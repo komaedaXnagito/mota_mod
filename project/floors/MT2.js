@@ -6,19 +6,19 @@ main.floors.MT2=
     "width": 13,
     "height": 13,
     "map": [
-    [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1],
-    [  1, 88,  0, 82,  0,  0,  0,  0,  0,  0,  0,  0,  1],
-    [  1,  0,  0,  1,  1,  0,222,  0,222,  0,  1,  1,  1],
-    [  1,  0,  1,  1,  1,  1,  1,  0,  1,  1,  1,  1,  1],
-    [  1,  0,  1, 21, 21,  1,  0,  0,  0,  1,  0,121,  1],
-    [  1,  0,  1, 21,  0, 86,  0,  0,  0, 86,  0,  0,  1],
-    [  1,  0,  1,  1,  1,  1,  0,  0,  0,  1,  1,  1,  1],
-    [  1,  0,  1,123,  0,  1,  0,  0,  0,  1,  0,124,  1],
-    [  1,  0,  1,  0,  0, 86,  0,  0,  0, 86,  0,  0,  1],
-    [  1,  0,  1,  1,  1,  1,  0,  0,  0,  1,  1,  1,  1],
-    [  1,  0,  1, 32, 32,  1,  0,  0,  0,  1,  0,  0,  1],
-    [  1, 87,  1, 32,  0, 86,  0,  0,  0, 86,123,  0,  1],
-    [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1]
+    [330,330,330,330,330,330,330,330,330,330,330,330,330],
+    [330, 88,  0, 82,  0,  0,  0,  0,  0,  0,  0,  0,330],
+    [330,  0,  0,  1,  1,  0,222,  0,222,  0,  1,  1,330],
+    [330,  0,  1,  1,  1,  1,  1,  0,  1,  1,  1,  1,330],
+    [330,  0,  1, 21, 21,  1,  0,  0,  0,  1,  0,121,330],
+    [330,  0,  1, 21,  0, 86,  0,  0,  0, 86,  0,  0,330],
+    [330,  0,  1,  1,  1,  1,  0,  0,  0,  1,  1,  1,330],
+    [330,  0,  1,123,  0,  1,  0,  0,  0,  1,  0,122,330],
+    [330,  0,  1,  0,  0, 86,  0,  0,  0, 86,  0,  0,330],
+    [330,  0,  1,  1,  1,  1,  0,  0,  0,  1,  1,  1,330],
+    [330,  0,  1, 32, 32,  1,  0,  0,  0,  1,  0,  0,330],
+    [330, 87,  1, 32,  0, 86,  0,  0,  0, 86,  0,123,330],
+    [330,330,330,330,330,330,330,330,330,330,330,330,330]
 ],
     "canFlyTo": true,
     "canFlyFrom": true,
@@ -28,11 +28,79 @@ main.floors.MT2=
     "defaultGround": "ground",
     "bgm": "section1.mp3",
     "firstArrive": [],
-    "eachArrive": [],
+    "eachArrive": [
+        {
+            "type": "if",
+            "condition": "flag:3f剧情",
+            "true": [
+                {
+                    "type": "sleep",
+                    "time": 500
+                },
+                "\t[小偷,thief]喂",
+                "\t[小偷,thief]喂 醒醒",
+                {
+                    "type": "setCurtain",
+                    "time": 1000
+                },
+                {
+                    "type": "hide",
+                    "loc": [
+                        [
+                            5,
+                            9
+                        ]
+                    ],
+                    "floorId": "MT3",
+                    "remove": true,
+                    "time": 0
+                },
+                {
+                    "type": "setValue",
+                    "name": "flag:3f剧情",
+                    "value": "0"
+                }
+            ],
+            "false": []
+        }
+    ],
     "parallelDo": "",
     "events": {
+        "11,11": {
+            "trigger": null,
+            "enable": false,
+            "noPass": null,
+            "displayDamage": true,
+            "opacity": 1,
+            "filter": {
+                "blur": 0,
+                "hue": 0,
+                "grayscale": 0,
+                "invert": false,
+                "shadow": 0
+            },
+            "data": [
+                "\t[小偷,thief]你终于来了 我以为再也出不去了呢 35层有个魔龙挡路 我帮你挖一条暗道吧",
+                {
+                    "type": "show",
+                    "loc": [
+                        [
+                            5,
+                            10
+                        ]
+                    ],
+                    "floorId": "MT35",
+                    "time": 0
+                },
+                {
+                    "type": "hide",
+                    "remove": true,
+                    "time": 500
+                }
+            ]
+        },
         "3,7": [
-            "\t[小偷,thief]你清醒了吗？你到监狱时还处在昏迷中，魔法警卫把你扔到我这个房间。但你很幸运，我刚完成逃跑的暗道你就醒了，我们一起越狱吧。",
+            "\t[小偷,thief]你清醒了吗 你到监狱时还处在昏迷中 魔法警卫把你扔到我这个房间 但你很幸运 我刚完成逃跑的暗道你就醒了 我们一起越狱吧",
             {
                 "type": "openDoor",
                 "loc": [
@@ -52,7 +120,7 @@ main.floors.MT2=
             },
             {
                 "type": "move",
-                "time": 50,
+                "time": 200,
                 "keep": true,
                 "steps": [
                     "left:2",
@@ -61,40 +129,42 @@ main.floors.MT2=
             },
             {
                 "type": "hide",
+                "remove": true,
                 "time": 0
             }
         ],
         "11,7": [
             {
+                "type": "comment",
+                "text": "\\d\\c[24]\\i[I363]\\i[A367]\\c\r[rgb(66,185,131)](+3%)\\c[24]\\i[I362]\\i[A367]\\c\r[rgb(66,185,131)](+3%)"
+            },
+            {
                 "type": "choices",
-                "text": "\t[商人,specialTrader]谢谢你救了我，我能用祝福魔法提升你 3% 的攻击力和防御力。现在就提升吗？",
+                "text": "\t[商人,woman]谢谢你的帮助！我能为你增加3%攻击和防御。",
                 "choices": [
                     {
                         "text": "现在提升",
                         "action": [
                             {
                                 "type": "playSound",
-                                "name": "获得道具"
+                                "name": "item.mp3"
                             },
                             {
                                 "type": "setValue",
                                 "name": "status:atk",
                                 "operator": "+=",
-                                "value": "Math.round(status:atk*0.03)"
+                                "value": "(Math.round((status:atk*0.03)))"
                             },
                             {
                                 "type": "setValue",
                                 "name": "status:def",
                                 "operator": "+=",
-                                "value": "Math.round(status:def*0.03)"
-                            },
-                            {
-                                "type": "tip",
-                                "text": "你受到了祝福，攻击和防御都提升了3%"
+                                "value": "(Math.round((status:def*0.03)))"
                             },
                             {
                                 "type": "hide",
-                                "time": 500
+                                "remove": true,
+                                "time": 200
                             }
                         ]
                     },
@@ -103,6 +173,24 @@ main.floors.MT2=
                         "action": []
                     }
                 ]
+            }
+        ],
+        "11,4": [
+            {
+                "type": "comment",
+                "text": "\\d\\c[24]\\i[I361]\\i[A367]\\c\r[rgb(224,210,69)](+1000G)"
+            },
+            "\t[老登,man]谢谢你救了我，为了感谢你的帮助请收下这些礼物。",
+            {
+                "type": "setValue",
+                "name": "status:money",
+                "operator": "+=",
+                "value": "1000"
+            },
+            {
+                "type": "hide",
+                "remove": true,
+                "time": 200
             }
         ],
         "1,9": {
@@ -119,10 +207,10 @@ main.floors.MT2=
                 "shadow": 0
             },
             "data": [
-                "\t[小偷,thief]我们终于逃出来了。你的剑和盾被警卫拿走了，你必须先找到武器。我知道铁剑在5楼，铁盾在9楼，你最好先取到它们。我现在有事要做没法帮你，再见。",
+                "\t[小偷,thief]我们终于逃出来了 你的剑盾被警卫拿走了 你必须先找到武器 我知道铁剑在5楼 铁盾在9楼 你最好先取到他们 我现在有事要做没法帮你 再见",
                 {
                     "type": "move",
-                    "time": 50,
+                    "time": 200,
                     "steps": [
                         "down:2"
                     ]
@@ -132,68 +220,27 @@ main.floors.MT2=
                     "time": 0
                 }
             ]
-        },
-        "10,11": {
-            "trigger": null,
-            "enable": false,
-            "noPass": null,
-            "displayDamage": true,
-            "opacity": 1,
-            "filter": {
-                "blur": 0,
-                "hue": 0,
-                "grayscale": 0,
-                "invert": false,
-                "shadow": 0
-            },
-            "data": [
-                "\t[小偷,thief]哈哈，我们又见面了! 谢谢你救了我。我可以帮你在魔龙前打开一条暗道，我现在就去35楼。",
-                {
-                    "type": "setBlock",
-                    "number": "0",
-                    "loc": [
-                        [
-                            4,
-                            9
-                        ]
-                    ],
-                    "floorId": "MT35"
-                },
-                {
-                    "type": "show",
-                    "loc": [
-                        [
-                            5,
-                            10
-                        ]
-                    ],
-                    "floorId": "MT35",
-                    "time": 0
-                },
-                {
-                    "type": "hide",
-                    "time": 500
-                }
-            ]
         }
     },
     "changeFloor": {
         "1,11": {
             "floorId": ":next",
-            "stair": "downFloor",
-            "time": 0
+            "stair": "downFloor"
         },
         "1,1": {
             "floorId": ":before",
-            "stair": "upFloor",
-            "time": 0
+            "stair": "upFloor"
         }
     },
     "afterBattle": {
         "6,2": [
             {
+                "type": "function",
+                "function": "function(){\nvar bool = true;\nvar loc_arr = [\n\t[6, 2],\n\t[8, 2],\n]\nloc_arr.forEach(loc => {\n\tif (core.getBlockCls(loc[0], loc[1]) == \"enemys\") {\n\t\tbool = false;\n\t}\n});\ncore.setFlag(\"open_yes\", bool)\n}"
+            },
+            {
                 "type": "if",
-                "condition": "flag:2",
+                "condition": "flag:open_yes",
                 "true": [
                     {
                         "type": "openDoor",
@@ -245,22 +292,18 @@ main.floors.MT2=
                     },
                     {
                         "type": "waitAsync"
-                    }
-                ],
-                "false": [
-                    {
-                        "type": "setValue",
-                        "operator": "+=",
-                        "name": "flag:2",
-                        "value": "1"
                     }
                 ]
             }
         ],
         "8,2": [
             {
+                "type": "function",
+                "function": "function(){\nvar bool = true;\nvar loc_arr = [\n\t[6, 2],\n\t[8, 2],\n]\nloc_arr.forEach(loc => {\n\tif (core.getBlockCls(loc[0], loc[1]) == \"enemys\") {\n\t\tbool = false;\n\t}\n});\ncore.setFlag(\"open_yes\", bool)\n}"
+            },
+            {
                 "type": "if",
-                "condition": "flag:2",
+                "condition": "flag:open_yes",
                 "true": [
                     {
                         "type": "openDoor",
@@ -312,14 +355,6 @@ main.floors.MT2=
                     },
                     {
                         "type": "waitAsync"
-                    }
-                ],
-                "false": [
-                    {
-                        "type": "setValue",
-                        "operator": "+=",
-                        "name": "flag:2",
-                        "value": "1"
                     }
                 ]
             }
@@ -354,7 +389,13 @@ main.floors.MT2=
         1,
         2
     ],
-    "autoEvent": {},
+    "autoEvent": {
+        "5,5": {
+            "1": null
+        }
+    },
     "beforeBattle": {},
-    "cannotMoveIn": {}
+    "cannotMoveIn": {},
+    "bg2map": [],
+    "fg2map": []
 }

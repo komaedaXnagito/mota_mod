@@ -45,6 +45,51 @@ var events_c12a15a8_c380_4b28_8144_256cba95f760 =
 				]
 			}
 		],
+		"游戏说明": [
+			{
+				"type": "choices",
+				"choices": [
+					{
+						"text": "游戏简介",
+						"action": [
+							"h5版本是按照flash版复刻，其中部分对话使用的魔塔盛宴的版本。",
+							"地图复制：数码宝贝51、641\n部分事件复制：小艾\n游戏音乐、怪物显伤等开关可以在系统设置里打开和关闭",
+							"想要获得更详细的介绍，可以在菜单——游戏信息——游戏主页中进入本塔的评论区，查看置顶评论。",
+							{
+								"type": "insert",
+								"name": "游戏说明"
+							}
+						]
+					},
+					{
+						"text": "mod声明",
+						"action": [
+							"此处填写mod修改内容",
+							{
+								"type": "insert",
+								"name": "游戏说明"
+							}
+						]
+					},
+					{
+						"text": "返回游戏",
+						"action": []
+					}
+				]
+			}
+		],
+		"记事本": [
+			"\t[记事本,wand]你点什么？你敢再点一次！魔塔不需要像我这样废物的道具，来人给我杀了。",
+			{
+				"type": "playSound",
+				"name": "bomb.mp3"
+			},
+			{
+				"type": "setValue",
+				"name": "status:hp",
+				"value": "0"
+			}
+		],
 		"回收钥匙商店": [
 			{
 				"type": "comment",
@@ -142,1470 +187,299 @@ var events_c12a15a8_c380_4b28_8144_256cba95f760 =
 					}
 				]
 			}
-		],
-		"游戏说明": [
+		]
+	},
+	"CommonEventTemplate": {
+		"检测音乐如果没有开启则系统提示开启": [
 			{
-				"type": "function",
-				"function": "function(){\ncore.status.route.push('help')\n}"
+				"type": "if",
+				"condition": "(!core.musicStatus.bgmStatus)",
+				"true": [
+					"\t[系统提示]你当前音乐处于关闭状态，本塔开音乐游戏效果更佳"
+				],
+				"false": []
+			}
+		],
+		"仿新新魔塔一次性商人": [
+			{
+				"type": "if",
+				"condition": "switch:A",
+				"true": [
+					"\t[行商,trader]\b[this]这是购买我的道具后我给玩家的提示。",
+					{
+						"type": "comment",
+						"text": "下一条指令可视情况使用或不使用"
+					},
+					{
+						"type": "hide",
+						"remove": true,
+						"time": 250,
+						"loc": [
+							[]
+						]
+					}
+				],
+				"false": [
+					{
+						"type": "confirm",
+						"text": "我有3把黄钥匙，\n你出50金币就卖给你。",
+						"yes": [
+							{
+								"type": "if",
+								"condition": "status:money>=50",
+								"true": [
+									{
+										"type": "setValue",
+										"name": "status:money",
+										"operator": "-=",
+										"value": "50"
+									},
+									{
+										"type": "setValue",
+										"name": "item:yellowKey",
+										"operator": "+=",
+										"value": "3"
+									},
+									{
+										"type": "playSound",
+										"name": "确定",
+										"stop": true
+									},
+									{
+										"type": "setValue",
+										"name": "switch:A",
+										"value": "true"
+									}
+								],
+								"false": [
+									{
+										"type": "playSound",
+										"name": "操作失败"
+									},
+									"\t[行商,trader]\b[this]你的金币不足！"
+								]
+							}
+						],
+						"no": []
+					}
+				]
+			}
+		],
+		"全地图选中一个点": [
+			{
+				"type": "comment",
+				"text": "全地图选中一个点，需要用鼠标或触屏操作"
+			},
+			{
+				"type": "setValue",
+				"name": "temp:X",
+				"value": "status:x"
+			},
+			{
+				"type": "setValue",
+				"name": "temp:Y",
+				"value": "status:y"
+			},
+			{
+				"type": "tip",
+				"text": "再次点击闪烁位置确认"
 			},
 			{
 				"type": "while",
 				"condition": "true",
 				"data": [
 					{
-						"type": "choices",
-						"choices": [
+						"type": "drawSelector",
+						"image": "winskin.png",
+						"code": 1,
+						"x": "32*temp:X",
+						"y": "32*temp:Y",
+						"width": 32,
+						"height": 32
+					},
+					{
+						"type": "wait"
+					},
+					{
+						"type": "if",
+						"condition": "(flag:type === 1)",
+						"true": [
 							{
-								"text": "游戏特性",
-								"norecord": true,
-								"action": [
-									"您游玩的当前版本，是由三原塔翻新小组按照flash版重新复刻而成。",
-									"进入游戏时，玩家可选择是否开启flash原版特性。若选择开启，则本局游戏进入“特性版”，将同时启用三大原版特性：对话穿墙、偷雪花、圣水复活。若选择不开启，则本局游戏进入“纯净版”，以上三大特性均无法使用。",
-									"\t[对话穿墙,yellowWall]在与会消失的NPC（例如老人或已经交易完成的商人）对话后，玩家可以选择以下一项行动：\n·停留在原地；\n·向任意方向行走一格（可以拾取道具）；\n·使用一个道具（该道具不可引发楼层切换）；\n执行上述行动后，如果玩家触碰到周围的图块",
-									"\t[对话穿墙,yellowWall]且当图块满足以下条件：\n·该图块没有事件，例如墙，岩浆，商店的左右部分\n·该图块为门且对应钥匙数量为0（否则按正常方式开门）；\n·该图块为怪物且无法战胜该怪物（否则正常进入战斗）。\n则该图块会被直接摧毁。\n（确切来说，不计入录像的道具，如记事本，是可以任意使用并仍旧能对话穿墙的）",
-									"\t[偷雪花,snow]flash版本的三个蓝血瓶与冰魔法均放置在魔龙身下，由于魔龙后六格可以直接通行，因此若可以接触到魔龙后六格则可直接拿取其中物品\n若关闭此特性，魔龙后六格仍旧将可通行，但是三个蓝血瓶与冰魔法变为在击败魔龙后才生成",
-									"\t[圣水复活,yellowKnight]在Flash版本的32F遭遇骑士队长时，即使玩家血量降至0，实际战斗仍会继续进行（血量将保持为0）。且击败骑士队长后仍旧可以正常进行游戏，道具也能照常使用。 但玩家血量为0时，无法与任何相邻格子交互。因此必须使用圣水，才能恢复正常行动能力。",
-									"\t[圣水复活,yellowKnight]复刻版已复刻这一特性，如果您在其它情况下（例如自己修改数据）后将血量降至0及以下时，也将不能与相邻格交互。\n注意，如果您无法破防骑士队长，在flash版则会一直战斗下去，复刻版改为直接战败。"
-								]
-							},
-							{
-								"text": "游戏结局",
-								"need": "false",
-								"norecord": true,
-								"action": [
-									"\t[普通结局（NE）,redKing]正常通关流程中战胜50F魔王",
-									"\t[真结局（TE）,redKing]若不打49F假魔王，而是先前往50F和小偷对话，之后使用下楼器到49F触发假魔王剧情。此时封印假魔王，真魔王也将被封印为一成功力。再次从24F的通道到达50F后，战胜被封印的真魔王即可实现真结局。（TE）。"
-								]
-							},
-							{
-								"text": "游戏榜单",
-								"need": "false",
-								"norecord": true,
-								"action": [
-									"本塔可选择“纯净版”或“特性版”，也可选择打出“普通结局”或“真结局”，上述两两组合共4种情况，在每一种情况下，均设置15个榜单：最高血量、最高攻击、最高防御、最多金币、最高攻防和、最多商店加点次数、最低攻击、最低防御、最低攻防和、最少商店加点次数、最多黄钥匙、最多蓝钥匙、最多红钥匙、最多道具数量、最高血量（疯狂加血模式）。因此，目前版本共有4*15=60个榜单。"
-								]
-							},
-							{
-								"text": "自动操作",
-								"color": [
-									101,
-									255,
-									255,
-									1
-								],
-								"action": [
-									{
-										"type": "while",
-										"condition": "1",
-										"data": [
-											{
-												"type": "function",
-												"function": "function(){\nif (!core.status.hero.flags.__auto__) core.status.hero.flags.__auto__ = { battle: false, item: false, wall: false }\n}"
-											},
-											{
-												"type": "choices",
-												"text": "选择要开启的功能",
-												"choices": [
-													{
-														"text": "自动清零伤怪 [off]",
-														"condition": "!core.status.hero.flags.__auto__.battle",
-														"action": [
-															{
-																"type": "function",
-																"function": "function(){\ncore.status.hero.flags.__auto__.battle = true;\n}"
-															},
-															{
-																"type": "tip",
-																"text": "自动清怪已开启"
-															}
-														]
-													},
-													{
-														"text": "自动清零伤怪 [on]",
-														"condition": "core.status.hero.flags.__auto__.battle",
-														"action": [
-															{
-																"type": "function",
-																"function": "function(){\ncore.status.hero.flags.__auto__.battle = false;\n}"
-															},
-															{
-																"type": "tip",
-																"text": "自动清怪已关闭"
-															}
-														]
-													},
-													{
-														"text": "自动拾取物品 [off]",
-														"condition": "!core.status.hero.flags.__auto__.item",
-														"action": [
-															{
-																"type": "function",
-																"function": "function(){\ncore.status.hero.flags.__auto__.item = 'nopotion';\n}"
-															},
-															{
-																"type": "tip",
-																"text": "已开启：拾取物品(不含血瓶)"
-															}
-														]
-													},
-													{
-														"text": "自动拾取物品 [不含血瓶]",
-														"condition": "core.status.hero.flags.__auto__.item == 'nopotion'",
-														"action": [
-															{
-																"type": "function",
-																"function": "function(){\ncore.status.hero.flags.__auto__.item = 'all';\n}"
-															},
-															{
-																"type": "tip",
-																"text": "已切换：拾取全部物品"
-															}
-														]
-													},
-													{
-														"text": "自动拾取物品 [全部]",
-														"condition": "core.status.hero.flags.__auto__.item == 'all' || core.status.hero.flags.__auto__.item === true",
-														"action": [
-															{
-																"type": "function",
-																"function": "function(){\ncore.status.hero.flags.__auto__.item = false;\n}"
-															},
-															{
-																"type": "tip",
-																"text": "自动拾取已关闭"
-															}
-														]
-													},
-													{
-														"text": "自动开暗墙岩浆 [off]",
-														"condition": "!core.status.hero.flags.__auto__.wall",
-														"action": [
-															{
-																"type": "function",
-																"function": "function(){\ncore.status.hero.flags.__auto__.wall = true;\n}"
-															},
-															{
-																"type": "tip",
-																"text": "自动开暗墙岩浆已开启"
-															}
-														]
-													},
-													{
-														"text": "自动开暗墙岩浆 [on]",
-														"condition": "core.status.hero.flags.__auto__.wall",
-														"action": [
-															{
-																"type": "function",
-																"function": "function(){\ncore.status.hero.flags.__auto__.wall = false;\n}"
-															},
-															{
-																"type": "tip",
-																"text": "自动开暗墙岩浆已关闭"
-															}
-														]
-													},
-													{
-														"text": "退出设置",
-														"action": [
-															{
-																"type": "break",
-																"n": 1
-															}
-														]
-													}
-												]
-											}
-										]
-									}
-								]
-							},
-							{
-								"text": "交易统计",
-								"color": [
-									255,
-									230,
-									100,
-									1
-								],
-								"norecord": true,
-								"action": [
-									{
-										"type": "function",
-										"function": "function(){\ncore.plugin.showAltarSummary()\n}"
-									}
-								]
-							},
-							{
-								"text": "返回游戏",
-								"action": [
+								"type": "if",
+								"condition": "((temp:X===flag:x)&&(temp:Y===flag:y))",
+								"true": [
 									{
 										"type": "break",
 										"n": 1
 									}
 								]
+							},
+							{
+								"type": "setValue",
+								"name": "temp:X",
+								"value": "flag:x"
+							},
+							{
+								"type": "setValue",
+								"name": "temp:Y",
+								"value": "flag:y"
 							}
 						]
 					}
 				]
+			},
+			{
+				"type": "drawSelector",
+				"code": 1
+			},
+			{
+				"type": "comment",
+				"text": "流程进行到这里可以对[X,Y]点进行处理，比如"
+			},
+			{
+				"type": "closeDoor",
+				"id": "yellowDoor",
+				"loc": [
+					"temp:X",
+					"temp:Y"
+				]
 			}
 		],
-		"对话": [
+		"多阶段Boss战斗": [
+			{
+				"type": "comment",
+				"text": "多阶段boss，请直接作为战后事件使用"
+			},
 			{
 				"type": "setValue",
-				"name": "flag:有选择的对话",
-				"value": "false"
+				"name": "switch:A",
+				"operator": "+=",
+				"value": "1"
 			},
 			{
 				"type": "switch",
-				"condition": "flag:arg1",
+				"condition": "switch:A",
 				"caseList": [
+					{
+						"case": "1",
+						"action": [
+							{
+								"type": "setBlock",
+								"number": "redSlime",
+								"loc": [
+									[]
+								]
+							},
+							"\t[2阶段boss,redSlime]\b[this]你以为你已经打败我了吗？没听说过史莱姆有九条命吗？"
+						]
+					},
 					{
 						"case": "2",
 						"action": [
 							{
-								"type": "setValue",
-								"name": "flag:content",
-								"value": "'给你1000金币！希望不会拿了之后变弱，哈哈！'"
+								"type": "setBlock",
+								"number": "blackSlime",
+								"loc": [
+									[]
+								]
 							},
-							{
-								"type": "setValue",
-								"name": "flag:有选择的对话",
-								"value": "true"
-							}
+							"\t[3阶段boss,blackSlime]\b[this]不能消灭我的，只会让我更强大！"
 						]
 					},
 					{
 						"case": "3",
 						"action": [
 							{
-								"type": "setValue",
-								"name": "flag:content",
-								"value": "'吾命休矣！'"
+								"type": "setBlock",
+								"number": "slimelord",
+								"loc": [
+									[]
+								]
 							},
-							{
-								"type": "setValue",
-								"name": "flag:有选择的对话",
-								"value": "true"
-							}
+							"\t[4阶段boss,slimelord]\b[this]我还能打！"
 						]
 					},
 					{
 						"case": "4",
 						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:content",
-								"value": "'要不要考虑一区加点？毕竟骷髅队长那么厉害？'"
-							}
-						]
-					},
-					{
-						"case": "6",
-						"action": [
-							{
-								"type": "if",
-								"condition": "flag:arg4 ",
-								"true": [
-									{
-										"type": "setValue",
-										"name": "flag:content",
-										"value": "'也许有时候需要先搁置一些属性不拿更好？'"
-									}
-								],
-								"false": [
-									{
-										"type": "setValue",
-										"name": "flag:content",
-										"value": "'别忘了boss战会关门，所以你最好调整一个合适的攻防再进去？'"
-									}
-								]
-							}
-						]
-					},
-					{
-						"case": "7",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:content",
-								"value": "'加点既会影响金币又会影响属性，所以要想好！'"
-							}
-						]
-					},
-					{
-						"case": "12",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:content",
-								"value": "'嗯，金币数量影响钥匙数量怎么样？好像不好玩？'"
-							}
-						]
-					},
-					{
-						"case": "15",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:content",
-								"value": "'我听说测塔员本来建议吸血鬼boss战还要打大蝙蝠，但是作者不同意'"
-							}
-						]
-					},
-					{
-						"case": "16",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:content",
-								"value": "'也许你需要提前取得圣水……？'"
-							}
-						]
-					},
-					{
-						"case": "18",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:content",
-								"value": "'石头人虽然算不上不堪一击，但是加强幅度也很小，第二个模式甚至变弱了！'"
-							}
-						]
-					},
-					{
-						"case": "21",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:content",
-								"value": "'必须打大法师！但是大法师可不好对付！'"
-							}
-						]
-					},
-					{
-						"case": "23",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:content",
-								"value": "'没用！顺便一提，如果你选简单难度，那么0层是圣水，别忘了拿！'"
-							}
-						]
-					},
-					{
-						"case": "27",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:content",
-								"value": "'祝贺你！成功！'"
-							}
-						]
-					},
-					{
-						"case": "31",
-						"action": [
-							{
-								"type": "if",
-								"condition": "flag:arg4",
-								"true": [
-									{
-										"type": "setValue",
-										"name": "flag:content",
-										"value": "'你居然买了我的钥匙，那我就告诉你一个秘密：本来2区过后一片坦途的，但是作者改成了区域倍率*最大公约数！这下就厉害了！'"
-									}
-								],
-								"false": [
-									{
-										"type": "setValue",
-										"name": "flag:content",
-										"value": "'双手剑士仍旧不弱！但是我听说骑士队长更厉害……'"
-									}
-								]
-							}
-						]
-					},
-					{
-						"case": "33",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:content",
-								"value": "'如何取得骑士剑呢？'"
-							}
-						]
-					},
-					{
-						"case": "36",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:content",
-								"value": "'暗道，有用吗？'"
-							}
-						]
-					},
-					{
-						"case": "37",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:content",
-								"value": "'还是需要，地震卷轴！'"
-							}
-						]
-					},
-					{
-						"case": "38",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:content",
-								"value": "'存放圣剑的房间的门好了，进去的办法有的是。'"
-							}
-						]
-					},
-					{
-						"case": "39",
-						"action": [
-							{
-								"type": "if",
-								"condition": "flag:arg4",
-								"true": [
-									{
-										"type": "setValue",
-										"name": "flag:content",
-										"value": "'你居然买了我的钥匙，那我就告诉你一个秘密：还好有圣水复活！要不然这机制真的不好弄！'"
-									}
-								],
-								"false": [
-									{
-										"type": "setValue",
-										"name": "flag:content",
-										"value": "'对称飞该用在哪里呢？'"
-									}
-								]
-							}
-						]
-					},
-					{
-						"case": "42",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:content",
-								"value": "'巫师 会用魔法攻击路过的人，在2个 魔法警卫 间通过会使你的生命减少一半。'"
-							}
-						]
-					},
-					{
-						"case": "45",
-						"action": [
-							{
-								"type": "if",
-								"condition": "flag:arg4",
-								"true": [
-									{
-										"type": "setValue",
-										"name": "flag:content",
-										"value": "'44楼被藏在异空间，你只能用秘宝才能到达，但是似乎里面的怪物非常强大……'"
-									}
-								],
-								"false": [
-									{
-										"type": "setValue",
-										"name": "flag:content",
-										"value": "'神圣盾 能防御魔法攻击，但它被藏在异空间的楼层内。'"
-									}
-								]
-							}
-						]
-					},
-					{
-						"case": "46",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:content",
-								"value": "'快去拿幸运金币吧！'"
-							}
-						]
-					},
-					{
-						"case": "47",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:content",
-								"value": "'地震卷轴该用在哪里呢？'"
-							}
-						]
-					},
-					{
-						"case": "48",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:content",
-								"value": "'旁边那个就是圣剑的守卫，快揍他！'"
-							}
-						]
-					},
-					{
-						"case": "default",
-						"action": [
-							"没有本层对话信息，请在公共事件“对话”中配置！",
-							{
-								"type": "break",
-								"n": 1
-							}
+							"\t[4阶段boss,slimelord]我一定会回来的！"
 						]
 					}
 				]
-			},
-			{
-				"type": "if",
-				"condition": "flag:有选择的对话",
-				"true": [
-					{
-						"type": "choices",
-						"text": "\t[老人,oldman]${flag:content}",
-						"choices": [
-							{
-								"text": "谢谢",
-								"action": [
-									{
-										"type": "switch",
-										"condition": "flag:arg1",
-										"caseList": [
-											{
-												"case": "2",
-												"action": [
-													{
-														"type": "playSound",
-														"name": "获得道具"
-													},
-													{
-														"type": "setValue",
-														"name": "status:money",
-														"operator": "+=",
-														"value": "1000"
-													},
-													{
-														"type": "tip",
-														"text": "获得1000金币"
-													}
-												]
-											},
-											{
-												"case": "3",
-												"action": [
-													{
-														"type": "setValue",
-														"name": "item:book",
-														"operator": "+=",
-														"value": "1"
-													}
-												]
-											},
-											{
-												"case": "default",
-												"action": []
-											}
-										]
-									}
-								]
-							}
-						]
-					}
-				],
-				"false": [
-					{
-						"type": "if",
-						"condition": "flag:arg4",
-						"true": [
-							"\t[商人,trader]${flag:content}"
-						],
-						"false": [
-							"\t[老人,oldman]${flag:content}"
-						]
-					}
-				]
-			},
-			{
-				"type": "function",
-				"function": "function(){\nlet f = `对话${core.getFlag('arg1')}`;\nif (core.getFlag('arg4')) f = f + '02';\ncore.setFlag(f, true)\n}"
-			},
-			{
-				"type": "hide",
-				"loc": [
-					"flag:arg2 ",
-					"flag:arg3 "
-				],
-				"remove": true,
-				"time": 500
 			}
 		],
-		"商人": [
-			{
-				"type": "switch",
-				"condition": "flag:arg1",
-				"caseList": [
-					{
-						"case": "6",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:money",
-								"value": "50"
-							},
-							{
-								"type": "setValue",
-								"name": "flag:text",
-								"value": "'我有一把兰钥匙你出50个金币就卖给你。'"
-							}
-						]
-					},
-					{
-						"case": "7",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:money",
-								"value": "50"
-							},
-							{
-								"type": "setValue",
-								"name": "flag:text",
-								"value": "'我有五把黄钥匙你出50个金币就卖给你。'"
-							}
-						]
-					},
-					{
-						"case": "12",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:money",
-								"value": "800"
-							},
-							{
-								"type": "setValue",
-								"name": "flag:text",
-								"value": "'我有一把红钥匙你出800个金币就卖给你。'"
-							}
-						]
-					},
-					{
-						"case": "15",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:money",
-								"value": "200"
-							},
-							{
-								"type": "setValue",
-								"name": "flag:text",
-								"value": "'我有一把兰钥匙你出200个金币就卖给你。'"
-							}
-						]
-					},
-					{
-						"case": "31",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:money",
-								"value": "1000"
-							},
-							{
-								"type": "setValue",
-								"name": "flag:text",
-								"value": "'我有四把黄钥匙一把兰钥匙你出1000个金币就都给你。'"
-							}
-						]
-					},
-					{
-						"case": "38",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:money",
-								"value": "200"
-							},
-							{
-								"type": "setValue",
-								"name": "flag:text",
-								"value": "'我有3把黄钥匙你出200个金币就都给你。'"
-							}
-						]
-					},
-					{
-						"case": "39",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:money",
-								"value": "2000"
-							},
-							{
-								"type": "setValue",
-								"name": "flag:text",
-								"value": "'我有3把兰钥匙你出2000个金币就都给你。'"
-							}
-						]
-					},
-					{
-						"case": "45",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:money",
-								"value": "1000"
-							},
-							{
-								"type": "setValue",
-								"name": "flag:text",
-								"value": "'给我1000个金币我就提升你的生命2000点。'"
-							}
-						]
-					},
-					{
-						"case": "47",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:money",
-								"value": "4000"
-							},
-							{
-								"type": "setValue",
-								"name": "flag:text",
-								"value": "'给我4000个金币我就给你地震卷轴，它可摧毁一层楼所有的墙'"
-							}
-						]
-					},
-					{
-						"case": "default",
-						"action": [
-							"\t[商人,trader]没有本层商人信息，请在公共事件“商人”中配置！",
-							{
-								"type": "break",
-								"n": 1
-							}
-						]
-					}
-				]
-			},
+		"阿狸的音乐盒": [
 			{
 				"type": "choices",
-				"text": "\t[商人,trader]${flag:text}",
+				"text": "\t[阿狸,ali]要听听看这些歌曲吗",
 				"choices": [
 					{
-						"text": "我太需要了",
+						"text": "theme1",
 						"action": [
 							{
 								"type": "if",
-								"condition": "(status:money >= flag:money)",
+								"condition": "(flag:阿狸的音乐盒!==1)",
 								"true": [
 									{
+										"type": "playBgm",
+										"name": "theme1.mp3",
+										"keep": true
+									},
+									{
 										"type": "setValue",
-										"name": "status:money",
-										"operator": "-=",
-										"value": "flag:money"
-									},
-									{
-										"type": "switch",
-										"condition": "flag:arg1",
-										"caseList": [
-											{
-												"case": "6",
-												"action": [
-													{
-														"type": "setValue",
-														"name": "item:blueKey",
-														"operator": "+=",
-														"value": "1"
-													}
-												]
-											},
-											{
-												"case": "7",
-												"action": [
-													{
-														"type": "setValue",
-														"name": "item:yellowKey",
-														"operator": "+=",
-														"value": "5"
-													}
-												]
-											},
-											{
-												"case": "12",
-												"action": [
-													{
-														"type": "setValue",
-														"name": "item:redKey",
-														"operator": "+=",
-														"value": "1"
-													}
-												]
-											},
-											{
-												"case": "15",
-												"action": [
-													{
-														"type": "setValue",
-														"name": "item:blueKey",
-														"operator": "+=",
-														"value": "1"
-													}
-												]
-											},
-											{
-												"case": "31",
-												"action": [
-													{
-														"type": "setValue",
-														"name": "item:yellowKey",
-														"operator": "+=",
-														"value": "4"
-													},
-													{
-														"type": "setValue",
-														"name": "item:blueKey",
-														"operator": "+=",
-														"value": "1"
-													}
-												]
-											},
-											{
-												"case": "38",
-												"action": [
-													{
-														"type": "setValue",
-														"name": "item:yellowKey",
-														"operator": "+=",
-														"value": "3"
-													}
-												]
-											},
-											{
-												"case": "39",
-												"action": [
-													{
-														"type": "setValue",
-														"name": "item:blueKey",
-														"operator": "+=",
-														"value": "3"
-													}
-												]
-											},
-											{
-												"case": "45",
-												"action": [
-													{
-														"type": "playSound",
-														"name": "获得道具"
-													},
-													{
-														"type": "setValue",
-														"name": "status:hp",
-														"operator": "+=",
-														"value": "2000"
-													}
-												]
-											},
-											{
-												"case": "47",
-												"action": [
-													{
-														"type": "setValue",
-														"name": "item:earthquake",
-														"operator": "+=",
-														"value": "1"
-													}
-												]
-											},
-											{
-												"case": "default",
-												"action": []
-											}
-										]
-									},
-									{
-										"type": "function",
-										"function": "function(){\nvar name = core.status.floorId + '@' + core.getFlag(\"arg2\", 0) + '@' + core.getFlag(\"arg3\", 0) + '@' + 'A';\ncore.setFlag(name, 1);\n}"
+										"name": "flag:阿狸的音乐盒",
+										"value": "1"
 									}
-								],
-								"false": [
-									"\t[商人,trader]你的金币不够${flag:money}枚，无法交易！"
 								]
 							}
-						]
+						],
+						"color": null
 					},
 					{
-						"text": "下次再说",
-						"action": []
-					}
-				]
-			},
-			{
-				"type": "setValue",
-				"name": "flag:alt",
-				"value": "0"
-			}
-		],
-		"商店": [
-			{
-				"type": "while",
-				"condition": "true",
-				"data": [
-					{
-						"type": "setValue",
-						"name": "flag:money1",
-						"value": "20+10*(flag:times1+1)*flag:times1"
+						"text": "theme2",
+						"action": [
+							{
+								"type": "if",
+								"condition": "(flag:阿狸的音乐盒!==2)",
+								"true": [
+									{
+										"type": "playBgm",
+										"name": "theme2.mp3",
+										"keep": true
+									},
+									{
+										"type": "setValue",
+										"name": "flag:阿狸的音乐盒",
+										"value": "2"
+									}
+								]
+							}
+						],
+						"color": null
 					},
 					{
-						"type": "choices",
-						"text": "\t[祭坛,blueShop]如果供奉${flag:money1}金币, 便可以增加你的力量, 你想要什么呢…",
-						"choices": [
+						"text": "恢复楼层BGM",
+						"action": [
 							{
-								"text": "生命+${100*(flag:times1+1)}",
-								"action": [
+								"type": "if",
+								"condition": "(flag:阿狸的音乐盒!==0)",
+								"true": [
 									{
-										"type": "if",
-										"condition": "(status:money>=flag:money1)",
-										"true": [
-											{
-												"type": "playSound",
-												"name": "获得道具"
-											},
-											{
-												"type": "function",
-												"function": "function(){\ncore.addFlag(`${core.getFlag('ratio')}区购买hp`, 100 * (core.getFlag('times1', 0) + 1));\ncore.addFlag(`${core.getFlag('ratio')}区购买hp次数`, 1);\n}"
-											},
-											{
-												"type": "setValue",
-												"name": "status:hp",
-												"operator": "+=",
-												"value": "100*(flag:times1+1)"
-											},
-											{
-												"type": "setValue",
-												"name": "status:money",
-												"operator": "-=",
-												"value": "flag:money1"
-											},
-											{
-												"type": "setValue",
-												"name": "flag:times1",
-												"operator": "+=",
-												"value": "1"
-											}
-										],
-										"false": [
-											{
-												"type": "tip",
-												"text": "你的金币不足${flag:money1}枚，无法供奉！"
-											}
-										]
-									}
-								]
-							},
-							{
-								"text": "攻击+${2*flag:ratio}",
-								"action": [
+										"type": "playBgm",
+										"name": "section1.mp3"
+									},
 									{
-										"type": "if",
-										"condition": "(status:money>=flag:money1)",
-										"true": [
-											{
-												"type": "playSound",
-												"name": "获得道具"
-											},
-											{
-												"type": "function",
-												"function": "function(){\ncore.addFlag(`${core.getFlag('ratio')}区购买atk`, 2 * core.getFlag('ratio', 1));\ncore.addFlag(`${core.getFlag('ratio')}区购买atk次数`, 1);\n}"
-											},
-											{
-												"type": "setValue",
-												"name": "status:atk",
-												"operator": "+=",
-												"value": "2*flag:ratio"
-											},
-											{
-												"type": "setValue",
-												"name": "status:money",
-												"operator": "-=",
-												"value": "flag:money1"
-											},
-											{
-												"type": "setValue",
-												"name": "flag:times1",
-												"operator": "+=",
-												"value": "1"
-											}
-										],
-										"false": [
-											{
-												"type": "tip",
-												"text": "你的金币不足${flag:money1}枚，无法供奉！"
-											}
-										]
-									}
-								]
-							},
-							{
-								"text": "防御+${4*flag:ratio}",
-								"action": [
-									{
-										"type": "if",
-										"condition": "(status:money>=flag:money1)",
-										"true": [
-											{
-												"type": "playSound",
-												"name": "获得道具"
-											},
-											{
-												"type": "function",
-												"function": "function(){\ncore.addFlag(`${core.getFlag('ratio')}区购买def`, 4 * core.getFlag('ratio', 1));\ncore.addFlag(`${core.getFlag('ratio')}区购买def次数`, 1);\n}"
-											},
-											{
-												"type": "setValue",
-												"name": "status:def",
-												"operator": "+=",
-												"value": "4*flag:ratio"
-											},
-											{
-												"type": "setValue",
-												"name": "status:money",
-												"operator": "-=",
-												"value": "flag:money1"
-											},
-											{
-												"type": "setValue",
-												"name": "flag:times1",
-												"operator": "+=",
-												"value": "1"
-											}
-										],
-										"false": [
-											{
-												"type": "tip",
-												"text": "你的金币不足${flag:money1}枚，无法供奉！"
-											}
-										]
-									}
-								]
-							},
-							{
-								"text": "离开",
-								"action": [
-									{
-										"type": "break",
-										"n": 1
+										"type": "setValue",
+										"name": "flag:阿狸的音乐盒",
+										"value": "0"
 									}
 								]
 							}
-						]
+						],
+						"color": null
 					}
 				]
 			}
-		],
-		"记事本": [
-			{
-				"type": "if",
-				"condition": "(flag:翻页==0)",
-				"true": [
-					{
-						"type": "setValue",
-						"name": "flag:翻页",
-						"value": "1"
-					}
-				]
-			},
-			{
-				"type": "if",
-				"condition": "(flag:翻页==1)",
-				"true": [
-					{
-						"type": "while",
-						"condition": "true",
-						"data": [
-							{
-								"type": "choices",
-								"text": "留言簿",
-								"norecord": true,
-								"choices": [
-									{
-										"text": "2层老人",
-										"condition": "flag:对话2==1",
-										"action": [
-											"谢谢你救了我，为了感谢你的帮助请收下这些礼物.（收到1000金币）"
-										]
-									},
-									{
-										"text": "3层老人",
-										"condition": "flag:对话3==1",
-										"action": [
-											"我可以给你怪物手册. 你可以用快捷键 X 去使用它。它能预测出当前楼层各类怪物对你的伤害。"
-										]
-									},
-									{
-										"text": "4层老人",
-										"condition": "flag:对话4==1",
-										"action": [
-											"有些门不能用钥匙打开，只有当你打败它的守卫后才会自动打开。"
-										]
-									},
-									{
-										"text": "6层老人",
-										"condition": "flag:对话6==1 && !flag:arg4",
-										"action": [
-											"你购买了礼物后再与商人对话，他会告诉你一些重要的消息。"
-										]
-									},
-									{
-										"text": "6层商人",
-										"condition": "flag:对话602==1 && flag:arg4",
-										"action": [
-											"魔塔一共50层，每10层为一个区域。如果不打败此区域的头目就不能到更高的地方。"
-										]
-									},
-									{
-										"text": "7层商人",
-										"condition": "flag:对话7==1",
-										"action": [
-											"在商店里你最好选择提升防御，只有在攻击力低于敌人的防御力时才提升攻击力"
-										]
-									},
-									{
-										"text": "12层商人",
-										"condition": "flag:对话12==1",
-										"action": [
-											"你是否注意到 5,9,14,16,18 楼有的墙与众不同？"
-										]
-									},
-									{
-										"text": "15层商人",
-										"condition": "flag:对话15==1",
-										"action": [
-											"如果你持有十字架，面对兽人和吸血鬼时你的攻击力加倍。在没有十字架的情况下你不可能打败吸血鬼。十字架被藏在高于15楼的墙内。"
-										]
-									},
-									{
-										"text": "16层老人",
-										"condition": "flag:对话16==1",
-										"action": [
-											"我听说在塔内有2把隐藏的红钥匙。"
-										]
-									},
-									{
-										"text": "跳到尾页",
-										"action": [
-											{
-												"type": "setValue",
-												"name": "flag:翻页",
-												"value": "3"
-											},
-											{
-												"type": "insert",
-												"name": "记事本"
-											}
-										]
-									},
-									{
-										"text": "下一页",
-										"action": [
-											{
-												"type": "setValue",
-												"name": "flag:翻页",
-												"value": "2"
-											},
-											{
-												"type": "insert",
-												"name": "记事本"
-											}
-										]
-									},
-									{
-										"text": "离开",
-										"action": [
-											{
-												"type": "setValue",
-												"name": "flag:翻页",
-												"value": "1"
-											},
-											{
-												"type": "exit"
-											}
-										]
-									}
-								]
-							}
-						]
-					}
-				],
-				"false": []
-			},
-			{
-				"type": "if",
-				"condition": "(flag:翻页==2)",
-				"true": [
-					{
-						"type": "while",
-						"condition": "true",
-						"data": [
-							{
-								"type": "choices",
-								"text": "留言簿",
-								"norecord": true,
-								"choices": [
-									{
-										"text": "18层老人",
-										"condition": "flag:对话18==1",
-										"action": [
-											"在这区域不多次提升攻击力，就不能打败 石头人。切记前人教训！"
-										]
-									},
-									{
-										"text": "21层老人",
-										"condition": "flag:对话21==1",
-										"action": [
-											"大法师住在25楼，他是魔塔的主人。以你现在的状态去攻击他简直就是自杀。 你应当在取得更高级别的道具后再去打败他。"
-										]
-									},
-									{
-										"text": "23层老人",
-										"condition": "flag:对话23==1",
-										"action": [
-											"我没有什么可说的，但有一个确切的消息藏在这个楼层里。(我没有搞清楚此层在原游戏里的作用，现不找到所有的暗墙29楼暗道不开)"
-										]
-									},
-									{
-										"text": "27层老人",
-										"condition": "flag:对话27==1",
-										"action": [
-											"如果你到27楼时状态为：生命1500，攻击80，防御98，拥有1兰钥匙，5黄钥匙。那么祝贺你，你前期是比较成功的。"
-										]
-									},
-									{
-										"text": "31层商人",
-										"condition": "flag:对话3102==1 && flag:arg4",
-										"action": [
-											"魔塔有50层高,但似乎你不能直接到50楼。"
-										]
-									},
-									{
-										"text": "31层老人",
-										"condition": "flag:对话31==1 && !flag:arg4",
-										"action": [
-											"双手剑士的攻击力太高了，你最好到能对他一击必杀时再与他战斗。"
-										]
-									},
-									{
-										"text": "33层老人",
-										"condition": "flag:对话33==1",
-										"action": [
-											"别匆忙，放慢速度。"
-										]
-									},
-									{
-										"text": "36层老人",
-										"condition": "flag:对话36==1",
-										"action": [
-											"如果你能用好4种移动宝物，你不用与强敌作战就能上楼。"
-										]
-									},
-									{
-										"text": "37层老人",
-										"condition": "flag:对话37==1",
-										"action": [
-											"你需要用 地震卷轴 取出37楼仓库内的所有宝物。"
-										]
-									},
-									{
-										"text": "上一页",
-										"action": [
-											{
-												"type": "setValue",
-												"name": "flag:翻页",
-												"value": "1"
-											},
-											{
-												"type": "insert",
-												"name": "记事本"
-											}
-										]
-									},
-									{
-										"text": "下一页",
-										"action": [
-											{
-												"type": "setValue",
-												"name": "flag:翻页",
-												"value": "3"
-											},
-											{
-												"type": "insert",
-												"name": "记事本"
-											}
-										]
-									},
-									{
-										"text": "离开",
-										"action": [
-											{
-												"type": "setValue",
-												"name": "flag:翻页",
-												"value": "1"
-											},
-											{
-												"type": "exit"
-											}
-										]
-									}
-								]
-							}
-						]
-					}
-				],
-				"false": []
-			},
-			{
-				"type": "if",
-				"condition": "(flag:翻页==3)",
-				"true": [
-					{
-						"type": "while",
-						"condition": "true",
-						"data": [
-							{
-								"type": "choices",
-								"text": "留言簿",
-								"norecord": true,
-								"choices": [
-									{
-										"text": "38层商人",
-										"condition": "flag:对话38==1",
-										"action": [
-											"存放圣剑的房间的门坏了，你必须用镐破墙而入。"
-										]
-									},
-									{
-										"text": "39层商人",
-										"condition": "flag:对话3902==1 && flag:arg4",
-										"action": [
-											"塔内有个 幸运金币。拥有它在打败敌人后能获得2倍的金钱。"
-										]
-									},
-									{
-										"text": "39层老人",
-										"condition": "flag:对话39==1 && !flag:arg4",
-										"action": [
-											"谜题：'在3点，拥有传送功能的密宝 就会出现。'"
-										]
-									},
-									{
-										"text": "42层老人",
-										"condition": "flag:对话42==1",
-										"action": [
-											"巫师 会用魔法攻击路过的人，在2个 魔法警卫 间通过会使你的生命减少一半。"
-										]
-									},
-									{
-										"text": "45层商人",
-										"condition": "flag:对话4502==1 && flag:arg4",
-										"action": [
-											"44楼 被藏在异空间，你只能用密宝才能到达"
-										]
-									},
-									{
-										"text": "45层老人",
-										"condition": "flag:对话45==1 && !flag:arg4",
-										"action": [
-											"神圣盾 能防御魔法攻击，但它被藏在异空间的楼层内。"
-										]
-									},
-									{
-										"text": "46层老人",
-										"condition": "flag:对话46==1",
-										"action": [
-											"41楼 事实上是左右对称的。"
-										]
-									},
-									{
-										"text": "47层商人",
-										"condition": "flag:对话47==1",
-										"action": [
-											"如果要打败魔龙你需要 圣剑，圣盾，屠龙匕 或更高等级的装备。"
-										]
-									},
-									{
-										"text": "48层老人",
-										"condition": "flag:对话48==1",
-										"action": [
-											"象骰子上5的形状是一种封印魔法，你最好记住它在你与49楼假魔王战斗时有用。"
-										]
-									},
-									{
-										"text": "上一页",
-										"action": [
-											{
-												"type": "setValue",
-												"name": "flag:翻页",
-												"value": "2"
-											},
-											{
-												"type": "insert",
-												"name": "记事本"
-											}
-										]
-									},
-									{
-										"text": "跳到首页",
-										"action": [
-											{
-												"type": "setValue",
-												"name": "flag:翻页",
-												"value": "1"
-											},
-											{
-												"type": "insert",
-												"name": "记事本"
-											}
-										]
-									},
-									{
-										"text": "离开",
-										"action": [
-											{
-												"type": "setValue",
-												"name": "flag:翻页",
-												"value": "1"
-											},
-											{
-												"type": "exit"
-											}
-										]
-									}
-								]
-							}
-						]
-					}
-				],
-				"false": []
-			}
-		],
-		"关于游戏": [
-			"\t[HTML5 魔塔样板] 版本：${main.__VERSION__}\n作者：艾之葵",
-			"\t[最初的50层魔塔](C) 1998 - 2000 Oz & Kenichi\n(C) 1996 N.W",
-			"\t[flash的50层魔塔]本塔所复刻的版本为：czl_falsh 制作的 flash 版 50 层魔塔。\n该版本与 24 层魔塔、新新魔塔并称为“三原塔”，对中国早期魔塔的发展产生了深远影响。",
-			"\t[此前的复刻]（排名不分先后）\n复刻者：数码宝贝51、艾之葵、鹿间裕贵、641\n花絮：鹿间裕贵、艾之葵\n\n在此致谢诸位前辈的探索与积累，为本项目提供了重要参考与传承。",
-			"\t[您所游玩的版本]复刻者：详见本塔评论区\n测试者：详见本塔评论区\n\n感谢所有参与其中的玩家与测试者，是你们让本塔不断完善。",
-			"\t[还有您]如果您对 H5 魔塔产生了兴趣，甚至希望尝试成为一名创作者，欢迎加入：\nHTML5 魔塔交流群：624253557\n三原魔塔整活宇宙四群：1033598249\n\n感谢您的游玩！"
 		]
 	}
 }

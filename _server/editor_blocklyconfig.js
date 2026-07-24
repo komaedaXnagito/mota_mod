@@ -108,8 +108,8 @@ editor_blocklyconfig=(function(){
       MotaActionBlocks['tip_s'].xmlText(),
       MotaActionBlocks['confirm_s'].xmlText(),
       MotaActionBlocks['choices_s'].xmlText([
-        '选择模式','作者','king',0,'',false, MotaActionBlocks['choicesContext'].xmlText([
-          '模式1','','','','','',false, MotaActionFunctions.actionParser.parseList([{"type": "setValue", "name": "flag:模式", "value": "1"}]),
+        '选择剑或者盾','流浪者','man',0,'',MotaActionBlocks['choicesContext'].xmlText([
+          '剑','','',null,'','',MotaActionFunctions.actionParser.parseList([{"type": "openDoor", "loc": [3,3]}]),
         ])
       ]),
       MotaActionBlocks['win_s'].xmlText(),
@@ -118,7 +118,7 @@ editor_blocklyconfig=(function(){
     ],
     '数据相关':[
       MotaActionBlocks['setValue_s'].xmlText([
-        MotaActionBlocks['idIdList_e'].xmlText(['flag','生命']), '=', '', false
+        MotaActionBlocks['idIdList_e'].xmlText(['status','生命']), '=', '', false
       ]),
       MotaActionBlocks['setEnemy_s'].xmlText(),
       MotaActionBlocks['setEnemyOnPoint_s'].xmlText(),
@@ -159,7 +159,6 @@ editor_blocklyconfig=(function(){
       MotaActionBlocks['turnBlock_s'].xmlText(),
       MotaActionBlocks['moveHero_s'].xmlText(),
       MotaActionBlocks['move_s'].xmlText(),
-      MotaActionBlocks['generateMove_s'].xmlText(),
       MotaActionBlocks['jumpHero_s'].xmlText(),
       MotaActionBlocks['jumpHero_1_s'].xmlText(),
       MotaActionBlocks['jump_s'].xmlText(),

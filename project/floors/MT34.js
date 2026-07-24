@@ -6,19 +6,19 @@ main.floors.MT34=
     "width": 13,
     "height": 13,
     "map": [
-    [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1],
-    [  1, 88,  0, 31,  1,  0, 21,  0,  1, 21, 21, 28,  1],
-    [  1,  0,  0,  0, 81,216,  0,227, 81,  0, 21, 31,  1],
-    [  1,  0,216,  0,  1,  1,  1,  1,  1,  1,  1,  1,  1],
-    [  1,  1, 81,  1,  1,201,  1,224,  1,203,  1,225,  1],
-    [  1,  0,  0,  0,  1, 81,  1, 81,  1, 81,  1, 81,  1],
-    [  1,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1],
-    [  1,  0,  0,  0,  1, 81,  1, 81,  1, 81,  1, 81,  1],
-    [  1,  1, 81,  1,  1,212,  1,202,  1,227,  1,205,  1],
-    [  1,  0,  0,212,  1,  1,  1,  1,  1,  1,  1,  1,  1],
-    [  1,224,  1,  0, 81,  0,  0,  0, 81,225,  0, 31,  1],
-    [  1, 32,225,  0,  1,  0, 87,  0,  1,  0, 21, 27,  1],
-    [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1]
+    [330,330,330,330,330,330,330,330,330,330,330,330,330],
+    [330, 88,  0, 31,  1,  0, 21,  0,  1, 21, 21, 28,330],
+    [330,  0,  0,  0, 81,216,  0,227, 81,  0, 21, 31,330],
+    [330,  0,216,  0,  1,  1,  1,  1,  1,  1,  1,  1,330],
+    [330,  1, 81,  1,  1,201,  1,224,  1,203,  1,225,330],
+    [330,  0,  0,  0,  1, 81,  1, 81,  1, 81,  1, 81,330],
+    [330,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,330],
+    [330,  0,  0,  0,  1, 81,  1, 81,  1, 81,  1, 81,330],
+    [330,  1, 81,  1,  1,212,  1,202,  1,227,  1,205,330],
+    [330,  0,  0,212,  1,  1,  1,  1,  1,  1,  1,  1,330],
+    [330,224,  1,  0, 81,  0,  0,  0, 81,225,  0, 31,330],
+    [330, 32,225,  0,  1,  0, 87,  0,  1,  0, 21, 27,330],
+    [330,330,330,330,330,330,330,330,330,330,330,330,330]
 ],
     "canFlyTo": true,
     "canFlyFrom": true,
@@ -32,18 +32,609 @@ main.floors.MT34=
     "parallelDo": "",
     "events": {},
     "changeFloor": {
-        "6,11": {
-            "floorId": ":next",
-            "stair": "downFloor",
-            "time": 0
-        },
         "1,1": {
             "floorId": ":before",
-            "stair": "upFloor",
-            "time": 0
+            "stair": "upFloor"
+        },
+        "6,11": {
+            "floorId": ":next",
+            "stair": "downFloor"
         }
     },
-    "afterBattle": {},
+    "afterBattle": {
+        "5,4": [
+            {
+                "type": "function",
+                "function": "function(){\nvar bool = true;\nvar loc_arr = [\n\t[5, 4],\n\t[7, 4],\n\t[9, 4],\n\t[11, 4],\n\t[5, 8],\n\t[7, 8],\n\t[9, 8],\n\t[11, 8],\n]\nloc_arr.forEach(loc => {\n\tif (core.getBlockCls(loc[0], loc[1]) == \"enemys\") {\n\t\tbool = false;\n\t}\n});\ncore.setFlag(\"open_yes\", bool)\n}"
+            },
+            {
+                "type": "if",
+                "condition": "flag:open_yes",
+                "true": [
+                    {
+                        "type": "playSound",
+                        "name": "door.mp3"
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                1,
+                                5
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                3,
+                                5
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                1,
+                                7
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                3,
+                                7
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "23",
+                        "loc": [
+                            [
+                                2,
+                                6
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "waitAsync"
+                    }
+                ]
+            }
+        ],
+        "5,8": [
+            {
+                "type": "function",
+                "function": "function(){\nvar bool = true;\nvar loc_arr = [\n\t[5, 4],\n\t[7, 4],\n\t[9, 4],\n\t[11, 4],\n\t[5, 8],\n\t[7, 8],\n\t[9, 8],\n\t[11, 8],\n]\nloc_arr.forEach(loc => {\n\tif (core.getBlockCls(loc[0], loc[1]) == \"enemys\") {\n\t\tbool = false;\n\t}\n});\ncore.setFlag(\"open_yes\", bool)\n}"
+            },
+            {
+                "type": "if",
+                "condition": "flag:open_yes",
+                "true": [
+                    {
+                        "type": "playSound",
+                        "name": "door.mp3"
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                1,
+                                5
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                3,
+                                5
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                1,
+                                7
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                3,
+                                7
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "23",
+                        "loc": [
+                            [
+                                2,
+                                6
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "waitAsync"
+                    }
+                ]
+            }
+        ],
+        "7,4": [
+            {
+                "type": "function",
+                "function": "function(){\nvar bool = true;\nvar loc_arr = [\n\t[5, 4],\n\t[7, 4],\n\t[9, 4],\n\t[11, 4],\n\t[5, 8],\n\t[7, 8],\n\t[9, 8],\n\t[11, 8],\n]\nloc_arr.forEach(loc => {\n\tif (core.getBlockCls(loc[0], loc[1]) == \"enemys\") {\n\t\tbool = false;\n\t}\n});\ncore.setFlag(\"open_yes\", bool)\n}"
+            },
+            {
+                "type": "if",
+                "condition": "flag:open_yes",
+                "true": [
+                    {
+                        "type": "playSound",
+                        "name": "door.mp3"
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                1,
+                                5
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                3,
+                                5
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                1,
+                                7
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                3,
+                                7
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "23",
+                        "loc": [
+                            [
+                                2,
+                                6
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "waitAsync"
+                    }
+                ]
+            }
+        ],
+        "7,8": [
+            {
+                "type": "function",
+                "function": "function(){\nvar bool = true;\nvar loc_arr = [\n\t[5, 4],\n\t[7, 4],\n\t[9, 4],\n\t[11, 4],\n\t[5, 8],\n\t[7, 8],\n\t[9, 8],\n\t[11, 8],\n]\nloc_arr.forEach(loc => {\n\tif (core.getBlockCls(loc[0], loc[1]) == \"enemys\") {\n\t\tbool = false;\n\t}\n});\ncore.setFlag(\"open_yes\", bool)\n}"
+            },
+            {
+                "type": "if",
+                "condition": "flag:open_yes",
+                "true": [
+                    {
+                        "type": "playSound",
+                        "name": "door.mp3"
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                1,
+                                5
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                3,
+                                5
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                1,
+                                7
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                3,
+                                7
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "23",
+                        "loc": [
+                            [
+                                2,
+                                6
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "waitAsync"
+                    }
+                ]
+            }
+        ],
+        "9,4": [
+            {
+                "type": "function",
+                "function": "function(){\nvar bool = true;\nvar loc_arr = [\n\t[5, 4],\n\t[7, 4],\n\t[9, 4],\n\t[11, 4],\n\t[5, 8],\n\t[7, 8],\n\t[9, 8],\n\t[11, 8],\n]\nloc_arr.forEach(loc => {\n\tif (core.getBlockCls(loc[0], loc[1]) == \"enemys\") {\n\t\tbool = false;\n\t}\n});\ncore.setFlag(\"open_yes\", bool)\n}"
+            },
+            {
+                "type": "if",
+                "condition": "flag:open_yes",
+                "true": [
+                    {
+                        "type": "playSound",
+                        "name": "door.mp3"
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                1,
+                                5
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                3,
+                                5
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                1,
+                                7
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                3,
+                                7
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "23",
+                        "loc": [
+                            [
+                                2,
+                                6
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "waitAsync"
+                    }
+                ]
+            }
+        ],
+        "9,8": [
+            {
+                "type": "function",
+                "function": "function(){\nvar bool = true;\nvar loc_arr = [\n\t[5, 4],\n\t[7, 4],\n\t[9, 4],\n\t[11, 4],\n\t[5, 8],\n\t[7, 8],\n\t[9, 8],\n\t[11, 8],\n]\nloc_arr.forEach(loc => {\n\tif (core.getBlockCls(loc[0], loc[1]) == \"enemys\") {\n\t\tbool = false;\n\t}\n});\ncore.setFlag(\"open_yes\", bool)\n}"
+            },
+            {
+                "type": "if",
+                "condition": "flag:open_yes",
+                "true": [
+                    {
+                        "type": "playSound",
+                        "name": "door.mp3"
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                1,
+                                5
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                3,
+                                5
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                1,
+                                7
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                3,
+                                7
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "23",
+                        "loc": [
+                            [
+                                2,
+                                6
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "waitAsync"
+                    }
+                ]
+            }
+        ],
+        "11,8": [
+            {
+                "type": "function",
+                "function": "function(){\nvar bool = true;\nvar loc_arr = [\n\t[5, 4],\n\t[7, 4],\n\t[9, 4],\n\t[11, 4],\n\t[5, 8],\n\t[7, 8],\n\t[9, 8],\n\t[11, 8],\n]\nloc_arr.forEach(loc => {\n\tif (core.getBlockCls(loc[0], loc[1]) == \"enemys\") {\n\t\tbool = false;\n\t}\n});\ncore.setFlag(\"open_yes\", bool)\n}"
+            },
+            {
+                "type": "if",
+                "condition": "flag:open_yes",
+                "true": [
+                    {
+                        "type": "playSound",
+                        "name": "door.mp3"
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                1,
+                                5
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                3,
+                                5
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                1,
+                                7
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                3,
+                                7
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "23",
+                        "loc": [
+                            [
+                                2,
+                                6
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "waitAsync"
+                    }
+                ]
+            }
+        ],
+        "11,4": [
+            {
+                "type": "function",
+                "function": "function(){\nvar bool = true;\nvar loc_arr = [\n\t[5, 4],\n\t[7, 4],\n\t[9, 4],\n\t[11, 4],\n\t[5, 8],\n\t[7, 8],\n\t[9, 8],\n\t[11, 8],\n]\nloc_arr.forEach(loc => {\n\tif (core.getBlockCls(loc[0], loc[1]) == \"enemys\") {\n\t\tbool = false;\n\t}\n});\ncore.setFlag(\"open_yes\", bool)\n}"
+            },
+            {
+                "type": "if",
+                "condition": "flag:open_yes",
+                "true": [
+                    {
+                        "type": "playSound",
+                        "name": "door.mp3"
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                1,
+                                5
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                3,
+                                5
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                1,
+                                7
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                3,
+                                7
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "23",
+                        "loc": [
+                            [
+                                2,
+                                6
+                            ]
+                        ],
+                        "async": true
+                    },
+                    {
+                        "type": "waitAsync"
+                    }
+                ]
+            }
+        ]
+    },
     "afterGetItem": {},
     "afterOpenDoor": {},
     "cannotMove": {},
@@ -70,70 +661,12 @@ main.floors.MT34=
         10
     ],
     "downFloor": [
-        2,
-        1
+        1,
+        2
     ],
-    "autoEvent": {
-        "2,6": {
-            "0": {
-                "condition": "core.getBlockCls(5,4) !== 'enemys' && core.getBlockCls(7,4) !== 'enemys' && core.getBlockCls(9,4) !== 'enemys' && core.getBlockCls(11,4) !== 'enemys' && core.getBlockCls(5,8) !== 'enemys' && core.getBlockCls(7,8) !== 'enemys' && core.getBlockCls(9,8) !== 'enemys' && core.getBlockCls(11,8) !== 'enemys' ",
-                "currentFloor": true,
-                "priority": 0,
-                "delayExecute": false,
-                "multiExecute": false,
-                "data": [
-                    {
-                        "type": "hide",
-                        "loc": [
-                            [
-                                2,
-                                6
-                            ]
-                        ],
-                        "remove": true
-                    },
-                    {
-                        "type": "setBlock",
-                        "number": "yellowKey",
-                        "loc": [
-                            [
-                                1,
-                                5
-                            ],
-                            [
-                                3,
-                                5
-                            ],
-                            [
-                                1,
-                                7
-                            ],
-                            [
-                                3,
-                                7
-                            ]
-                        ],
-                        "async": true
-                    },
-                    {
-                        "type": "setBlock",
-                        "number": "redKey",
-                        "loc": [
-                            [
-                                2,
-                                6
-                            ]
-                        ],
-                        "async": true
-                    },
-                    {
-                        "type": "waitAsync"
-                    }
-                ]
-            },
-            "1": null
-        }
-    },
+    "autoEvent": {},
     "beforeBattle": {},
-    "cannotMoveIn": {}
+    "cannotMoveIn": {},
+    "bg2map": [],
+    "fg2map": []
 }

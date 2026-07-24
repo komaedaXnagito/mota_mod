@@ -6,19 +6,19 @@ main.floors.MT32=
     "width": 13,
     "height": 13,
     "map": [
-    [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1],
-    [  1, 28,  0, 82,  0,  0,  0,  0,  0,  0,  0, 87,  1],
-    [  1,  0, 27,  1,  1,  1,  0,  1,  1,  1,  0,  0,  1],
-    [  1, 81,  1,  1,  0, 81,  0, 81,  0,  1,  1,  1,  1],
-    [  1,225,  0,216,  0,  1,  0,  1,212,  1, 21, 32,  1],
-    [  1,  0, 21,  0,216,  1,  0,  1,  0, 81,  0, 21,  1],
-    [  1,  1,  1,  1,  1,  1,  0,  1,  0,  1,  1,  1,  1],
-    [  1, 21, 21, 21, 21,  1,  0,  1,227,  1, 21, 22,  1],
-    [  1,  0,  0,  0, 22,  1,  0,  1,  0, 81,  0, 21,  1],
-    [  1,  1, 85,  1,  1,  1,  0,  1,  1,  1,  1,  1,  1],
-    [  1,222,  0,222,  0,  0,  0,  0,  0,  7,131,  8,  1],
-    [  1,  0,  0,  0,  0, 88,  0,  1,212,  0,  0,  0,  1],
-    [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1]
+    [330,330,330,330,330,330,330,330,330,330,330,330,330],
+    [330, 28,  0, 82,  0,  0,  0,  0,  0,  0,  0, 87,330],
+    [330,  0, 27,  1,  1,  1,  0,  1,  1,  1,  0,  0,330],
+    [330, 81,  1,  1,  0, 81,  0, 81,  0,  1,  1,  1,330],
+    [330,225,  0,216,  0,  1,  0,  1,212,  1, 21, 32,330],
+    [330,  0, 21,  0,216,  1,  0,  1,  0, 81,  0, 21,330],
+    [330,  1,  1,  1,  1,  1,  0,  1,  0,  1,  1,  1,330],
+    [330, 21, 21, 21, 21,  1,  0,  1,227,  1, 21, 22,330],
+    [330,  0,  0,  0, 22,  1,  0,  1,  0, 81,  0, 21,330],
+    [330,  1, 85,  1,  1,  1,  0,  1,  1,  1,  1,  1,330],
+    [330,222,  0,222,  0,  0,  0,  0,  0,  7,131,  8,330],
+    [330,  0,  0,  0,  0, 88,  0,  1,212,  0,  0,  0,330],
+    [330,330,330,330,330,330,330,330,330,330,330,330,330]
 ],
     "canFlyTo": true,
     "canFlyFrom": true,
@@ -33,39 +33,17 @@ main.floors.MT32=
     "events": {
         "10,10": [
             {
-                "type": "setValue",
-                "name": "flag:ratio",
-                "value": "4"
-            },
-            {
-                "type": "insert",
-                "name": "商店"
+                "type": "openShop",
+                "id": "shop3",
+                "open": true
             }
         ],
         "6,10": [
             {
-                "type": "playBgm",
-                "name": "Knight.mp3"
-            },
-            {
                 "type": "setEnemy",
                 "id": "yellowKnight",
                 "name": "special",
-                "value": "1"
-            },
-            {
-                "type": "hide",
-                "loc": [
-                    [
-                        6,
-                        2
-                    ],
-                    [
-                        6,
-                        9
-                    ]
-                ],
-                "remove": true
+                "value": "[1]"
             },
             {
                 "type": "setBlock",
@@ -75,7 +53,8 @@ main.floors.MT32=
                         10,
                         1
                     ]
-                ]
+                ],
+                "time": 500
             },
             {
                 "type": "move",
@@ -83,13 +62,13 @@ main.floors.MT32=
                     10,
                     1
                 ],
-                "time": 50,
+                "time": 200,
                 "keep": true,
                 "steps": [
                     "left:4"
                 ]
             },
-            "\t[骑士队长,yellowKnight]你打败了前两个区域的头目，这表明你是个勇士。但现在游戏结束了，我将在这里亲手杀死你！",
+            "\t[骑士队长,yellowKnight]你打败了前2个区域的头目 这表明你是个勇士 但现在游戏结束了 我将在这里亲手杀死你",
             {
                 "type": "callBook"
             },
@@ -99,50 +78,37 @@ main.floors.MT32=
                     6,
                     1
                 ],
-                "time": 50,
+                "time": 200,
                 "keep": true,
                 "steps": [
-                    "down:9"
+                    "down:8"
                 ]
             },
             {
-                "type": "if",
-                "condition": "core.canBattle('yellowKnight')",
-                "true": [
-                    {
-                        "type": "battle",
-                        "id": "yellowKnight"
-                    }
-                ],
-                "false": [
-                    {
-                        "type": "function",
-                        "function": "function(){\ncore.status.hero.hp = 0;\ncore.afterBattle('yellowKnight', null, null, false);\n}"
-                    }
-                ]
+                "type": "battle",
+                "id": "yellowKnight"
             },
-            {
-                "type": "move",
-                "loc": [
-                    6,
-                    10
-                ],
-                "time": 50,
-                "keep": true,
-                "steps": [
-                    "up:1"
-                ]
-            },
-            "\t[骑士队长,yellowKnight]你以为你已非常强大了吗？嘿嘿错了，只是我今天状态不佳而已。我走了，有本事到40楼与我再打一次。",
             {
                 "type": "move",
                 "loc": [
                     6,
                     9
                 ],
-                "time": 50,
+                "time": 200,
+                "keep": true,
                 "steps": [
-                    "up:8",
+                    "up:8"
+                ]
+            },
+            "\t[骑士队长,yellowKnight]你以为你已非常强大了吗 嘿嘿错了 只是我今天状态不佳而已 我走了 有本事到40楼与我再打一次",
+            {
+                "type": "move",
+                "loc": [
+                    6,
+                    1
+                ],
+                "time": 200,
+                "steps": [
                     "right:5"
                 ]
             },
@@ -150,33 +116,34 @@ main.floors.MT32=
                 "type": "setEnemy",
                 "id": "yellowKnight",
                 "name": "special",
-                "value": "0"
+                "value": "[]"
             },
             {
                 "type": "hide",
                 "remove": true,
-                "time": 0,
-                "destruct": true
+                "time": 0
             }
         ]
     },
     "changeFloor": {
-        "11,1": {
-            "floorId": ":next",
-            "stair": "downFloor",
-            "time": 0
-        },
         "5,11": {
             "floorId": ":before",
-            "stair": "upFloor",
-            "time": 0
+            "stair": "upFloor"
+        },
+        "11,1": {
+            "floorId": ":next",
+            "stair": "downFloor"
         }
     },
     "afterBattle": {
         "1,10": [
             {
+                "type": "function",
+                "function": "function(){\nvar bool = true;\nvar loc_arr = [\n\t[1, 10],\n\t[3, 10],\n]\nloc_arr.forEach(loc => {\n\tif (core.getBlockCls(loc[0], loc[1]) == \"enemys\") {\n\t\tbool = false;\n\t}\n});\ncore.setFlag(\"open_yes\", bool)\n}"
+            },
+            {
                 "type": "if",
-                "condition": "flag:32",
+                "condition": "flag:open_yes",
                 "true": [
                     {
                         "type": "openDoor",
@@ -184,22 +151,18 @@ main.floors.MT32=
                             2,
                             9
                         ]
-                    }
-                ],
-                "false": [
-                    {
-                        "type": "setValue",
-                        "operator": "+=",
-                        "name": "flag:32",
-                        "value": "1"
                     }
                 ]
             }
         ],
         "3,10": [
             {
+                "type": "function",
+                "function": "function(){\nvar bool = true;\nvar loc_arr = [\n\t[1, 10],\n\t[3, 10],\n]\nloc_arr.forEach(loc => {\n\tif (core.getBlockCls(loc[0], loc[1]) == \"enemys\") {\n\t\tbool = false;\n\t}\n});\ncore.setFlag(\"open_yes\", bool)\n}"
+            },
+            {
                 "type": "if",
-                "condition": "flag:32",
+                "condition": "flag:open_yes",
                 "true": [
                     {
                         "type": "openDoor",
@@ -207,14 +170,6 @@ main.floors.MT32=
                             2,
                             9
                         ]
-                    }
-                ],
-                "false": [
-                    {
-                        "type": "setValue",
-                        "operator": "+=",
-                        "name": "flag:32",
-                        "value": "1"
                     }
                 ]
             }
@@ -251,5 +206,7 @@ main.floors.MT32=
     ],
     "autoEvent": {},
     "beforeBattle": {},
-    "cannotMoveIn": {}
+    "cannotMoveIn": {},
+    "bg2map": [],
+    "fg2map": []
 }

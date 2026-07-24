@@ -56,109 +56,181 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 		],
 		"floorPartitions": [],
 		"images": [
-			"85.png",
+			"ameNoHabakiri.png",
 			"bear.png",
 			"bg.jpg",
+			"bg2.jpg",
+			"bgVer.png",
+			"bigRedPotion.png",
+			"blueDagger.png",
+			"brave.png",
+			"bronzeShield.png",
+			"comboDagger.png",
+			"crab.png",
+			"darkDragonSpear.png",
+			"darkAxe.png",
+			"darkBook.png",
+			"diamondCrystal.png",
 			"dragon.png",
+			"dropStaff.png",
+			"earthDragonStaff.png",
+			"earthGirlSword.png",
+			"electricEel.png",
+			"fangTian.png",
+			"fireBass.png",
+			"fireDragonAxe.png",
+			"fireGuitar.png",
+			"fly_p.png",
+			"fly_p_b.png",
+			"fly_p_r.png",
+			"fly_p_w.png",
+			"friedShrimp.png",
+			"giBao.png",
+			"goldJar.png",
+			"gundamFist.png",
+			"h25.png",
 			"hero.png",
+			"largeDropStaff.png",
+			"light.png",
+			"lightDragonFist.png",
+			"lightSword.png",
+			"lock.png",
+			"maba.png",
+			"machineGodShield.png",
+			"oilAxe.png",
+			"oilBow.png",
+			"oilGun.png",
+			"oilStaff.png",
+			"pan.png",
+			"pie.png",
+			"sevenStarSword.png",
+			"shangmian.png",
+			"silverJar.png",
+			"silverShield.png",
+			"spiritEuropa.png",
+			"spiritFireDragon.png",
+			"status.png",
+			"statusBackground.jpg",
 			"statusBackground.png",
-			"statusBackground_vertical.png",
-			"winskin.png"
+			"statusBackground2.png",
+			"statusBackground3.jpg",
+			"trueSevenStarSword.png",
+			"waterDagger.png",
+			"waterDragonUmbrella.png",
+			"windDagger.png",
+			"windGuitar.png",
+			"windGun.png",
+			"winskin.png",
+			"winskin1.png",
+			"xde.png",
+			"xiamian.png",
+			"youbian.png",
+			"zuobian.png"
 		],
 		"tilesets": [
 			"magictower.png"
 		],
 		"animates": [
 			"hand",
+			"qishijian",
+			"shengjian",
+			"shenshengjian",
 			"sword",
+			"tiejian",
+			"yinjian",
 			"zone"
 		],
 		"bgms": [
-			"0f.mp3",
-			"44f.mp3",
-			"Ending.mp3",
-			"GameOver.mp3",
-			"GreatMagicMaster.mp3",
-			"Heart.mp3",
-			"Knight.mp3",
-			"LastFight.mp3",
-			"Princess.mp3",
-			"SkeletonA.mp3",
-			"Vampire.mp3",
-			"Zeno.mp3",
+			"bgm.mp3",
+			"boss1.mp3",
+			"boss2.mp3",
+			"boss3.mp3",
+			"boss4.mp3",
+			"boss5.mp3",
+			"section0.mp3",
 			"section1.mp3",
 			"section2.mp3",
 			"section3.mp3",
 			"section4.mp3",
 			"section5.mp3",
+			"theme1.mp3",
+			"theme2.mp3",
 			"truth.mp3"
 		],
 		"sounds": [
-			"Applause1.ogg",
-			"Book1.ogg",
-			"Book2.ogg",
-			"Buzzer1.ogg",
-			"Cancel2.ogg",
-			"Coin.ogg",
-			"Decision2.ogg",
-			"Disappointment.ogg",
-			"Jump1.ogg",
-			"Load.ogg",
-			"Save.ogg",
-			"Shop1.ogg",
-			"Shop2.ogg",
-			"Sound1.ogg",
+			"10F.mp3",
+			"129-Earth01.ogg",
+			"158-Skill02.ogg",
+			"170-Skill14.ogg",
+			"20F.mp3",
+			"3F.mp3",
+			"Ice1.ogg",
+			"Ice4.m4a",
+			"Ice8.ogg",
+			"Skill3.ogg",
+			"Slash12.ogg",
+			"Sword4.ogg",
+			"Sword5.ogg",
 			"attack.mp3",
+			"attack2.mp3",
 			"bomb.mp3",
+			"cancel.mp3",
 			"centerFly.mp3",
+			"confirm.mp3",
 			"door.mp3",
 			"equip.mp3",
+			"error.mp3",
 			"floor.mp3",
-			"get.wav",
+			"gem.mp3",
+			"icePickaxe.mp3",
 			"item.mp3",
 			"jump.mp3",
-			"open.wav",
+			"load.mp3",
 			"pickaxe.mp3",
-			"taisen.wav",
-			"zeno.wav",
+			"recovery.mp3",
+			"save.mp3",
 			"zone.mp3"
 		],
-		"fonts": [],
+		"fonts": [
+			"beeB",
+			"cjk",
+			"hywh85W",
+			"num",
+			"number"
+		],
 		"nameMap": {
-			"确定": "Book1.ogg",
-			"取消": "Cancel2.ogg",
-			"操作失败": "Buzzer1.ogg",
+			"确定": "confirm.mp3",
+			"取消": "cancel.mp3",
+			"操作失败": "error.mp3",
 			"光标移动": "cursor.mp3",
-			"打开界面": "Book1.ogg",
-			"读档": "Decision2.ogg",
-			"存档": "Save.ogg",
-			"获得道具": "get.wav",
+			"打开界面": "open_ui.mp3",
+			"读档": "load.mp3",
+			"存档": "save.mp3",
+			"获得道具": "item.mp3",
 			"回血": "recovery.mp3",
 			"炸弹": "bomb.mp3",
 			"飞行器": "centerFly.mp3",
-			"开关门": "open.wav",
+			"开关门": "door.mp3",
 			"上下楼": "floor.mp3",
-			"跳跃": "Jump1.ogg",
+			"跳跃": "jump.mp3",
 			"破墙镐": "pickaxe.mp3",
 			"破冰镐": "icePickaxe.mp3",
 			"宝石": "gem.mp3",
-			"阻激夹域": "zeno.wav",
+			"阻激夹域": "zone.mp3",
 			"穿脱装备": "equip.mp3",
 			"背景音乐": "bgm.mp3",
-			"攻击": "taisen.wav",
+			"攻击": "attack.mp3",
 			"背景图": "bg.jpg",
 			"商店": "shop.mp3",
-			"领域": "zone",
-			"游戏失败": "GameOver.mp3",
-			"游戏胜利": "Ending.mp3"
+			"领域": "zone"
 		},
-		"levelChoose": [],
+		"levelChoose": null,
 		"equipName": [],
-		"startBgm": "0f.mp3",
+		"startBgm": "theme2.mp3",
 		"styles": {
 			"startBackground": "project/images/bg.jpg",
-			"startVerticalBackground": "project/images/bg.jpg",
-			"startLogoStyle": "color: white",
+			"startVerticalBackground": "project/images/bgVer.png",
+			"startLogoStyle": "display:none",
 			"startButtonsStyle": "background-color: #32369F; opacity: 0.85; color: #FFFFFF; border: #FFFFFF 2px solid; caret-color: #FFD700;",
 			"statusLeftBackground": "url(project/materials/ground.png) repeat",
 			"statusTopBackground": "url(project/materials/ground.png) repeat",
@@ -177,12 +249,12 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 				1
 			],
 			"selectColor": [
-				255,
+				135,
+				243,
 				215,
-				0,
 				1
 			],
-			"font": "Verdana"
+			"font": "beeB"
 		},
 		"splitImages": [
 			{
@@ -194,9 +266,9 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 		]
 	},
 	"firstData": {
-		"title": "50层魔塔",
-		"name": "51",
-		"version": "Ver 3.0",
+		"title": "鸽窝小队50层样板",
+		"name": "51_dove",
+		"version": "Ver 2.02",
 		"floorId": "MT1",
 		"hero": {
 			"image": "hero.png",
@@ -228,8 +300,10 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			"flags": {
 				"nowWeapon": "sword5",
 				"nowShield": "shield5",
-				"魔法免疫": true,
-				"__winskin_opacity__": 1
+				"次数": 1,
+				"useBetweenLight": true,
+				"__winskin_opacity__": 1,
+				"useEnemyInfoDisplay": false
 			},
 			"followers": [],
 			"steps": 0
@@ -589,10 +663,453 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 		"startText": [
 			{
 				"type": "setText",
-				"background": "winskin.png"
+				"background": "winskin.png",
+				"time": 30,
+				"animateTime": 50
+			},
+			{
+				"type": "setValue",
+				"name": "item:book",
+				"operator": "+=",
+				"value": "1"
+			},
+			{
+				"type": "setValue",
+				"name": "item:fly",
+				"operator": "+=",
+				"value": "1"
+			},
+			{
+				"type": "stopSound"
 			}
 		],
-		"shops": [],
+		"shops": [
+			{
+				"id": "shop1",
+				"text": "\t[贪婪之神,moneyShop]勇士啊, 给我${20+10*flag:次数*(flag:次数-1)}金币就可以：",
+				"textInList": "一区商店",
+				"mustEnable": true,
+				"disablePreview": false,
+				"choices": [
+					{
+						"text": "生命+${100*flag:次数}",
+						"need": "status:money>=20+10*flag:次数*(flag:次数-1)",
+						"action": [
+							{
+								"type": "playSound",
+								"name": "item.mp3"
+							},
+							{
+								"type": "setValue",
+								"name": "status:hp",
+								"operator": "+=",
+								"value": "100*flag:次数"
+							},
+							{
+								"type": "setValue",
+								"name": "status:money",
+								"operator": "-=",
+								"value": "20+10*flag:次数*(flag:次数-1)"
+							},
+							{
+								"type": "setValue",
+								"name": "flag:次数",
+								"operator": "+=",
+								"value": "1"
+							}
+						]
+					},
+					{
+						"text": "攻击+2",
+						"need": "status:money>=20+10*flag:次数*(flag:次数-1)",
+						"action": [
+							{
+								"type": "playSound",
+								"name": "item.mp3"
+							},
+							{
+								"type": "setValue",
+								"name": "status:atk",
+								"operator": "+=",
+								"value": "2"
+							},
+							{
+								"type": "setValue",
+								"name": "status:money",
+								"operator": "-=",
+								"value": "20+10*flag:次数*(flag:次数-1)"
+							},
+							{
+								"type": "setValue",
+								"name": "flag:次数",
+								"operator": "+=",
+								"value": "1"
+							}
+						]
+					},
+					{
+						"text": "防御+4",
+						"need": "status:money>=20+10*flag:次数*(flag:次数-1)",
+						"action": [
+							{
+								"type": "playSound",
+								"name": "item.mp3"
+							},
+							{
+								"type": "setValue",
+								"name": "status:def",
+								"operator": "+=",
+								"value": "4"
+							},
+							{
+								"type": "setValue",
+								"name": "status:money",
+								"operator": "-=",
+								"value": "20+10*flag:次数*(flag:次数-1)"
+							},
+							{
+								"type": "setValue",
+								"name": "flag:次数",
+								"operator": "+=",
+								"value": "1"
+							}
+						]
+					}
+				]
+			},
+			{
+				"id": "shop2",
+				"text": "\t[贪婪之神,moneyShop]勇士啊, 给我${20+10*flag:次数*(flag:次数-1)}金币就可以：",
+				"textInList": "二区商店",
+				"mustEnable": true,
+				"disablePreview": false,
+				"choices": [
+					{
+						"text": "生命+${100*flag:次数}",
+						"need": "status:money>=20+10*flag:次数*(flag:次数-1)",
+						"action": [
+							{
+								"type": "playSound",
+								"name": "item.mp3"
+							},
+							{
+								"type": "setValue",
+								"name": "status:hp",
+								"operator": "+=",
+								"value": "100*flag:次数"
+							},
+							{
+								"type": "setValue",
+								"name": "status:money",
+								"operator": "-=",
+								"value": "20+10*flag:次数*(flag:次数-1)"
+							},
+							{
+								"type": "setValue",
+								"name": "flag:次数",
+								"operator": "+=",
+								"value": "1"
+							}
+						]
+					},
+					{
+						"text": "攻击+4",
+						"need": "status:money>=20+10*flag:次数*(flag:次数-1)",
+						"action": [
+							{
+								"type": "playSound",
+								"name": "item.mp3"
+							},
+							{
+								"type": "setValue",
+								"name": "status:atk",
+								"operator": "+=",
+								"value": "4"
+							},
+							{
+								"type": "setValue",
+								"name": "status:money",
+								"operator": "-=",
+								"value": "20+10*flag:次数*(flag:次数-1)"
+							},
+							{
+								"type": "setValue",
+								"name": "flag:次数",
+								"operator": "+=",
+								"value": "1"
+							}
+						]
+					},
+					{
+						"text": "防御+8",
+						"need": "status:money>=20+10*flag:次数*(flag:次数-1)",
+						"action": [
+							{
+								"type": "playSound",
+								"name": "item.mp3"
+							},
+							{
+								"type": "setValue",
+								"name": "status:def",
+								"operator": "+=",
+								"value": "8"
+							},
+							{
+								"type": "setValue",
+								"name": "status:money",
+								"operator": "-=",
+								"value": "20+10*flag:次数*(flag:次数-1)"
+							},
+							{
+								"type": "setValue",
+								"name": "flag:次数",
+								"operator": "+=",
+								"value": "1"
+							}
+						]
+					}
+				]
+			},
+			{
+				"id": "shop3",
+				"text": "\t[贪婪之神,moneyShop]勇士啊, 给我${20+10*flag:次数*(flag:次数-1)}金币就可以：",
+				"textInList": "四区商店",
+				"mustEnable": true,
+				"disablePreview": false,
+				"choices": [
+					{
+						"text": "生命+${100*flag:次数}",
+						"need": "status:money>=20+10*flag:次数*(flag:次数-1)",
+						"action": [
+							{
+								"type": "playSound",
+								"name": "item.mp3"
+							},
+							{
+								"type": "setValue",
+								"name": "status:hp",
+								"operator": "+=",
+								"value": "100*flag:次数"
+							},
+							{
+								"type": "setValue",
+								"name": "status:money",
+								"operator": "-=",
+								"value": "20+10*flag:次数*(flag:次数-1)"
+							},
+							{
+								"type": "setValue",
+								"name": "flag:次数",
+								"operator": "+=",
+								"value": "1"
+							}
+						]
+					},
+					{
+						"text": "攻击+8",
+						"need": "status:money>=20+10*flag:次数*(flag:次数-1)",
+						"action": [
+							{
+								"type": "playSound",
+								"name": "item.mp3"
+							},
+							{
+								"type": "setValue",
+								"name": "status:atk",
+								"operator": "+=",
+								"value": "8"
+							},
+							{
+								"type": "setValue",
+								"name": "status:money",
+								"operator": "-=",
+								"value": "20+10*flag:次数*(flag:次数-1)"
+							},
+							{
+								"type": "setValue",
+								"name": "flag:次数",
+								"operator": "+=",
+								"value": "1"
+							}
+						]
+					},
+					{
+						"text": "防御+16",
+						"need": "status:money>=20+10*flag:次数*(flag:次数-1)",
+						"action": [
+							{
+								"type": "playSound",
+								"name": "item.mp3"
+							},
+							{
+								"type": "setValue",
+								"name": "status:def",
+								"operator": "+=",
+								"value": "16"
+							},
+							{
+								"type": "setValue",
+								"name": "status:money",
+								"operator": "-=",
+								"value": "20+10*flag:次数*(flag:次数-1)"
+							},
+							{
+								"type": "setValue",
+								"name": "flag:次数",
+								"operator": "+=",
+								"value": "1"
+							}
+						]
+					}
+				]
+			},
+			{
+				"id": "shop4",
+				"text": "\t[贪婪之神,moneyShop]勇士啊, 给我${20+10*flag:次数*(flag:次数-1)}金币就可以：",
+				"textInList": "五区商店",
+				"mustEnable": true,
+				"disablePreview": false,
+				"choices": [
+					{
+						"text": "生命+${100*flag:次数}",
+						"need": "status:money>=20+10*flag:次数*(flag:次数-1)",
+						"action": [
+							{
+								"type": "playSound",
+								"name": "item.mp3"
+							},
+							{
+								"type": "setValue",
+								"name": "status:hp",
+								"operator": "+=",
+								"value": "100*flag:次数"
+							},
+							{
+								"type": "setValue",
+								"name": "status:money",
+								"operator": "-=",
+								"value": "20+10*flag:次数*(flag:次数-1)"
+							},
+							{
+								"type": "setValue",
+								"name": "flag:次数",
+								"operator": "+=",
+								"value": "1"
+							}
+						]
+					},
+					{
+						"text": "攻击+10",
+						"need": "status:money>=20+10*flag:次数*(flag:次数-1)",
+						"action": [
+							{
+								"type": "playSound",
+								"name": "item.mp3"
+							},
+							{
+								"type": "setValue",
+								"name": "status:atk",
+								"operator": "+=",
+								"value": "10"
+							},
+							{
+								"type": "setValue",
+								"name": "status:money",
+								"operator": "-=",
+								"value": "20+10*flag:次数*(flag:次数-1)"
+							},
+							{
+								"type": "setValue",
+								"name": "flag:次数",
+								"operator": "+=",
+								"value": "1"
+							}
+						]
+					},
+					{
+						"text": "防御+20",
+						"need": "status:money>=20+10*flag:次数*(flag:次数-1)",
+						"action": [
+							{
+								"type": "playSound",
+								"name": "item.mp3"
+							},
+							{
+								"type": "setValue",
+								"name": "status:def",
+								"operator": "+=",
+								"value": "20"
+							},
+							{
+								"type": "setValue",
+								"name": "status:money",
+								"operator": "-=",
+								"value": "20+10*flag:次数*(flag:次数-1)"
+							},
+							{
+								"type": "setValue",
+								"name": "flag:次数",
+								"operator": "+=",
+								"value": "1"
+							}
+						]
+					}
+				]
+			},
+			{
+				"id": "shop5",
+				"text": "\t[商人,woman]我能以100金币一把的价格回收黄钥匙！",
+				"textInList": "回收钥匙商店",
+				"mustEnable": true,
+				"disablePreview": false,
+				"choices": [
+					{
+						"text": "我太需要了",
+						"need": "item:yellowKey>=1",
+						"action": [
+							{
+								"type": "playSound",
+								"name": "item.mp3"
+							},
+							{
+								"type": "setValue",
+								"name": "status:money",
+								"operator": "+=",
+								"value": "100"
+							},
+							{
+								"type": "setValue",
+								"name": "item:yellowKey",
+								"operator": "-=",
+								"value": "1"
+							}
+						]
+					},
+					{
+						"text": "我要卖10把",
+						"need": "item:yellowKey>=10",
+						"action": [
+							{
+								"type": "playSound",
+								"name": "item.mp3"
+							},
+							{
+								"type": "setValue",
+								"name": "status:money",
+								"operator": "+=",
+								"value": "1000"
+							},
+							{
+								"type": "setValue",
+								"name": "item:yellowKey",
+								"operator": "-=",
+								"value": "10"
+							}
+						]
+					}
+				]
+			}
+		],
 		"levelUp": [
 			{
 				"need": "0",
@@ -649,8 +1166,8 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 		"counterAttack": 0.1,
 		"purify": 3,
 		"hatred": 2,
-		"animateSpeed": 200,
-		"moveSpeed": 50,
+		"animateSpeed": 300,
+		"moveSpeed": 100,
 		"statusCanvasRowsOnMobile": 3,
 		"floorChangeTime": 0
 	},
@@ -676,11 +1193,14 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 		"statusCanvas": false,
 		"enableEnemyPoint": true,
 		"enableGentleClick": false,
-		"ignoreChangeFloor": true,
+		"ignoreChangeFloor": false,
 		"canGoDeadZone": false,
 		"enableMoveDirectly": true,
 		"enableRouteFolding": true,
 		"disableShopOnDamage": false,
-		"blurFg": false
+		"blurFg": false,
+		"autoScale": null,
+		"hideLeftStatusBar": null,
+		"60FPS": false
 	}
 }

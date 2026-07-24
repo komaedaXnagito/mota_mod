@@ -6,19 +6,19 @@ main.floors.MT17=
     "width": 13,
     "height": 13,
     "map": [
-    [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1],
-    [  1,  0,  0,  0,  1,  0, 87,  0,  1, 27,  0, 28,  1],
-    [  1,  0, 37,  0,  1,  0,  0,  0,  1,  0, 32,  0,  1],
-    [  1,  0,  0,  0,  1,214,  1,206,  1, 21,  0, 21,  1],
-    [  1,  1, 85,  1,  1,  0,  1,  0,  1,  1, 85,  1,  1],
-    [  1,221,  0,221,  1, 81,  1, 82,  1,214,  0,214,  1],
-    [  1,  0,  0,  0,  1,  0,  1,  0,  1,  0,  0,  0,  1],
-    [  1,  1, 85,  1,  1,213,  1,203,  1,  1, 85,  1,  1],
-    [  1,221,  0,221,  1,  0,  0,  0,  1,213,  0,213,  1],
-    [  1,  0,  0,  0,  1,  1,218,  1,  1,  0,  0,  0,  1],
-    [  1,  1, 81,  1,  1,  0,  0,  0,  1,  1, 81,  1,  1],
-    [  1, 31,  0,  0,206,  0, 88,  0,206,  0,  0, 31,  1],
-    [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1]
+    [330,330,330,330,330,330,330,330,330,330,330,330,330],
+    [330,  0,  0,  0,  1,  0, 87,  0,  1, 27,  0, 28,330],
+    [330,  0, 37,  0,  1,  0,  0,  0,  1,  0, 32,  0,330],
+    [330,  0,  0,  0,  1,214,  1,206,  1, 21,  0, 21,330],
+    [330,  1, 85,  1,  1,  0,  1,  0,  1,  1, 85,  1,330],
+    [330,221,  0,221,  1, 81,  1, 82,  1,214,  0,214,330],
+    [330,  0,  0,  0,  1,  0,  1,  0,  1,  0,  0,  0,330],
+    [330,  1, 85,  1,  1,213,  1,203,  1,  1, 85,  1,330],
+    [330,221,  0,221,  1,  0,  0,  0,  1,213,  0,213,330],
+    [330,  0,  0,  0,  1,  1,218,  1,  1,  0,  0,  0,330],
+    [330,  1, 81,  1,  1,  0,  0,  0,  1,  1, 81,  1,330],
+    [330, 31,  0,  0,206,  0, 88,  0,206,  0,  0, 31,330],
+    [330,330,330,330,330,330,330,330,330,330,330,330,330]
 ],
     "canFlyTo": true,
     "canFlyFrom": true,
@@ -32,22 +32,24 @@ main.floors.MT17=
     "parallelDo": "",
     "events": {},
     "changeFloor": {
-        "6,1": {
-            "floorId": ":next",
-            "stair": "downFloor",
-            "time": 0
-        },
         "6,11": {
             "floorId": ":before",
-            "stair": "upFloor",
-            "time": 0
+            "stair": "upFloor"
+        },
+        "6,1": {
+            "floorId": ":next",
+            "stair": "downFloor"
         }
     },
     "afterBattle": {
         "1,8": [
             {
+                "type": "function",
+                "function": "function(){\nvar bool = true;\nvar loc_arr = [\n\t[1, 8],\n\t[3, 8],\n]\nloc_arr.forEach(loc => {\n\tif (core.getBlockCls(loc[0], loc[1]) == \"enemys\") {\n\t\tbool = false;\n\t}\n});\ncore.setFlag(\"open_yes\", bool)\n}"
+            },
+            {
                 "type": "if",
-                "condition": "flag:171",
+                "condition": "flag:open_yes",
                 "true": [
                     {
                         "type": "openDoor",
@@ -55,22 +57,18 @@ main.floors.MT17=
                             2,
                             7
                         ]
-                    }
-                ],
-                "false": [
-                    {
-                        "type": "setValue",
-                        "operator": "+=",
-                        "name": "flag:171",
-                        "value": "1"
                     }
                 ]
             }
         ],
         "3,8": [
             {
+                "type": "function",
+                "function": "function(){\nvar bool = true;\nvar loc_arr = [\n\t[1, 8],\n\t[3, 8],\n]\nloc_arr.forEach(loc => {\n\tif (core.getBlockCls(loc[0], loc[1]) == \"enemys\") {\n\t\tbool = false;\n\t}\n});\ncore.setFlag(\"open_yes\", bool)\n}"
+            },
+            {
                 "type": "if",
-                "condition": "flag:171",
+                "condition": "flag:open_yes",
                 "true": [
                     {
                         "type": "openDoor",
@@ -78,22 +76,18 @@ main.floors.MT17=
                             2,
                             7
                         ]
-                    }
-                ],
-                "false": [
-                    {
-                        "type": "setValue",
-                        "operator": "+=",
-                        "name": "flag:171",
-                        "value": "1"
                     }
                 ]
             }
         ],
         "1,5": [
             {
+                "type": "function",
+                "function": "function(){\nvar bool = true;\nvar loc_arr = [\n\t[1, 5],\n\t[3, 5],\n]\nloc_arr.forEach(loc => {\n\tif (core.getBlockCls(loc[0], loc[1]) == \"enemys\") {\n\t\tbool = false;\n\t}\n});\ncore.setFlag(\"open_yes\", bool)\n}"
+            },
+            {
                 "type": "if",
-                "condition": "flag:172",
+                "condition": "flag:open_yes",
                 "true": [
                     {
                         "type": "openDoor",
@@ -101,22 +95,18 @@ main.floors.MT17=
                             2,
                             4
                         ]
-                    }
-                ],
-                "false": [
-                    {
-                        "type": "setValue",
-                        "operator": "+=",
-                        "name": "flag:172",
-                        "value": "1"
                     }
                 ]
             }
         ],
         "3,5": [
             {
+                "type": "function",
+                "function": "function(){\nvar bool = true;\nvar loc_arr = [\n\t[1, 5],\n\t[3, 5],\n]\nloc_arr.forEach(loc => {\n\tif (core.getBlockCls(loc[0], loc[1]) == \"enemys\") {\n\t\tbool = false;\n\t}\n});\ncore.setFlag(\"open_yes\", bool)\n}"
+            },
+            {
                 "type": "if",
-                "condition": "flag:172",
+                "condition": "flag:open_yes",
                 "true": [
                     {
                         "type": "openDoor",
@@ -125,21 +115,17 @@ main.floors.MT17=
                             4
                         ]
                     }
-                ],
-                "false": [
-                    {
-                        "type": "setValue",
-                        "operator": "+=",
-                        "name": "flag:172",
-                        "value": "1"
-                    }
                 ]
             }
         ],
         "9,8": [
             {
+                "type": "function",
+                "function": "function(){\nvar bool = true;\nvar loc_arr = [\n\t[9, 8],\n\t[11, 8],\n]\nloc_arr.forEach(loc => {\n\tif (core.getBlockCls(loc[0], loc[1]) == \"enemys\") {\n\t\tbool = false;\n\t}\n});\ncore.setFlag(\"open_yes\", bool)\n}"
+            },
+            {
                 "type": "if",
-                "condition": "flag:173",
+                "condition": "flag:open_yes",
                 "true": [
                     {
                         "type": "openDoor",
@@ -147,22 +133,18 @@ main.floors.MT17=
                             10,
                             7
                         ]
-                    }
-                ],
-                "false": [
-                    {
-                        "type": "setValue",
-                        "operator": "+=",
-                        "name": "flag:173",
-                        "value": "1"
                     }
                 ]
             }
         ],
         "11,8": [
             {
+                "type": "function",
+                "function": "function(){\nvar bool = true;\nvar loc_arr = [\n\t[9, 8],\n\t[11, 8],\n]\nloc_arr.forEach(loc => {\n\tif (core.getBlockCls(loc[0], loc[1]) == \"enemys\") {\n\t\tbool = false;\n\t}\n});\ncore.setFlag(\"open_yes\", bool)\n}"
+            },
+            {
                 "type": "if",
-                "condition": "flag:173",
+                "condition": "flag:open_yes",
                 "true": [
                     {
                         "type": "openDoor",
@@ -171,21 +153,17 @@ main.floors.MT17=
                             7
                         ]
                     }
-                ],
-                "false": [
-                    {
-                        "type": "setValue",
-                        "operator": "+=",
-                        "name": "flag:173",
-                        "value": "1"
-                    }
                 ]
             }
         ],
         "9,5": [
             {
+                "type": "function",
+                "function": "function(){\nvar bool = true;\nvar loc_arr = [\n\t[9, 5],\n\t[11, 5],\n]\nloc_arr.forEach(loc => {\n\tif (core.getBlockCls(loc[0], loc[1]) == \"enemys\") {\n\t\tbool = false;\n\t}\n});\ncore.setFlag(\"open_yes\", bool)\n}"
+            },
+            {
                 "type": "if",
-                "condition": "flag:174",
+                "condition": "flag:open_yes",
                 "true": [
                     {
                         "type": "openDoor",
@@ -193,22 +171,18 @@ main.floors.MT17=
                             10,
                             4
                         ]
-                    }
-                ],
-                "false": [
-                    {
-                        "type": "setValue",
-                        "operator": "+=",
-                        "name": "flag:174",
-                        "value": "1"
                     }
                 ]
             }
         ],
         "11,5": [
             {
+                "type": "function",
+                "function": "function(){\nvar bool = true;\nvar loc_arr = [\n\t[9, 5],\n\t[11, 5],\n]\nloc_arr.forEach(loc => {\n\tif (core.getBlockCls(loc[0], loc[1]) == \"enemys\") {\n\t\tbool = false;\n\t}\n});\ncore.setFlag(\"open_yes\", bool)\n}"
+            },
+            {
                 "type": "if",
-                "condition": "flag:174",
+                "condition": "flag:open_yes",
                 "true": [
                     {
                         "type": "openDoor",
@@ -216,14 +190,6 @@ main.floors.MT17=
                             10,
                             4
                         ]
-                    }
-                ],
-                "false": [
-                    {
-                        "type": "setValue",
-                        "operator": "+=",
-                        "name": "flag:174",
-                        "value": "1"
                     }
                 ]
             }
@@ -251,8 +217,8 @@ main.floors.MT17=
     [ 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17]
 ],
     "downFloor": [
-        5,
-        11
+        6,
+        10
     ],
     "upFloor": [
         6,
@@ -260,5 +226,7 @@ main.floors.MT17=
     ],
     "autoEvent": {},
     "beforeBattle": {},
-    "cannotMoveIn": {}
+    "cannotMoveIn": {},
+    "bg2map": [],
+    "fg2map": []
 }

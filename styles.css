@@ -102,7 +102,7 @@
     top:50%;
     left:50%;
     height: 100%;
-    width: auto;
+    width: 100%;
     transform:translate(-50%,-50%);
     z-index: 260;
 }
@@ -173,8 +173,6 @@
 }
 
 #floorMsgGroup {
-    top: 3px;
-    right: 3px;
     position: absolute;
     text-align: center;
     display: none;
@@ -490,7 +488,19 @@ p#name {
     0% { opacity: 1 }
     100% { opacity: 0 }
 }
-
-.anti-aliasing {
-    image-rendering: pixelated;
+#ui-editor {
+    z-index: 9999;
+    position: absolute;
+    overflow: visible;
+    height: 100%;
 }
+
+@font-face {
+    font-family: Fira Code;
+    src: url(../src/fonts/FiraCode-Regular.ttf);
+}
+
+/* 注释下面这三行以开启抗锯齿 */
+/*.anti-aliasing {
+    image-rendering: pixelated;
+}*/

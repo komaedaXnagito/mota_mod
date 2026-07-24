@@ -99,6 +99,40 @@ var comment_c456ea59_6018_45ef_8bcc_211a24c627dc = {
 					"_lint": true,
 					"_docs": "能否使用或装备",
 					"_data": "当前能否使用或装备该道具，仅对cls不为items有效。null表示始终不可使用但可装备"
+				},
+				'rare':{
+					"_leaf": true,
+					"_type": "select",
+					"_select": {
+						"values": [
+							"N",
+							"R",
+							"SR",
+							"SSR"
+						]
+					},
+					"_docs": "稀有度",
+					"_data": "N(普通) R(稀有) SR(史诗) SSR(传说)"
+				},
+				'shape':{
+					"_leaf": true,
+					"_type": "textarea",
+					"_string": true,
+					"_lint": true,
+					"_docs": "武器形状",
+					"_data": "二维数组，1为武器形状，0为空白\n如：[[1,1,1],[0,1,0],[0,1,0]]"
+				},
+				'weaponType':{
+					"_leaf": true,
+					"_type": "select",
+					"_select": {
+						"values": [
+							"剑",
+							"刀",'盾','精灵','召唤','饮料','食物','琴','枪','拳'
+						]
+					},
+					"_docs": "武器类型",
+					
 				}
 			}
 		},
@@ -211,20 +245,87 @@ var comment_c456ea59_6018_45ef_8bcc_211a24c627dc = {
 					"_leaf": true,
 					"_type": "textarea",
 					"_docs": "特殊属性数值",
-					"_data": "特殊属性的数值\n如：领域/阻激/激光怪的伤害值；吸血怪的吸血比例；光环怪增加生命的比例"
+					"_data": "特殊属性的数值\n如：领域/阻激/激光怪的伤害值；光环怪增加生命的比例"
+				},
+				"zone": {
+					"_leaf": true,
+					"_type": "textarea",
+					"_docs": "领域伤害",
+					"_data": "领域怪的伤害值"
+				},
+				"repulse": {
+					"_leaf": true,
+					"_type": "textarea",
+					"_docs": "阻击伤害",
+					"_data": "阻击怪的伤害值"
+				},
+				"laser": {
+					"_leaf": true,
+					"_type": "textarea",
+					"_docs": "激光伤害",
+					"_data": "激光怪的伤害值"
+				},
+				"breakArmor": {
+					"_leaf": true,
+					"_type": "textarea",
+					"_docs": "破甲比例",
+					"_data": "破甲百分比"
+				},
+				"counterAttack": {
+					"_leaf": true,
+					"_type": "textarea",
+					"_docs": "反击比例",
+					"_data": "反击百分比"
+				},
+				"vampire": {
+					"_leaf": true,
+					"_type": "textarea",
+					"_docs": "吸血比例",
+					"_data": "吸血怪的吸血百分比"
+				},
+				"hpBuff": {
+					"_leaf": true,
+					"_type": "textarea",
+					"_docs": "光环加血",
+					"_data": "光环怪增加生命的比例"
+				},
+				"atkBuff": {
+					"_leaf": true,
+					"_type": "textarea",
+					"_docs": "光环加攻",
+					"_data": "光环怪增加攻击的比例"
+				},
+				"defBuff": {
+					"_leaf": true,
+					"_type": "textarea",
+					"_docs": "光环加防",
+					"_data": "光环怪增加防御的比例"
 				},
 				"zoneSquare": {
 					"_leaf": true,
 					"_type": "checkbox",
 					"_docs": "九宫格",
-					"_data": "领域、阻击、光环或捕捉怪是否九宫格"
+					"_data": "领域、阻击或捕捉怪是否九宫格"
+				},
+				"haloSquare": {
+					"_leaf": true,
+					"_type": "checkbox",
+					"_docs": "九宫格",
+					"_data": "光环怪是否九宫格"
 				},
 				"range": {
 					"_leaf": true,
 					"_type": "textarea",
 					"_range": "(thiseval==~~thiseval && thiseval>0)||thiseval==null",
 					"_docs": "领域范围",
-					"_data": "领域或光环的范围；领域不加默认为1，光环不加则为全图效果"
+					"_data": "领域的范围；不加默认为1"
+				},
+				"haloRange": {
+					"_leaf": true,
+					"_type": "textarea",
+					"_range": "(thiseval==~~thiseval && thiseval>0)||thiseval==null",
+					"_docs": "光环范围",
+					"_data": "光环的范围；不加为全图效果"
 				},
 				"notBomb": {
 					"_leaf": true,
@@ -239,25 +340,38 @@ var comment_c456ea59_6018_45ef_8bcc_211a24c627dc = {
 					"_docs": "连击数",
 					"_data": "多连击的连击数，净化怪的净化倍率"
 				},
+				"purify": {
+					"_leaf": true,
+					"_type": "textarea",
+					"_range": "(thiseval==~~thiseval && thiseval>0)||thiseval==null",
+					"_docs": "净化倍率",
+					"_data": "净化百分比"
+				},
 				"add": {
 					"_leaf": true,
 					"_type": "checkbox",
 					"_docs": "吸血加到自身",
-					"_data": "吸血后是否加到自身；光环是否叠加"
+					"_data": "吸血后是否加到自身"
+				},
+				"haloAdd": {
+					"_leaf": true,
+					"_type": "checkbox",
+					"_docs": "光环是否叠加",
+					"_data": "光环是否叠加"
 				},
 				"atkValue": {
 					"_leaf": true,
 					"_type": "textarea",
 					"_range": "thiseval==~~thiseval||thiseval==null",
 					"_docs": "退化扣攻",
-					"_data": "退化时勇士下降的攻击力点数；光环怪增加攻击的比例；反击的比例"
+					"_data": "退化时勇士下降的攻击力点数"
 				},
 				"defValue": {
 					"_leaf": true,
 					"_type": "textarea",
 					"_range": "thiseval==~~thiseval||thiseval==null",
 					"_docs": "退化扣防",
-					"_data": "退化时勇士下降的防御力点数；光环怪增加防御的比例；破甲的比例"
+					"_data": "退化时勇士下降的防御力点数"
 				},
 				"damage": {
 					"_leaf": true,
@@ -348,14 +462,6 @@ var comment_c456ea59_6018_45ef_8bcc_211a24c627dc = {
 					"_event": "item",
 					"_docs": "碰触事件",
 					"_data": "触碰到该图块时自动执行的事件内容；如果存在本事件则不会执行默认触发器"
-				},
-
-				"outEvent": {
-					"_leaf": true,
-					"_type": "event",
-					"_event": "item",
-					"_docs": "出格事件",
-					"_data": "“走一步”离开本图块时触发的事件"
 				},
 				"cannotOut": {
 					"_leaf": true,
@@ -489,12 +595,6 @@ var comment_c456ea59_6018_45ef_8bcc_211a24c627dc = {
 							"_docs": "不可浏览",
 							"_data": "该层是否不允许被浏览地图看到；如果勾上则浏览地图会跳过该层"
 						},
-						"isHide": {
-							"_leaf": true,
-							"_type": "checkbox",
-							"_docs": "是否隐藏",
-							"_data": "是否隐藏该层，若隐藏则在楼梯寻找下（上）一层时会被直接跳过"
-						},
 						"cannotMoveDirectly": {
 							"_leaf": true,
 							"_type": "checkbox",
@@ -595,7 +695,7 @@ var comment_c456ea59_6018_45ef_8bcc_211a24c627dc = {
 						"ratio": {
 							"_leaf": true,
 							"_type": "textarea",
-							"_range": "thiseval==~~thiseval && thiseval>=0",
+							"_range": "thiseval <= Number.MAX_SAFE_INTEGER && thiseval>=0",
 							"_docs": "宝石血瓶效果",
 							"_data": "每一层的宝石/血瓶效果，即获得宝石和血瓶时框内\"ratio\"的值。"
 						}
@@ -696,7 +796,6 @@ var comment_c456ea59_6018_45ef_8bcc_211a24c627dc = {
 			"width": 13,
 			"height": 13,
 			"canFlyTo": true,
-			"canFlyFrom": true,
 			"canFlyFrom": true,
 			"canUseQuickShop": true,
 			"cannotViewMap": false,

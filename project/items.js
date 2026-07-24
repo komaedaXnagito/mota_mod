@@ -9,7 +9,7 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 	},
 	"blueKey": {
 		"cls": "tools",
-		"name": "兰钥匙",
+		"name": "蓝钥匙",
 		"text": "可以打开一扇蓝门",
 		"hideInToolbox": true,
 		"hideInReplay": true
@@ -26,7 +26,7 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 		"name": "红宝石",
 		"text": "攻击+${core.values.redGem}",
 		"itemEffect": "core.status.hero.atk += core.values.redGem * core.status.thisMap.ratio",
-		"itemEffectTip": "你的攻击力增加 ${core.values.redGem * core.status.thisMap.ratio} 点",
+		"itemEffectTip": "，提升 ${core.values.redGem * core.status.thisMap.ratio} 点攻击",
 		"useItemEffect": "core.status.hero.atk += core.values.redGem",
 		"canUseItemEffect": "true"
 	},
@@ -35,7 +35,7 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 		"name": "蓝宝石",
 		"text": "，防御+${core.values.blueGem}",
 		"itemEffect": "core.status.hero.def += core.values.blueGem * core.status.thisMap.ratio",
-		"itemEffectTip": "你的防御力增加 ${core.values.blueGem * core.status.thisMap.ratio} 点",
+		"itemEffectTip": "，提升 ${core.values.blueGem * core.status.thisMap.ratio} 点防御",
 		"useItemEffect": "core.status.hero.def += core.values.blueGem",
 		"canUseItemEffect": "true"
 	},
@@ -101,7 +101,7 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 		"name": "红血瓶",
 		"text": "，生命+${core.values.redPotion}",
 		"itemEffect": "core.status.hero.hp += core.values.redPotion * core.status.thisMap.ratio",
-		"itemEffectTip": "你的生命增加了 ${core.values.redPotion * core.status.thisMap.ratio} 点",
+		"itemEffectTip": "，提升 ${core.values.redPotion * core.status.thisMap.ratio} 点生命",
 		"useItemEffect": "core.status.hero.hp += core.values.redPotion",
 		"canUseItemEffect": "true"
 	},
@@ -110,7 +110,7 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 		"name": "蓝血瓶",
 		"text": "，生命+${core.values.bluePotion}",
 		"itemEffect": "core.status.hero.hp += core.values.bluePotion * core.status.thisMap.ratio",
-		"itemEffectTip": "你的生命增加了 ${core.values.bluePotion * core.status.thisMap.ratio} 点",
+		"itemEffectTip": "，提升 ${core.values.bluePotion * core.status.thisMap.ratio} 点生命",
 		"useItemEffect": "core.status.hero.hp += core.values.bluePotion",
 		"canUseItemEffect": "true"
 	},
@@ -141,7 +141,8 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 			"animate": "sword",
 			"value": {
 				"atk": 0
-			}
+			},
+			"percentage": {}
 		},
 		"itemEffect": "core.status.hero.atk += 0",
 		"itemEffectTip": "，攻击+0"
@@ -157,8 +158,8 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 				"atk": 10
 			}
 		},
-		"itemEffect": "core.status.hero.atk += 10; core.setFlag('nowWeapon', 'sword1');",
-		"itemEffectTip": "你得到了铁剑，攻击力增加10点"
+		"itemEffect": "core.status.hero.atk += 10;\ncore.setFlag('nowWeapon', 'sword1');",
+		"itemEffectTip": "，提升 10 点攻击"
 	},
 	"sword2": {
 		"cls": "items",
@@ -169,10 +170,11 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 			"animate": "sword",
 			"value": {
 				"atk": 20
-			}
+			},
+			"percentage": {}
 		},
-		"itemEffect": "core.status.hero.atk += 20; core.setFlag('nowWeapon', 'sword2');",
-		"itemEffectTip": "你得到了银剑，攻击力增加20点"
+		"itemEffect": "core.status.hero.atk += 20;\ncore.setFlag('nowWeapon', 'sword2');",
+		"itemEffectTip": "，提升 20 点攻击"
 	},
 	"sword3": {
 		"cls": "items",
@@ -185,8 +187,8 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 				"atk": 40
 			}
 		},
-		"itemEffect": "core.status.hero.atk += 40; core.setFlag('nowWeapon', 'sword3');",
-		"itemEffectTip": "你得到了骑士剑，攻击力增加40点"
+		"itemEffect": "core.status.hero.atk += 40;\ncore.setFlag('nowWeapon', 'sword3');",
+		"itemEffectTip": "，提升 40 点攻击"
 	},
 	"sword4": {
 		"cls": "items",
@@ -196,11 +198,11 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 			"type": 0,
 			"animate": "sword",
 			"value": {
-				"atk": 80
+				"atk": 50
 			}
 		},
-		"itemEffect": "core.status.hero.atk += 50; core.setFlag('nowWeapon', 'sword4');",
-		"itemEffectTip": "你得到了圣剑，攻击力增加50点"
+		"itemEffect": "core.status.hero.atk += 50;\ncore.setFlag('nowWeapon', 'sword4');",
+		"itemEffectTip": "，提升 50 点攻击"
 	},
 	"sword5": {
 		"cls": "items",
@@ -210,11 +212,11 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 			"type": 0,
 			"animate": "sword",
 			"value": {
-				"atk": 160
+				"atk": 100
 			}
 		},
-		"itemEffect": "core.status.hero.atk += 100; core.setFlag('nowWeapon', 'sword5');",
-		"itemEffectTip": "你得到了神圣剑，攻击力增加100点"
+		"itemEffect": "core.status.hero.atk += 100;\ncore.setFlag('nowWeapon', 'sword5');",
+		"itemEffectTip": "，提升 100 点攻击"
 	},
 	"shield0": {
 		"cls": "items",
@@ -227,7 +229,7 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 			}
 		},
 		"itemEffect": "core.status.hero.def += 0",
-		"itemEffectTip": "你得到了破旧的盾，防御力增加0点"
+		"itemEffectTip": "，防御+0"
 	},
 	"shield1": {
 		"cls": "items",
@@ -239,8 +241,8 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 				"def": 10
 			}
 		},
-		"itemEffect": "core.status.hero.def += 10; core.setFlag('nowShield', 'shield1');",
-		"itemEffectTip": "你得到了铁盾，防御力增加10点"
+		"itemEffect": "core.status.hero.def += 10;\ncore.setFlag('nowShield', 'shield1');",
+		"itemEffectTip": "，提升 10 点防御"
 	},
 	"shield2": {
 		"cls": "items",
@@ -252,8 +254,8 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 				"def": 20
 			}
 		},
-		"itemEffect": "core.status.hero.def += 20; core.setFlag('nowShield', 'shield2');",
-		"itemEffectTip": "你得到了银盾，防御力增加20点"
+		"itemEffect": "core.status.hero.def += 20;\ncore.setFlag('nowShield', 'shield2');",
+		"itemEffectTip": "，提升 20 点防御"
 	},
 	"shield3": {
 		"cls": "items",
@@ -265,8 +267,8 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 				"def": 40
 			}
 		},
-		"itemEffect": "core.status.hero.def += 40; core.setFlag('nowShield', 'shield3');",
-		"itemEffectTip": "你得到了骑士盾，防御力增加40点"
+		"itemEffect": "core.status.hero.def += 40;\ncore.setFlag('nowShield', 'shield3');",
+		"itemEffectTip": "，提升 40 点防御"
 	},
 	"shield4": {
 		"cls": "items",
@@ -275,11 +277,11 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 		"equip": {
 			"type": 1,
 			"value": {
-				"def": 80
+				"def": 50
 			}
 		},
-		"itemEffect": "core.status.hero.def += 50; core.setFlag('nowShield', 'shield4');",
-		"itemEffectTip": "你得到了圣盾，防御力增加50点"
+		"itemEffect": "core.status.hero.def += 50;\ncore.setFlag('nowShield', 'shield4');",
+		"itemEffectTip": "，提升 50 点防御"
 	},
 	"shield5": {
 		"cls": "items",
@@ -292,73 +294,67 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 				"mdef": 100
 			}
 		},
-		"itemEffect": "core.status.hero.def += 100;\ncore.setFlag('nowShield', 'shield5');\ncore.setFlag('魔法免疫', true);",
-		"itemEffectTip": "你得到了 神圣盾，可以忽略魔法攻击了"
+		"itemEffect": "core.status.hero.def += 100;\ncore.setFlag('nowShield', 'shield5');\ncore.setFlag('shield5', 1);",
+		"itemEffectTip": "，提升 100 点防御，并免疫魔法伤害"
 	},
 	"superPotion": {
 		"cls": "tools",
 		"name": "圣水",
-		"itemEffect": null,
-		"itemEffectTip": "你得到 圣水 按攻击和防御提升生命点数",
-		"useItemEffect": "var hp = Math.round(0.74 * (core.status.hero.atk + core.status.hero.def)) * 10\ncore.status.hero.hp += hp;\ncore.insertAction([\n\t{ \"type\": \"playSound\", \"name\": \"获得道具\" },\n\t{ \"type\": \"tip\", \"text\": \"使用圣水，增加 \" + hp + \" 生命\" },\n]);",
+		"itemEffect": "core.status.hero.hp *= 2",
+		"itemEffectTip": "增加10倍攻击+5倍防御的生命",
+		"useItemEffect": "var hp = Math.round(10 * core.status.hero.atk + 5 * core.status.hero.def)\ncore.status.hero.hp += hp;\ncore.insertAction([\n\t{ \"type\": \"playSound\", \"name\": \"item.mp3\" },\n\t{ \"type\": \"tip\", \"text\": \"使用圣水，增加 \" + hp + \" 生命\" },\n]);",
 		"canUseItemEffect": "true",
-		"text": "使用后获得 round(0.74 * (攻击 + 防御)) * 10 点生命",
+		"text": "增加10倍攻击+5倍防御的生命",
 		"hideInToolbox": true,
 		"hideInReplay": true
 	},
 	"book": {
 		"cls": "constants",
-		"name": "游戏手册",
-		"text": "察看敌人参数",
+		"name": "怪物手册",
+		"text": "可以查看当前楼层各怪物属性",
 		"hideInToolbox": true,
-		"useItemEffect": "core.ui.drawBook(0);",
+		"useItemEffect": "core.ui.drawBook(0)",
 		"canUseItemEffect": "true",
-		"hideInReplay": true,
-		"itemEffectTip": "你得到 游戏手册，察看敌人参数"
+		"hideInReplay": true
 	},
 	"fly": {
 		"cls": "constants",
-		"name": "魔杖",
-		"text": "可以飞往到过的楼层",
+		"name": "楼层传送器",
+		"text": "可以自由往来去过的楼层",
 		"hideInReplay": true,
 		"hideInToolbox": true,
-		"useItemEffect": "core.ui.drawFly(core.floorIds.indexOf(core.status.floorId));",
-		"canUseItemEffect": "(function () {\n\tif (!core.status.maps[core.status.floorId].canFlyFrom) {\n\t\tcore.drawTip(core.material.items['fly'].name + \"似乎失效了\", 'fly');\n\t\treturn false;\n\t}\n\tif (core.nearStair() || !core.flags.flyNearStair) {\n\t\treturn true;\n\t} else {\n\t\tif (!core.maps._canMoveDirectly_checkGlobal()) {\n\t\t\tcore.drawTip(\"当前不能瞬间移动\");\n\t\t\treturn false;\n\t\t}\n\t\tvar blocks = core.status.maps[core.status.floorId].blocks;\n\t\tif (!blocks) return false;\n\n\t\t// 四方向偏移\n\t\tvar dirs = [\n\t\t\t{ x: 1, y: 0 },\n\t\t\t{ x: -1, y: 0 },\n\t\t\t{ x: 0, y: 1 },\n\t\t\t{ x: 0, y: -1 }\n\t\t];\n\n\t\tvar fp = [\"portal\", \"upFloor\", \"downFloor\"]\n\n\t\tfor (var i = 0; i < blocks.length; i++) {\n\t\t\tvar block = blocks[i];\n\t\t\tif (!block || !block.event) continue;\n\n\t\t\tvar id = block.event.id;\n\t\t\tif (!fp.includes(id)) continue;\n\n\t\t\tvar sx = block.x,\n\t\t\t\tsy = block.y;\n\n\t\t\tfor (var direction in core.utils.scan) {\n\t\t\t\tvar delta = core.utils.scan[direction];\n\t\t\t\tvar tx = sx + delta.x,\n\t\t\t\t\tty = sy + delta.y;\n\n\t\t\t\tif (core.canMoveDirectly(tx, ty) >= 0) {\n\t\t\t\t\treturn true;\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\tcore.drawTip(\"无法到达任何一个楼梯边\");\n\t\treturn false;\n\t}\n\treturn false;\n})();",
-		"itemEffectTip": "你得到 魔杖 可以飞往到过的楼层"
+		"useItemEffect": "core.ui.drawFly(core.floorIds.indexOf(core.status.floorId));\n//core.ui.drawFly(core.floorIds.indexOf(core.status.floorId));",
+		"canUseItemEffect": "(function () {\n\treturn core.status.maps[core.status.floorId].canFlyFrom;\n})();"
 	},
 	"coin": {
 		"cls": "constants",
 		"name": "幸运金币",
-		"text": "战后获得双倍金钱",
+		"text": "持有时打败怪物可得双倍金币",
 		"hideInToolbox": true,
-		"hideInReplay": true,
-		"itemEffectTip": "你得到 幸运金币 战后获得双倍金钱"
+		"hideInReplay": true
 	},
 	"snow": {
 		"cls": "constants",
-		"name": "冰魔法",
-		"text": "可冻结熔岩",
+		"name": "冰冻徽章",
+		"text": "可以将面前的熔岩变成平地",
 		"useItemEffect": "(function () {\n\tvar success = false;\n\n\tvar snowFourDirections = true; // 是否多方向雪花；如果是将其改成true\n\tif (snowFourDirections) {\n\t\t// 多方向雪花\n\t\tfor (var direction in core.utils.scan) { // 多方向雪花默认四方向，如需改为八方向请将这两个scan改为scan2\n\t\t\tvar delta = core.utils.scan[direction];\n\t\t\tvar nx = core.getHeroLoc('x') + delta.x,\n\t\t\t\tny = core.getHeroLoc('y') + delta.y;\n\t\t\tif (core.getBlockId(nx, ny) == 'lava') {\n\t\t\t\tcore.removeBlock(nx, ny);\n\t\t\t\tsuccess = true;\n\t\t\t}\n\t\t}\n\t} else {\n\t\tif (core.getBlockId(core.nextX(), core.nextY()) == 'lava') {\n\t\t\tcore.removeBlock(core.nextX(), core.nextY());\n\t\t\tsuccess = true;\n\t\t}\n\t}\n\n\tif (success) {\n\t\tcore.playSound('打开界面');\n\t\tcore.drawTip(core.material.items[itemId].name + '使用成功', itemId);\n\t} else {\n\t\tcore.playSound('操作失败');\n\t\tcore.drawTip(\"当前无法使用\" + core.material.items[itemId].name, itemId);\n\t\tcore.addItem(itemId, 1);\n\t\treturn;\n\t}\n})();",
 		"canUseItemEffect": "true",
 		"hideInToolbox": true,
-		"hideInReplay": true,
-		"itemEffectTip": "你学会 冰魔法 可冻结熔岩"
+		"hideInReplay": true
 	},
 	"cross": {
 		"cls": "constants",
 		"name": "十字架",
-		"text": "对吸血鬼和兽人攻击力加倍",
+		"text": "持有后无视怪物的无敌属性",
 		"hideInToolbox": true,
-		"hideInReplay": true,
-		"itemEffectTip": "你得到 十字架 对吸血鬼和兽人攻击力加倍"
+		"hideInReplay": true
 	},
 	"knife": {
 		"cls": "constants",
 		"name": "屠龙匕首",
-		"text": "对龙攻击力加倍",
+		"text": "对魔龙攻击加倍",
 		"hideInToolbox": true,
-		"hideInReplay": true,
-		"itemEffectTip": "你得到 屠龙匕 对龙攻击力加倍"
+		"hideInReplay": true
 	},
 	"amulet": {
 		"cls": "constants",
@@ -369,12 +365,12 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 	},
 	"bigKey": {
 		"cls": "tools",
-		"name": "魔法钥匙",
-		"text": "可打开一层楼所有的黄门",
-		"itemEffect": null,
-		"itemEffectTip": "你得到 魔法钥匙 可打开一层楼所有的黄门",
+		"name": "大黄门钥匙",
+		"text": "可以开启当前层所有黄门",
+		"itemEffect": "core.addItem('yellowKey', 1);\ncore.addItem('blueKey', 1);\ncore.addItem('redKey', 1);",
+		"itemEffectTip": "，全钥匙+1",
 		"useItemEffect": "(function () {\n\tvar actions = core.searchBlock(\"yellowDoor\").map(function (block) {\n\t\treturn { \"type\": \"openDoor\", \"loc\": [block.x, block.y], \"async\": true };\n\t});\n\tactions.push({ \"type\": \"waitAsync\" });\n\tactions.push({ \"type\": \"tip\", \"text\": core.material.items[itemId].name + \"使用成功\" });\n\tcore.insertAction(actions);\n})();",
-		"canUseItemEffect": "true",
+		"canUseItemEffect": "(function () {\n\treturn core.searchBlock('yellowDoor').length > 0;\n})();",
 		"hideInToolbox": true,
 		"hideInReplay": true
 	},
@@ -394,13 +390,12 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 	},
 	"pickaxe": {
 		"cls": "tools",
-		"name": "镐",
-		"text": "可破坏你周围的堵墙",
-		"useItemEffect": "(function () {\n\tvar canBreak = function (x, y) {\n\t\tvar block = core.getBlock(x, y);\n\t\tif (block == null || block.disable) return false;\n\t\treturn block.event.canBreak;\n\t};\n\tlet todo = [];\n\tfor (var direction in core.utils.scan) { // 多方向破默认四方向，如需改成八方向请将这两个scan改为scan2\n\t\tvar delta = core.utils.scan[direction];\n\t\tvar nx = core.getHeroLoc('x') + delta.x,\n\t\t\tny = core.getHeroLoc('y') + delta.y;\n\t\tif (canBreak(nx, ny)) {\n\t\t\tcore.push(todo, { \"type\": \"openDoor\", \"loc\": [nx, ny], \"async\": true });\n\t\t\t//core.removeBlock(nx, ny);\n\t\t}\n\t}\n\tcore.push(todo, { \"type\": \"waitAsync\" });\n\tcore.insertAction(todo);\n\n\tcore.playSound('破墙镐');\n\t//core.drawTip(core.material.items[itemId].name + '使用成功', itemId);\n})();",
+		"name": "破墙镐",
+		"text": "可以破坏勇士面前的墙壁",
+		"useItemEffect": "(function () {\n\tvar canBreak = function (x, y) {\n\t\tvar block = core.getBlock(x, y);\n\t\tif (block == null || block.disable) return false;\n\t\treturn block.event.canBreak;\n\t};\n\n\tvar success = false;\n\tvar pickaxeFourDirections = true; // 是否多方向破；如果是将其改成true\n\tif (pickaxeFourDirections) {\n\t\t// 多方向破\n\t\tfor (var direction in core.utils.scan) { // 多方向破默认四方向，如需改成八方向请将这两个scan改为scan2\n\t\t\tvar delta = core.utils.scan[direction];\n\t\t\tvar nx = core.getHeroLoc('x') + delta.x,\n\t\t\t\tny = core.getHeroLoc('y') + delta.y;\n\t\t\ttrue\n\t\t\tif (canBreak(nx, ny)) {\n\t\t\t\tcore.removeBlock(nx, ny);\n\t\t\t\tsuccess = true;\n\t\t\t}\n\t\t}\n\t} else {\n\t\t// 仅破当前\n\t\tif (canBreak(core.nextX(), core.nextY())) {\n\t\t\tcore.removeBlock(core.nextX(), core.nextY());\n\t\t\tsuccess = true;\n\t\t}\n\t}\n\n\tif (success) {\n\t\tcore.playSound('破墙镐');\n\t\tcore.drawTip(core.material.items[itemId].name + '使用成功', itemId);\n\t} else {\n\t\t// 无法使用\n\t\tcore.playSound('操作失败');\n\t\tcore.drawTip(\"当前无法使用\" + core.material.items[itemId].name, itemId);\n\t\tcore.addItem(itemId, 1);\n\t\treturn;\n\t}\n})();",
 		"canUseItemEffect": "true",
 		"hideInToolbox": true,
-		"hideInReplay": true,
-		"itemEffectTip": "你得到 镐 可破坏你周围的堵墙"
+		"hideInReplay": true
 	},
 	"icePickaxe": {
 		"cls": "tools",
@@ -414,51 +409,48 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 	"bomb": {
 		"cls": "tools",
 		"name": "炸弹",
-		"text": "可炸死你周围的敌人",
-		"useItemEffect": "(function () {\n\tvar bombList = [],\n\t\ttodo = [],\n\t\tmoney = 0;\n\tvar heroX = core.getHeroLoc('x'),\n\t\theroY = core.getHeroLoc('y');\n\n\t// 用于记录需要移除的坐标，格式为 \"x,y\": true\n\tvar targets = {};\n\n\t// 检查可炸目标\n\tvar canBomb = function (x, y) {\n\t\tvar block = core.getBlock(x, y);\n\t\tif (block && !block.disable && block.event.trigger === 'battle' && block.event.cls.indexOf('enemy') === 0) {\n\t\t\tvar enemy = core.material.enemys[block.event.id];\n\t\t\tvar hp = core.enemys.getEnemyInfo(enemy, null, x, y, core.status.floorId).hp;\n\t\t\treturn hp < 500;\n\t\t}\n\t};\n\n\t// 预处理炸弹逻辑（只计算数据和标记，不移除）\n\tvar prepareBomb = function (x, y) {\n\t\tif (!canBomb(x, y)) return;\n\t\tbombList.push([x, y]);\n\n\t\t// 标记该坐标需要移除\n\t\ttargets[x + \",\" + y] = true;\n\n\t\tvar enemy = core.material.enemys[core.getBlockId(x, y)];\n\t\tmoney += core.getEnemyInfo(enemy, null, x, y).money || 0;\n\t\tcore.push(todo, core.floors[core.status.floorId].afterBattle[x + \",\" + y]);\n\t\tcore.push(todo, enemy.afterBattle);\n\t};\n\n\t// 扫描四周\n\tvar scan = core.utils.scan;\n\tfor (var direction in scan) {\n\t\tvar delta = scan[direction];\n\t\tprepareBomb(heroX + delta.x, heroY + delta.y);\n\t}\n\n\t// 如果有目标被炸到，执行批量移除\n\tif (bombList.length > 0) {\n\t\tvar indexes = [];\n\t\t// 遍历当前地图所有图块，寻找匹配的坐标\n\t\t// 这样只需要遍历一次 blocks 数组，而不是每个方向遍历一次\n\t\tfor (var index in core.status.thisMap.blocks) {\n\t\t\tvar block = core.status.thisMap.blocks[index];\n\t\t\tif (targets[block.x + \",\" + block.y]) {\n\t\t\t\tindexes.push(index);\n\t\t\t}\n\t\t}\n\t\t// 批量移除\n\t\tcore.removeBlockByIndexes(indexes);\n\t\tcore.redrawMap();\n\t}\n\n\tcore.playSound('炸弹');\n\tcore.drawTip(core.material.items[itemId].name + '使用成功，你获得了 ' + money + ' 金币');\n\tcore.status.hero.money += money;\n\n\t// 触发战后事件\n\tif (todo.length > 0) core.insertAction(todo);\n})();",
+		"text": "可以炸掉勇士面前的怪物",
+		"useItemEffect": "(function () {\n\tvar bombList = []; // 炸掉的怪物坐标列表\n\tvar todo = []; // 炸弹后事件\n\tvar money = 0,\n\t\texp = 0; // 炸弹获得的金币和经验\n\n\tvar canBomb = function (x, y) {\n\t\tvar block = core.getBlock(x, y);\n\t\tif (block == null || block.disable || block.event.cls.indexOf('enemy') != 0) return false;\n\t\tvar enemy = core.material.enemys[block.event.id];\n\t\treturn enemy && !enemy.notBomb;\n\t};\n\n\tvar bomb = function (x, y) {\n\t\tif (!canBomb(x, y)) return;\n\t\tbombList.push([x, y]);\n\t\tvar id = core.getBlockId(x, y),\n\t\t\tenemy = core.material.enemys[id];\n\t\tmoney += core.getEnemyValue(enemy, 'money', x, y) || 0;\n\t\texp += core.getEnemyValue(enemy, 'exp', x, y) || 0;\n\t\tcore.push(todo, core.floors[core.status.floorId].afterBattle[x + \",\" + y]);\n\t\tcore.push(todo, enemy.afterBattle);\n\t\tcore.removeBlock(x, y);\n\t}\n\n\t// 如果要多方向可炸，把这里的false改成true\n\tif (true) {\n\t\tvar scan = core.utils.scan; // 多方向炸时默认四方向，如果要改成八方向炸可以改成 core.utils.scan2\n\t\tfor (var direction in scan) {\n\t\t\tvar delta = scan[direction];\n\t\t\tbomb(core.getHeroLoc('x') + delta.x, core.getHeroLoc('y') + delta.y);\n\t\t}\n\t} else {\n\t\t// 仅炸当前\n\t\tbomb(core.nextX(), core.nextY());\n\t}\n\n\tif (bombList.length == 0) {\n\t\tcore.playSound('操作失败');\n\t\tcore.drawTip('当前无法使用' + core.material.items[itemId].name, itemId);\n\t\tcore.addItem(itemId, 1);\n\t\treturn;\n\t}\n\n\tcore.playSound('炸弹');\n\tcore.drawTip(core.material.items[itemId].name + '使用成功', itemId);\n\n\t// 取消这里的注释可以炸弹后获得金币和经验\n\t//core.status.hero.money += money;\n\t//core.status.hero.exp += exp;\n\n\t// 取消这里的注释可以炸弹引发战后事件\n\tif (todo.length > 0) core.insertAction(todo);\n\n})();",
 		"canUseItemEffect": "true",
-		"hideInToolbox": true,
-		"hideInReplay": true,
-		"itemEffectTip": "你得到 炸弹 可炸死你周围的敌人"
-	},
-	"centerFly": {
-		"cls": "tools",
-		"name": "瞬移",
-		"text": "可以飞向当前楼层中心对称的位置",
-		"useItemEffect": "core.playSound('飞行器');\ncore.clearMap('hero');\ncore.setHeroLoc('x', core.bigmap.width - 1 - core.getHeroLoc('x'));\ncore.setHeroLoc('y', core.bigmap.height - 1 - core.getHeroLoc('y'));\ncore.drawHero();\ncore.setFlag('talking', 0);\ncore.drawTip(core.material.items[itemId].name + '使用成功');",
-		"canUseItemEffect": "(function () {\n\tvar toX = core.bigmap.width - 1 - core.getHeroLoc('x'),\n\t\ttoY = core.bigmap.height - 1 - core.getHeroLoc('y');\n\tvar id = core.getBlockId(toX, toY);\n\treturn id === null || id === 'none' || id === 'airwall';\n})();",
 		"hideInToolbox": true,
 		"hideInReplay": true
 	},
-	"upFly": {
+	"centerFly": {
 		"cls": "tools",
-		"name": "向上传送",
-		"text": "传送到楼上对应位置",
-		"useItemEffect": "(function () {\n\tvar floorId = core.floorIds[core.floorIds.indexOf(core.status.floorId) + 1];\n\tif (core.status.event.id == 'action') {\n\t\tcore.insertAction([\n\t\t\t{ \"type\": \"changeFloor\", \"loc\": [core.getHeroLoc('x'), core.getHeroLoc('y')], \"floorId\": floorId },\n\t\t\t{ \"type\": \"tip\", \"text\": core.material.items[itemId].name + '使用成功' }\n\t\t]);\n\t} else {\n\t\tcore.changeFloor(floorId, null, core.status.hero.loc, null, function () {\n\t\t\tcore.drawTip(core.material.items[itemId].name + '使用成功');\n\t\t\tcore.replay();\n\t\t});\n\t}\n})();",
-		"canUseItemEffect": "(function () {\n\tvar floorId = core.status.floorId,\n\t\tindex = core.floorIds.indexOf(floorId);\n\tif (index >= 49) {\n\t\tcore.drawTip('你已在最高层');\n\t\treturn false;\n\t}\n\tif (index < core.floorIds.length - 1) {\n\t\tvar toId = core.floorIds[index + 1],\n\t\t\ttoX = core.getHeroLoc('x'),\n\t\t\ttoY = core.getHeroLoc('y');\n\t\tvar mw = core.floors[toId].width,\n\t\t\tmh = core.floors[toId].height;\n\t\tif (toX >= 0 && toX < mw && toY >= 0 && toY < mh && core.getBlockId(toX, toY, toId) == null) {\n\t\t\treturn true;\n\t\t}\n\t}\n\tcore.drawTip('上一层此位置有东西');\n\treturn false;\n})();",
+		"name": "对称飞行器",
+		"text": "可以飞向当前楼层中心对称的位置",
+		"useItemEffect": "core.playSound('centerFly.mp3');\ncore.clearMap('hero');\ncore.setHeroLoc('x', core.bigmap.width - 1 - core.getHeroLoc('x'));\ncore.setHeroLoc('y', core.bigmap.height - 1 - core.getHeroLoc('y'));\ncore.drawHero();\ncore.setFlag('talking', 0);\ncore.drawTip(core.material.items[itemId].name + '使用成功');",
+		"canUseItemEffect": "(function () {\n\tvar toX = core.bigmap.width - 1 - core.getHeroLoc('x'),\n\t\ttoY = core.bigmap.height - 1 - core.getHeroLoc('y');\n\tvar id = core.getBlockId(toX, toY);\n\treturn id == null;\n})();",
 		"hideInToolbox": true,
 		"hideInReplay": true,
-		"itemEffectTip": "你得到 向上传送 传送到楼上对应位置"
+		"useItemEvent": null
+	},
+	"upFly": {
+		"cls": "tools",
+		"name": "上楼器",
+		"text": "可以飞往楼上的相同位置",
+		"useItemEffect": "(function () {\n\tvar floorId = core.floorIds[core.floorIds.indexOf(core.status.floorId) + 1];\n\tif (core.status.event.id == 'action') {\n\t\tcore.insertAction([\n\t\t\t{ \"type\": \"changeFloor\", \"loc\": [core.getHeroLoc('x'), core.getHeroLoc('y')], \"floorId\": floorId },\n\t\t\t{ \"type\": \"tip\", \"text\": core.material.items[itemId].name + '使用成功' }\n\t\t]);\n\t} else {\n\t\tcore.changeFloor(floorId, null, core.status.hero.loc, null, function () {\n\t\t\tcore.drawTip(core.material.items[itemId].name + '使用成功');\n\t\t\tcore.replay();\n\t\t});\n\t}\n})();",
+		"canUseItemEffect": "(function () {\n\tvar floorId = core.status.floorId,\n\t\tindex = core.floorIds.indexOf(floorId);\n\tif (floorId == 'MT49') return false;\n\tif (index < core.floorIds.length - 1) {\n\t\tvar toId = core.floorIds[index + 1],\n\t\t\ttoX = core.getHeroLoc('x'),\n\t\t\ttoY = core.getHeroLoc('y');\n\t\tvar mw = core.floors[toId].width,\n\t\t\tmh = core.floors[toId].height;\n\t\tif (toX >= 0 && toX < mw && toY >= 0 && toY < mh && core.getBlock(toX, toY, toId) == null) {\n\t\t\treturn true;\n\t\t}\n\t}\n\treturn false;\n})();",
+		"hideInToolbox": true,
+		"hideInReplay": true
 	},
 	"downFly": {
 		"cls": "tools",
-		"name": "向下传送",
-		"text": "传送到楼下对应位置",
+		"name": "下楼器",
+		"text": "可以飞往楼下的相同位置",
 		"useItemEffect": "(function () {\n\tvar floorId = core.floorIds[core.floorIds.indexOf(core.status.floorId) - 1];\n\tif (core.status.event.id == 'action') {\n\t\tcore.insertAction([\n\t\t\t{ \"type\": \"changeFloor\", \"loc\": [core.getHeroLoc('x'), core.getHeroLoc('y')], \"floorId\": floorId },\n\t\t\t{ \"type\": \"tip\", \"text\": core.material.items[itemId].name + '使用成功' }\n\t\t]);\n\t} else {\n\t\tcore.changeFloor(floorId, null, core.status.hero.loc, null, function () {\n\t\t\tcore.drawTip(core.material.items[itemId].name + '使用成功');\n\t\t\tcore.replay();\n\t\t});\n\t}\n})();",
-		"canUseItemEffect": "(function () {\n\tvar floorId = core.status.floorId,\n\t\tindex = core.floorIds.indexOf(floorId);\n\tif (index < 1) {\n\t\tcore.drawTip('你已在地下室');\n\t\treturn false;\n\t}\n\tvar toId = core.floorIds[index - 1],\n\t\ttoX = core.getHeroLoc('x'),\n\t\ttoY = core.getHeroLoc('y');\n\tvar mw = core.floors[toId].width,\n\t\tmh = core.floors[toId].height;\n\tif (toX >= 0 && toX < mw && toY >= 0 && toY < mh && core.getBlock(toX, toY, toId) == null) {\n\t\treturn true;\n\t}\n\tcore.drawTip('下一层此位置有东西');\n\treturn false;\n})();",
+		"canUseItemEffect": "(function () {\n\tvar floorId = core.status.floorId,\n\t\tindex = core.floorIds.indexOf(floorId);\n\tif (floorId == \"MT50\") return false;\n\tif (index > 0) {\n\t\tvar toId = core.floorIds[index - 1],\n\t\t\ttoX = core.getHeroLoc('x'),\n\t\t\ttoY = core.getHeroLoc('y');\n\t\tvar mw = core.floors[toId].width,\n\t\t\tmh = core.floors[toId].height;\n\t\tif (toX >= 0 && toX < mw && toY >= 0 && toY < mh && core.getBlock(toX, toY, toId) == null) {\n\t\t\treturn true;\n\t\t}\n\t}\n\treturn false;\n})();",
 		"hideInToolbox": true,
-		"hideInReplay": true,
-		"itemEffectTip": "你得到 向下传送 传送到楼下对应位置"
+		"hideInReplay": true
 	},
 	"earthquake": {
 		"cls": "tools",
 		"name": "地震卷轴",
-		"text": "可破坏一层楼的墙",
-		"useItemEffect": "(function () {\n\tvar indexes = [];\n\tfor (var index in core.status.thisMap.blocks) {\n\t\tvar block = core.status.thisMap.blocks[index];\n\t\tif (!block.disable && block.event.canBreak) {\n\t\t\tindexes.push(index);\n\t\t}\n\t}\n\tcore.removeBlockByIndexes(indexes);\n\tcore.redrawMap();\n\tcore.playSound('door.mp3');\n\tcore.drawTip(core.material.items[itemId].name + '使用成功');\n})();",
-		"canUseItemEffect": "true",
+		"text": "可以破坏当前层的所有墙壁",
+		"useItemEffect": "(function () {\n\tcore.autosave();\n\tvar indexes = [];\n\tfor (var index in core.status.thisMap.blocks) {\n\t\tvar block = core.status.thisMap.blocks[index];\n\t\tif (!block.disable && block.event.canBreak) {\n\t\t\tindexes.push(index);\n\t\t}\n\t}\n\tcore.removeBlockByIndexes(indexes);\n\tcore.drawMap();\n\tcore.playSound('door.mp3');\n\tcore.drawTip(core.material.items[itemId].name + '使用成功');\n})();",
+		"canUseItemEffect": "(function () {\n\treturn core.status.thisMap.blocks.filter(function (block) {\n\t\treturn !block.disable && block.event.canBreak;\n\t}).length > 0;\n})();",
 		"hideInToolbox": true,
-		"hideInReplay": true,
-		"itemEffectTip": "你得到 地震卷 可破坏一层楼的墙"
+		"hideInReplay": true
 	},
 	"poisonWine": {
 		"cls": "tools",
@@ -491,7 +483,7 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 	"hammer": {
 		"cls": "tools",
 		"name": "圣锤",
-		"text": "消灭面前的怪物"
+		"text": "该道具尚未被定义"
 	},
 	"lifeWand": {
 		"cls": "tools",
@@ -568,16 +560,15 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 	},
 	"wand": {
 		"cls": "constants",
-		"name": "备忘录",
-		"text": "自动记录谈话内容",
+		"name": "记事本",
+		"text": "可以记录并查看老人和商人说的话",
 		"itemEffect": null,
 		"canUseItemEffect": "true",
 		"hideInToolbox": true,
 		"hideInReplay": true,
-		"useItemEffect": "core.insertCommonEvent(\"记事本\");",
-		"itemEffectTip": "你得到 备忘录，自动记录谈话内容"
+		"useItemEffect": "core.insertCommonEvent(\"记事本\");"
 	},
-	"moneyPocket": {
+	"pack": {
 		"cls": "items",
 		"name": "钱袋",
 		"itemEffect": "core.status.hero.money += 500",
@@ -592,11 +583,1430 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 		"hideInToolbox": true,
 		"hideInReplay": true
 	},
-	"centerFly3": {
+	"itembag": {
 		"cls": "items",
-		"name": "瞬移",
-		"itemEffect": "core.addItem('centerFly', 3)",
-		"itemEffectTip": "你得到 瞬移 可用3次到达中心对称的对应点",
-		"text": "可用3次到达中心对称的对应点"
+		"name": "新物品",
+		"canUseItemEffect": "true"
+	},
+	"itemequip": {
+		"cls": "items",
+		"name": "新物品",
+		"canUseItemEffect": "true"
+	},
+	"I359": {
+		"cls": "items",
+		"name": "新物品",
+		"canUseItemEffect": "true"
+	},
+	"I360": {
+		"cls": "items",
+		"name": "新物品",
+		"canUseItemEffect": "true"
+	},
+	"I361": {
+		"cls": "items",
+		"name": "新物品",
+		"canUseItemEffect": "true"
+	},
+	"I362": {
+		"cls": "items",
+		"name": "新物品",
+		"canUseItemEffect": "true"
+	},
+	"I363": {
+		"cls": "items",
+		"name": "新物品",
+		"canUseItemEffect": "true"
+	},
+	"I383": {
+		"cls": "items",
+		"name": "新物品",
+		"canUseItemEffect": "true"
+	},
+	"I384": {
+		"cls": "items",
+		"name": "火龙斧",
+		"text": "拾取后直接进入背包，占用上宽下窄的 2×4 格。",
+		"backpackWeapon": {
+			"id": "fireDragonAxe",
+			"name": "火龙斧",
+			"shape": [
+				[
+					1,
+					1
+				],
+				[
+					1,
+					1
+				],
+				[
+					1,
+					0
+				],
+				[
+					1,
+					0
+				]
+			],
+			"image": "project/images/fireDragonAxe.png",
+			"imageCrop": [
+				3,
+				15,
+				149,
+				285,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I385": {
+		"cls": "constants",
+		"name": "新物品",
+		"canUseItemEffect": "true",
+		"useItemEffect": "core.plugin.boxbar()",
+		"text": ""
+	},
+	"I386": {
+		"cls": "items",
+		"name": "暗龙枪",
+		"text": "拾取后直接进入背包，占用展开式的 3×5 格。",
+		"backpackWeapon": {
+			"id": "darkDragonSpear",
+			"name": "暗龙枪",
+			"shape": [
+				[
+					0,
+					1,
+					0
+				],
+				[
+					1,
+					1,
+					1
+				],
+				[
+					0,
+					1,
+					0
+				],
+				[
+					0,
+					1,
+					0
+				],
+				[
+					0,
+					1,
+					0
+				]
+			],
+			"image": "project/images/darkDragonSpear.png",
+			"imageCrop": [
+				7,
+				7,
+				139,
+				299,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I387": {
+		"cls": "items",
+		"name": "高达拳",
+		"text": "拾取后直接进入背包，占用紧凑的 2×3 格。",
+		"backpackWeapon": {
+			"id": "gundamFist",
+			"name": "高达拳",
+			"shape": [
+				[
+					1,
+					1
+				],
+				[
+					1,
+					1
+				],
+				[
+					1,
+					0
+				]
+			],
+			"image": "project/images/gundamFist.png",
+			"imageCrop": [
+				3,
+				14,
+				70,
+				135,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I372": {
+		"cls": "items",
+		"name": "薛定谔",
+		"text": "拾取后直接进入背包，占用 1×3 格。",
+		"backpackWeapon": {
+			"id": "xde",
+			"name": "薛定谔",
+			"shape": [
+				[
+					1
+				],
+				[
+					1
+				],
+				[
+					1
+				]
+			],
+			"image": "project/images/xde.png"
+		},
+		"itemEffectTip": "，已放入背包",
+		"shape": "[\n\t[1, 0],\n\t[1, 1],\n\t[1, 1]\n]"
+	},
+	"I388": {
+		"cls": "items",
+		"name": "暗斧",
+		"text": "拾取后直接进入背包，占用斧头轮廓的 2×4 格。",
+		"backpackWeapon": {
+			"id": "darkAxe",
+			"name": "暗斧",
+			"shape": [
+				[
+					1,
+					1
+				],
+				[
+					0,
+					1
+				],
+				[
+					0,
+					1
+				],
+				[
+					0,
+					1
+				]
+			],
+			"image": "project/images/darkAxe.png",
+			"imageCrop": [
+				24,
+				8,
+				133,
+				286,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I389": {
+		"cls": "items",
+		"name": "暗书",
+		"text": "拾取后直接进入背包，占用 2×2 格。",
+		"backpackWeapon": {
+			"id": "darkBook",
+			"name": "暗书",
+			"shape": [
+				[
+					1,
+					1
+				],
+				[
+					1,
+					1
+				]
+			],
+			"image": "project/images/darkBook.png",
+			"imageCrop": [
+				8,
+				3,
+				59,
+				71,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I390": {
+		"cls": "items",
+		"name": "大掉宝杖",
+		"text": "拾取后直接进入背包，占用 1×4 格。",
+		"backpackWeapon": {
+			"id": "largeDropStaff",
+			"name": "大掉宝杖",
+			"shape": [
+				[
+					1
+				],
+				[
+					1
+				],
+				[
+					1
+				],
+				[
+					1
+				]
+			],
+			"image": "project/images/largeDropStaff.png",
+			"imageCrop": [
+				2,
+				25,
+				72,
+				272,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I391": {
+		"cls": "items",
+		"name": "大红",
+		"text": "拾取后直接进入背包，占用 1×1 格。",
+		"backpackWeapon": {
+			"id": "bigRedPotion",
+			"name": "大红",
+			"shape": [
+				[
+					1
+				]
+			],
+			"image": "project/images/bigRedPotion.png",
+			"imageCrop": [
+				3,
+				4,
+				67,
+				68,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I393": {
+		"cls": "items",
+		"name": "电鳗",
+		"text": "拾取后直接进入背包，占用弯曲轮廓的 2×5 格。",
+		"backpackWeapon": {
+			"id": "electricEel",
+			"name": "电鳗",
+			"shape": [
+				[
+					1,
+					1
+				],
+				[
+					0,
+					1
+				],
+				[
+					0,
+					1
+				],
+				[
+					0,
+					1
+				],
+				[
+					0,
+					1
+				]
+			],
+			"image": "project/images/electricEel.png",
+			"imageCrop": [
+				8,
+				4,
+				125,
+				301,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I394": {
+		"cls": "items",
+		"name": "掉宝杖",
+		"text": "拾取后直接进入背包，占用 1×4 格。",
+		"backpackWeapon": {
+			"id": "dropStaff",
+			"name": "掉宝杖",
+			"shape": [
+				[
+					1
+				],
+				[
+					1
+				],
+				[
+					1
+				],
+				[
+					1
+				]
+			],
+			"image": "project/images/dropStaff.png",
+			"imageCrop": [
+				2,
+				25,
+				72,
+				272,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I395": {
+		"cls": "items",
+		"name": "方天",
+		"text": "拾取后直接进入背包，占用 2×2 格。",
+		"backpackWeapon": {
+			"id": "fangTian",
+			"name": "方天",
+			"shape": [
+				[
+					1,
+					1
+				],
+				[
+					1,
+					1
+				]
+			],
+			"image": "project/images/fangTian.png",
+			"imageCrop": [
+				2,
+				23,
+				80,
+				115,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I396": {
+		"cls": "items",
+		"name": "风短",
+		"text": "拾取后直接进入背包，占用 1×2 格。",
+		"backpackWeapon": {
+			"id": "windDagger",
+			"name": "风短",
+			"shape": [
+				[
+					1
+				],
+				[
+					1
+				]
+			],
+			"image": "project/images/windDagger.png",
+			"imageCrop": [
+				4,
+				6,
+				64,
+				145,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I397": {
+		"cls": "items",
+		"name": "风吉他",
+		"text": "拾取后直接进入背包，占用琴身轮廓的 2×4 格。",
+		"backpackWeapon": {
+			"id": "windGuitar",
+			"name": "风吉他",
+			"shape": [
+				[
+					1,
+					0
+				],
+				[
+					1,
+					0
+				],
+				[
+					1,
+					0
+				],
+				[
+					1,
+					1
+				]
+			],
+			"image": "project/images/windGuitar.png",
+			"imageCrop": [
+				2,
+				13,
+				77,
+				278,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I398": {
+		"cls": "items",
+		"name": "风妈铳",
+		"text": "拾取后直接进入背包，占用 1×3 格。",
+		"backpackWeapon": {
+			"id": "windGun",
+			"name": "风妈铳",
+			"shape": [
+				[
+					1
+				],
+				[
+					1
+				],
+				[
+					1
+				]
+			],
+			"image": "project/images/windGun.png",
+			"imageCrop": [
+				7,
+				9,
+				62,
+				221,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I399": {
+		"cls": "items",
+		"name": "给爆",
+		"text": "拾取后直接进入背包，占用 1×4 格。",
+		"backpackWeapon": {
+			"id": "giBao",
+			"name": "给爆",
+			"shape": [
+				[
+					1
+				],
+				[
+					1
+				],
+				[
+					1
+				],
+				[
+					1
+				]
+			],
+			"image": "project/images/giBao.png",
+			"imageCrop": [
+				2,
+				7,
+				70,
+				299,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I400": {
+		"cls": "items",
+		"name": "光剑",
+		"text": "拾取后直接进入背包，占用 1×4 格。",
+		"backpackWeapon": {
+			"id": "lightSword",
+			"name": "光剑",
+			"shape": [
+				[
+					1
+				],
+				[
+					1
+				],
+				[
+					1
+				],
+				[
+					1
+				]
+			],
+			"image": "project/images/lightSword.png",
+			"imageCrop": [
+				2,
+				22,
+				71,
+				264,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I401": {
+		"cls": "items",
+		"name": "光龙拳",
+		"text": "拾取后直接进入背包，占用 2×2 格。",
+		"backpackWeapon": {
+			"id": "lightDragonFist",
+			"name": "光龙拳",
+			"shape": [
+				[
+					1,
+					1
+				],
+				[
+					1,
+					1
+				]
+			],
+			"image": "project/images/lightDragonFist.png",
+			"imageCrop": [
+				2,
+				12,
+				72,
+				102,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I402": {
+		"cls": "items",
+		"name": "锅",
+		"text": "拾取后直接进入背包，占用 1×3 格。",
+		"backpackWeapon": {
+			"id": "pan",
+			"name": "锅",
+			"shape": [
+				[
+					1
+				],
+				[
+					1
+				],
+				[
+					1
+				]
+			],
+			"image": "project/images/pan.png",
+			"imageCrop": [
+				2,
+				39,
+				72,
+				169,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I403": {
+		"cls": "items",
+		"name": "火贝斯",
+		"text": "拾取后直接进入背包，占用 1×3 格。",
+		"backpackWeapon": {
+			"id": "fireBass",
+			"name": "火贝斯",
+			"shape": [
+				[
+					1
+				],
+				[
+					1
+				],
+				[
+					1
+				]
+			],
+			"image": "project/images/fireBass.png",
+			"imageCrop": [
+				2,
+				6,
+				72,
+				223,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I404": {
+		"cls": "items",
+		"name": "火吉他",
+		"text": "拾取后直接进入背包，占用 1×3 格。",
+		"backpackWeapon": {
+			"id": "fireGuitar",
+			"name": "火吉他",
+			"shape": [
+				[
+					1
+				],
+				[
+					1
+				],
+				[
+					1
+				]
+			],
+			"image": "project/images/fireGuitar.png",
+			"imageCrop": [
+				1,
+				4,
+				71,
+				224,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I405": {
+		"cls": "items",
+		"name": "机神盾",
+		"text": "拾取后直接进入背包，占用 2×3 格。",
+		"backpackWeapon": {
+			"id": "machineGodShield",
+			"name": "机神盾",
+			"shape": [
+				[
+					1,
+					1
+				],
+				[
+					1,
+					1
+				],
+				[
+					1,
+					1
+				]
+			],
+			"image": "project/images/machineGodShield.png",
+			"imageCrop": [
+				3,
+				11,
+				149,
+				216,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I406": {
+		"cls": "items",
+		"name": "金刚晶",
+		"text": "拾取后直接进入背包，占用 1×1 格。",
+		"backpackWeapon": {
+			"id": "diamondCrystal",
+			"name": "金刚晶",
+			"shape": [
+				[
+					1
+				]
+			],
+			"image": "project/images/diamondCrystal.png",
+			"imageCrop": [
+				8,
+				4,
+				58,
+				69,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I407": {
+		"cls": "items",
+		"name": "金罐子",
+		"text": "拾取后直接进入背包，占用 2×2 格。",
+		"backpackWeapon": {
+			"id": "goldJar",
+			"name": "金罐子",
+			"shape": [
+				[
+					1,
+					1
+				],
+				[
+					1,
+					1
+				]
+			],
+			"image": "project/images/goldJar.png",
+			"imageCrop": [
+				3,
+				7,
+				147,
+				143,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I408": {
+		"cls": "items",
+		"name": "精灵火龙",
+		"text": "拾取后直接进入背包，占用 2×2 格。",
+		"backpackWeapon": {
+			"id": "spiritFireDragon",
+			"name": "精灵火龙",
+			"shape": [
+				[
+					1,
+					1
+				],
+				[
+					1,
+					1
+				]
+			],
+			"image": "project/images/spiritFireDragon.png",
+			"imageCrop": [
+				12,
+				5,
+				138,
+				151,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I409": {
+		"cls": "items",
+		"name": "精灵欧罗巴",
+		"text": "拾取后直接进入背包，占用 2×2 格。",
+		"backpackWeapon": {
+			"id": "spiritEuropa",
+			"name": "精灵欧罗巴",
+			"shape": [
+				[
+					1,
+					1
+				],
+				[
+					1,
+					1
+				]
+			],
+			"image": "project/images/spiritEuropa.png",
+			"imageCrop": [
+				8,
+				4,
+				144,
+				151,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I410": {
+		"cls": "items",
+		"name": "兰短",
+		"text": "拾取后直接进入背包，占用 1×2 格。",
+		"backpackWeapon": {
+			"id": "blueDagger",
+			"name": "兰短",
+			"shape": [
+				[
+					1
+				],
+				[
+					1
+				]
+			],
+			"image": "project/images/blueDagger.png",
+			"imageCrop": [
+				16,
+				7,
+				40,
+				145,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I411": {
+		"cls": "items",
+		"name": "连战短",
+		"text": "拾取后直接进入背包，占用 1×2 格。",
+		"backpackWeapon": {
+			"id": "comboDagger",
+			"name": "连战短",
+			"shape": [
+				[
+					1
+				],
+				[
+					1
+				]
+			],
+			"image": "project/images/comboDagger.png",
+			"imageCrop": [
+				8,
+				5,
+				58,
+				147,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I412": {
+		"cls": "items",
+		"name": "派",
+		"text": "拾取后直接进入背包，占用 1×2 格。",
+		"backpackWeapon": {
+			"id": "pie",
+			"name": "派",
+			"shape": [
+				[
+					1
+				],
+				[
+					1
+				]
+			],
+			"image": "project/images/pie.png",
+			"imageCrop": [
+				2,
+				17,
+				72,
+				119,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I413": {
+		"cls": "items",
+		"name": "螃蟹",
+		"text": "拾取后直接进入背包，占用上宽下窄的 2×4 格。",
+		"backpackWeapon": {
+			"id": "crab",
+			"name": "螃蟹",
+			"shape": [
+				[
+					1,
+					1
+				],
+				[
+					1,
+					1
+				],
+				[
+					0,
+					1
+				],
+				[
+					0,
+					1
+				]
+			],
+			"image": "project/images/crab.png",
+			"imageCrop": [
+				1,
+				3,
+				153,
+				271,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I414": {
+		"cls": "items",
+		"name": "七星剑",
+		"text": "拾取后直接进入背包，占用 1×3 格。",
+		"backpackWeapon": {
+			"id": "sevenStarSword",
+			"name": "七星剑",
+			"shape": [
+				[
+					1
+				],
+				[
+					1
+				],
+				[
+					1
+				]
+			],
+			"image": "project/images/sevenStarSword.png",
+			"imageCrop": [
+				10,
+				10,
+				55,
+				216,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I415": {
+		"cls": "items",
+		"name": "石油铳",
+		"text": "拾取后直接进入背包，占用 1×2 格。",
+		"backpackWeapon": {
+			"id": "oilGun",
+			"name": "石油铳",
+			"shape": [
+				[
+					1
+				],
+				[
+					1
+				]
+			],
+			"image": "project/images/oilGun.png",
+			"imageCrop": [
+				6,
+				7,
+				62,
+				141,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I416": {
+		"cls": "items",
+		"name": "石油斧",
+		"text": "拾取后直接进入背包，占用巨斧轮廓的 3×5 格。",
+		"backpackWeapon": {
+			"id": "oilAxe",
+			"name": "石油斧",
+			"shape": [
+				[
+					1,
+					1,
+					1
+				],
+				[
+					1,
+					1,
+					1
+				],
+				[
+					0,
+					1,
+					0
+				],
+				[
+					0,
+					1,
+					0
+				],
+				[
+					0,
+					1,
+					0
+				]
+			],
+			"image": "project/images/oilAxe.png",
+			"imageCrop": [
+				29,
+				5,
+				177,
+				304,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I417": {
+		"cls": "items",
+		"name": "石油弓",
+		"text": "拾取后直接进入背包，占用 1×3 格。",
+		"backpackWeapon": {
+			"id": "oilBow",
+			"name": "石油弓",
+			"shape": [
+				[
+					1
+				],
+				[
+					1
+				],
+				[
+					1
+				]
+			],
+			"image": "project/images/oilBow.png",
+			"imageCrop": [
+				6,
+				6,
+				63,
+				222,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I418": {
+		"cls": "items",
+		"name": "石油杖",
+		"text": "拾取后直接进入背包，占用 1×3 格。",
+		"backpackWeapon": {
+			"id": "oilStaff",
+			"name": "石油杖",
+			"shape": [
+				[
+					1
+				],
+				[
+					1
+				],
+				[
+					1
+				]
+			],
+			"image": "project/images/oilStaff.png",
+			"imageCrop": [
+				1,
+				6,
+				76,
+				211,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I419": {
+		"cls": "items",
+		"name": "水短",
+		"text": "拾取后直接进入背包，占用 1×2 格。",
+		"backpackWeapon": {
+			"id": "waterDagger",
+			"name": "水短",
+			"shape": [
+				[
+					1
+				],
+				[
+					1
+				]
+			],
+			"image": "project/images/waterDagger.png",
+			"imageCrop": [
+				20,
+				5,
+				41,
+				149,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I420": {
+		"cls": "items",
+		"name": "水龙伞",
+		"text": "拾取后直接进入背包，占用伞盖轮廓的 2×3 格。",
+		"backpackWeapon": {
+			"id": "waterDragonUmbrella",
+			"name": "水龙伞",
+			"shape": [
+				[
+					1,
+					1
+				],
+				[
+					1,
+					1
+				],
+				[
+					0,
+					1
+				]
+			],
+			"image": "project/images/waterDragonUmbrella.png",
+			"imageCrop": [
+				11,
+				3,
+				132,
+				231,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I421": {
+		"cls": "items",
+		"name": "天羽羽斩",
+		"text": "拾取后直接进入背包，占用 1×4 格。",
+		"backpackWeapon": {
+			"id": "ameNoHabakiri",
+			"name": "天羽羽斩",
+			"shape": [
+				[
+					1
+				],
+				[
+					1
+				],
+				[
+					1
+				],
+				[
+					1
+				]
+			],
+			"image": "project/images/ameNoHabakiri.png",
+			"imageCrop": [
+				4,
+				11,
+				77,
+				290,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I422": {
+		"cls": "items",
+		"name": "铜盾",
+		"text": "拾取后直接进入背包，占用 2×2 格。",
+		"backpackWeapon": {
+			"id": "bronzeShield",
+			"name": "铜盾",
+			"shape": [
+				[
+					1,
+					1
+				],
+				[
+					1,
+					1
+				]
+			],
+			"image": "project/images/bronzeShield.png",
+			"imageCrop": [
+				2,
+				2,
+				152,
+				153,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I423": {
+		"cls": "items",
+		"name": "土龙杖",
+		"text": "拾取后直接进入背包，占用 1×3 格。",
+		"backpackWeapon": {
+			"id": "earthDragonStaff",
+			"name": "土龙杖",
+			"shape": [
+				[
+					1
+				],
+				[
+					1
+				],
+				[
+					1
+				]
+			],
+			"image": "project/images/earthDragonStaff.png",
+			"imageCrop": [
+				3,
+				7,
+				72,
+				221,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I424": {
+		"cls": "items",
+		"name": "土妹剑",
+		"text": "拾取后直接进入背包，占用 1×3 格。",
+		"backpackWeapon": {
+			"id": "earthGirlSword",
+			"name": "土妹剑",
+			"shape": [
+				[
+					1
+				],
+				[
+					1
+				],
+				[
+					1
+				]
+			],
+			"image": "project/images/earthGirlSword.png",
+			"imageCrop": [
+				2,
+				21,
+				72,
+				196,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I425": {
+		"cls": "items",
+		"name": "银盾",
+		"text": "拾取后直接进入背包，占用盾牌轮廓的 2×3 格。",
+		"backpackWeapon": {
+			"id": "silverShield",
+			"name": "银盾",
+			"shape": [
+				[
+					1,
+					1
+				],
+				[
+					1,
+					1
+				],
+				[
+					0,
+					1
+				]
+			],
+			"image": "project/images/silverShield.png",
+			"imageCrop": [
+				2,
+				7,
+				151,
+				220,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I426": {
+		"cls": "items",
+		"name": "银罐子",
+		"text": "拾取后直接进入背包，占用 2×2 格。",
+		"backpackWeapon": {
+			"id": "silverJar",
+			"name": "银罐子",
+			"shape": [
+				[
+					1,
+					1
+				],
+				[
+					1,
+					1
+				]
+			],
+			"image": "project/images/silverJar.png",
+			"imageCrop": [
+				21,
+				16,
+				119,
+				120,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I427": {
+		"cls": "items",
+		"name": "炸虾",
+		"text": "拾取后直接进入背包，占用 1×3 格。",
+		"backpackWeapon": {
+			"id": "friedShrimp",
+			"name": "炸虾",
+			"shape": [
+				[
+					1
+				],
+				[
+					1
+				],
+				[
+					1
+				]
+			],
+			"image": "project/images/friedShrimp.png",
+			"imageCrop": [
+				3,
+				23,
+				69,
+				182,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I428": {
+		"cls": "items",
+		"name": "真化七星剑",
+		"text": "拾取后直接进入背包，占用 1×3 格。",
+		"backpackWeapon": {
+			"id": "trueSevenStarSword",
+			"name": "真化七星剑",
+			"shape": [
+				[
+					1
+				],
+				[
+					1
+				],
+				[
+					1
+				]
+			],
+			"image": "project/images/trueSevenStarSword.png",
+			"imageCrop": [
+				10,
+				10,
+				55,
+				215,
+				312,
+				312
+			]
+		},
+		"itemEffectTip": "，已放入背包"
+	},
+	"I429": {
+		"cls": "tools",
+		"name": "背包格子",
+		"text": "用于解锁一个背包格子。打开背包后，点击带加号的虚线格即可消耗一个。",
+		"canUseItemEffect": "false"
 	}
 }

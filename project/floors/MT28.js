@@ -6,19 +6,19 @@ main.floors.MT28=
     "width": 13,
     "height": 13,
     "map": [
-    [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1],
-    [  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1],
-    [  1,  0,  0,  0,  0,  0,  1,  1,  1,  1,  1,  0,  1],
-    [  1,  0,  0,  0,  0,  0,  1,  0,  0,  0,  1,  0,  1],
-    [  1,  0,  0,  0,  0,  0,  1,  0,124,  0,  1,  0,  1],
-    [  1,  0,  0,  0,  0,  0,  1,  0,  0,  0,  1,  0,  1],
-    [  1,  0,  0,  0,  0,  0,  1,  1,  0,  1,  1,  0,  1],
-    [  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1],
-    [  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1],
-    [  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1],
-    [  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1],
-    [  1, 87,  0,  0,  0,  0,  0,  0,  0,  0,  0, 88,  1],
-    [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1]
+    [330,330,330,330,330,330,330,330,330,330,330,330,330],
+    [330,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,330],
+    [330,  0,  0,  0,  0,  0,  1,  1,  1,  1,  1,  0,330],
+    [330,  0,  0,  0,  0,  0,  1,  0,  0,  0,  1,  0,330],
+    [330,  0,  0,  0,  0,  0,  1,  0,124,  0,  1,  0,330],
+    [330,  0,  0,  0,  0,  0,  1,  0,  0,  0,  1,  0,330],
+    [330,  0,  0,  0,  0,  0,  1,  1,  0,  1,  1,  0,330],
+    [330,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,330],
+    [330,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,330],
+    [330,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,330],
+    [330,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,330],
+    [330, 87,  0,  0,  0,  0,  0,  0,  0,  0,  0, 88,330],
+    [330,330,330,330,330,330,330,330,330,330,330,330,330]
 ],
     "canFlyTo": true,
     "canFlyFrom": true,
@@ -33,159 +33,32 @@ main.floors.MT28=
     "events": {
         "8,4": [
             {
-                "type": "while",
-                "condition": "true",
-                "data": [
-                    {
-                        "type": "choices",
-                        "text": "\t[商人,specialTrader]我按100个金币一把的价格回收黄钥匙，你出售吗？",
-                        "choices": [
-                            {
-                                "text": "我太需要了",
-                                "action": [
-                                    {
-                                        "type": "if",
-                                        "condition": "(item:yellowKey>=1)",
-                                        "true": [
-                                            {
-                                                "type": "playSound",
-                                                "name": "获得道具"
-                                            },
-                                            {
-                                                "type": "setValue",
-                                                "name": "item:yellowKey",
-                                                "operator": "-=",
-                                                "value": "1"
-                                            },
-                                            {
-                                                "type": "setValue",
-                                                "name": "status:money",
-                                                "operator": "+=",
-                                                "value": "100"
-                                            },
-                                            {
-                                                "type": "setValue",
-                                                "name": "flag:黄钥匙出售次数",
-                                                "operator": "+=",
-                                                "value": "1"
-                                            }
-                                        ],
-                                        "false": [
-                                            {
-                                                "type": "tip",
-                                                "text": "你没有黄钥匙"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "text": "卖5把",
-                                "action": [
-                                    {
-                                        "type": "if",
-                                        "condition": "(item:yellowKey>=5)",
-                                        "true": [
-                                            {
-                                                "type": "playSound",
-                                                "name": "获得道具"
-                                            },
-                                            {
-                                                "type": "setValue",
-                                                "name": "item:yellowKey",
-                                                "operator": "-=",
-                                                "value": "5"
-                                            },
-                                            {
-                                                "type": "setValue",
-                                                "name": "status:money",
-                                                "operator": "+=",
-                                                "value": "500"
-                                            },
-                                            {
-                                                "type": "setValue",
-                                                "name": "flag:黄钥匙出售次数",
-                                                "operator": "+=",
-                                                "value": "5"
-                                            }
-                                        ],
-                                        "false": [
-                                            {
-                                                "type": "tip",
-                                                "text": "黄钥匙不够"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "text": "全卖了",
-                                "action": [
-                                    {
-                                        "type": "if",
-                                        "condition": "(item:yellowKey>=1)",
-                                        "true": [
-                                            {
-                                                "type": "playSound",
-                                                "name": "获得道具"
-                                            },
-                                            {
-                                                "type": "setValue",
-                                                "name": "flag:当前黄钥匙数",
-                                                "value": "item:yellowKey"
-                                            },
-                                            {
-                                                "type": "setValue",
-                                                "name": "item:yellowKey",
-                                                "value": "0"
-                                            },
-                                            {
-                                                "type": "setValue",
-                                                "name": "status:money",
-                                                "operator": "+=",
-                                                "value": "100*flag:当前黄钥匙数"
-                                            },
-                                            {
-                                                "type": "setValue",
-                                                "name": "flag:黄钥匙出售次数",
-                                                "operator": "+=",
-                                                "value": "flag:当前黄钥匙数"
-                                            }
-                                        ],
-                                        "false": [
-                                            {
-                                                "type": "tip",
-                                                "text": "你没有黄钥匙"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "text": "下次再说",
-                                "action": [
-                                    {
-                                        "type": "break",
-                                        "n": 1
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
+                "type": "comment",
+                "text": "\\d\\c[24]\\i[T370]\\c\r[gray]无限使用"
+            },
+            {
+                "type": "comment",
+                "text": "\\d\\c[24]\\i[yellowKey]\\c\r[rgb(244,108,108)](-1)\\c[24]\\i[T358]\\i[I361]\\c\r[rgb(224,210,69)](+100G)"
+            },
+            {
+                "type": "comment",
+                "text": "\\d\\c[24]\\i[yellowKey]\\c\r[rgb(244,108,108)](-10)\\c[24]\\i[T358]\\i[I361]\\c\r[rgb(224,210,69)](+1000G)"
+            },
+            {
+                "type": "openShop",
+                "id": "shop5",
+                "open": true
             }
         ]
     },
     "changeFloor": {
-        "1,11": {
-            "floorId": ":next",
-            "stair": "downFloor",
-            "time": 0
-        },
         "11,11": {
             "floorId": ":before",
-            "stair": "upFloor",
-            "time": 0
+            "stair": "upFloor"
+        },
+        "1,11": {
+            "floorId": ":next",
+            "stair": "downFloor"
         }
     },
     "afterBattle": {},
@@ -220,5 +93,7 @@ main.floors.MT28=
     ],
     "autoEvent": {},
     "beforeBattle": {},
-    "cannotMoveIn": {}
+    "cannotMoveIn": {},
+    "bg2map": [],
+    "fg2map": []
 }

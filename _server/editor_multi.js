@@ -7,11 +7,11 @@ editor_multi = function () {
     var extraKeys = {
         "Ctrl-/": function (cm) { cm.toggleComment(); },
         "Ctrl-B": function (cm) { ternServer.jumpToDef(cm); },
-        "Ctrl-Q": function(cm) { ternServer.rename(cm); },
+        "Ctrl-Q": function (cm) { ternServer.rename(cm); },
         "Cmd-F": CodeMirror.commands.findPersistent,
         "Ctrl-F": CodeMirror.commands.findPersistent,
         "Ctrl-R": CodeMirror.commands.replaceAll,
-        "Ctrl-D": function(cm){ cm.foldCode(cm.getCursor()); },
+        "Ctrl-D": function (cm) { cm.foldCode(cm.getCursor()); },
         "Ctrl-O": function () { editor_multi.openUrl('/_docs/#/api'); },
         "Ctrl-P": function () { editor_multi.openUrl('https://h5mota.com/plugins/'); }
     };
@@ -27,9 +27,7 @@ editor_multi = function () {
         lineWrapping: true,
         continueComments: "Enter",
         gutters: ["CodeMirror-lint-markers", "CodeMirror-linenumbers", "CodeMirror-foldgutter"],
-        lint: {
-            esversion: 11
-        },
+        lint: true,
         autocomplete: true,
         autoCloseBrackets: true,
         styleActiveLine: true,
@@ -50,14 +48,14 @@ editor_multi = function () {
         'Ctrl-P': '打开在线插件列表（Ctrl+P）'
     };
 
-    document.getElementById('codemirrorCommands').innerHTML = 
-        "<option value='' selected>执行操作...</option>" + 
+    document.getElementById('codemirrorCommands').innerHTML =
+        "<option value='' selected>执行操作...</option>" +
         Object.keys(commandsName).map(function (name) {
             return "<option value='" + name + "'>" + commandsName[name] + "</option>"
         }).join('');
 
     var coredef = terndefs_f6783a0a_522d_417e_8407_94c67b692e50[2];
-    Object.keys(core.material.enemys).forEach(function (name){
+    Object.keys(core.material.enemys).forEach(function (name) {
         coredef.core.material.enemys[name] = {
             "!type": "enemy",
             "!doc": core.material.enemys[name].name || "怪物"
@@ -238,7 +236,15 @@ editor_multi = function () {
         document.getElementById('left7').style = 'z-index:-1;opacity: 0;';
     }
     editor_multi.setLint = function () {
-        codeEditor.setOption("lint", editor_multi.lintAutocomplete);
+        if (editor_multi.lintAutocomplete) {
+            codeEditor.setOption("lint", {
+                options: {
+                    esversion: 2021
+                }
+            });
+        } else {
+            codeEditor.setOption("lint", false);
+        }
         codeEditor.setOption("autocomplete", editor_multi.lintAutocomplete);
         document.getElementById("lintCheckbox").checked = editor_multi.lintAutocomplete;
     }
@@ -486,6 +492,22 @@ editor_multi = function () {
         editor_multi.lintAutocomplete = true
         editor_multi.setLint()
         editor_multi.importFile(dict[mod])
+    }
+
+    // 字体大小
+    {
+        const CONFIG_KEY = "editor_multi.fontSize";
+        let fontsize = editor.config.get(CONFIG_KEY, 14);
+        const input = document.getElementById("editor_multi_fontsize");
+        const check = document.getElementById("editor_multi_fontweight")
+        input.value = fontsize;
+        editor_multi.setFontSize = function () {
+            const value = Number(input.value);
+            editor.config.set(CONFIG_KEY, value);
+            const ele = codeEditor.getWrapperElement()
+            ele.style.fontSize = `${value}px`;
+            ele.style.fontWeight = `${check.checked ? 'bold' : 'normal'}`
+        }
     }
 
     return editor_multi;

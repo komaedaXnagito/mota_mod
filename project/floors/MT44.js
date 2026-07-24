@@ -6,43 +6,50 @@ main.floors.MT44=
     "width": 13,
     "height": 13,
     "map": [
-    [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1],
-    [  1, 87,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1],
-    [  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1],
-    [  1,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0,  0,  1],
-    [  1,  0,  0,  0,  0,  1,  1,  1,  0,  0,  0,  0,  1],
-    [  1,  0,  0,  0,  1,  1, 31,  1,  1,  0,  0,  0,  1],
-    [  1,  0,  0,  1,  1, 31, 44, 31,  1,  1,  0,  0,  1],
-    [  1,  0,  0,  0,  1,  1, 31,  1,  1,  0,  0,  0,  1],
-    [  1,  0,  0,  0,  0,  1, 85,  1,  0,  0,  0,  0,  1],
-    [  1,  0,  0,  0,  0,223,  0,223,  0,  0,  0,  0,  1],
-    [  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1],
-    [  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1],
-    [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1]
+    [330,330,330,330,330,330,330,330,330,330,330,330,330],
+    [330, 87,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,330],
+    [330,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,330],
+    [330,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0,  0,330],
+    [330,  0,  0,  0,  0,  1,  1,  1,  0,  0,  0,  0,330],
+    [330,  0,  0,  0,  1,  1, 31,  1,  1,  0,  0,  0,330],
+    [330,  0,  0,  1,  1, 31, 44, 31,  1,  1,  0,  0,330],
+    [330,  0,  0,  0,  1,  1, 31,  1,  1,  0,  0,  0,330],
+    [330,  0,  0,  0,  0,  1, 85,  1,  0,  0,  0,  0,330],
+    [330,  0,  0,  0,  0,223,  0,223,  0,  0,  0,  0,330],
+    [330,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,330],
+    [330, 88,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,330],
+    [330,330,330,330,330,330,330,330,330,330,330,330,330]
 ],
     "canFlyTo": false,
-    "canFlyFrom": true,
+    "canFlyFrom": false,
     "canUseQuickShop": false,
     "images": [],
     "ratio": 5,
     "defaultGround": "ground",
-    "bgm": "44f.mp3",
+    "bgm": "section5.mp3",
     "firstArrive": [],
     "eachArrive": [],
     "parallelDo": "",
     "events": {},
     "changeFloor": {
+        "1,11": {
+            "floorId": ":before",
+            "stair": "upFloor"
+        },
         "1,1": {
             "floorId": ":next",
-            "stair": "downFloor",
-            "time": 0
+            "stair": "downFloor"
         }
     },
     "afterBattle": {
         "5,9": [
             {
+                "type": "function",
+                "function": "function(){\nvar bool = true;\nvar loc_arr = [\n\t[5, 9],\n\t[7, 9],\n]\nloc_arr.forEach(loc => {\n\tif (core.getBlockCls(loc[0], loc[1]) == \"enemys\") {\n\t\tbool = false;\n\t}\n});\ncore.setFlag(\"open_yes\", bool)\n}"
+            },
+            {
                 "type": "if",
-                "condition": "flag:44",
+                "condition": "flag:open_yes",
                 "true": [
                     {
                         "type": "openDoor",
@@ -50,22 +57,22 @@ main.floors.MT44=
                             6,
                             8
                         ]
-                    }
-                ],
-                "false": [
+                    },
                     {
-                        "type": "setValue",
-                        "operator": "+=",
-                        "name": "flag:44",
-                        "value": "1"
+                        "type": "hide",
+                        "time": 0
                     }
                 ]
             }
         ],
         "7,9": [
             {
+                "type": "function",
+                "function": "function(){\nvar bool = true;\nvar loc_arr = [\n\t[5, 9],\n\t[7, 9],\n]\nloc_arr.forEach(loc => {\n\tif (core.getBlockCls(loc[0], loc[1]) == \"enemys\") {\n\t\tbool = false;\n\t}\n});\ncore.setFlag(\"open_yes\", bool)\n}"
+            },
+            {
                 "type": "if",
-                "condition": "flag:44",
+                "condition": "flag:open_yes",
                 "true": [
                     {
                         "type": "openDoor",
@@ -73,14 +80,10 @@ main.floors.MT44=
                             6,
                             8
                         ]
-                    }
-                ],
-                "false": [
+                    },
                     {
-                        "type": "setValue",
-                        "operator": "+=",
-                        "name": "flag:44",
-                        "value": "1"
+                        "type": "hide",
+                        "time": 0
                     }
                 ]
             }
@@ -110,5 +113,6 @@ main.floors.MT44=
     "autoEvent": {},
     "beforeBattle": {},
     "cannotMoveIn": {},
-    "isHide": true
+    "bg2map": [],
+    "fg2map": []
 }

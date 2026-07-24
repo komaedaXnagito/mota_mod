@@ -836,6 +836,14 @@ action
     |   insert_1_s
     |   insert_2_s
     |   exit_s
+    |   setanimate_s
+    |   deleteanimate_s
+    |   playanimate_s
+    |   clearanimate_s
+    |   animateloop_s
+    |   animatemove_s
+    |   animatereverse_s
+    |   animatepause_s
     |   setBlock_s
     |   turnBlock_s
     |   showFloorImg_s
@@ -870,6 +878,10 @@ action
     |   unfollow_s
     |   animate_s
     |   animate_1_s
+    |   moveAnimate_s
+    |   animateResize_s
+    |   pauseAnimate_s
+    |   remuseAnimate_s
     |   stopAnimate_s
     |   vibrate_s
     |   showImage_s
@@ -884,7 +896,6 @@ action
     |   setCurtain_1_s
     |   screenFlash_s
     |   setWeather_s
-    |   generateMove_s
     |   move_s
     |   moveAction_s
     |   moveHero_s
@@ -1375,13 +1386,13 @@ return code;
 */;
 
 setFloor_s
-    :   '设置楼层属性' ':' Floor_Meta_List '楼层名' IdString? '为' JsonEvalString Newline
+    :   '设置楼层属性' ':'  '楼层ID' IdString? '的' Floor_Meta_List '改为' JsonEvalString Newline
 
 
 /* setFloor_s
 tooltip : setFloor：设置楼层属性；该楼层属性和编辑器中的楼层属性一一对应
 helpUrl : /_docs/#/instruction
-default : ["title","","\"新楼层名\""]
+default : ["","title","\"新楼层名\""]
 allFloorIds : ['IdString_0']
 colour : this.dataColor
 IdString_0 = IdString_0 && (', "floorId": "'+IdString_0+'"');
@@ -1466,23 +1477,22 @@ return code;
 */;
 
 hide_s
-    :   '隐藏事件' 'x' EvalString? ',' 'y' EvalString? '楼层' IdString? '同时删除' Bool '动画时间' IntString? '彻底删除' Bool '不等待执行完毕' Bool? Newline
+    :   '隐藏事件' 'x' EvalString? ',' 'y' EvalString? '楼层' IdString? '同时删除' Bool '动画时间' IntString? '不等待执行完毕' Bool? Newline
     
 
 /* hide_s
 tooltip : hide: 隐藏事件，同时可删除
 helpUrl : /_docs/#/instruction
-default : ["","","",true,"",false,false]
+default : ["","","",true,"",false]
 selectPoint : ["EvalString_0", "EvalString_1", "IdString_0"]
 allFloorIds : ['IdString_0']
 colour : this.mapColor
 var floorstr = MotaActionFunctions.processMultiLoc(EvalString_0, EvalString_1);
 IdString_0 = IdString_0 && (', "floorId": "'+IdString_0+'"');
-Bool_0 = Bool_0 ?', "remove": true':'';
 IntString_0 = IntString_0 ?(', "time": '+IntString_0):'';
-var destruct = Bool_1 ? ', "destruct": true' : '';
-Bool_2 = Bool_2 ?', "async": true':'';
-var code = '{"type": "hide"'+floorstr+IdString_0+Bool_0+IntString_0+destruct+Bool_2+'},\n';
+Bool_0 = Bool_0 ?', "remove": true':'';
+Bool_1 = Bool_1 ?', "async": true':'';
+var code = '{"type": "hide"'+floorstr+IdString_0+Bool_0+IntString_0+Bool_1+'},\n';
 return code;
 */;
 
@@ -1606,7 +1616,7 @@ return code;
 */;
 
 setBlock_s
-    :   '转变图块为' EvalString 'x' EvalString? ',' 'y' EvalString? '楼层' IdString? '彻底转变' Bool '动画时间' IntString? '不等待执行完毕' Bool Newline
+    :   '转变图块为' EvalString 'x' EvalString? ',' 'y' EvalString? '楼层' IdString? '动画时间' IntString? '不等待执行完毕' Bool Newline
     
 
 /* setBlock_s
@@ -1615,14 +1625,13 @@ helpUrl : /_docs/#/instruction
 colour : this.mapColor
 allFloorIds : ['IdString_0']
 allIds : ['EvalString_0']
-default : ["yellowDoor", "", "", "", false, "", false]
+default : ["yellowDoor","","","","",false]
 selectPoint : ["EvalString_1", "EvalString_2", "IdString_0"]
 var floorstr = MotaActionFunctions.processMultiLoc(EvalString_1, EvalString_2);
 IdString_0 = IdString_0 && (', "floorId": "'+IdString_0+'"');
-var destruct = Bool_0 ? (', "destruct": true') : '';
 IntString_0 = IntString_0 && (', "time": ' + IntString_0);
-Bool_1 = Bool_1 ? (', "async": true') : '';
-var code = '{"type": "setBlock", "number": "'+EvalString_0+'"'+floorstr+IdString_0+destruct+IntString_0+Bool_1+'},\n';
+Bool_0 = Bool_0 ? (', "async": true') : '';
+var code = '{"type": "setBlock", "number": "'+EvalString_0+'"'+floorstr+IdString_0+IntString_0+Bool_0+'},\n';
 return code;
 */;
 
@@ -2051,6 +2060,211 @@ var code = '{"type": "vibrate", "direction": "'+Vibrate_List_0+'", "time": '+Int
 return code;
 */;
 
+
+setanimate_s
+    :   '新建 帧动画/特效' '名称' EvalString '参照点偏移像素x' IntString? 'y' IntString? '动画大小 宽' IntString '高' IntString '总帧数' IntString BGNL?Newline
+        '图片序列（同一帧后面覆盖先前的，默认起始帧为0，结束帧为最后一帧)'BGNL?Newline
+        '(剪裁区域不填写为全图，绘制区域不填写为全画面）'BGNL?Newline
+        '(不透明度100为不透明，默认为不透明，结束透明度默认与开始不透明度相同）'BGNL?Newline
+        animateDrawableimage+? Newline
+        '音频序列（到达对应帧进行播放）'BGNL?Newline
+        animateDrawablesound+? Newline
+
+/* setanimate_s
+tooltip : setanimate:设置帧动画/特效（此项仅储存，不播放）
+helpUrl : /_docs/#/instruction
+default : ["sword","","",192,192,60]
+colour : this.imageColor
+IntString_0 = IntString_0 ? (', "px": '+IntString_0+'') : '';
+IntString_1 = IntString_1 ? (', "py": '+IntString_1+'') : '';
+var imageList=animateDrawableimage_0?',"imageList": [\n'+animateDrawableimage_0.slice(0,-1)+'\n]':''
+var soundList=animateDrawablesound_0?',"soundList": [\n'+animateDrawablesound_0.slice(0,-1)+'\n]':''
+var code = '{"type": "setanimate", "name": "'+EvalString_0+'"'+IntString_0+IntString_1+' ,"width": '+IntString_2+', "height": '+IntString_3+', "allFarme": '+IntString_4+imageList+soundList+'},\n';
+return code;
+*/;
+
+animateDrawableList
+    : animateDrawableimage
+    | animateDrawablesound
+    | animateDrawabletextEmpty;
+
+animateDrawableimage
+    : '图片' EvalString? '起始帧' IntString? '起始不透明度'  IntString? BGNL? Newline 
+    '剪裁坐标cx' IntString? 'cy' IntString? '宽' IntString? '高' IntString? '绘制坐标x'IntString? 'y' IntString? '宽' IntString? '高' IntString?'旋转角度'IntString? BGNL? Newline
+    '结束帧' IntString? '结束不透明度'  IntString? '剪裁坐标cx' IntString? 'cy' IntString? '宽' IntString? '高' IntString? '绘制坐标x'IntString? 'y' IntString? '宽' IntString? '高' IntString?'旋转角度'IntString? Newline
+/* animateDrawableimage
+tooltip : 帧动画图片列表
+helpUrl : /_docs/#/instruction
+default : ["","","","","","","","","","","","","","","","","","","","","","",""]
+colour : this.subColor
+allImages : ['EvalString_0']
+if (IntString_1&&(IntString_1 < 0||IntString_1>100)) throw new Error('不透明度范围为0-100,0为透明,100为不透明,不填默认为不透明')
+if (IntString_12&&(IntString_12 < 0||IntString_12>100)) throw new Error('不透明度范围为0-100,0为透明,100为不透明,不填默认为不透明')
+IntString_0 = IntString_0 ? (', "beforefarme": '+IntString_0+'') : '';
+IntString_1 = IntString_1 ? (', "globalAlpha": '+IntString_1+'') : '';
+IntString_2 = IntString_2 ? (', "cx": '+IntString_2+'') : '';
+IntString_3 = IntString_3 ? (', "cy": '+IntString_3+'') : '';
+IntString_4 = IntString_4 ? (', "cw": '+IntString_4+'') : '';
+IntString_5 = IntString_5 ? (', "ch": '+IntString_5+'') : '';
+IntString_6 = IntString_6 ? (', "x": '+IntString_6+'') : '';
+IntString_7 = IntString_7 ? (', "y": '+IntString_7+'') : '';
+IntString_8 = IntString_8 ? (', "w": '+IntString_8+'') : '';
+IntString_9 = IntString_9 ? (', "h": '+IntString_9+'') : '';
+IntString_10 = IntString_10 ? (', "angle": '+IntString_10+'') : '';
+
+IntString_11 = IntString_11 ? (', "afterfarme": '+IntString_11+'') : '';
+IntString_12 = IntString_12 ? (', "aglobalAlpha": '+IntString_12+'') : '';
+IntString_13 = IntString_13 ? (', "acx": '+IntString_13+'') : '';
+IntString_14 = IntString_14 ? (', "acy": '+IntString_14+'') : '';
+IntString_15 = IntString_15? (', "acw": '+IntString_15+'') : '';
+IntString_16 = IntString_16 ? (', "ach": '+IntString_16+'') : '';
+IntString_17 = IntString_17 ? (', "ax": '+IntString_17+'') : '';
+IntString_18 = IntString_18 ? (', "ay": '+IntString_18+'') : '';
+IntString_19 = IntString_19 ? (', "aw": '+IntString_19+'') : '';
+IntString_20 = IntString_20 ? (', "ah": '+IntString_20+'') : '';
+IntString_21 = IntString_21 ? (', "aangle": '+IntString_21+'') : '';
+return '{ "image":"'+EvalString_0+'"'+IntString_0+IntString_1+IntString_2+IntString_3+IntString_4+IntString_5+IntString_6+IntString_7+IntString_8+IntString_9+IntString_10+IntString_11+IntString_12+IntString_13+IntString_14+IntString_15+IntString_16+IntString_17+IntString_18+IntString_19+IntString_20+IntString_21+'},'
+*/;
+
+animateDrawablesound
+    : '音效' EvalString? '起始帧' IntString '是否停止其他音效'Bool  Newline 
+ 
+/* animateDrawablesound
+tooltip : 帧动画配音
+helpUrl : /_docs/#/instruction
+default : ["",0,false]
+colour : this.subColor
+allSounds : ['EvalString_0']
+
+return '{ "sound":"'+EvalString_0+'","startfarme":'+IntString_0+',"stopbefore":'+Bool_0+'},'
+*/;
+
+animateDrawabletextEmpty
+    :   Newline
+    
+/* animateDrawabletextEmpty
+var code = [];
+return code;
+*/;
+
+deleteanimate_s
+    :   '删除 帧动画/特效' '名称' EvalString Newline
+
+/* deleteanimate_s
+tooltip : deleteanimate:删除储存的帧动画
+helpUrl : /_docs/#/instruction
+default : ["zone"]
+
+colour : this.imageColor
+
+var code = '{"type": "deleteanimate", "name": "'+EvalString_0+'"},\n';
+return code;
+*/;
+
+playanimate_s
+    :   '播放 帧动画/特效' '名称' EvalString '编号'IntString?'像素x'  IntString? 'y' IntString? '跟随勇士' Bool 'x方向缩放' EvalString? 'y方向缩放'EvalString?'循环'Bool'倒放'Bool  Newline
+
+/* playanimate_s
+tooltip : playanimate:播放帧动画，选择跟随勇士后x、y将失效改为勇士中心坐标
+helpUrl : /_docs/#/instruction
+default : ["zone","","","",false,1,1,false,false]
+previewBlock : true
+colour : this.imageColor
+IntString_0 = IntString_0 ? (', "id": '+IntString_0+'') : '';
+IntString_1 = IntString_1 ? (', "x": '+IntString_1+'') : '';
+IntString_2 = IntString_2 ? (', "y": '+IntString_2+'') : '';
+if(EvalString_1&&!/^(0|([1-9][0-9]*))(\.[\d]+)?$/.test(EvalString_1))throw new Error("此项仅能填写小数、整数或不填");
+if(EvalString_2&&!/^(0|([1-9][0-9]*))(\.[\d]+)?$/.test(EvalString_2))throw new Error("此项仅能填写小数、整数或不填");
+EvalString_1 = EvalString_1 ? (', "scalex": '+EvalString_1+'') : '';
+EvalString_2 = EvalString_2 ? (', "scaley": '+EvalString_2+'') : '';
+var code = '{"type": "playanimate", "name": "'+EvalString_0+'"'+IntString_0+IntString_1+IntString_2+',"hero":'+Bool_0+EvalString_1+EvalString_2+',"loop":'+Bool_1+',"reverse":'+Bool_2+'},\n';
+return code;
+*/;
+
+clearanimate_s
+    :   '停止正在播放的帧动画/特效  编号'IntString?'（不填编号为对所有正在进行的帧动画/特效进行操作）'
+
+/* clearanimate_s
+tooltip : clearanimate:清空正在播放的帧动画
+helpUrl : /_docs/#/instruction
+default : [""]
+colour : this.imageColor
+IntString_0 = IntString_0 ? (', "id": '+IntString_0+'') : '';
+var code = '{"type": "clearanimate"'+IntString_0+'},\n';
+return code;
+*/;
+
+animateloop_s
+    :   '调整正在播放的帧动画/特效  编号'IntString?'循环'Bool '（不填编号为对所有正在进行的帧动画/特效进行操作）'
+
+/* animateloop_s
+tooltip : animateloop:调整正在播放的帧动画（循环）
+helpUrl : /_docs/#/instruction
+default : ["",false]
+colour : this.imageColor
+IntString_0 = IntString_0 ? (', "id": '+IntString_0+'') : ''
+var code = '{"type": "animateloop"'+IntString_0+',"loop":'+Bool_0+'},\n';
+return code;
+*/;
+
+animatemove_s
+    :   '移动正在播放的帧动画/特效  编号'IntString'目标像素x'PosString'y'PosString Absolute_List'移动时长'PosString'移动模式'MoveMode2_List? '（仅可对有编号的非跟随勇士帧动画/特效使用）'
+
+/* animatemove_s
+tooltip : animateloop:调整正在播放的帧动画（循环）
+helpUrl : /_docs/#/instruction
+default : [0,0,0,false,1000,'']
+previewBlock : true
+colour : this.imageColor
+IntString_0 = IntString_0 ? (', "id": '+IntString_0+'') : ''
+MoveMode2_List_0=MoveMode2_List_0?(', "style": "'+MoveMode2_List_0+'"') : ''
+var code = '{"type": "animatemove"'+IntString_0+',"px":'+PosString_0+',"py":'+PosString_1+',"relative":'+Absolute_List_0+',"time":'+PosString_2+MoveMode2_List_0+'},\n';
+return code;
+*/;
+
+
+moveAnimate_s
+    :   '移动正在播放的帧动画/特效  编号'IntString'目标像素x'PosString'y'PosString Absolute_List'移动时长'PosString'移动模式'MoveMode2_List? '（仅可对有编号的非跟随勇士动画使用）'
+
+/* moveAnimate_s
+tooltip : animateloop:调整正在播放的帧动画（循环）
+helpUrl : /_docs/#/instruction
+default : [0,0,0,false,1000,'']
+previewBlock : true
+colour : this.soundColor
+IntString_0 = IntString_0 ? (', "id": '+IntString_0+'') : ''
+MoveMode2_List_0=MoveMode2_List_0?(', "style": "'+MoveMode2_List_0+'"') : ''
+var code = '{"type": "moveAnimate"'+IntString_0+',"px":'+PosString_0+',"py":'+PosString_1+',"relative":'+Absolute_List_0+',"time":'+PosString_2+MoveMode2_List_0+'},\n';
+return code;
+*/;
+
+
+animatereverse_s
+    :   '调整正在播放的帧动画/特效  编号'IntString?'倒放'Bool'（不填编号为对所有正在进行的帧动画/特效进行操作）'
+
+/* animatereverse_s
+tooltip : animatereverse:调整正在播放的帧动画（倒放）
+helpUrl : /_docs/#/instruction
+default : ["",false]
+colour : this.imageColor
+IntString_0 = IntString_0 ? (', "id": '+IntString_0+'') : ''
+var code = '{"type": "animatereverse"'+IntString_0+',"reverse":'+Bool_0+'},\n';
+return code;
+*/;
+
+animatepause_s
+    :   '调整正在播放的帧动画/特效  编号'IntString?'暂停'Bool'（不填编号为对所有正在进行的帧动画/特效进行操作）'
+
+/* animatepause_s
+tooltip :  animatereverse:调整正在播放的帧动画（暂停）
+helpUrl : /_docs/#/instruction
+default : ["",false]
+colour : this.imageColor
+IntString_0 = IntString_0 ? (', "id": '+IntString_0+'') : ''
+var code = '{"type": "animatepause"'+IntString_0+',"pause":'+Bool_0+'},\n';
+return code;
+*/;
+
 animate_s
     :   '显示动画' EvalString '位置' 'x' PosString? 'y' PosString? '相对窗口坐标' Bool '不等待执行完毕' Bool Newline
     
@@ -2086,16 +2300,71 @@ var code = '{"type": "animate", "name": "'+EvalString_0+'", "loc": "hero"'+Bool_
 return code;
 */;
 
+animateResize_s
+ :   '显示动画' EvalString '编号'PosString? '中心像素' 'x' PosString? 'y' PosString?'以勇士为中心' Bool'倒放' Bool'循环'Bool'不等待执行完毕' Bool Newline
+    
+
+/* animateResize_s
+tooltip : animateResize：显示动画并选择是否以勇士为中心及倒放（以勇士为中心时，中心像素坐标无效）
+helpUrl : /_docs/#/instruction
+default : ["zone","","","",false,false,false,false]
+allAnimates : ['EvalString_0']
+previewBlock : true
+material : ["./project/animates/", "EvalString_0"]
+colour : this.soundColor
+
+PosString_0 = PosString_0?', "id":'+PosString_0:'';
+Bool_0 = Bool_0?', "hero": true':'';
+if(!Bool_0){
+    if(PosString_1===""||PosString_2==="")throw new Error("中心像素坐标或以勇士为中心必须填写一项");
+    
+    Bool_0=',"centerX":'+PosString_1+', "centerY":'+PosString_2
+}
+if(Bool_2&&!Bool_3 )throw new Error("循环必须与不等待执行完毕同时开启，否则将陷入死循环")
+Bool_1 = Bool_1?', "reverse": true':'';
+Bool_2 = Bool_2?', "loop": true':'';
+Bool_3 = Bool_3?', "async": true':'';
+var code = '{"type": "animateResize", "name": "'+EvalString_0+'"'+PosString_0+Bool_0+Bool_1+Bool_2+Bool_3+'},\n';
+return code;
+*/;
+
+pauseAnimate_s
+ :   '暂停动画编号'PosString?'（不填写编号为暂停所有）' Newline
+
+/* pauseAnimate_s
+tooltip : pauseAnimate：暂停动画（不填写编号为暂停所有）
+helpUrl : /_docs/#/instruction
+default : ['']
+colour : this.soundColor
+PosString_0 = PosString_0?', "id":'+PosString_0:'';
+var code = '{"type": "pauseAnimate"'+PosString_0+'},\n';
+return code;
+*/;
+
+remuseAnimate_s
+ :   '继续动画编号'PosString?'（不填写编号为继续所有）'  Newline
+
+/* remuseAnimate_s
+tooltip : remuseAnimate：继续动画（不填写编号为继续所有）
+helpUrl : /_docs/#/instruction
+default : ['']
+colour : this.soundColor
+PosString_0 = PosString_0?', "id":'+PosString_0:'';
+var code = '{"type": "remuseAnimate"'+PosString_0+'},\n';
+return code;
+*/;
+
 stopAnimate_s
-    :   '停止所有动画' '执行动画回调' Bool Newline
+    :   '停止动画编号'PosString?'（不填写编号为继续所有）' '执行动画回调' Bool Newline
 
 /* stopAnimate_s
-tooltip : stopAnimate：停止所有动画
+tooltip : stopAnimate：停止动画（不填写编号为继续所有）
 helpUrl : /_docs/#/instruction
-default : [false]
+default : ["",false]
 colour : this.soundColor
+PosString_0 = PosString_0?', "id":'+PosString_0:'';
 Bool_0 = Bool_0?', "doCallback": true':'';
-var code = '{"type": "stopAnimate"'+Bool_0+'},\n';
+var code = '{"type": "stopAnimate"'+PosString_0+Bool_0+'},\n';
 return code;
 */;
 
@@ -2372,31 +2641,8 @@ if(Weather_List_0===''||Weather_List_0==='null'||Weather_List_0==null)code = '{"
 return code;
 */;
 
-generateMove_s : '生成并移动图块' 'x' PosString? ',' 'y' PosString? '图块ID' EvalString '动画时间' IntString? '不消失' Bool '淡入时间' IntString? 'Z轴' IntString? '不等待执行完毕' Bool BGNL? moveDirection+ Newline
-/* generateMove_s tooltip : generateMove: 生成一个图块并移动,位置可不填代表当前事件
-   helpUrl : /_docs/#/instruction
-   default : ["","","yellowDoor",500,true,0,100,false,null]
-   selectPoint : ["PosString_0", "PosString_1"]
-   allIds : ['EvalString_0']
-   colour : this.mapColor
-   var floorstr = '';
-   if (PosString_0 && PosString_1) {
-     floorstr = ', "loc": ['+PosString_0+','+PosString_1+']';
-   }
-   IntString_0 = IntString_0 ?(', "time": '+IntString_0):'';
-   Bool_0 = Bool_0?', "keep": true':', "keep": false';
-   IntString_1 = IntString_1 ?(', "fadeInTime": '+IntString_1):'';
-   IntString_2 = IntString_2 ?(', "zIndex": '+IntString_2):'';
-   Bool_1 = Bool_1?', "async": true':'';
-   // 将EvalString_0直接放在双引号内，避免转义问题
-   var code = '{"type": "generateMove"'+floorstr+', "id": "'+EvalString_0+'"'+IntString_0+Bool_0+IntString_1+IntString_2+Bool_1+', "steps": ['+moveDirection_0.trim().substring(2)+']},\n';
-   return code;
-*/;
-
-
-
 move_s
-    :   '移动事件' 'x' PosString? ',' 'y' PosString? '动画时间' IntString? '不消失' Bool '不等待执行完毕' Bool BGNL? moveDirection+ Newline
+    :   '移动事件' 'x' PosString? ',' 'y' PosString? '动画时间' IntString? '不消失' Bool '不等待执行完毕' Bool BGNL? move2Direction+ Newline
     
 
 /* move_s
@@ -2412,10 +2658,9 @@ if (PosString_0 && PosString_1) {
 IntString_0 = IntString_0 ?(', "time": '+IntString_0):'';
 Bool_0 = Bool_0?', "keep": true':'';
 Bool_1 = Bool_1?', "async": true':'';
-var code = '{"type": "move"'+floorstr+IntString_0+Bool_0+Bool_1+', "steps": ['+moveDirection_0.trim().substring(2)+']},\n';
+var code = '{"type": "move"'+floorstr+IntString_0+Bool_0+Bool_1+', "steps": ['+move2Direction_0.trim().substring(2)+']},\n';
 return code;
 */;
-
 
 moveDirection
     :   '移动方向' Move_List '格数' Int Newline
@@ -2427,6 +2672,18 @@ default : ["up", 0]
 colour : this.subColor
 if (Move_List_0 == 'speed' && Int_0 < 16) throw '设置的移动速度值不得小于16';
 return ', "' + Move_List_0 + ':' + Int_0 + '"';
+*/;
+
+move2Direction
+    :   '移动方向' Move2_List '格数' Int Newline
+
+/* move2Direction
+tooltip : 移动方向
+helpUrl : /_docs/#/instruction
+default : ["up", 0]
+colour : this.subColor
+if (Move2_List_0 == 'speed' && Int_0 < 16) throw '设置的移动速度值不得小于16';
+return ', "' + Move2_List_0 + ':' + Int_0 + '"';
 */;
 
 moveAction_s
@@ -2831,15 +3088,14 @@ return code;
 */;
 
 choices_s
-    :   '选项' ':' EvalString_Multi? BGNL? '标题' EvalString? '图像' IdString? 
-        '超时毫秒数' Int '宽度' IntString? '不计入录像' Bool? BGNL? 
-        Newline choicesContext+ BEND Newline
+    :   '选项' ':' EvalString_Multi? BGNL? '标题' EvalString? '图像' IdString? '超时毫秒数' Int '宽度' IntString? BGNL? Newline choicesContext+ BEND Newline
+
 
 /* choices_s
 tooltip : choices: 给用户提供选项
 helpUrl : /_docs/#/instruction
 previewBlock : true
-default : ["","作者","king",0,'',false]
+default : ["","流浪者","trader",0,'']
 allIds : ['IdString_0']
 var title='';
 if (EvalString_0==''){
@@ -2853,8 +3109,7 @@ EvalString_Multi_0 = title+EvalString_Multi_0;
 EvalString_Multi_0 = EvalString_Multi_0 ?(', "text": "'+EvalString_Multi_0+'"'):'';
 Int_0 = Int_0 ? (', "timeout": '+Int_0) : '';
 IntString_0 = IntString_0 ? (', "width": ' + IntString_0) : '';
-Bool_0 = Bool_0 ? (', "norecord": ' + Bool_0) : '';
-var code = ['{"type": "choices"',EvalString_Multi_0,Int_0,IntString_0,Bool_0,
+var code = ['{"type": "choices"',EvalString_Multi_0,Int_0,IntString_0,
     block.isCollapsed()?', "_collapsed": true':'',
     block.isEnabled()?'':', "_disabled": true',
     ', "choices": [\n',
@@ -2864,41 +3119,36 @@ return code;
 */;
 
 choicesContext
-    :   '子选项' EvalString '图标' IdString? '颜色' ColorString? Colour 
-        '启用条件' EvalString? '出现条件' EvalString? '不计入录像' Bool? 
-        BGNL? Newline action+
+    :   '子选项' EvalString '图标' IdString? '颜色' ColorString? Colour '启用条件' EvalString? '出现条件' EvalString? BGNL? Newline action+
+
 
 /* choicesContext
 tooltip : 选项的选择
 helpUrl : /_docs/#/instruction
-default : ["提示文字:红钥匙","","","","",false]
+default : ["提示文字:红钥匙","","","",""]
 allIds : ['IdString_0']
 colour : this.subColor
 ColorString_0 = ColorString_0 ? (', "color": ['+ColorString_0+']') : '';
 EvalString_1 = EvalString_1 && (', "need": "'+EvalString_1+'"');
 EvalString_2 = EvalString_2 && (', "condition": "'+EvalString_2+'"');
 IdString_0 = IdString_0?(', "icon": "'+IdString_0+'"'):'';
-Bool_0 = Bool_0 ? (', "norecord": ' + Bool_0) : '';
 var collapsed=block.isCollapsed()?', "_collapsed": true':'';
 var disabled=block.isEnabled()?'':', "_disabled": true';
-var code = '{"text": "'+EvalString_0+'"'+IdString_0+ColorString_0+EvalString_1+EvalString_2+Bool_0+collapsed+disabled+', "action": [\n'+action_0+']},\n';
+var code = '{"text": "'+EvalString_0+'"'+IdString_0+ColorString_0+EvalString_1+EvalString_2+collapsed+disabled+', "action": [\n'+action_0+']},\n';
 return code;
 */;
 
 confirm_s
-    :   '显示确认框' ':' EvalString_Multi '超时毫秒数' Int '不计入录像' Bool? 
-        BGNL? '确定的场合' ':' '（默认选中' Bool '）' BGNL? Newline action+ 
-        '取消的场合' ':' BGNL? Newline action+ BEND Newline
+    :   '显示确认框' ':' EvalString_Multi '超时毫秒数' Int BGNL? '确定的场合' ':' '（默认选中' Bool '）' BGNL? Newline action+ '取消的场合' ':' BGNL? Newline action+ BEND Newline
 
 /* confirm_s
 tooltip : 弹出确认框
 helpUrl : /_docs/#/instruction
-default : ["确认要xxx吗?",0,false,false]
+default : ["确认要xxx吗?",0,false]
 previewBlock : true
 Bool_0 = Bool_0?', "default": true':''
-Bool_1 = Bool_1 ? (', "norecord": ' + Bool_1) : '';
 Int_0 = Int_0 ? (', "timeout": '+Int_0) : '';
-var code = ['{"type": "confirm"'+Int_0+Bool_0+Bool_1+', "text": "',EvalString_Multi_0,'",',
+var code = ['{"type": "confirm"'+Int_0+Bool_0+', "text": "',EvalString_Multi_0,'",',
     block.isCollapsed()?' "_collapsed": true,':'',
     block.isEnabled()?'':' "_disabled": true,',
     '\n"yes": [\n',action_0,'],\n',
@@ -3153,7 +3403,7 @@ return code;
 
 
 autoSave_s
-    :   '自动存档' '不提示' Bool Newline
+    :   '自动存档' '读档到触发前' Bool Newline
 
 
 /* autoSave_s
@@ -3161,7 +3411,7 @@ tooltip : autoSave: 自动存档
 helpUrl : /_docs/#/instruction
 colour : this.soundColor
 default : [false]
-Bool_0 = Bool_0 ? (', "nohint": true') : '';
+Bool_0 = Bool_0 ? (', "removeLast": true') : '';
 var code = '{"type": "autoSave"'+Bool_0+'},\n';
 return code;
 */;
@@ -3291,18 +3541,19 @@ return code;
 */;
 
 fillBoldText_s
-    :   '绘制描边文本' 'x' PosString 'y' PosString '样式' ColorString? Colour '描边颜色' ColorString? Colour '字体' FontString? BGNL? EvalString Newline
+    :   '绘制描边文本' 'x' PosString 'y' PosString '样式' ColorString? Colour '描边颜色' ColorString? Colour '线宽' PosString '字体' FontString? BGNL? EvalString Newline
 
 /* fillBoldText_s
 tooltip : fillBoldText：绘制一行描边文本
 helpUrl : /_docs/#/instruction
 colour : this.uiColor
 previewBlock : true
-default : ["0","0","",'rgba(255,255,255,1)',"",'rgba(0,0,0,1)',"","绘制一行描边文本"]
+default : ["80","224","255, 0, 0,1",'rgba(255, 0, 0,1)',"0,0,0,1",'rgba(0,0,0,1)','4',"bold 32px Verdana","绘制一行描边文本"]
 ColorString_0 = ColorString_0 ? (', "style": ['+ColorString_0+']') : '';
 ColorString_1 = ColorString_1 ? (', "strokeStyle": ['+ColorString_1+']') : '';
+PosString_2 = PosString_2 ? (', "lineWidth": ' + PosString_2) : '';
 FontString_0 = FontString_0 ? (', "font": "' + FontString_0 + '"') : '';
-var code = '{"type": "fillBoldText", "x": '+PosString_0+', "y": '+PosString_1+ColorString_0+ColorString_1+FontString_0+', "text": "'+EvalString_0+'"},\n';
+var code = '{"type": "fillBoldText", "x": '+PosString_0+', "y": '+PosString_1+ColorString_0+ColorString_1+PosString_2+FontString_0+', "text": "'+EvalString_0+'"},\n';
 return code;
 */;
 
@@ -4155,6 +4406,10 @@ Direction_List
 DirectionEx_List
     :   '不变'|'朝上'|'朝下'|'朝左'|'朝右'|'左转'|'右转'|'背对'|'角色同向'|'角色反向'
     /*DirectionEx_List ['null','up','down','left','right',':left',':right',':back',':hero',':backhero']*/;
+Absolute_List
+    :'绝对模式'|'相对模式'
+    /*Absolute_List ['false','true']*/;
+
 
 StepString
     :   (Direction_List Int?)+
@@ -4177,8 +4432,8 @@ EnemyId_List
     /*EnemyId_List ['hp','atk','def','money','exp','point','special','name','displayInBook','value','atkValue','defValue','notBomb','zoneSquare','range','n','add','damage']*/;
 
 EnemyPoint_List
-    :   '生命'|'攻击'|'防御'|'金币'|'经验'|'加点'|'名称'
-    /*EnemyPoint_List ['hp','atk','def','money','exp','point','name']*/;
+    :   '生命'|'攻击'|'防御'|'金币'|'经验'|'加点'|'特殊属性'|'名称'
+    /*EnemyPoint_List ['hp','atk','def','money','exp','point','special','name']*/;
 
 Equip_List
     :   '生命'|'生命上限'|'攻击'|'防御'|'护盾'|'魔力'|'魔力上限'
@@ -4192,9 +4447,17 @@ Move_List
     :   '上'|'下'|'左'|'右'|'前'|'后'|'左上'|'左下'|'右上'|'右下'|'设置速度'
     /*Move_List ['up','down','left','right','forward','backward','leftup','leftdown','rightup','rightdown','speed']*/;
 
+Move2_List
+    :   '上'|'下'|'左'|'右'|'前'|'后'|'左上'|'左下'|'右上'|'右下'|'等待'|'设置速度'
+    /*Move2_List ['up','down','left','right','forward','backward','leftup','leftdown','rightup','rightdown','wait','speed']*/;
+
 MoveMode_List
     :   '匀速移动'|'缓入快出'|'快入缓出'|'缓入缓出'|'随机'
     /*MoveMode_List ['', 'easeIn', 'easeOut', 'easeInOut', 'random']*/;
+
+MoveMode2_List
+    :   '匀速移动'|'慢-快'|'快-慢'|'慢-快-慢'|'快-慢-快'
+    /*MoveMode2_List ['', 'in', 'out', 'in-out', 'center']*/;
 
 NameMap_List
     :   '确定'|'取消'|'操作失败'|'光标移动'|'打开界面'|'读档'|'存档'|'获得道具'|'回血'|'宝石'|'炸弹'|'飞行器'|'开关门'|'上下楼'|'跳跃'|'破墙镐'|'破冰镐'|'阻激夹域'|'穿脱装备'|'商店'

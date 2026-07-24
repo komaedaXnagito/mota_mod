@@ -6,19 +6,19 @@ main.floors.MT24=
     "width": 13,
     "height": 13,
     "map": [
-    [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1],
-    [  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1],
-    [  1,  0,  0,  0,  1,  1,  1,  1,  1,  0,  0,  0,  1],
-    [  1,  0,  0,  1,  1,  1,  1,  1,  1,  1,  0,  0,  1],
-    [  1,  0,  1,  1,  1,  1,  1,  1,  1,  1,  1,  0,  1],
-    [  1,  0,  1,  1,  1,  0,  0,  0,  1,  1,  1,  0,  1],
-    [  1,  0,  1,  1,  1,  0,  0,  0,  1,  1,  1,  0,  1],
-    [  1,  0,  1,  1,  1,  0,  0,  0,  1,  1,  1,  0,  1],
-    [  1,  0,  1,  1,  1,  1, 83,  1,  1,  1,  1,  0,  1],
-    [  1,  0,  0,  1,  1,  1,  0,  1,  1,  1,  0,  0,  1],
-    [  1,  0, 87,  0,  1,  1,  0,  1,  1,  0,  0,  0,  1],
-    [  1, 88,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1],
-    [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1]
+    [330,330,330,330,330,330,330,330,330,330,330,330,330],
+    [330,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,330],
+    [330,  0,  0,  0,  1,  1,  1,  1,  1,  0,  0,  0,330],
+    [330,  0,  0,  1,  1,  1,  1,  1,  1,  1,  0,  0,330],
+    [330,  0,  1,  1,  1,  1,  1,  1,  1,  1,  1,  0,330],
+    [330,  0,  1,  1,  1,  0,  0,  0,  1,  1,  1,  0,330],
+    [330,  0,  1,  1,  1,  0,  0,  0,  1,  1,  1,  0,330],
+    [330,  0,  1,  1,  1,  0,  0,  0,  1,  1,  1,  0,330],
+    [330,  0,  1,  1,  1,  1, 83,  1,  1,  1,  1,  0,330],
+    [330,  0,  0,  1,  1,  1,  0,  1,  1,  1,  0,  0,330],
+    [330,  0, 87,  0,  1,  1,  0,  1,  1,  0,  0,  0,330],
+    [330, 88,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,330],
+    [330,330,330,330,330,330,330,330,330,330,330,330,330]
 ],
     "canFlyTo": true,
     "canFlyFrom": true,
@@ -31,67 +31,72 @@ main.floors.MT24=
     "eachArrive": [],
     "parallelDo": "",
     "events": {
-        "6,2": [
-            {
-                "type": "if",
-                "condition": "flag:营救公主",
-                "true": [
-                    {
-                        "type": "setCurtain",
-                        "color": [
-                            0,
-                            0,
-                            0
-                        ],
-                        "time": 200,
-                        "keep": true
-                    },
-                    {
-                        "type": "for",
-                        "name": "temp:A",
-                        "from": "24",
-                        "to": "50",
-                        "step": "1",
-                        "data": [
-                            {
-                                "type": "function",
-                                "function": "function(){\ncore.ui.statusBar._update_props(core.floors[\"MT\" + core.calValue(\"temp:A\")].title)\n}"
-                            },
-                            {
-                                "type": "sleep",
-                                "time": 80
-                            }
-                        ]
-                    },
-                    {
-                        "type": "changeFloor",
-                        "floorId": "MT50",
-                        "loc": [
-                            6,
-                            7
-                        ],
-                        "direction": "down",
-                        "time": 200
-                    },
-                    {
-                        "type": "setCurtain",
-                        "time": 200
-                    }
-                ],
-                "false": []
-            }
-        ]
+        "6,1": {
+            "trigger": null,
+            "enable": false,
+            "noPass": null,
+            "displayDamage": true,
+            "opacity": 1,
+            "filter": {
+                "blur": 0,
+                "hue": 0,
+                "grayscale": 0,
+                "invert": false,
+                "shadow": 0
+            },
+            "data": [
+                {
+                    "type": "setCurtain",
+                    "color": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "time": 200,
+                    "keep": true
+                },
+                {
+                    "type": "for",
+                    "name": "temp:A",
+                    "from": "24",
+                    "to": "50",
+                    "step": "1",
+                    "data": [
+                        {
+                            "type": "function",
+                            "function": "function(){\ncore.ui.statusBar._update_props(core.floors[\"MT\" + core.calValue(\"temp:A\")].title)\n}"
+                        },
+                        {
+                            "type": "sleep",
+                            "time": 80
+                        }
+                    ]
+                },
+                {
+                    "type": "changeFloor",
+                    "floorId": "MT50",
+                    "loc": [
+                        6,
+                        7
+                    ],
+                    "direction": "down",
+                    "time": 200
+                },
+                {
+                    "type": "setCurtain",
+                    "time": 200
+                }
+            ]
+        }
     },
     "changeFloor": {
-        "2,10": {
-            "floorId": ":next",
-            "stair": "downFloor",
-            "time": 0
-        },
         "1,11": {
             "floorId": ":before",
-            "stair": "upFloor",
-            "time": 0
+            "stair": "upFloor"
+        },
+        "2,10": {
+            "floorId": ":next",
+            "stair": "downFloor"
         }
     },
     "afterBattle": {},
@@ -126,5 +131,7 @@ main.floors.MT24=
     ],
     "autoEvent": {},
     "beforeBattle": {},
-    "cannotMoveIn": {}
+    "cannotMoveIn": {},
+    "bg2map": [],
+    "fg2map": []
 }

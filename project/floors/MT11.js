@@ -6,19 +6,19 @@ main.floors.MT11=
     "width": 13,
     "height": 13,
     "map": [
-    [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1],
-    [  1,  0,  0,  0,  1, 27,  0, 81,  0,  1, 31, 21,  1],
-    [  1,  0, 38,  0,  1,  0,205,  1,213,  1,  0,  0,  1],
-    [  1,  0,  0,  0,  1, 81,  1,  1,  0, 81,  0,  0,  1],
-    [  1,  1, 85,  1,  1,  0,206,  1,  1,  1,  1,203,  1],
-    [  1,218,  0,218,  1,213,  0, 81,218,  0,  1,  0,  1],
-    [  1,  0,  0,  0,  1,  1,  1,  1,  0, 31,  1,  0,  1],
-    [  1, 32,  0,  0,206,  0,  0, 81,203,  0,  1,  0,  1],
-    [  1,  1, 82,  1,  1,  1,  1,  1,  1,  1,  1,206,  1],
-    [  1,  0,206,  0,203, 81,  0,  0,  0,  0,205,  0,  1],
-    [  1, 21,  0,  0,  0,  1,  0,  1,  1, 81,  1,  0,  1],
-    [  1, 21, 21, 21, 21,  1, 88,  1, 32,206,  1, 87,  1],
-    [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1]
+    [330,330,330,330,330,330,330,330,330,330,330,330,330],
+    [330,  0,  0,  0,  1, 27,  0, 81,  0,  1, 31, 21,330],
+    [330,  0, 38,  0,  1,  0,205,  1,213,  1,  0,  0,330],
+    [330,  0,  0,  0,  1, 81,  1,  1,  0, 81,  0,  0,330],
+    [330,  1, 85,  1,  1,  0,206,  1,  1,  1,  1,203,330],
+    [330,218,  0,218,  1,213,  0, 81,218,  0,  1,  0,330],
+    [330,  0,  0,  0,  1,  1,  1,  1,  0, 31,  1,  0,330],
+    [330, 32,  0,  0,206,  0,  0, 81,203,  0,  1,  0,330],
+    [330,  1, 82,  1,  1,  1,  1,  1,  1,  1,  1,206,330],
+    [330,  0,206,  0,203, 81,  0,  0,  0,  0,205,  0,330],
+    [330, 21,  0,  0,  0,  1,  0,  1,  1, 81,  1,  0,330],
+    [330, 21, 21, 21, 21,  1, 88,  1, 32,206,  1, 87,330],
+    [330,330,330,330,330,330,330,330,330,330,330,330,330]
 ],
     "canFlyTo": true,
     "canFlyFrom": true,
@@ -32,22 +32,24 @@ main.floors.MT11=
     "parallelDo": "",
     "events": {},
     "changeFloor": {
-        "11,11": {
-            "floorId": ":next",
-            "stair": "downFloor",
-            "time": 0
-        },
         "6,11": {
             "floorId": ":before",
-            "stair": "upFloor",
-            "time": 0
+            "stair": "upFloor"
+        },
+        "11,11": {
+            "floorId": ":next",
+            "stair": "downFloor"
         }
     },
     "afterBattle": {
         "1,5": [
             {
+                "type": "function",
+                "function": "function(){\nvar bool = true;\nvar loc_arr = [\n\t[1, 5],\n\t[3, 5],\n]\nloc_arr.forEach(loc => {\n\tif (core.getBlockCls(loc[0], loc[1]) == \"enemys\") {\n\t\tbool = false;\n\t}\n});\ncore.setFlag(\"open_yes\", bool)\n}"
+            },
+            {
                 "type": "if",
-                "condition": "flag:11",
+                "condition": "flag:open_yes",
                 "true": [
                     {
                         "type": "openDoor",
@@ -55,21 +57,18 @@ main.floors.MT11=
                             2,
                             4
                         ]
-                    }
-                ],
-                "false": [
-                    {
-                        "type": "setValue", "operator": "+=",
-                        "name": "flag:11",
-                        "value": "1"
                     }
                 ]
             }
         ],
         "3,5": [
             {
+                "type": "function",
+                "function": "function(){\nvar bool = true;\nvar loc_arr = [\n\t[1, 5],\n\t[3, 5],\n]\nloc_arr.forEach(loc => {\n\tif (core.getBlockCls(loc[0], loc[1]) == \"enemys\") {\n\t\tbool = false;\n\t}\n});\ncore.setFlag(\"open_yes\", bool)\n}"
+            },
+            {
                 "type": "if",
-                "condition": "flag:11",
+                "condition": "flag:open_yes",
                 "true": [
                     {
                         "type": "openDoor",
@@ -77,13 +76,6 @@ main.floors.MT11=
                             2,
                             4
                         ]
-                    }
-                ],
-                "false": [
-                    {
-                        "type": "setValue", "operator": "+=",
-                        "name": "flag:11",
-                        "value": "1"
                     }
                 ]
             }
@@ -120,5 +112,7 @@ main.floors.MT11=
     ],
     "autoEvent": {},
     "beforeBattle": {},
-    "cannotMoveIn": {}
+    "cannotMoveIn": {},
+    "bg2map": [],
+    "fg2map": []
 }

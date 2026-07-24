@@ -552,17 +552,41 @@ var data_comment_c456ea59_6018_45ef_8bcc_211a24c627dc = {
 					},
 					"_data": "状态栏显示项"
 				},
+				"autoScale": {
+					"_leaf": true,
+					"_type": "checkbox",
+					"_docs": "自动缩放",
+					"_data": "是否自动缩放至合适值"
+				},
+				// 				"newStatusBar": {
+				// 					"_leaf": true,
+				// 					"_type": "checkbox",
+				// 					"_docs": "自定义状态栏（新）",
+				// 					"_data": "是否使用新版UI"
+				// 				},
 				"extendToolbar": {
 					"_leaf": true,
 					"_type": "checkbox",
-					"_docs": "横屏底部工具栏",
-					"_data": "在横屏状态下是否将工具栏挪动到游戏画布下方，从而完全解放状态栏空间"
+					"_docs": "画面下方道具栏",
+					"_data": "开启后道具栏会被挪动至游戏画面的下方"
+				},
+				"hideLeftStatusBar": {
+					"_leaf": true,
+					"_type": "checkbox",
+					"_docs": "隐藏左侧状态栏",
+					"_data": "是否隐藏左侧状态栏，开启后强制开启画面下方道具栏"
 				},
 				"flyNearStair": {
 					"_leaf": true,
 					"_type": "checkbox",
 					"_docs": "楼传需在楼梯边",
 					"_data": "传送器是否需要在楼梯边使用；如果flyRecordPosition开启，则此项对箭头也有效。"
+				},
+				"60FPS": {
+					"_leaf": true,
+					"_type": "checkbox",
+					"_docs": "动画高帧率",
+					"_data": "开启后动画以60帧速播放（默认为20帧速）。"
 				},
 				"flyRecordPosition": {
 					"_leaf": true,

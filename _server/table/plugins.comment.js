@@ -13,13 +13,7 @@ var plugins_comment_c456ea59_6018_45ef_8bcc_211a24c627dc = {
 				"_leaf": true,
 				"_type": "textarea",
 				"_range": "typeof(thiseval)=='string'",
-				"_data": "自定义插件"
-			},
-			"resizeTo11": {
-				"_leaf": true,
-				"_type": "textarea",
-				"_range": "typeof(thiseval)=='string' || thiseval==null",
-				"_data": "11x11地图适配"
+				"_data": "初始化"
 			},
 			"shop": {
 				"_leaf": true,
@@ -27,17 +21,102 @@ var plugins_comment_c456ea59_6018_45ef_8bcc_211a24c627dc = {
 				"_range": "typeof(thiseval)=='string'",
 				"_data": "全局商店"
 			},
+			"drawLight": {
+				"_leaf": true,
+				"_type": "textarea",
+				"_range": "typeof(thiseval)=='string' || thiseval==null",
+				"_data": "灯光效果"
+			},
+			"removeMap": {
+				"_leaf": true,
+				"_type": "textarea",
+				"_range": "typeof(thiseval)=='string' || thiseval==null",
+				"_data": "砍层插件"
+			},
+			"fiveLayers": {
+				"_leaf": true,
+				"_type": "textarea",
+				"_range": "typeof(thiseval)=='string' || thiseval==null",
+				"_data": "五图层(背景前景2)"
+			},
+			"itemShop": {
+				"_leaf": true,
+				"_type": "textarea",
+				"_range": "typeof(thiseval)=='string' || thiseval==null",
+				"_data": "道具商店"
+			},
+			"enemyLevel": {
+				"_leaf": true,
+				"_type": "textarea",
+				"_range": "typeof(thiseval)=='string' || thiseval==null",
+				"_data": "手册显示怪物境界"
+			},
+			"multiHeros": {
+				"_leaf": true,
+				"_type": "textarea",
+				"_range": "typeof(thiseval)=='string' || thiseval==null",
+				"_data": "多角色"
+			},
+			"heroFourFrames": {
+				"_leaf": true,
+				"_type": "textarea",
+				"_range": "typeof(thiseval)=='string' || thiseval==null",
+				"_data": "勇士四帧行走动画"
+			},
+			"routeFixing": {
+				"_leaf": true,
+				"_type": "textarea",
+				"_range": "typeof(thiseval)=='string' || thiseval==null",
+				"_data": "录像精修"
+			},
+			"numpad": {
+				"_leaf": true,
+				"_type": "textarea",
+				"_range": "typeof(thiseval)=='string' || thiseval==null",
+				"_data": "整数输入面板美化"
+			},
+			"sprite": {
+				"_leaf": true,
+				"_type": "textarea",
+				"_range": "typeof(thiseval)=='string' || thiseval==null",
+				"_data": "基于canvas的sprite化"
+			},
+			"hotReload": {
+				"_leaf": true,
+				"_type": "textarea",
+				"_range": "typeof(thiseval)=='string' || thiseval==null",
+				"_data": "热重载"
+			},
+			"statusBar2": {
+				"_leaf": true,
+				"_type": "textarea",
+				"_range": "typeof(thiseval)=='string' || thiseval==null",
+				"_data": "自定义状态栏（旧）"
+			},
 			"statusBar": {
 				"_leaf": true,
 				"_type": "textarea",
 				"_range": "typeof(thiseval)=='string' || thiseval==null",
-				"_data": "自定义状态栏"
+				"_data": "自定义状态栏（新）"
 			},
+
 			"override": {
 				"_leaf": true,
 				"_type": "textarea",
 				"_range": "typeof(thiseval)=='string' || thiseval==null",
 				"_data": "函数复写"
+			},
+			"animate": {
+				"_leaf": true,
+				"_type": "textarea",
+				"_range": "typeof(thiseval)=='string' || thiseval==null",
+				"_data": "高级动画"
+			},
+			"func": {
+				"_leaf": true,
+				"_type": "textarea",
+				"_range": "typeof(thiseval)=='string' || thiseval==null",
+				"_data": "实用函数集"
 			}
 		}
 		if (obj[key]) return obj[key];

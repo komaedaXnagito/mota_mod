@@ -1,4 +1,3 @@
-/// <reference path="../runtime.d.ts" />
 
 /*
 extensions.js：负责拓展插件
@@ -6,7 +5,7 @@ extensions.js：负责拓展插件
 
 "use strict";
 
-function extensions() {
+function extensions () {
 
 }
 
