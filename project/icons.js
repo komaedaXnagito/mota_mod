@@ -213,6 +213,7 @@ var icons_4665ee12_3a1f_44a4_bea3_0fccba634dc1 =
 	"items": {
 		"yellowKey": 0,
 		"blueKey": 1,
+		"symmetryPickaxe": 1,
 		"redKey": 2,
 		"greenKey": 3,
 		"steelKey": 4,

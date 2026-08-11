@@ -94,7 +94,7 @@ main.floors.MT34=
                     },
                     {
                         "type": "setBlock",
-                        "number": "yellowKey",
+                        "number": "jumpShoes",
                         "loc": [
                             [
                                 1,

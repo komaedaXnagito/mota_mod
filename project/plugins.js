@@ -144,7 +144,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 =
 		PRESET_SCALES: [1, 1.25, 1.5, 1.75, 2],
 
 		// 强制显示数量的物品
-		FORCE_COUNTABLE_ITEMS: ["centerFly"],
+		FORCE_COUNTABLE_ITEMS: ["centerFly", "symmetryPickaxe"],
 
 		// 状态列表设置
 		STATUS_LIST: ['hp', 'atk', 'def', 'money'],
@@ -427,12 +427,12 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 =
 				["snow", "cross", "coin"],
 				["knife", "superPotion", "bigKey"],
 				["pickaxe", "earthquake", "bomb"],
-				["centerFly", "upFly", "downFly"],
+				["centerFly", "symmetryPickaxe", "upFly"],
 				["I333"]
 			];
 			// 添加竖屏专用物品数组
 			this.itemMxVertical = [
-				["book", "coin", "fly", "cross", "superPotion", "pickaxe", "bomb", "centerFly"],
+				["book", "coin", "fly", "cross", "superPotion", "pickaxe", "bomb", "centerFly", "symmetryPickaxe"],
 				["upFly", "downFly", "knife", "snow", "bigKey", "earthquake", "wand", "I333"],
 			];
 			this.infoText = null;
@@ -996,6 +996,9 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 =
 					case "centerFly":
 						core.ui._drawCenterFly();
 						break;
+					case "symmetryPickaxe":
+						core.ui._drawSymmetryPickaxe();
+						break;
 					default:
 						core.useItem(itemId);
 					}
@@ -1314,6 +1317,51 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 =
 		core.playSound('打开界面');
 		core.drawTip("请确认当前" + core.material.items['centerFly'].name + "的位置", 'centerFly');
 		return;
+	}
+
+	ui.prototype._drawSymmetryPickaxe = function () {
+		core.lockControl();
+		core.status.event.id = 'centerFly';
+		var toX = core.bigmap.width - 1 - core.getHeroLoc('x'),
+			toY = core.bigmap.height - 1 - core.getHeroLoc('y');
+		this.clearUI();
+		core.fillRect('ui', 0, 0, this.PIXEL, this.PIXEL, '#000000');
+		core.drawThumbnail(null, null, { heroLoc: core.status.hero.loc, heroIcon: core.status.hero.image, ctx: 'ui', centerX: toX, centerY: toY });
+		var offsetX = 1, offsetY = 1;
+		var targets = [[toX, toY], [toX - 1, toY], [toX + 1, toY], [toX, toY - 1], [toX, toY + 1]];
+		targets.forEach(function (loc) {
+			var block = core.getBlock(loc[0], loc[1]);
+			var fillstyle = block && !block.disable && block.event.canBreak ? 'rgba(0,255,0,0.5)' : 'rgba(255,0,0,0.35)';
+			core.fillRect('ui', (loc[0] - offsetX) * 32, (loc[1] - offsetY) * 32, 32, 32, fillstyle);
+		});
+		core.status.event.data = { x: toX, y: toY, posX: toX - offsetX, posY: toY - offsetY, itemId: 'symmetryPickaxe' };
+		core.playSound('打开界面');
+		core.drawTip('请确认对称位置的十字破墙范围', 'symmetryPickaxe');
+	}
+
+	actions.prototype._clickCenterFly = function (x, y) {
+		var data = core.status.event.data;
+		var itemId = data.itemId || 'centerFly';
+		core.ui.closePanel();
+		if (x == data.posX && y == data.posY) {
+			if (core.canUseItem(itemId)) core.useItem(itemId);
+			else {
+				core.playSound('操作失败');
+				core.drawTip('当前不能使用' + core.material.items[itemId].name, itemId);
+			}
+		}
+	}
+
+	actions.prototype._keyUpCenterFly = function (keycode) {
+		var itemId = core.status.event.data.itemId || 'centerFly';
+		core.ui.closePanel();
+		if (keycode == 51 || keycode == 13 || keycode == 32 || keycode == 67) {
+			if (core.canUseItem(itemId)) core.useItem(itemId);
+			else {
+				core.playSound('操作失败');
+				core.drawTip('当前不能使用' + core.material.items[itemId].name, itemId);
+			}
+		}
 	}
 
 	actions.prototype._getClickLoc = function (x, y) {
