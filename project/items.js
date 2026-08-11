@@ -14,6 +14,14 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 		"hideInToolbox": true,
 		"hideInReplay": true
 	},
+	"symmetryPickaxe": {
+		"cls": "tools",
+		"name": "对称破墙镐",
+		"text": "预览中心对称位置，并破坏该位置十字范围内可破坏的墙壁",
+		"useItemEffect": "(function () {\n\tvar centerX = core.bigmap.width - 1 - core.getHeroLoc('x'), centerY = core.bigmap.height - 1 - core.getHeroLoc('y');\n\tvar targets = [[centerX, centerY], [centerX - 1, centerY], [centerX + 1, centerY], [centerX, centerY - 1], [centerX, centerY + 1]];\n\tvar actions = [];\n\ttargets.forEach(function (loc) {\n\t\tvar block = core.getBlock(loc[0], loc[1]);\n\t\tif (block && !block.disable && block.event.canBreak) actions.push({ type: 'openDoor', loc: loc, async: true });\n\t});\n\tactions.push({ type: 'waitAsync' });\n\tcore.insertAction(actions);\n\tcore.playSound('破墙镐');\n\tcore.drawTip(core.material.items[itemId].name + '使用成功', itemId);\n})();",
+		"canUseItemEffect": "(function () {\n\tvar centerX = core.bigmap.width - 1 - core.getHeroLoc('x'), centerY = core.bigmap.height - 1 - core.getHeroLoc('y');\n\treturn [[centerX, centerY], [centerX - 1, centerY], [centerX + 1, centerY], [centerX, centerY - 1], [centerX, centerY + 1]].some(function (loc) {\n\t\tvar block = core.getBlock(loc[0], loc[1]);\n\t\treturn block && !block.disable && block.event.canBreak;\n\t});\n})();",
+		"itemEffectTip": "你得到 对称破墙镐，可破坏中心对称位置十字范围内的墙壁"
+	},
 	"redKey": {
 		"cls": "tools",
 		"name": "红钥匙",
