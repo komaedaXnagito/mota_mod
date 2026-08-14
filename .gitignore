@@ -1,6 +1,7 @@
 # Local Codex metadata
 /.agents/
 /.codex/
+/.workbuddy/
 
 # Runtime saves and temporary files
 /_saves/*
