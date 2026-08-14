@@ -1,0 +1,410 @@
+[
+ {
+  "cn": "R拳",
+  "eng": "rquan"
+ },
+ {
+  "cn": "R斧",
+  "eng": "rfu"
+ },
+ {
+  "cn": "R暗斧",
+  "eng": "ranfu"
+ },
+ {
+  "cn": "R杖",
+  "eng": "rzhang"
+ },
+ {
+  "cn": "R枪",
+  "eng": "rqiang"
+ },
+ {
+  "cn": "R短",
+  "eng": "rduan"
+ },
+ {
+  "cn": "R铳",
+  "eng": "rchong"
+ },
+ {
+  "cn": "R高达拳",
+  "eng": "rgaodaquan"
+ },
+ {
+  "cn": "io杖",
+  "eng": "iozhang"
+ },
+ {
+  "cn": "一期一振",
+  "eng": "yiqiyizhen"
+ },
+ {
+  "cn": "七星剑胚子",
+  "eng": "qixingjianpeizi"
+ },
+ {
+  "cn": "仇闪",
+  "eng": "choushan"
+ },
+ {
+  "cn": "你与我的桃色水平线",
+  "eng": "niyuwodetaoseshuipingxian"
+ },
+ {
+  "cn": "使役者之证",
+  "eng": "shiyizhezhizheng"
+ },
+ {
+  "cn": "光小精灵",
+  "eng": "guangxiaojingling"
+ },
+ {
+  "cn": "光龙玩偶",
+  "eng": "guanglongwanou"
+ },
+ {
+  "cn": "兽王之证",
+  "eng": "shouwangzhizheng"
+ },
+ {
+  "cn": "军神",
+  "eng": "junshen"
+ },
+ {
+  "cn": "冰淇淋",
+  "eng": "bingqilin"
+ },
+ {
+  "cn": "凤凰琴",
+  "eng": "fenghuangqin"
+ },
+ {
+  "cn": "切片菠萝",
+  "eng": "qiepianboluo"
+ },
+ {
+  "cn": "压制之斧",
+  "eng": "yazhizhifu"
+ },
+ {
+  "cn": "双剑之证",
+  "eng": "shuangjianzhizheng"
+ },
+ {
+  "cn": "发卡",
+  "eng": "faka"
+ },
+ {
+  "cn": "吟游诗人之证",
+  "eng": "yinyoushirenzhizheng"
+ },
+ {
+  "cn": "土龙玩偶",
+  "eng": "tulongwanou"
+ },
+ {
+  "cn": "垂泪曼陀铃",
+  "eng": "chuileimantuoling"
+ },
+ {
+  "cn": "基础盾",
+  "eng": "jichudun"
+ },
+ {
+  "cn": "塔赫尔玛萨拉",
+  "eng": "taheermasala"
+ },
+ {
+  "cn": "威尔士天浆",
+  "eng": "weiershitianjiang"
+ },
+ {
+  "cn": "小光剑",
+  "eng": "xiaoguangjian"
+ },
+ {
+  "cn": "小土妹剑",
+  "eng": "xiaotumeijian"
+ },
+ {
+  "cn": "小掉宝杖",
+  "eng": "xiaodiaobaozhang"
+ },
+ {
+  "cn": "小水短",
+  "eng": "xiaoshuiduan"
+ },
+ {
+  "cn": "小红",
+  "eng": "xiaohong"
+ },
+ {
+  "cn": "少女蜜露",
+  "eng": "shaonvmilu"
+ },
+ {
+  "cn": "尼伯龙根之杯",
+  "eng": "nibolonggenzhibei"
+ },
+ {
+  "cn": "巫妖斧",
+  "eng": "wuyaofu"
+ },
+ {
+  "cn": "巴哈姆特之盾",
+  "eng": "bahamutezhidun"
+ },
+ {
+  "cn": "应援者之证",
+  "eng": "yingyuanzhezhizheng"
+ },
+ {
+  "cn": "彗星猎手",
+  "eng": "huixinglieshou"
+ },
+ {
+  "cn": "恶灭之雷",
+  "eng": "emiezhilei"
+ },
+ {
+  "cn": "拉卡姆铳",
+  "eng": "lakamuchong"
+ },
+ {
+  "cn": "指虎",
+  "eng": "zhihu"
+ },
+ {
+  "cn": "暗小精灵",
+  "eng": "anxiaojingling"
+ },
+ {
+  "cn": "暗龙玩偶",
+  "eng": "anlongwanou"
+ },
+ {
+  "cn": "月丘",
+  "eng": "yueqiu"
+ },
+ {
+  "cn": "未熟炸虾",
+  "eng": "weishuzhaxia"
+ },
+ {
+  "cn": "梦乡",
+  "eng": "mengxiang"
+ },
+ {
+  "cn": "欧罗巴",
+  "eng": "ouluoba"
+ },
+ {
+  "cn": "水龙玩偶",
+  "eng": "shuilongwanou"
+ },
+ {
+  "cn": "法桑小精灵",
+  "eng": "fasangxiaojingling"
+ },
+ {
+  "cn": "混沌之源",
+  "eng": "hundunzhiyuan"
+ },
+ {
+  "cn": "湿婆",
+  "eng": "shipo"
+ },
+ {
+  "cn": "火组长球",
+  "eng": "huozuzhangqiu"
+ },
+ {
+  "cn": "火龙玩偶",
+  "eng": "huolongwanou"
+ },
+ {
+  "cn": "炼金龙",
+  "eng": "lianjinlong"
+ },
+ {
+  "cn": "烤肉",
+  "eng": "kaorou"
+ },
+ {
+  "cn": "熊",
+  "eng": "xiong"
+ },
+ {
+  "cn": "狂战士之怒",
+  "eng": "kuangzhanshizhinu"
+ },
+ {
+  "cn": "狂战士之证",
+  "eng": "kuangzhanshizhizheng"
+ },
+ {
+  "cn": "狮子王战拳",
+  "eng": "shiziwangzhanquan"
+ },
+ {
+  "cn": "狼弓",
+  "eng": "langgong"
+ },
+ {
+  "cn": "猎犬",
+  "eng": "liequan"
+ },
+ {
+  "cn": "玉米",
+  "eng": "yumi"
+ },
+ {
+  "cn": "玉钢",
+  "eng": "yugang"
+ },
+ {
+  "cn": "琴师之证",
+  "eng": "qinshizhizheng"
+ },
+ {
+  "cn": "疯狂扫帚",
+  "eng": "fengkuangsaozhou"
+ },
+ {
+  "cn": "盾斧之证",
+  "eng": "dunfuzhizheng"
+ },
+ {
+  "cn": "石像鬼之刃",
+  "eng": "shixiangguizhiren"
+ },
+ {
+  "cn": "神意之盾",
+  "eng": "shenyizhidun"
+ },
+ {
+  "cn": "神盾",
+  "eng": "shendun"
+ },
+ {
+  "cn": "精灵鸟",
+  "eng": "jinglingniao"
+ },
+ {
+  "cn": "纵情之目",
+  "eng": "zongqingzhimu"
+ },
+ {
+  "cn": "组长球",
+  "eng": "zuzhangqiu"
+ },
+ {
+  "cn": "绝拳",
+  "eng": "juequan"
+ },
+ {
+  "cn": "绯绯色金",
+  "eng": "feifeisejin"
+ },
+ {
+  "cn": "绽花瓶",
+  "eng": "zhanhuaping"
+ },
+ {
+  "cn": "胡萝卜",
+  "eng": "huluobo"
+ },
+ {
+  "cn": "蔚蓝闪电",
+  "eng": "weilanshandian"
+ },
+ {
+  "cn": "薛定谔",
+  "eng": "xuedinge"
+ },
+ {
+  "cn": "虹之弓",
+  "eng": "hongzhigong"
+ },
+ {
+  "cn": "裙䙓利刃",
+  "eng": "qunbailiren"
+ },
+ {
+  "cn": "语部之弦",
+  "eng": "yubuzhixian"
+ },
+ {
+  "cn": "贤者之证",
+  "eng": "xianzhezhizheng"
+ },
+ {
+  "cn": "路枪",
+  "eng": "luqiang"
+ },
+ {
+  "cn": "这就是生活",
+  "eng": "zhejiushishenghuo"
+ },
+ {
+  "cn": "追忆小提琴",
+  "eng": "zhuiyixiaotiqin"
+ },
+ {
+  "cn": "野猪",
+  "eng": "yezhu"
+ },
+ {
+  "cn": "金刚晶碎片",
+  "eng": "jingangjingsuipian"
+ },
+ {
+  "cn": "铁盾",
+  "eng": "tiedun"
+ },
+ {
+  "cn": "铁锅",
+  "eng": "tieguo"
+ },
+ {
+  "cn": "铜罐子",
+  "eng": "tongguanzi"
+ },
+ {
+  "cn": "阿斯克勒庇俄斯之杖",
+  "eng": "asikeleibiesizhizhang"
+ },
+ {
+  "cn": "音响",
+  "eng": "yinxiang"
+ },
+ {
+  "cn": "风龙玩偶",
+  "eng": "fenglongwanou"
+ },
+ {
+  "cn": "香榭丽舍",
+  "eng": "xiangxielishe"
+ },
+ {
+  "cn": "香蕉",
+  "eng": "xiangjiao"
+ },
+ {
+  "cn": "鬼丸国綱",
+  "eng": "guiwanguogang"
+ },
+ {
+  "cn": "魔剑士之证",
+  "eng": "mojianshizhizheng"
+ },
+ {
+  "cn": "鸵鸟",
+  "eng": "tuoniao"
+ },
+ {
+  "cn": "鹿",
+  "eng": "lu"
+ }
+]
