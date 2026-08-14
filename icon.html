@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>背包战斗 Buff 图标总览</title>
+	<style>
+		:root {
+			color-scheme: dark;
+			font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+			background: #15171b;
+			color: #f2eee6;
+		}
+		* { box-sizing: border-box; }
+		body {
+			margin: 0;
+			min-width: 320px;
+			background:
+				radial-gradient(circle at 50% -15%, rgba(205, 160, 81, .16), transparent 38rem),
+				#15171b;
+		}
+		main {
+			width: min(1120px, calc(100% - 32px));
+			margin: 0 auto;
+			padding: 42px 0 64px;
+		}
+		h1 {
+			margin: 0;
+			font-size: clamp(26px, 4vw, 40px);
+			letter-spacing: .08em;
+		}
+		.summary {
+			margin: 10px 0 38px;
+			color: #aaa397;
+			font-size: 14px;
+		}
+		.status-group + .status-group { margin-top: 42px; }
+		.group-heading {
+			display: flex;
+			align-items: baseline;
+			gap: 10px;
+			margin: 0 0 16px;
+			font-size: 20px;
+		}
+		.group-heading small {
+			color: #8f887d;
+			font-size: 13px;
+			font-weight: 400;
+		}
+		.icon-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));
+			gap: 16px;
+		}
+		.icon-card {
+			min-width: 0;
+			padding: 20px 16px 16px;
+			border: 1px solid #393a3d;
+			border-radius: 14px;
+			background: linear-gradient(145deg, rgba(46, 48, 53, .94), rgba(29, 31, 35, .96));
+			box-shadow: 0 8px 24px rgba(0, 0, 0, .22);
+			text-align: center;
+		}
+		.icon-frame {
+			display: grid;
+			place-items: center;
+			width: 112px;
+			height: 112px;
+			margin: 0 auto 15px;
+			border: 4px solid currentColor;
+			border-radius: 25px;
+			background: #20242a;
+			box-shadow: inset 0 0 20px rgba(255, 255, 255, .08), 0 7px 18px rgba(0, 0, 0, .3);
+		}
+		.icon-frame svg {
+			display: block;
+			width: 88px;
+			height: 88px;
+			overflow: visible;
+		}
+		.icon-name {
+			margin: 0;
+			font-size: 18px;
+			font-weight: 700;
+		}
+		.icon-meta {
+			display: flex;
+			justify-content: center;
+			gap: 7px;
+			margin-top: 7px;
+			color: #9e978b;
+			font: 12px/1.4 Consolas, monospace;
+		}
+		.kind {
+			padding: 1px 6px;
+			border: 1px solid currentColor;
+			border-radius: 999px;
+			font-family: "Microsoft YaHei", sans-serif;
+		}
+		.kind.buff { color: #84d99a; }
+		.kind.debuff { color: #ee928a; }
+		.empty {
+			padding: 28px;
+			border: 1px dashed #555;
+			border-radius: 12px;
+			color: #bbb;
+		}
+		@media (max-width: 520px) {
+			main { width: min(100% - 20px, 1120px); padding-top: 26px; }
+			.icon-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+			.icon-card { padding: 15px 8px 12px; }
+			.icon-frame { width: 92px; height: 92px; border-radius: 21px; }
+			.icon-frame svg { width: 72px; height: 72px; }
+		}
+	</style>
+</head>
+<body>
+	<main>
+		<h1>状态图标总览</h1>
+		<p class="summary" id="summary">正在读取状态注册表…</p>
+		<section class="status-group" aria-labelledby="debuff-title">
+			<h2 class="group-heading" id="debuff-title">Debuff <small id="debuff-count"></small></h2>
+			<div class="icon-grid" id="debuff-grid"></div>
+		</section>
+		<section class="status-group" aria-labelledby="buff-title">
+			<h2 class="group-heading" id="buff-title">Buff <small id="buff-count"></small></h2>
+			<div class="icon-grid" id="buff-grid"></div>
+		</section>
+	</main>
+	<script src="project/backpackBattleStatuses.js"></script>
+	<script>
+		(function () {
+			"use strict";
+			var registry = window.backpackBattleStatusDefinitions_7d94f05e_2f6d_4b8e_9c23_5a317ccab120;
+			var summary = document.getElementById("summary");
+			var groups = {
+				debuff: document.getElementById("debuff-grid"),
+				buff: document.getElementById("buff-grid")
+			};
+			if (!registry || !registry.definitions) {
+				summary.textContent = "状态注册表加载失败。";
+				Object.keys(groups).forEach(function (kind) {
+					groups[kind].innerHTML = "<div class='empty'>没有可展示的图标</div>";
+				});
+				return;
+			}
+
+			var counts = { buff: 0, debuff: 0 };
+			(registry.order || Object.keys(registry.definitions)).forEach(function (statusId) {
+				var definition = registry.definitions[statusId];
+				if (!definition || !groups[definition.kind] || !definition.iconSvg) return;
+				counts[definition.kind]++;
+				var card = document.createElement("article");
+				card.className = "icon-card";
+				card.setAttribute("aria-label", definition.name + "，" + definition.kind);
+
+				var frame = document.createElement("div");
+				frame.className = "icon-frame";
+				frame.style.color = definition.color || "#ffffff";
+				var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+				svg.setAttribute("viewBox", "0 0 64 64");
+				svg.setAttribute("role", "img");
+				svg.setAttribute("aria-label", definition.name + "图标");
+				svg.innerHTML = "<title>" + definition.name + "</title>" + definition.iconSvg;
+				frame.appendChild(svg);
+
+				var name = document.createElement("h3");
+				name.className = "icon-name";
+				name.textContent = definition.name;
+				var meta = document.createElement("div");
+				meta.className = "icon-meta";
+				var id = document.createElement("span");
+				id.textContent = definition.id;
+				var kind = document.createElement("span");
+				kind.className = "kind " + definition.kind;
+				kind.textContent = definition.kind === "buff" ? "Buff" : "Debuff";
+				meta.appendChild(id);
+				meta.appendChild(kind);
+				card.appendChild(frame);
+				card.appendChild(name);
+				card.appendChild(meta);
+				groups[definition.kind].appendChild(card);
+			});
+
+			document.getElementById("debuff-count").textContent = counts.debuff + " 个";
+			document.getElementById("buff-count").textContent = counts.buff + " 个";
+			summary.textContent = "共 " + (counts.buff + counts.debuff) + " 个状态图标；页面直接读取游戏状态注册表，刷新即可同步最新图案。";
+		})();
+	</script>
+</body>
+</html>
