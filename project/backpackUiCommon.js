@@ -6,6 +6,10 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	var activeAnchor = null;
 	var lastPointer = null;
 	var tooltipHideTimer = null;
+	var tooltipMoveFrame = null;
+	var pendingTooltipPosition = null;
+	var lastTooltipHtml = null;
+	var TOOLTIP_HIDE_DELAY = 0;
 	var recipePreviewRoot = null;
 
 	var escapeHtml = function (value) {
@@ -402,6 +406,7 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	var ensureTooltip = function () {
 		if (tooltip && tooltip.isConnected) return tooltip;
 		tooltip = document.createElement("div");
+		lastTooltipHtml = null;
 		tooltip.className = "bui-tooltip";
 		tooltip.setAttribute("role", "tooltip");
 		tooltip.addEventListener("pointerenter", function () {
@@ -444,15 +449,46 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		tooltip.style.top = Math.max(8, y) + "px";
 	};
 
+	var cancelQueuedTooltipPosition = function () {
+		pendingTooltipPosition = null;
+		if (tooltipMoveFrame == null) return;
+		if (typeof window.cancelAnimationFrame === "function") window.cancelAnimationFrame(tooltipMoveFrame);
+		tooltipMoveFrame = null;
+	};
+
+	/** 鼠标高频移动只在下一帧做一次尺寸读取与定位，避免每个 pointermove 都强制布局。 */
+	var queueTooltipPosition = function (event, anchor) {
+		if (typeof window.requestAnimationFrame !== "function") {
+			positionTooltip(event, anchor);
+			return;
+		}
+		pendingTooltipPosition = {
+			event: event && Number.isFinite(event.clientX)
+				? { clientX: event.clientX, clientY: event.clientY } : null,
+			anchor: anchor
+		};
+		if (tooltipMoveFrame != null) return;
+		tooltipMoveFrame = window.requestAnimationFrame(function () {
+			tooltipMoveFrame = null;
+			var pending = pendingTooltipPosition;
+			pendingTooltipPosition = null;
+			if (pending) positionTooltip(pending.event, pending.anchor);
+		});
+	};
+
 	var showTooltip = function (anchor, html, event) {
 		if (!anchor || !html) return;
 		if (tooltipHideTimer) clearTimeout(tooltipHideTimer);
 		tooltipHideTimer = null;
+		cancelQueuedTooltipPosition();
 		ensureTooltip();
 		if (activeAnchor && activeAnchor !== anchor) activeAnchor.classList.remove("bui-hover");
 		activeAnchor = anchor;
 		anchor.classList.add("bui-hover");
-		tooltip.innerHTML = html;
+		if (lastTooltipHtml !== html) {
+			tooltip.innerHTML = html;
+			lastTooltipHtml = html;
+		}
 		tooltip.classList.add("show");
 		positionTooltip(event, anchor);
 	};
@@ -461,6 +497,7 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		if (tooltipHideTimer) clearTimeout(tooltipHideTimer);
 		tooltipHideTimer = null;
 		if (anchor && activeAnchor && anchor !== activeAnchor) return;
+		cancelQueuedTooltipPosition();
 		if (activeAnchor) activeAnchor.classList.remove("bui-hover");
 		if (tooltip) tooltip.classList.remove("show");
 		activeAnchor = null;
@@ -468,7 +505,7 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 
 	var scheduleTooltipHide = function (anchor) {
 		if (tooltipHideTimer) clearTimeout(tooltipHideTimer);
-		tooltipHideTimer = setTimeout(function () { hideTooltip(anchor); }, 120);
+		tooltipHideTimer = setTimeout(function () { hideTooltip(anchor); }, TOOLTIP_HIDE_DELAY);
 	};
 
 	var bindTooltip = function (element, provider, options) {
@@ -490,7 +527,7 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 			if (!wasActive && options.onEnter) options.onEnter(event);
 		};
 		var move = function (event) {
-			if (activeAnchor === element) positionTooltip(event, element);
+			if (activeAnchor === element) queueTooltipPosition(event, element);
 		};
 		var leave = function (event) {
 			if (isSameHitArea(event.relatedTarget)) return;

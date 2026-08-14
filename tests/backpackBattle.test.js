@@ -68,6 +68,14 @@ function makeInput(overrides) {
 	return Object.assign(base, overrides || {});
 }
 
+test("开局地图背包道具使用背包名称和专用图标槽", () => {
+	const itemsSource = fs.readFileSync(path.join(root, "project/items.js"), "utf8");
+	const iconsSource = fs.readFileSync(path.join(root, "project/icons.js"), "utf8");
+	assert.match(itemsSource, /"I385":\s*\{[\s\S]*?"name": "背包"/);
+	assert.match(iconsSource, /"I385": 70/);
+	assert.equal(fs.existsSync(path.join(root, "project/images/backpackSlot.png")), true);
+});
+
 test("背包与战斗武器的 hover 按实际占格触发且背包内部格缝保持连续", () => {
 	const battleUiSource = fs.readFileSync(path.join(root, "project/backpackBattleUI.js"), "utf8");
 	const backpackSource = fs.readFileSync(path.join(root, "project/backpackSystem.js"), "utf8");
@@ -126,6 +134,12 @@ test("商店和背包共用特殊效果箭头渲染，并由商店静态展示�
 	assert.match(shopSource, /const buildWeaponDetails = function \(def\)/);
 	assert.match(commonSource, /const|var formatSpecialEffectHtml/);
 	assert.match(commonSource, /split\(\/\(\[\\\^∧＾\]\)\/g\)/);
+	assert.match(commonSource, /TOOLTIP_HIDE_DELAY = 0/);
+	assert.match(commonSource, /queueTooltipPosition\(event, element\)/);
+	assert.match(commonSource, /window\.requestAnimationFrame\(function \(\) \{[\s\S]*?positionTooltip\(pending\.event, pending\.anchor\)/);
+	assert.match(commonSource, /if \(lastTooltipHtml !== html\) \{\s*tooltip\.innerHTML = html/);
+	assert.match(cssSource, /\.bui-tooltip\s*\{[^}]*contain:\s*layout paint[^}]*will-change:\s*opacity, transform[^}]*visibility 0s linear \.08s/);
+	assert.match(cssSource, /\.bui-tooltip\.show\s*\{[^}]*transition-delay:\s*0s/);
 	assert.match(shopSource, /formatSpecialEffectHtml\(def\.synergyText\)/);
 	assert.match(shopSource, /card\.appendChild\(buildWeaponDetails\(def\)\)/);
 	assert.doesNotMatch(shopSource, /bindTooltip\(card/);
