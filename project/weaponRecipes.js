@@ -16,7 +16,22 @@
  * 将下面的示例替换/追加为你自己的配方即可。
  */
 var weaponRecipes_7f2e9c4a_3b5d_4f8a_9c1e_6d4b8a2f9c31 = {
-	"version": 1,
+	"version": 2,
+	"displayNames": {
+		"I384": "炎威的翼镰",
+		"I414": "七星剑・煌",
+		"I428": "七星剑・白天",
+		"I523": "甄选吉他拨片",
+		"I532": "熟悉的银箱护身符",
+		"I547": "炸虾剑",
+		"I549": "欧罗巴",
+		"I587": "追忆小提乐器",
+		"I589": "金刚晶欠片",
+		"I602": "欧罗巴",
+		"I603": "欧罗巴",
+		"I604": "欧罗巴",
+		"I605": "欧罗巴"
+	},
 	"recipes": [
 		{ "id": "r_example_1", "a": "I510", "b": "I510", "result": "I414" },
 		{ "id": "r_example_2", "a": "I414", "b": "I576", "result": "I428" },
@@ -54,7 +69,7 @@ var weaponRecipes_7f2e9c4a_3b5d_4f8a_9c1e_6d4b8a2f9c31 = {
 		{ "id": "r_example_34", "a": "I388", "b": "I557", "result": "I393" },
 		{ "id": "r_example_35", "a": "I501", "b": "I555", "result": "I384" },
 		{ "id": "r_example_36", "a": "I501", "b": "I550", "result": "I420" },
-		{ "id": "r_example_37", "a": "I503", "b": "I525", "result": "I423" },
+		{ "id": "r_example_37", "a": "I501", "b": "I525", "result": "I423" },
 		{ "id": "r_example_38", "a": "I541", "b": "I581", "result": "I417" },
 		{ "id": "r_example_39", "a": "I506", "b": "I506", "result": "I398" },
 		{ "id": "r_example_40", "a": "I590", "b": "I515", "result": "I422" },
@@ -72,5 +87,7 @@ var weaponRecipes_7f2e9c4a_3b5d_4f8a_9c1e_6d4b8a2f9c31 = {
 		{ "id": "r_example_52", "a": "I515", "b": "I500", "result": "I401" },
 		{ "id": "r_example_53", "a": "I534", "b": "I534", "result": "I391" },
 		{ "id": "r_example_54", "a": "I589", "b": "I589", "result": "I406" },
+		{ "id": "r_example_55", "a": "I587", "b": "I523", "result": "I403" },
+		{ "id": "r_example_56", "a": "I426", "b": "I576", "result": "I407" },
 	]
 };

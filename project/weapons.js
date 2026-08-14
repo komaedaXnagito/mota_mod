@@ -4882,10 +4882,15 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		]
 	},
 	"I523": {
-		"id": "甄选吉他拨片",
-		"name": "甄选吉他拨片",
+		"id": "发卡",
+		"name": "发卡",
 		"shape": [
 			[
+				1,
+				1
+			],
+			[
+				1,
 				1
 			]
 		],
@@ -4898,11 +4903,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			312,
 			312
 		],
-		"sourceName": "甄选吉他拨片",
-		"rarity": 3,
-		"weaponTypes": [
-			"道具"
-		]
+		"sourceName": "发卡"
 	},
 	"I524": {
 		"id": "吟游诗人之证",
@@ -9676,8 +9677,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"conditionId": "nearbyAll",
 						"stat": "attackInterval",
 						"operation": "add",
-						"value": -0.2,
-						"perMatch": true
+						"value": -0.2
 					}
 				]
 			}

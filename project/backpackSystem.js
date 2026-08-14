@@ -17,7 +17,8 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		attackFlag: "__backpack_attack__", // 缓存已摆放武器总攻击的 flag 名称。
 		stateVersion: 5, // v5：武器攻击改为上下限，并加入命中、间隔和奥义获取。
 		eventId: "backpack", // 背包界面占用的事件面板 ID。
-		sellPrice: 30 // 拖到售卖区出售武器时的固定售价（金币）。
+		sellPrice: 30, // 拖到售卖区出售武器时的固定售价（金币）。
+		imageInsetCells: 0.12 // 武器图片与占格外缘之间保留的格子距离，与商店预览一致。
 	};
 	const uiCommon = backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61;
 
@@ -39,9 +40,11 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	let expansionLayer = null; // 放置虚线加号扩展按钮的 DOM 图层。
 	let synergyLayer = null; // Hover 武器时显示结构化联动范围和方向动画。
 	let expansionCountLabel = null; // 工具栏中显示背包格子数量的文字节点。
+	let battleSpeedSelect = null; // 工具栏中的默认战斗速度选择器。
 	let placedLayer = null; // 显示已摆放武器 DOM 元素的图层。
 	let dragLayer = null; // 显示当前拖拽物视觉副本的最高层图层。
 	let sellZone = null; // 背包右侧的售卖区：拖武器到这里自动出售（固定售价）。
+	let toolbarElement = null; // 顶部工具栏；布局计算读取其换行后的真实高度。
 	let gameGroup = null; // 魔塔引擎提供的游戏容器 DOM 节点。
 	let layout = null; // 最近一次计算出的自适应尺寸和坐标结果。
 
@@ -482,7 +485,17 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		const height = root.clientHeight || rect.height;
 		const scale = rect.width ? width / rect.width : 1;
 		const compact = rect.width < 620;
-		const toolbarHeight = 46 * scale;
+		const narrow = rect.width < 900;
+		root.dataset.compact = compact ? "true" : "false";
+		root.dataset.narrow = narrow ? "true" : "false";
+		const toolbarHeight = Math.max(42 * scale,
+			(toolbarElement ? toolbarElement.offsetHeight : 42 * scale) + 4 * scale);
+		const sideGap = 10 * scale;
+		const inventoryWidth = (narrow ? 130 : 148) * scale;
+		const sellWidth = (compact ? 104 : (narrow ? 106 : 122)) * scale;
+		const contentTop = toolbarHeight + 4 * scale;
+		const contentHeight = Math.max(80 * scale, height - contentTop - 8 * scale);
+		let sellBox; // 售卖区位置；与棋盘共用布局计算，避免窄屏时覆盖格子。
 		let panelBox; // 库存面板的 left/top/width/height。
 		let cellSize; // 根据可用空间缩放后的单格像素尺寸（不含格间缝隙）。
 		let bagX; // 最大背包网格左上角的横坐标。
@@ -491,7 +504,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		let availHeight; // 网格可用纵向空间。
 
 		if (compact) {
-			const panelHeight = 104 * scale;
+			const panelHeight = 96 * scale;
 			const availableHeight = Math.max(80 * scale, height - toolbarHeight - panelHeight - 22 * scale);
 			availWidth = width - 18 * scale;
 			availHeight = availableHeight;
@@ -503,12 +516,18 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 			panelBox = {
 				left: 8 * scale,
 				top: toolbarHeight,
-				width: width - 16 * scale,
+				width: Math.max(80 * scale, width - sellWidth - 3 * sideGap - 8 * scale),
+				height: panelHeight - 6 * scale
+			};
+			sellBox = {
+				left: width - sellWidth - 8 * scale,
+				top: toolbarHeight,
+				width: sellWidth,
 				height: panelHeight - 6 * scale
 			};
 		} else {
-			const panelWidth = 148 * scale;
-			availWidth = width - panelWidth - 30 * scale;
+			const sellReserve = sellWidth + 2 * sideGap;
+			availWidth = width - inventoryWidth - sellReserve - 24 * scale;
 			availHeight = height - toolbarHeight - 20 * scale;
 			cellSize = Math.min(
 				CONFIG.maxCellSize * scale,
@@ -518,13 +537,21 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 			panelBox = {
 				left: 8 * scale,
 				top: toolbarHeight,
-				width: panelWidth - 14 * scale,
+				width: inventoryWidth - 14 * scale,
 				height: height - toolbarHeight - 8 * scale
+			};
+			const desiredSellHeight = (narrow ? 188 : 220) * scale;
+			const sellHeight = Math.min(desiredSellHeight, contentHeight);
+			sellBox = {
+				left: width - sellWidth - 10 * scale,
+				top: contentTop + Math.max(0, (contentHeight - sellHeight) / 2),
+				width: sellWidth,
+				height: sellHeight
 			};
 		}
 
 		cellSize = Math.max(8, Math.floor(cellSize));
-		// 格间缝隙：cellSize 的约 6%（至少 1px）。缝隙只用于格子定位，不参与武器尺寸/缩放计算
+		// 格间缝隙：cellSize 的约 10%（至少 2px）。缝隙只用于格子定位，不参与武器尺寸/缩放计算
 		//（武器仍按 cellSize 计算，1×1 武器只占 1 格内，4×4 武器只占 4×4 格内，不会扩大到缝隙）。
 		const gap = Math.max(2, Math.round(cellSize * 0.1));
 		// 含缝总尺寸超可用空间时缩小格子（缝隙固定），保证网格整体不溢出。
@@ -538,10 +565,10 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		const totalHeight = grid.maxRows * cellSize + (grid.maxRows - 1) * gap;
 		if (compact) {
 			bagX = (width - totalWidth) / 2;
-			bagY = toolbarHeight + 104 * scale + 10 * scale;
+			bagY = toolbarHeight + 96 * scale + 10 * scale;
 		} else {
-			const panelWidth = 148 * scale;
-			bagX = panelWidth + (width - panelWidth - totalWidth) / 2;
+			const sellReserve = sellWidth + 2 * sideGap;
+			bagX = inventoryWidth + (width - inventoryWidth - sellReserve - totalWidth) / 2;
 			bagY = toolbarHeight + (height - toolbarHeight - totalHeight) / 2;
 		}
 
@@ -557,7 +584,8 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 			bagY: bagY,
 			bagWidth: totalWidth,
 			bagHeight: totalHeight,
-			panel: panelBox
+			panel: panelBox,
+			sell: sellBox
 		};
 	};
 
@@ -580,10 +608,20 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		element.style.height = px(spanW(bounds.rows));
 
 		const baseBounds = getBounds(weapon, 0);
+		const baseWidth = spanW(baseBounds.cols);
+		const baseHeight = spanW(baseBounds.rows);
+		const imageInset = Math.min(
+			cellSize * CONFIG.imageInsetCells,
+			Math.max(0, (baseWidth - 1) / 2),
+			Math.max(0, (baseHeight - 1) / 2)
+		);
+		const frameWidth = baseWidth - imageInset * 2;
+		const frameHeight = baseHeight - imageInset * 2;
 		const imageFrame = document.createElement("div");
 		imageFrame.className = "backpack-image-frame";
-		imageFrame.style.width = px(spanW(baseBounds.cols));
-		imageFrame.style.height = px(spanW(baseBounds.rows));
+		imageFrame.dataset.insetCells = String(CONFIG.imageInsetCells);
+		imageFrame.style.width = px(frameWidth);
+		imageFrame.style.height = px(frameHeight);
 		imageFrame.style.transformOrigin = "0 0";
 
 		const image = document.createElement("img");
@@ -592,32 +630,41 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		image.src = weapon.image;
 		const crop = weapon.imageCrop;
 		if (Array.isArray(crop) && crop.length >= 6 && crop[2] > 0 && crop[3] > 0) {
-			const scaleX = spanW(baseBounds.cols) / crop[2];
-			const scaleY = spanW(baseBounds.rows) / crop[3];
-			image.style.width = px(crop[4] * scaleX);
-			image.style.height = px(crop[5] * scaleY);
-			image.style.left = px(-crop[0] * scaleX);
-			image.style.top = px(-crop[1] * scaleY);
+			// 裁剪素材横纵方向使用同一个比例，并把裁剪区域等比居中到留白后的图片框内。
+			const uniformScale = Math.min(frameWidth / crop[2], frameHeight / crop[3]);
+			const displayedCropWidth = crop[2] * uniformScale;
+			const displayedCropHeight = crop[3] * uniformScale;
+			image.style.width = px(crop[4] * uniformScale);
+			image.style.height = px(crop[5] * uniformScale);
+			image.style.left = px((frameWidth - displayedCropWidth) / 2 - crop[0] * uniformScale);
+			image.style.top = px((frameHeight - displayedCropHeight) / 2 - crop[1] * uniformScale);
 		} else {
-			image.style.width = px(spanW(baseBounds.cols));
-			image.style.height = px(spanW(baseBounds.rows));
+			image.style.width = "100%";
+			image.style.height = "100%";
 		}
 		imageFrame.appendChild(image);
 
 		const normalized = normalizeRotation(rotation);
 		if (normalized === 90) {
-			imageFrame.style.left = px(spanW(bounds.cols));
+			imageFrame.style.left = px(spanW(bounds.cols) - imageInset);
+			imageFrame.style.top = px(imageInset);
 			imageFrame.style.transform = "rotate(90deg)";
 		} else if (normalized === 180) {
-			imageFrame.style.left = px(spanW(bounds.cols));
-			imageFrame.style.top = px(spanW(bounds.rows));
+			imageFrame.style.left = px(spanW(bounds.cols) - imageInset);
+			imageFrame.style.top = px(spanW(bounds.rows) - imageInset);
 			imageFrame.style.transform = "rotate(180deg)";
 		} else if (normalized === 270) {
-			imageFrame.style.top = px(spanW(bounds.rows));
+			imageFrame.style.left = px(imageInset);
+			imageFrame.style.top = px(spanW(bounds.rows) - imageInset);
 			imageFrame.style.transform = "rotate(270deg)";
+		} else {
+			imageFrame.style.left = px(imageInset);
+			imageFrame.style.top = px(imageInset);
 		}
 		element.appendChild(imageFrame);
 
+		const occupiedCells = {};
+		bounds.cells.forEach(function (cell) { occupiedCells[cell[0] + "," + cell[1]] = true; });
 		bounds.cells.forEach(function (cell) {
 			// 占格轮廓/命中热区按本函数的格距（step）定位、按格子净尺寸（cellSize）显示：与背景格对齐。
 			const outline = document.createElement("span");
@@ -632,8 +679,10 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 			hitCell.className = "backpack-cell-hit";
 			hitCell.style.left = px(cell[0] * step);
 			hitCell.style.top = px(cell[1] * step);
-			hitCell.style.width = px(cellSize);
-			hitCell.style.height = px(cellSize);
+			// 只连接同一武器横向/纵向相邻占格之间的缝隙，避免跨格 hover 闪断；
+			// 外侧和凹形缺口不扩张，因此不会退化成覆盖整个外接矩形的误命中区域。
+			hitCell.style.width = px(cellSize + (occupiedCells[(cell[0] + 1) + "," + cell[1]] ? gap : 0));
+			hitCell.style.height = px(cellSize + (occupiedCells[cell[0] + "," + (cell[1] + 1)] ? gap : 0));
 			element.appendChild(hitCell);
 		});
 		return element;
@@ -878,12 +927,13 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 
 			const name = document.createElement("div");
 			name.className = "backpack-card-name";
-			name.textContent = entry.weapon.name;
+			uiCommon.renderWeaponName(name, entry.weapon, { showHammer: false });
 			const rarity = document.createElement("div");
 			rarity.className = "backpack-card-rarity";
 			rarity.textContent = entry.weapon.rarity == null
 				? "未定稀有度"
 				: new Array(Math.max(0, Math.min(5, Number(entry.weapon.rarity))) + 1).join("★");
+			uiCommon.appendCraftHammer(rarity, entry.weapon);
 
 			const rotate = document.createElement("button");
 			rotate.className = "backpack-mini-button";
@@ -905,6 +955,18 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		});
 	};
 
+	/** 按同一份响应式布局定位售卖区，确保它永远位于棋盘预留空间内。 */
+	const renderSellZone = function () {
+		if (!sellZone || !layout || !layout.sell) return;
+		const sell = layout.sell;
+		sellZone.style.left = px(sell.left);
+		sellZone.style.top = px(sell.top);
+		sellZone.style.right = "auto";
+		sellZone.style.width = px(sell.width);
+		sellZone.style.height = px(sell.height);
+		sellZone.style.minHeight = "0";
+	};
+
 	/** 统一执行尺寸计算、画布绘制、扩展槽、已摆放区和库存区渲染。 */
 	const renderAll = function () {
 		if (!root) return;
@@ -915,6 +977,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		renderExpansionSlots();
 		renderPlaced();
 		renderInventory();
+		renderSellZone();
 		if (dragState) updateDragElement();
 	};
 
@@ -1137,6 +1200,59 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		return button;
 	};
 
+	const BATTLE_SPEED_OPTIONS = [
+		{ value: "0.25", label: "0.25×" },
+		{ value: "0.5", label: "0.5×" },
+		{ value: "1", label: "1×" },
+		{ value: "2", label: "2×" },
+		{ value: "3", label: "3×" },
+		{ value: "10", label: "10×" },
+		{ value: "instant", label: "立即" }
+	];
+
+	/** 读取战斗插件中持久化的速度偏好，并同步到背包工具栏。 */
+	const renderBattleSpeedControl = function () {
+		if (!battleSpeedSelect) return;
+		const battle = core.plugin && core.plugin.backpackBattle;
+		const available = battle && typeof battle.getPreferredSpeed === "function"
+			&& typeof battle.setPreferredSpeed === "function";
+		battleSpeedSelect.disabled = !available;
+		if (!available) return;
+		const preference = battle.getPreferredSpeed();
+		battleSpeedSelect.value = preference === "instant" ? "instant" : String(preference);
+	};
+
+	/** 创建紧凑下拉框，避免七个倍速按钮挤占背包的小分辨率工具栏。 */
+	const createBattleSpeedControl = function () {
+		const control = document.createElement("label");
+		control.className = "backpack-battle-speed-control";
+		const caption = document.createElement("span");
+		caption.textContent = "战速";
+		battleSpeedSelect = document.createElement("select");
+		battleSpeedSelect.className = "backpack-battle-speed-select";
+		battleSpeedSelect.setAttribute("aria-label", "默认战斗速度");
+		BATTLE_SPEED_OPTIONS.forEach(function (speed) {
+			const option = document.createElement("option");
+			option.value = speed.value;
+			option.textContent = speed.label;
+			battleSpeedSelect.appendChild(option);
+		});
+		battleSpeedSelect.addEventListener("pointerdown", function (event) { event.stopPropagation(); });
+		battleSpeedSelect.addEventListener("change", function (event) {
+			event.stopPropagation();
+			const battle = core.plugin && core.plugin.backpackBattle;
+			if (!battle || typeof battle.setPreferredSpeed !== "function") return;
+			const value = battleSpeedSelect.value === "instant"
+				? "instant" : Number(battleSpeedSelect.value);
+			if (!battle.setPreferredSpeed(value)) return;
+			renderBattleSpeedControl();
+			if (core.drawTip) core.drawTip("默认战斗速度：" + battleSpeedSelect.options[battleSpeedSelect.selectedIndex].text);
+		});
+		control.appendChild(caption);
+		control.appendChild(battleSpeedSelect);
+		return control;
+	};
+
 	/** 创建背包所需 DOM 图层、工具栏和全局事件监听。 */
 	const buildInterface = function () {
 		gameGroup = document.getElementById("gameGroup");
@@ -1182,18 +1298,19 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		sellZone.appendChild(sellHint);
 		root.appendChild(sellZone);
 
-		const toolbar = document.createElement("div");
-		toolbar.className = "backpack-toolbar";
+		toolbarElement = document.createElement("div");
+		toolbarElement.className = "backpack-toolbar";
 		const title = document.createElement("span");
 		title.className = "backpack-toolbar-title";
 		title.textContent = "背包";
-		toolbar.appendChild(title);
+		toolbarElement.appendChild(title);
 		expansionCountLabel = document.createElement("span");
 		expansionCountLabel.className = "backpack-expansion-count";
-		toolbar.appendChild(expansionCountLabel);
-		toolbar.appendChild(createButton("旋转拖拽物（R）", rotateDrag));
-		toolbar.appendChild(createButton("自动整理", autoArrange));
-		toolbar.appendChild(createButton("合成", function () {
+		toolbarElement.appendChild(expansionCountLabel);
+		toolbarElement.appendChild(createBattleSpeedControl());
+		toolbarElement.appendChild(createButton("旋转拖拽物（R）", rotateDrag));
+		toolbarElement.appendChild(createButton("自动整理", autoArrange));
+		toolbarElement.appendChild(createButton("合成", function () {
 			// 合成插件方法挂在 core.plugin 顶层（core.plugin.openCraftPanel）。
 			const craft = core.plugin;
 			if (craft && typeof craft.openCraftPanel === "function") {
@@ -1207,9 +1324,10 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 				core.drawTip("合成系统未安装，请刷新页面（版本 2.10.15）");
 			}
 		}));
-		toolbar.appendChild(createButton("全部收回", collectAll));
-		toolbar.appendChild(createButton("关闭", function () { closeBackpack(); }));
-		root.appendChild(toolbar);
+		toolbarElement.appendChild(createButton("全部收回", collectAll));
+		toolbarElement.appendChild(createButton("关闭", function () { closeBackpack(); }));
+		root.appendChild(toolbarElement);
+		renderBattleSpeedControl();
 
 		gameGroup.appendChild(root);
 		window.addEventListener("resize", renderAll);
@@ -1333,11 +1451,13 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		if (root) root.remove();
 		root = null;
 		sellZone = null;
+		toolbarElement = null;
 		bagCanvas = null;
 		bagContext = null;
 		inventoryPanel = null;
 		expansionLayer = null;
 		expansionCountLabel = null;
+		battleSpeedSelect = null;
 		placedLayer = null;
 		synergyLayer = null;
 		dragLayer = null;

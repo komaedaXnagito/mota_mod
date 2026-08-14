@@ -12,6 +12,8 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 	var latestSnapshot = null;
 	var unsubscribe = null;
 	var resizeHandler = null;
+	var delayedOpenTimer = null;
+	var INSTANT_OPEN_DELAY = 100;
 	var GRID_COLS = 10;
 	var GRID_ROWS = 10;
 	var SVG_NS = "http://www.w3.org/2000/svg";
@@ -111,8 +113,8 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 			"<section class='bb-panel' role='dialog' aria-label='背包乱斗战斗'>",
 			"<header class='bb-topbar'><div class='bb-brand'>背包战斗</div><div class='bb-controls'>",
 			"<button class='bb-button bb-pause'>暂停</button><span class='bb-speed-label'>速度</span>",
-			"<button class='bb-button bb-speed' data-speed='0.25'>0.25×</button><button class='bb-button bb-speed' data-speed='0.5'>0.5×</button><button class='bb-button bb-speed' data-speed='1'>1×</button><button class='bb-button bb-speed' data-speed='2'>2×</button><button class='bb-button bb-speed' data-speed='4'>4×</button><button class='bb-button bb-speed' data-speed='10'>10×</button>",
-			"<button class='bb-button bb-fast'>快速结算</button></div></header>",
+			"<button class='bb-button bb-speed' data-speed='0.25'>0.25×</button><button class='bb-button bb-speed' data-speed='0.5'>0.5×</button><button class='bb-button bb-speed' data-speed='1'>1×</button><button class='bb-button bb-speed' data-speed='2'>2×</button><button class='bb-button bb-speed' data-speed='3'>3×</button><button class='bb-button bb-speed' data-speed='10'>10×</button>",
+			"<button class='bb-button bb-fast'>立即</button></div></header>",
 			"<div class='bb-content'>",
 			"<section class='bb-arsenal'><div class='bb-arsenal-title'>武器阵列 <small class='bb-weapon-count'></small></div><div class='bb-weapon-board'><div class='bb-weapon-stage'><div class='bb-synergy-layer'></div></div><div class='bb-weapon-empty'>尚未摆放武器</div></div></section>",
 			"<aside class='bb-sidebar'>",
@@ -163,9 +165,16 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 			else runtime.pause();
 		};
 		root.querySelectorAll(".bb-speed").forEach(function (button) {
-			button.onclick = function () { runtime.setSpeed(Number(button.dataset.speed)); };
+			button.onclick = function () {
+				if (typeof runtime.setPreferredSpeed === "function") {
+					runtime.setPreferredSpeed(Number(button.dataset.speed));
+				} else runtime.setSpeed(Number(button.dataset.speed));
+			};
 		});
-		nodes.fast.onclick = function () { runtime.fastForward(); };
+		nodes.fast.onclick = function () {
+			if (typeof runtime.setPreferredSpeed === "function") runtime.setPreferredSpeed("instant");
+			else runtime.fastForward();
+		};
 		nodes.logToggle.onclick = function () {
 			var collapsed = nodes.logSection.classList.toggle("collapsed");
 			nodes.logToggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
@@ -206,17 +215,30 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		};
 	};
 
+	var BATTLE_IMAGE_INSET_CELLS = 0.12;
+
 	var createArt = function (weapon, cellSize, className) {
 		var baseCells = normalizeCells(weapon.baseCells || weapon.cells);
 		var baseBounds = getBounds(baseCells);
 		var rotation = ((Math.round((Number(weapon.rotation) || 0) / 90) % 4) + 4) % 4 * 90;
 		var bounds = getBounds(rotateCells(baseCells, rotation));
+		var baseWidth = baseBounds.cols * cellSize;
+		var baseHeight = baseBounds.rows * cellSize;
+		// 与背包、商店一致：图片和格子边缘留出固定比例的距离，同时保证图片框始终为正尺寸。
+		var imageInset = Math.min(
+			cellSize * BATTLE_IMAGE_INSET_CELLS,
+			Math.max(0, (baseWidth - 1) / 2),
+			Math.max(0, (baseHeight - 1) / 2)
+		);
+		var frameWidth = baseWidth - imageInset * 2;
+		var frameHeight = baseHeight - imageInset * 2;
 		var art = document.createElement("div");
 		art.className = "bb-art " + className;
 		var frame = document.createElement("div");
 		frame.className = "bb-art-frame";
-		frame.style.width = (baseBounds.cols * cellSize) + "px";
-		frame.style.height = (baseBounds.rows * cellSize) + "px";
+		frame.dataset.insetCells = String(BATTLE_IMAGE_INSET_CELLS);
+		frame.style.width = frameWidth + "px";
+		frame.style.height = frameHeight + "px";
 		frame.style.transformOrigin = "0 0";
 		var image = document.createElement("img");
 		image.alt = weapon.name || "武器";
@@ -224,27 +246,34 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		image.src = weapon.image || "";
 		var crop = weapon.imageCrop;
 		if (Array.isArray(crop) && crop.length >= 6 && crop[2] > 0 && crop[3] > 0) {
-			var scaleX = baseBounds.cols * cellSize / crop[2];
-			var scaleY = baseBounds.rows * cellSize / crop[3];
-			image.style.width = (crop[4] * scaleX) + "px";
-			image.style.height = (crop[5] * scaleY) + "px";
-			image.style.left = (-crop[0] * scaleX) + "px";
-			image.style.top = (-crop[1] * scaleY) + "px";
+			// 完整图片和裁剪区域共用同一个缩放值，禁止横纵轴分别拉伸。
+			var uniformScale = Math.min(frameWidth / crop[2], frameHeight / crop[3]);
+			var displayedCropWidth = crop[2] * uniformScale;
+			var displayedCropHeight = crop[3] * uniformScale;
+			image.style.width = (crop[4] * uniformScale) + "px";
+			image.style.height = (crop[5] * uniformScale) + "px";
+			image.style.left = ((frameWidth - displayedCropWidth) / 2 - crop[0] * uniformScale) + "px";
+			image.style.top = ((frameHeight - displayedCropHeight) / 2 - crop[1] * uniformScale) + "px";
 		} else {
-			image.style.width = (baseBounds.cols * cellSize) + "px";
-			image.style.height = (baseBounds.rows * cellSize) + "px";
+			image.style.width = frameWidth + "px";
+			image.style.height = frameHeight + "px";
 		}
 		frame.appendChild(image);
 		if (rotation === 90) {
-			frame.style.left = (bounds.cols * cellSize) + "px";
+			frame.style.left = (bounds.cols * cellSize - imageInset) + "px";
+			frame.style.top = imageInset + "px";
 			frame.style.transform = "rotate(90deg)";
 		} else if (rotation === 180) {
-			frame.style.left = (bounds.cols * cellSize) + "px";
-			frame.style.top = (bounds.rows * cellSize) + "px";
+			frame.style.left = (bounds.cols * cellSize - imageInset) + "px";
+			frame.style.top = (bounds.rows * cellSize - imageInset) + "px";
 			frame.style.transform = "rotate(180deg)";
 		} else if (rotation === 270) {
-			frame.style.top = (bounds.rows * cellSize) + "px";
+			frame.style.left = imageInset + "px";
+			frame.style.top = (bounds.rows * cellSize - imageInset) + "px";
 			frame.style.transform = "rotate(270deg)";
+		} else {
+			frame.style.left = imageInset + "px";
+			frame.style.top = imageInset + "px";
 		}
 		art.appendChild(frame);
 		bounds.cells.forEach(function (cell) {
@@ -476,7 +505,13 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		nodes.log.scrollTop = nodes.log.scrollHeight;
 	};
 
-	var render = function (snapshot) {
+	var cancelDelayedOpen = function () {
+		if (delayedOpenTimer == null) return;
+		clearTimeout(delayedOpenTimer);
+		delayedOpenTimer = null;
+	};
+
+	var render = function (snapshot, allowInstantOpen) {
 		if (!snapshot || snapshot.active === false) {
 			close();
 			return;
@@ -485,8 +520,22 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 			close();
 			return;
 		}
-		build();
 		latestSnapshot = snapshot;
+		var preferredSpeed = typeof runtime.getPreferredSpeed === "function"
+			? runtime.getPreferredSpeed() : snapshot.speed;
+		// “立即”先静默模拟 100ms：期间完成则从未创建过面板，较慢的战斗才补显示结算进度。
+		if (preferredSpeed === "instant" && !root && !allowInstantOpen) {
+			if (delayedOpenTimer == null) {
+				delayedOpenTimer = setTimeout(function () {
+					delayedOpenTimer = null;
+					var current = runtime.getSnapshot();
+					if (current && current.active) render(current, true);
+				}, INSTANT_OPEN_DELAY);
+			}
+			return;
+		}
+		cancelDelayedOpen();
+		build();
 		nodes.playerName.textContent = snapshot.player.name;
 		nodes.playerHpText.textContent = format(snapshot.player.hp, 1) + " / " + format(snapshot.player.maxHp, 1);
 		nodes.playerHp.style.width = Math.max(0, Math.min(100, snapshot.player.hp / Math.max(1, snapshot.player.maxHp) * 100)) + "%";
@@ -504,9 +553,11 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		drawPortraits(snapshot);
 		nodes.pause.textContent = snapshot.paused ? "继续" : "暂停";
 		nodes.fast.disabled = !!snapshot.fastForwarding;
-		nodes.fast.textContent = snapshot.fastForwarding ? "结算中…" : "快速结算";
+		nodes.fast.textContent = snapshot.fastForwarding ? "结算中…" : "立即";
+		nodes.fast.classList.toggle("active", preferredSpeed === "instant");
 		root.querySelectorAll(".bb-speed").forEach(function (button) {
-			button.classList.toggle("active", Number(button.dataset.speed) === snapshot.speed);
+			button.classList.toggle("active", preferredSpeed !== "instant"
+				&& Number(button.dataset.speed) === Number(preferredSpeed));
 		});
 		nodes.ultimateText.textContent = format(snapshot.player.ultimate, 1) + " / 100";
 		nodes.ultimateBar.style.width = Math.min(100, snapshot.player.ultimate) + "%";
@@ -519,6 +570,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 	};
 
 	var close = function () {
+		cancelDelayedOpen();
 		common.hideTooltip();
 		if (resizeHandler) window.removeEventListener("resize", resizeHandler);
 		resizeHandler = null;

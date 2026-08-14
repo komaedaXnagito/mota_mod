@@ -762,6 +762,8 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 		pause: runtime.pause,
 		resume: runtime.resume,
 		setSpeed: runtime.setSpeed,
+		setPreferredSpeed: runtime.setPreferredSpeed,
+		getPreferredSpeed: runtime.getPreferredSpeed,
 		getSnapshot: runtime.getSnapshot,
 		fastForward: runtime.fastForward,
 		stop: runtime.stop,

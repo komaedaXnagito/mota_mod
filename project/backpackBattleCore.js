@@ -15,21 +15,26 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 	var fastForwardToken = 0;
 	var frameName = "backpackBattleTick";
 	var speedStorageKey = "backpackBattleSpeed";
-	var validSpeeds = [0.25, 0.5, 1, 2, 4, 10];
+	var instantSpeedValue = "instant";
+	var validSpeeds = [0.25, 0.5, 1, 2, 3, 10];
 
 	var normalizeSpeed = function (speed, fallback) {
 		speed = Number(speed);
 		return validSpeeds.indexOf(speed) >= 0 ? speed : fallback;
 	};
 
-	var getSavedSpeed = function () {
+	var getSavedPreference = function () {
 		if (!core || typeof core.getLocalStorage !== "function") return 1;
-		return normalizeSpeed(core.getLocalStorage(speedStorageKey, 1), 1);
+		var saved = core.getLocalStorage(speedStorageKey, 1);
+		if (saved === instantSpeedValue) return instantSpeedValue;
+		// 旧版本曾提供 4×；升级后平滑迁移到新的 3× 档位。
+		if (Number(saved) === 4) return 3;
+		return normalizeSpeed(saved, 1);
 	};
 
-	var saveSpeed = function (speed) {
+	var saveSpeedPreference = function (preference) {
 		if (!core || typeof core.setLocalStorage !== "function") return;
-		core.setLocalStorage(speedStorageKey, speed);
+		core.setLocalStorage(speedStorageKey, preference);
 	};
 
 	var notify = function () {
@@ -536,9 +541,10 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 	var start = function (input, options) {
 		options = options || {};
 		if (state && state.active) return false;
+		var savedPreference = getSavedPreference();
 		state = rules.createBattleState(input);
 		state.rngCallCount = 0;
-		state.speed = normalizeSpeed(options.speed, getSavedSpeed());
+		state.speed = normalizeSpeed(options.speed, savedPreference === instantSpeedValue ? 1 : savedPreference);
 		state.paused = false;
 		state.fastForwarding = false;
 		finishCallback = options.onFinish || null;
@@ -549,7 +555,9 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 		rules.runAllWeaponRules(state, "battleStart", { sourceSide: "player" }, getHandlers());
 		notify();
 		if (checkBattleEnd()) return true;
-		if (options.fastForward) runFastForward(options.fastForwardOptions);
+		if (options.fastForward || (options.speed == null && savedPreference === instantSpeedValue)) {
+			runFastForward(options.fastForwardOptions);
+		}
 		return true;
 	};
 
@@ -562,7 +570,28 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 	var setSpeed = function (speed) {
 		if (!state || validSpeeds.indexOf(Number(speed)) < 0) return false;
 		state.speed = Number(speed);
-		saveSpeed(state.speed);
+		saveSpeedPreference(state.speed);
+		notify();
+		return true;
+	};
+
+	/** 背包和战斗界面共用的速度偏好；允许尚未进入战斗时提前设置。 */
+	var setPreferredSpeed = function (preference) {
+		if (preference === instantSpeedValue) {
+			saveSpeedPreference(instantSpeedValue);
+			if (state && state.active) return state.fastForwarding || runFastForward();
+			return true;
+		}
+		var speed = Number(preference);
+		if (validSpeeds.indexOf(speed) < 0) return false;
+		saveSpeedPreference(speed);
+		if (!state || !state.active) return true;
+		if (state.fastForwarding) {
+			fastForwardToken++;
+			state.fastForwarding = false;
+		}
+		state.speed = speed;
+		lastTimestamp = null;
 		notify();
 		return true;
 	};
@@ -635,6 +664,8 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 		pause: pause,
 		resume: resume,
 		setSpeed: setSpeed,
+		setPreferredSpeed: setPreferredSpeed,
+		getPreferredSpeed: getSavedPreference,
 		fastForward: runFastForward,
 		stepTicks: function (ticks) {
 			for (var index = 0; index < ticks && state && state.active; index++) stepOneTick();

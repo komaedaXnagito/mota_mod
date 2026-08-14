@@ -1,7 +1,7 @@
 /* 背包乱斗共用 Tooltip */
 .bui-tooltip {
 	position: fixed;
-	z-index: 10080;
+	z-index: 10130;
 	width: min(370px, calc(100vw - 24px));
 	max-height: min(520px, calc(100vh - 24px));
 	overflow: auto;
@@ -17,17 +17,23 @@
 	opacity: 0;
 	visibility: hidden;
 	transform: translateY(5px);
-	transition: opacity .1s, transform .1s;
+	contain: layout paint;
+	will-change: opacity, transform;
+	transition: opacity .08s ease, transform .08s ease, visibility 0s linear .08s;
 	word-break: break-word;
 }
 
-.bui-tooltip.show { opacity: 1; visibility: visible; transform: none; }
+.bui-tooltip.show { opacity: 1; visibility: visible; transform: none; pointer-events: auto; transition-delay: 0s; }
 .bui-weapon-tip header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(220, 188, 134, .3); }
 .bui-weapon-tip header b { display: block; color: #fff6df; font-size: 18px; }
 .bui-weapon-tip header small { display: block; color: #a99b89; font-size: 10px; }
+.bui-tip-title-row { display: flex; align-items: center; gap: 5px; }
+.bui-rarity-row { display: flex; align-items: center; justify-content: flex-end; gap: 5px; }
 .bui-rarity { color: #ffd66b; white-space: nowrap; letter-spacing: 1px; }
 .bui-type-row { display: flex; flex-wrap: wrap; gap: 5px; margin: 8px 0; }
 .bui-type-row i { padding: 2px 7px; border: 1px solid #806b50; border-radius: 10px; background: #443526; color: #ead5ad; font-style: normal; font-size: 10px; }
+.bui-weapon-tip-main { display: block; }
+.bui-weapon-tip-main.attributes-only { display: block; }
 .bui-weapon-tip dl { display: grid; grid-template-columns: 76px 1fr; margin: 4px 0 0; }
 .bui-weapon-tip dt,
 .bui-weapon-tip dd { margin: 0; padding: 6px 4px; border-bottom: 1px solid rgba(255, 255, 255, .07); }
@@ -38,18 +44,58 @@
 .bui-weapon-tip h4 { margin: 0 0 4px; color: #f4cf88; font-size: 12px; }
 .bui-weapon-tip p,
 .bui-weapon-tip ul { margin: 0; }
+.bui-weapon-tip p { white-space: pre-line; word-break: break-word; }
 .bui-weapon-tip ul { padding-left: 18px; color: #d8c8af; }
+.bui-weapon-grid-preview { width: 100%; height: 86px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; margin: 3px 0 5px; box-sizing: border-box; }
+.bui-weapon-grid-preview > small { color: #9f8d73; font-size: 9px; line-height: 1.2; }
+.bui-weapon-grid-stage { position: relative; width: auto; height: 68px; max-width: 112px; max-height: 68px; flex: 0 1 68px; background: rgba(16, 13, 11, .5); box-shadow: 0 0 0 1px rgba(177, 144, 97, .22); }
+.bui-weapon-grid-cell,
+.bui-weapon-footprint-cell { position: absolute; box-sizing: border-box; pointer-events: none; }
+.bui-weapon-grid-cell { z-index: 0; border: 1px solid rgba(180, 145, 101, .28); background: rgba(111, 91, 69, .11); }
+.bui-weapon-footprint-cell { z-index: 1; border: 1px solid rgba(255, 230, 180, .48); background: rgba(238, 193, 112, .07); box-shadow: inset 0 0 5px rgba(244, 201, 124, .09); }
+.bui-weapon-grid-image-frame { position: absolute; z-index: 2; overflow: hidden; pointer-events: none; }
+.bui-weapon-grid-image-frame img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: contain; object-position: center; image-rendering: pixelated; pointer-events: none; -webkit-user-drag: none; }
+.bui-weapon-name { min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 3px; }
+.bui-weapon-name-text { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.bui-craft-hammer { flex: 0 0 auto; width: 20px; height: 20px; display: inline-grid; place-items: center; margin: 0; padding: 0; border: 1px solid rgba(226, 183, 103, .58); border-radius: 5px; background: rgba(102, 70, 37, .48); color: #ffe4a3; font: 11px/1 'Segoe UI Emoji', 'Microsoft YaHei', sans-serif; cursor: pointer; vertical-align: middle; opacity: .9; transition: opacity .12s, transform .12s, background .12s, border-color .12s; }
+.bui-craft-hammer:hover,
+.bui-craft-hammer:focus { border-color: #f2ca76; background: rgba(123, 81, 44, .8); outline: none; opacity: 1; transform: scale(1.08); }
+.backpack-shop-rarity,
+.backpack-craft-rarity { min-height: 20px; display: flex; align-items: center; justify-content: center; gap: 4px; }
 .bui-status-tip h3 { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 7px; color: #fff0cc; font-size: 16px; }
 .bui-status-tip h3 small { font-size: 11px; }
 .bui-status-tip p { margin: 4px 0; color: #ddd0bc; }
 .bui-status-tip strong { color: #f2c86f; }
 
+/* 由武器名称上的小锤子打开的轻量配方预览。 */
+.bui-recipe-preview-root { position: fixed; inset: 0; z-index: 10110; display: flex; align-items: center; justify-content: center; padding: 12px; box-sizing: border-box; background: rgba(6, 5, 4, .72); font-family: 'Microsoft YaHei', sans-serif; }
+.bui-recipe-preview-panel { width: min(690px, calc(100vw - 24px)); max-height: min(650px, calc(100vh - 24px)); display: flex; flex-direction: column; padding: 16px; box-sizing: border-box; overflow: hidden; border: 1px solid #c99a55; border-radius: 14px; background: linear-gradient(145deg, #34271e, #191513); color: #f5e6cd; box-shadow: 0 22px 65px rgba(0, 0, 0, .82), inset 0 0 0 1px rgba(255, 255, 255, .05); }
+.bui-recipe-preview-panel > header { flex: 0 0 auto; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid rgba(218, 177, 109, .3); }
+.bui-recipe-preview-panel > header b { display: block; color: #ffe8b7; font-size: 18px; }
+.bui-recipe-preview-panel > header small { display: block; margin-top: 3px; color: #af9876; font-size: 11px; }
+.bui-recipe-preview-close { flex: 0 0 auto; width: 30px; height: 30px; padding: 0; border: 1px solid #b9894e; border-radius: 7px; background: #654426; color: #fff1d4; font: bold 18px/1 sans-serif; cursor: pointer; }
+.bui-recipe-preview-close:hover { background: #80572f; }
+.bui-recipe-preview-list { min-height: 0; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding-right: 4px; }
+.bui-recipe-preview-card { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; padding: 10px 11px; border: 1px solid #6e5740; border-radius: 9px; background: linear-gradient(145deg, rgba(70, 52, 39, .95), rgba(39, 31, 27, .95)); color: #cdbb9f; font-size: 13px; }
+.bui-recipe-preview-weapon { color: #ead9bc; }
+.bui-recipe-preview-weapon.is-current { color: #f3cb72; font-weight: bold; }
+.bui-recipe-preview-weapon.has-tooltip .bui-weapon-name-text { border-bottom: 1px dotted currentColor; cursor: help; transition: color .12s, text-shadow .12s; }
+.bui-recipe-preview-weapon.has-tooltip:hover .bui-weapon-name-text,
+.bui-recipe-preview-weapon.has-tooltip.bui-hover .bui-weapon-name-text { color: #fff0a6; text-shadow: 0 0 7px rgba(240, 199, 96, .48); }
+.bui-recipe-preview-arrow { margin: 0 5px; color: #f0c760; font-size: 17px; }
+.bui-recipe-preview-card .bui-craft-hammer { width: 19px; height: 19px; font-size: 10px; }
+
 /* 地图背包界面 */
 #backpack-system-root { position: absolute; inset: 0; z-index: 260; overflow: hidden; touch-action: none; user-select: none; }
 #backpack-system-root canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.backpack-toolbar { position: absolute; z-index: 4; left: 0; right: 0; top: 0; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 6px; }
+.backpack-toolbar { position: absolute; z-index: 4; left: 0; right: 0; top: 0; display: flex; align-items: center; justify-content: center; flex-wrap: nowrap; gap: 8px; padding: 6px; box-sizing: border-box; white-space: nowrap; }
 .backpack-toolbar-title { margin-right: 10px; color: #ffe8bd; font: bold 16px sans-serif; }
 .backpack-expansion-count { color: #d7c39f; font: 12px sans-serif; white-space: nowrap; }
+.backpack-battle-speed-control { display: inline-flex; align-items: center; gap: 4px; color: #d7c39f; font: 12px sans-serif; white-space: nowrap; }
+.backpack-battle-speed-select { min-width: 66px; box-sizing: border-box; padding: 5px 6px; border: 1px solid #c29458; border-radius: 5px; outline: none; color: #fff7e8; background: #4f3525; font: 12px sans-serif; cursor: pointer; }
+.backpack-battle-speed-select:hover,
+.backpack-battle-speed-select:focus { border-color: #edc477; background: #68462d; box-shadow: 0 0 7px rgba(237, 196, 119, .22); }
+.backpack-battle-speed-select:disabled { opacity: .5; cursor: not-allowed; }
 .backpack-button,
 .backpack-mini-button { border: 1px solid #c29458; border-radius: 5px; color: #fff7e8; background: #6b4529; cursor: pointer; }
 .backpack-button { padding: 6px 12px; font-size: 13px; }
@@ -61,9 +107,20 @@
 .backpack-card:focus { border-color: #e1bd78; box-shadow: 0 0 10px rgba(233, 193, 112, .35); }
 .backpack-card[data-rarity='5'] { border-color: #d8ad4e; box-shadow: inset 0 0 8px rgba(255, 210, 98, .14); }
 .backpack-card-name { max-width: 104px; margin: 5px auto 2px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font: bold 12px sans-serif; }
-.backpack-card-rarity { min-height: 14px; margin-bottom: 5px; color: #f0c760; font: 10px sans-serif; letter-spacing: 1px; }
+.backpack-card-rarity { min-height: 20px; display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 5px; color: #f0c760; font: 10px sans-serif; letter-spacing: 1px; }
 .backpack-mini-button { padding: 3px 8px; font-size: 11px; }
 .backpack-empty { margin: auto; color: #c4ae8d; font: 13px sans-serif; text-align: center; }
+#backpack-system-root[data-narrow='true'] .backpack-toolbar { gap: 4px; padding: 4px; }
+#backpack-system-root[data-narrow='true'] .backpack-toolbar-title { margin-right: 4px; font-size: 14px; }
+#backpack-system-root[data-narrow='true'] .backpack-expansion-count { font-size: 11px; }
+#backpack-system-root[data-narrow='true'] .backpack-battle-speed-control { gap: 3px; font-size: 11px; }
+#backpack-system-root[data-narrow='true'] .backpack-battle-speed-select { min-width: 61px; padding: 4px 5px; font-size: 11px; }
+#backpack-system-root[data-narrow='true'] .backpack-button { padding: 5px 8px; font-size: 12px; }
+#backpack-system-root[data-compact='true'] .backpack-toolbar { flex-wrap: wrap; align-content: flex-start; }
+#backpack-system-root[data-compact='true'] .backpack-toolbar-title { display: none; }
+#backpack-system-root[data-compact='true'] .backpack-battle-speed-control > span { display: none; }
+#backpack-system-root[data-compact='true'] .backpack-button { padding: 4px 6px; font-size: 11px; }
+#backpack-system-root[data-compact='true'] .backpack-inventory { flex-direction: row; }
 .backpack-expansion-layer { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
 .backpack-synergy-layer { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
 .backpack-synergy-cell { position: absolute; overflow: hidden; box-sizing: border-box; border: 2px solid rgba(255, 202, 79, .92); border-radius: 4px; background: rgba(255, 174, 50, .2); box-shadow: inset 0 0 10px rgba(255, 219, 112, .42), 0 0 9px rgba(255, 174, 50, .5); pointer-events: none; }
@@ -78,7 +135,7 @@
 .backpack-drag-layer { z-index: 6; }
 .backpack-weapon { position: absolute; overflow: visible; box-sizing: border-box; }
 .backpack-image-frame { position: absolute; left: 0; top: 0; overflow: hidden; pointer-events: none; }
-.backpack-image-frame img { position: absolute; left: 0; top: 0; object-fit: fill; pointer-events: none; -webkit-user-drag: none; }
+.backpack-image-frame img { position: absolute; left: 0; top: 0; object-fit: contain; object-position: center; pointer-events: none; -webkit-user-drag: none; }
 .backpack-cell-outline { position: absolute; box-sizing: border-box; border: 1px solid rgba(255, 230, 180, .28); pointer-events: none; }
 .backpack-cell-hit { position: absolute; z-index: 2; box-sizing: border-box; pointer-events: auto; cursor: grab; }
 .backpack-placed,
@@ -126,7 +183,7 @@
 .bb-art.muted { filter: grayscale(.92) brightness(.28) sepia(.12); }
 .bb-art.color { will-change: clip-path; transition: clip-path .08s linear; }
 .bb-art-frame { position: absolute; left: 0; top: 0; overflow: hidden; pointer-events: none; }
-.bb-art-frame img { position: absolute; left: 0; top: 0; object-fit: fill; pointer-events: none; -webkit-user-drag: none; }
+.bb-art-frame img { position: absolute; left: 0; top: 0; object-fit: contain; object-position: center; pointer-events: none; -webkit-user-drag: none; }
 .bb-art-cell { position: absolute; box-sizing: border-box; border: 1px solid rgba(236, 208, 157, .22); pointer-events: none; }
 .bb-art.color .bb-art-cell { border-color: rgba(250, 218, 151, .38); }
 .bb-weapon-hit-cell { position: absolute; z-index: 3; box-sizing: border-box; pointer-events: auto; cursor: help; }
@@ -236,6 +293,7 @@
 	width: min(1180px, calc(100vw - 24px));
 	max-height: 90vh;
 	overflow-y: auto;
+	overflow-x: hidden;
 	box-sizing: border-box;
 	padding: 16px 18px;
 	border: 1px solid #c29458;
@@ -244,6 +302,11 @@
 	color: #f7ead2;
 	box-shadow: 0 18px 48px rgba(0, 0, 0, .7);
 	font: 13px/1.4 'Microsoft YaHei', sans-serif;
+}
+/* 免费武器选择器没有商店操作区，额外留出少量纵向空间容纳卡牌外放粒子，避免出现无意义滚动条。 */
+.backpack-shop-reward-panel {
+	height: min(670px, calc(100vh - 12px));
+	max-height: calc(100vh - 12px);
 }
 .backpack-shop-header {
 	display: flex;
@@ -280,12 +343,58 @@
 @media (max-width: 480px) {
 	.backpack-shop-grid { grid-template-columns: 1fr; }
 }
+.backpack-shop-card-shell {
+	position: relative;
+	box-sizing: border-box;
+	height: 540px;
+	min-height: 540px;
+	max-height: 540px;
+}
+.backpack-shop-particle-layer {
+	position: absolute;
+	z-index: 0;
+	inset: -52px;
+	overflow: hidden;
+	pointer-events: none;
+}
+.backpack-shop-particle-layer .particles-js-canvas-el {
+	position: absolute;
+	inset: 0;
+	display: block;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	mix-blend-mode: screen;
+}
+.backpack-shop-particle-layer[data-rarity='2'] .particles-js-canvas-el {
+	opacity: .72;
+	filter: brightness(1.18) drop-shadow(0 0 3px rgba(127, 216, 143, .78));
+}
+.backpack-shop-particle-layer[data-rarity='3'] .particles-js-canvas-el {
+	opacity: .84;
+	filter: brightness(1.28) drop-shadow(0 0 5px rgba(92, 183, 245, .9));
+}
+.backpack-shop-particle-layer[data-rarity='4'] .particles-js-canvas-el {
+	opacity: .94;
+	filter: brightness(1.38) drop-shadow(0 0 7px rgba(184, 126, 245, 1));
+}
+.backpack-shop-particle-layer[data-rarity='5'] .particles-js-canvas-el {
+	opacity: 1;
+	filter: brightness(1.5) drop-shadow(0 0 9px rgba(255, 193, 56, 1));
+}
 .backpack-shop-card {
 	position: relative;
+	z-index: 2;
+	isolation: isolate;
 	box-sizing: border-box;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+	width: 100%;
+	height: 540px;
+	min-height: 540px;
+	max-height: 540px;
+	overflow: hidden;
 	padding: 8px 8px 10px;
 	border: 1px solid #7d6248;
 	border-radius: 10px;
@@ -293,20 +402,120 @@
 	text-align: center;
 	cursor: default;
 }
-.backpack-shop-card[data-rarity='5'] { border-color: #d8ad4e; box-shadow: inset 0 0 8px rgba(255, 210, 98, .16); }
-.backpack-shop-card[data-rarity='4'] { border-color: #b389e8; }
-.backpack-shop-card[data-rarity='3'] { border-color: #6fb6e8; }
-.backpack-shop-card[data-rarity='2'] { border-color: #7fd88f; }
-.backpack-shop-card:hover { border-color: #e1bd78; box-shadow: 0 0 12px rgba(233, 193, 112, .35); }
-.backpack-shop-image {
-	width: 192px;
-	height: 192px;
-	object-fit: contain;
-	margin: 4px auto 8px;
-	display: block;
-	image-rendering: pixelated;
-	filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .6));
+.backpack-shop-card > * { position: relative; z-index: 2; }
+.backpack-shop-card[data-rarity='2'] {
+	border-color: #7fd88f;
+	box-shadow: inset 0 0 11px rgba(127, 216, 143, .08);
 }
+.backpack-shop-card[data-rarity='3'] {
+	border-color: #6fb6e8;
+	box-shadow: inset 0 0 16px rgba(73, 169, 235, .15), 0 0 6px rgba(73, 169, 235, .2);
+}
+.backpack-shop-card[data-rarity='4'] {
+	border-color: #bd8af0;
+	box-shadow: inset 0 0 22px rgba(164, 91, 229, .24), 0 0 9px rgba(179, 111, 238, .34);
+}
+.backpack-shop-card[data-rarity='5'] {
+	border-color: #ffd15b;
+	box-shadow: inset 0 0 30px rgba(255, 181, 32, .34), 0 0 13px rgba(255, 190, 52, .52);
+}
+.backpack-shop-card:hover { border-color: #ffe0a1; box-shadow: inset 0 0 22px rgba(233, 193, 112, .2), 0 0 15px rgba(233, 193, 112, .48); }
+.backpack-shop-card[data-rarity='4']:hover { box-shadow: inset 0 0 27px rgba(164, 91, 229, .31), 0 0 16px rgba(187, 123, 244, .58); }
+.backpack-shop-card[data-rarity='5']:hover { box-shadow: inset 0 0 36px rgba(255, 181, 32, .42), 0 0 20px rgba(255, 202, 77, .72); }
+@media (prefers-reduced-motion: reduce) {
+	.backpack-shop-particle-layer { display: none; }
+}
+.backpack-shop-preview {
+	position: relative;
+	width: 100%;
+	max-width: 220px;
+	aspect-ratio: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin: 0 auto 8px;
+	padding: 10px;
+	overflow: hidden;
+	box-sizing: border-box;
+	border: 1px solid rgba(128, 104, 79, .92);
+	border-radius: 8px;
+	background: #34241b;
+	box-shadow: inset 0 0 18px rgba(0, 0, 0, .45);
+}
+.backpack-shop-preview-stage { position: relative; flex: 0 0 auto; max-width: 100%; max-height: 100%; }
+.backpack-shop-preview-grid-cell,
+.backpack-shop-footprint-cell,
+.backpack-shop-synergy-cell {
+	position: absolute;
+	box-sizing: border-box;
+	transform: scale(.9);
+	transform-origin: 50% 50%;
+	pointer-events: none;
+}
+.backpack-shop-preview-grid-cell {
+	z-index: 0;
+	border: 1px solid #80684f;
+	background: #4a4038;
+}
+.backpack-shop-preview-grid-cell:nth-child(even) { background: #51463d; }
+.backpack-shop-preview-image-frame {
+	position: absolute;
+	z-index: 3;
+	overflow: hidden;
+	pointer-events: none;
+	filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .65));
+}
+.backpack-shop-preview-image-frame img {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	object-position: center;
+	image-rendering: pixelated;
+	pointer-events: none;
+	-webkit-user-drag: none;
+}
+.backpack-shop-footprint-cell {
+	z-index: 1;
+	border: 1px solid rgba(255, 230, 180, .3);
+	border-radius: 3px;
+	background: rgba(255, 222, 154, .018);
+}
+.backpack-shop-synergy-cell {
+	z-index: 4;
+	overflow: hidden;
+	border: 2px solid rgba(255, 202, 79, .94);
+	border-radius: 3px;
+	background: rgba(255, 174, 50, .22);
+	box-shadow: inset 0 0 10px rgba(255, 219, 112, .42), 0 0 8px rgba(255, 174, 50, .52);
+	opacity: 0;
+	transition: opacity .12s ease-out;
+}
+.backpack-shop-card:hover .backpack-shop-synergy-cell,
+.backpack-shop-card:focus .backpack-shop-synergy-cell,
+.backpack-shop-card:focus-within .backpack-shop-synergy-cell { opacity: 1; }
+.backpack-shop-preview-meta {
+	position: absolute;
+	z-index: 6;
+	left: 7px;
+	right: 7px;
+	bottom: 6px;
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	padding: 3px 6px;
+	border-radius: 9px;
+	background: rgba(24, 18, 14, .86);
+	color: #d8c7ac;
+	font: 10px/1.3 sans-serif;
+	pointer-events: none;
+}
+.backpack-shop-preview-meta b { color: #ffe1a2; font-size: 11px; }
+.backpack-shop-preview-meta span { color: #a99b89; }
+.backpack-shop-preview-meta em { margin-left: auto; color: #e9c98f; font-style: normal; }
+.backpack-shop-preview.has-synergy .backpack-shop-preview-meta em::before { content: '◆ '; color: #ffc64c; }
 .backpack-shop-name { font: bold 15px sans-serif; color: #f4e4c7; margin-bottom: 3px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .backpack-shop-rarity { color: #f0c760; font: 13px sans-serif; letter-spacing: 1px; margin-bottom: 5px; }
 .backpack-shop-types { display: flex; justify-content: center; gap: 4px; flex-wrap: wrap; min-height: 18px; margin-bottom: 6px; }
@@ -319,7 +528,77 @@
 	color: #e9c98f;
 	background: rgba(60, 44, 30, .6);
 }
+.backpack-shop-details {
+	flex: 1 1 auto;
+	min-height: 0;
+	width: 100%;
+	margin: 2px 0 10px;
+	overflow-y: auto;
+	box-sizing: border-box;
+	text-align: left;
+	scrollbar-width: thin;
+	scrollbar-color: rgba(194, 148, 88, .7) transparent;
+}
+.backpack-shop-detail-stats {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 5px;
+	margin: 0;
+}
+.backpack-shop-detail-stats > div {
+	min-width: 0;
+	padding: 5px 7px;
+	box-sizing: border-box;
+	border: 1px solid rgba(154, 122, 82, .38);
+	border-radius: 6px;
+	background: rgba(29, 23, 19, .46);
+}
+.backpack-shop-detail-stats dt,
+.backpack-shop-detail-stats dd { margin: 0; }
+.backpack-shop-detail-stats dt { color: #a99b89; font-size: 10px; }
+.backpack-shop-detail-stats dd {
+	margin-top: 1px;
+	overflow: hidden;
+	color: #f1c975;
+	font: 700 12px/1.35 sans-serif;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+.backpack-shop-detail-effect {
+	margin-top: 6px;
+	padding: 7px 8px;
+	border-radius: 6px;
+	background: rgba(122, 86, 50, .18);
+}
+.backpack-shop-detail-effect b { display: block; margin-bottom: 3px; color: #e9c98f; font-size: 11px; }
+.backpack-shop-detail-effect p {
+	margin: 0;
+	color: #d8c8af;
+	font: 11px/1.45 'Microsoft YaHei', sans-serif;
+	white-space: pre-line;
+	word-break: break-word;
+}
+.bui-inline-synergy {
+	display: inline-block;
+	width: 18px;
+	height: 18px;
+	margin: 0 2px;
+	vertical-align: -4px;
+	/* 单个箭头纵向重复，背景每 .62 秒向上滚动一格，模拟联动格里的连续箭头流。 */
+	background-image: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2718%27%20height=%279%27%20viewBox=%270%200%2018%209%27%3E%3Cpath%20d=%27M4%207l5-5%205%205%27%20fill=%27none%27%20stroke=%27%23fff0a6%27%20stroke-width=%272.4%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27/%3E%3C/svg%3E);
+	background-repeat: repeat-y;
+	background-position: center 9px;
+	background-size: 18px 9px;
+	filter: drop-shadow(0 0 2px #e98b17);
+	will-change: background-position;
+	animation: bui-inline-synergy-flow .62s linear infinite;
+}
+@keyframes bui-inline-synergy-flow {
+	from { background-position: center 9px; }
+	to { background-position: center 0; }
+}
 .backpack-shop-buy {
+	flex: 0 0 auto;
 	width: 100%;
 	max-width: 180px;
 	border: 1px solid #c29458;
@@ -347,9 +626,7 @@
 /* ===== 背包售卖区 ===== */
 .backpack-sell-zone {
 	position: absolute;
-	top: 50%;
-	right: 10px;
-	transform: translateY(-50%);
+	transform: none;
 	width: 122px;
 	min-height: 220px;
 	box-sizing: border-box;
@@ -371,10 +648,16 @@
 	border-color: #7fd88f;
 	background: rgba(70, 120, 70, .5);
 	color: #d8f5c8;
-	transform: translateY(-50%) scale(1.05);
+	transform: scale(1.05);
 }
 .backpack-sell-title { font: bold 15px sans-serif; color: inherit; }
 .backpack-sell-hint { font: 12px sans-serif; line-height: 1.6; white-space: pre-line; color: inherit; }
+#backpack-system-root[data-narrow='true'] .backpack-sell-zone { gap: 6px; }
+#backpack-system-root[data-narrow='true'] .backpack-sell-title { font-size: 13px; }
+#backpack-system-root[data-narrow='true'] .backpack-sell-hint { font-size: 10px; line-height: 1.45; }
+#backpack-system-root[data-compact='true'] .backpack-sell-zone { gap: 3px; border-radius: 8px; }
+#backpack-system-root[data-compact='true'] .backpack-sell-title { font-size: 12px; }
+#backpack-system-root[data-compact='true'] .backpack-sell-hint { font-size: 9px; line-height: 1.3; }
 
 /* ===== 背包乱斗武器合成 ===== */
 .backpack-craft-root {
@@ -451,6 +734,10 @@
 	background: rgba(40, 60, 34, .4);
 	text-align: center;
 }
+.backpack-craft-result.has-result { cursor: help; outline: none; }
+.backpack-craft-result.has-result:hover,
+.backpack-craft-result.has-result:focus,
+.backpack-craft-result.has-result.bui-hover { border-color: #b6d974; box-shadow: 0 0 13px rgba(153, 205, 91, .28), inset 0 0 18px rgba(119, 164, 72, .12); }
 .backpack-craft-preview {
 	width: 100%;
 	box-sizing: border-box;
@@ -643,3 +930,234 @@
 .backpack-craft-go:hover { background: #8a5a34; }
 
 .backpack-craft-hint { color: #c4ae8d; font: 14px sans-serif; text-align: center; padding: 16px 12px; line-height: 1.6; }
+
+/* 合成界面武器占格预览：与商店使用相同的等比裁剪原则，但不渲染联动层和详情。 */
+.backpack-craft-grid-preview {
+	width: min(100%, 168px);
+	height: 108px;
+	margin: 0 auto 5px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	pointer-events: none;
+}
+.backpack-craft-grid-stage {
+	position: relative;
+	max-width: 100%;
+	max-height: 100%;
+	flex: 0 0 auto;
+	background: rgba(28, 22, 18, .58);
+	box-shadow: 0 0 0 1px rgba(166, 131, 86, .2);
+}
+.backpack-craft-grid-cell,
+.backpack-craft-footprint-cell {
+	position: absolute;
+	box-sizing: border-box;
+	pointer-events: none;
+}
+.backpack-craft-grid-cell {
+	z-index: 0;
+	border: 1px solid rgba(180, 145, 101, .32);
+	background: rgba(111, 91, 69, .13);
+}
+.backpack-craft-footprint-cell {
+	z-index: 1;
+	border: 1px solid rgba(255, 230, 180, .34);
+	background: rgba(238, 193, 112, .08);
+	box-shadow: inset 0 0 5px rgba(244, 201, 124, .08);
+}
+.backpack-craft-grid-image-frame {
+	position: absolute;
+	z-index: 2;
+	overflow: hidden;
+	pointer-events: none;
+}
+.backpack-craft-grid-image-frame img {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	object-position: center;
+	image-rendering: pixelated;
+	pointer-events: none;
+	-webkit-user-drag: none;
+}
+.backpack-craft-grid-preview.compact {
+	flex: 0 0 48px;
+	width: 48px;
+	height: 48px;
+	margin: 0;
+}
+.backpack-craft-grid-preview.compact .backpack-craft-grid-cell,
+.backpack-craft-grid-preview.compact .backpack-craft-footprint-cell {
+	border-width: 1px;
+}
+
+/* 合成窗口与配方图鉴并排：组合区域居中后，原合成窗口自然向左让出图鉴位置。 */
+.backpack-craft-dialog {
+	width: min(1260px, calc(100vw - 32px));
+	height: min(580px, calc(100vh - 32px));
+	display: grid;
+	grid-template-columns: minmax(0, 760px) minmax(360px, 1fr);
+	gap: 14px;
+	align-items: stretch;
+}
+.backpack-craft-dialog .backpack-craft-panel {
+	width: auto;
+	height: 100%;
+	max-height: none;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+.backpack-craft-dialog .backpack-craft-main {
+	flex: 1 1 auto;
+	min-height: 0;
+}
+.backpack-craft-dialog .backpack-craft-slots { flex: 0 0 auto; }
+.backpack-craft-dialog .backpack-craft-list {
+	flex: 1 1 auto;
+	min-height: 76px;
+	max-height: none;
+}
+.backpack-craft-dialog .backpack-craft-go { flex: 0 0 auto; }
+
+.backpack-craft-recipes {
+	height: 100%;
+	min-width: 0;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	padding: 16px 14px;
+	border: 1px solid #9b774b;
+	border-radius: 14px;
+	background: linear-gradient(150deg, #30251c, #1c1714);
+	color: #f7ead2;
+	box-shadow: 0 18px 48px rgba(0, 0, 0, .7);
+	font: 13px/1.4 'Microsoft YaHei', sans-serif;
+	overflow: hidden;
+}
+.backpack-craft-recipes-header {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: baseline;
+	gap: 10px;
+	margin-bottom: 12px;
+}
+.backpack-craft-recipes-title {
+	flex: 1 1 auto;
+	font: bold 18px sans-serif;
+	color: #ffe8bd;
+}
+.backpack-craft-recipe-summary {
+	flex: 0 0 auto;
+	font-size: 12px;
+	color: #cdb58e;
+}
+.backpack-craft-recipe-list {
+	flex: 1 1 auto;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	overflow-y: auto;
+	padding: 2px 6px 2px 2px;
+	scrollbar-color: #85613c rgba(28, 22, 18, .6);
+}
+.backpack-craft-recipe-card {
+	position: relative;
+	flex: 0 0 auto;
+	width: 100%;
+	box-sizing: border-box;
+	padding: 9px 10px 8px;
+	border: 1px solid #6f5841;
+	border-radius: 9px;
+	background: linear-gradient(145deg, rgba(68, 52, 40, .96), rgba(39, 32, 28, .96));
+	color: #eadcc5;
+	font: inherit;
+	text-align: left;
+	transition: border-color .15s, background .15s, transform .15s, opacity .15s;
+}
+.backpack-craft-recipe-card.is-craftable {
+	border-color: #79a856;
+	background: linear-gradient(145deg, rgba(54, 73, 40, .98), rgba(35, 42, 30, .98));
+	cursor: pointer;
+	box-shadow: inset 3px 0 0 #8cc45f;
+}
+.backpack-craft-recipe-card.is-craftable:hover {
+	border-color: #b8db78;
+	background: linear-gradient(145deg, rgba(65, 89, 47, .98), rgba(41, 49, 34, .98));
+	transform: translateX(-2px);
+}
+.backpack-craft-recipe-card.uses-selected {
+	border-color: #e0ad55;
+	box-shadow: inset 3px 0 0 #f0c760, 0 0 0 1px rgba(240, 199, 96, .14);
+}
+.backpack-craft-recipe-card.is-locked {
+	opacity: .46;
+	filter: saturate(.45);
+	cursor: not-allowed;
+}
+.backpack-craft-recipe-formula {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto minmax(92px, .72fr);
+	align-items: center;
+	gap: 8px;
+}
+.backpack-craft-recipe-materials,
+.backpack-craft-recipe-result {
+	min-width: 0;
+	word-break: break-word;
+}
+.backpack-craft-recipe-weapon.has-tooltip {
+	border-bottom: 1px dotted currentColor;
+	cursor: help;
+	pointer-events: auto;
+	transition: color .12s, text-shadow .12s;
+}
+.backpack-craft-recipe-weapon.has-tooltip:hover,
+.backpack-craft-recipe-weapon.has-tooltip.bui-hover {
+	color: #fff0a6;
+	text-shadow: 0 0 7px rgba(240, 199, 96, .48);
+}
+.backpack-craft-recipe-formula b {
+	color: #f0c760;
+	font-size: 17px;
+}
+.backpack-craft-recipe-result {
+	font-weight: bold;
+	color: #f5e6c8;
+}
+.backpack-craft-recipe-state {
+	margin-top: 5px;
+	font-size: 11px;
+	color: #a99475;
+}
+.backpack-craft-recipe-card.is-craftable .backpack-craft-recipe-state { color: #b9d99b; }
+.backpack-craft-recipe-card.uses-selected .backpack-craft-recipe-state { color: #f0c760; }
+
+@media (max-width: 1120px) {
+	.backpack-craft-dialog {
+		height: min(92vh, 980px);
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-rows: auto minmax(320px, 1fr);
+		overflow-y: auto;
+	}
+	.backpack-craft-dialog .backpack-craft-panel {
+		height: auto;
+		min-height: 520px;
+	}
+	.backpack-craft-recipes { min-height: 400px; }
+}
+
+@media (max-width: 680px) {
+	.backpack-craft-dialog { width: calc(100vw - 16px); }
+	.backpack-craft-dialog .backpack-craft-panel { padding: 12px 10px; }
+	.backpack-craft-slots { gap: 5px; }
+	.backpack-craft-slot,
+	.backpack-craft-result { min-height: 176px; }
+	.backpack-craft-recipe-formula { grid-template-columns: minmax(0, 1fr) auto minmax(76px, .7fr); }
+}

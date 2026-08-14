@@ -68,7 +68,15 @@ function makeInput(overrides) {
 	return Object.assign(base, overrides || {});
 }
 
-test("背包与战斗武器的 hover 只由实际占格命中层触发", () => {
+test("开局地图背包道具使用背包名称和专用图标槽", () => {
+	const itemsSource = fs.readFileSync(path.join(root, "project/items.js"), "utf8");
+	const iconsSource = fs.readFileSync(path.join(root, "project/icons.js"), "utf8");
+	assert.match(itemsSource, /"I385":\s*\{[\s\S]*?"name": "背包"/);
+	assert.match(iconsSource, /"I385": 70/);
+	assert.equal(fs.existsSync(path.join(root, "project/images/backpackSlot.png")), true);
+});
+
+test("背包与战斗武器的 hover 按实际占格触发且背包内部格缝保持连续", () => {
 	const battleUiSource = fs.readFileSync(path.join(root, "project/backpackBattleUI.js"), "utf8");
 	const backpackSource = fs.readFileSync(path.join(root, "project/backpackSystem.js"), "utf8");
 	const cssSource = fs.readFileSync(path.join(root, "project/backpack.css"), "utf8");
@@ -77,11 +85,195 @@ test("背包与战斗武器的 hover 只由实际占格命中层触发", () => {
 	assert.match(cssSource, /\.bb-weapon-hit-cell\s*\{[^}]*pointer-events:\s*auto/);
 	assert.match(battleUiSource, /bounds\.cells\.forEach[\s\S]*?hitCell\.className = "bb-weapon-hit-cell"/);
 	assert.match(battleUiSource, /hitTargets: unit\.querySelectorAll\("\.bb-weapon-hit-cell"\)/);
+	assert.match(battleUiSource, /var BATTLE_IMAGE_INSET_CELLS = 0\.12/);
+	assert.match(battleUiSource, /cellSize \* BATTLE_IMAGE_INSET_CELLS/);
+	assert.match(battleUiSource, /var uniformScale = Math\.min\(frameWidth \/ crop\[2\], frameHeight \/ crop\[3\]\)/);
+	assert.match(battleUiSource, /image\.style\.width = \(crop\[4\] \* uniformScale\) \+ "px"/);
+	assert.match(battleUiSource, /image\.style\.height = \(crop\[5\] \* uniformScale\) \+ "px"/);
+	assert.doesNotMatch(battleUiSource, /var scaleX|var scaleY/);
+	assert.match(cssSource, /\.bb-art-frame img\s*\{[^}]*object-fit:\s*contain[^}]*object-position:\s*center/);
 
 	assert.match(cssSource, /\.backpack-placed,\s*\n?\.backpack-preview\s*\{[^}]*pointer-events:\s*none/);
 	assert.match(cssSource, /\.backpack-cell-hit\s*\{[^}]*pointer-events:\s*auto/);
 	assert.match(backpackSource, /bounds\.cells\.forEach[\s\S]*?hitCell\.className = "backpack-cell-hit"/);
+	assert.match(backpackSource, /imageInsetCells:\s*0\.12/);
+	assert.match(backpackSource, /const uniformScale = Math\.min\(frameWidth \/ crop\[2\], frameHeight \/ crop\[3\]\)/);
+	assert.match(backpackSource, /image\.style\.width = px\(crop\[4\] \* uniformScale\)/);
+	assert.match(backpackSource, /image\.style\.height = px\(crop\[5\] \* uniformScale\)/);
+	assert.match(backpackSource, /occupiedCells\[cell\[0\] \+ "," \+ cell\[1\]\] = true/);
+	assert.match(backpackSource, /hitCell\.style\.width = px\(cellSize \+ \(occupiedCells\[\(cell\[0\] \+ 1\) \+ "," \+ cell\[1\]\] \? gap : 0\)\)/);
+	assert.match(backpackSource, /hitCell\.style\.height = px\(cellSize \+ \(occupiedCells\[cell\[0\] \+ "," \+ \(cell\[1\] \+ 1\)\] \? gap : 0\)\)/);
 	assert.match(backpackSource, /hitTargets: element\.querySelectorAll\("\.backpack-cell-hit"\)/);
+	assert.match(cssSource, /\.backpack-image-frame img\s*\{[^}]*object-fit:\s*contain[^}]*object-position:\s*center/);
+});
+
+test("商店和背包共用特殊效果箭头渲染，并由商店静态展示详情", () => {
+	const shopSource = fs.readFileSync(path.join(root, "project/backpackShop.js"), "utf8");
+	const commonSource = fs.readFileSync(path.join(root, "project/backpackUiCommon.js"), "utf8");
+	const cssSource = fs.readFileSync(path.join(root, "project/backpack.css"), "utf8");
+	const htmlSource = fs.readFileSync(path.join(root, "index.html"), "utf8");
+	const context = loadScripts(["project/backpackUiCommon.js"]);
+	const common = context.backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61;
+	const formatted = common.formatSpecialEffectHtml("^甲∧乙＾<危险>");
+	assert.equal((formatted.match(/bui-inline-synergy/g) || []).length, 3);
+	assert.doesNotMatch(formatted, /[\^∧＾]/);
+	assert.match(formatted, /&lt;危险&gt;/);
+	assert.match(common.buildWeaponTooltip({ weapon: { synergyText: "配置在^的武器" } }), /bui-inline-synergy direction-up/);
+
+	assert.match(shopSource, /const buildWeaponPreview = function \(def\)/);
+	assert.match(shopSource, /const PREVIEW_IMAGE_INSET = 0\.12/);
+	assert.match(shopSource, /const layoutPreviewImage = function \(imageFrame, image, geometry\)/);
+	assert.match(shopSource, /const uniformScale = Math\.min\(frameCols \/ cropWidth, frameRows \/ cropHeight\)/);
+	assert.match(shopSource, /image\.style\.width = \(naturalWidth \* uniformScale \/ frameCols \* 100\)/);
+	assert.match(shopSource, /image\.style\.height = \(naturalHeight \* uniformScale \/ frameRows \* 100\)/);
+	assert.match(shopSource, /weaponSystem\.getRotatedCells\(weapon, 0\)/);
+	assert.match(shopSource, /weaponSystem\.getSynergyCells\(entry\)/);
+	assert.match(shopSource, /geometry\.sourceCells\.forEach[\s\S]*?backpack-shop-footprint-cell/);
+	assert.match(shopSource, /geometry\.synergyCells\.forEach[\s\S]*?backpack-shop-synergy-cell/);
+	assert.match(shopSource, /"占 " \+ geometry\.sourceCells\.length \+ " 格"/);
+	assert.match(shopSource, /const buildWeaponDetails = function \(def\)/);
+	assert.match(commonSource, /const|var formatSpecialEffectHtml/);
+	assert.match(commonSource, /split\(\/\(\[\\\^∧＾\]\)\/g\)/);
+	assert.match(commonSource, /TOOLTIP_HIDE_DELAY = 0/);
+	assert.match(commonSource, /queueTooltipPosition\(event, element\)/);
+	assert.match(commonSource, /window\.requestAnimationFrame\(function \(\) \{[\s\S]*?positionTooltip\(pending\.event, pending\.anchor\)/);
+	assert.match(commonSource, /if \(lastTooltipHtml !== html\) \{\s*tooltip\.innerHTML = html/);
+	assert.match(cssSource, /\.bui-tooltip\s*\{[^}]*contain:\s*layout paint[^}]*will-change:\s*opacity, transform[^}]*visibility 0s linear \.08s/);
+	assert.match(cssSource, /\.bui-tooltip\.show\s*\{[^}]*transition-delay:\s*0s/);
+	assert.match(shopSource, /formatSpecialEffectHtml\(def\.synergyText\)/);
+	assert.match(shopSource, /card\.appendChild\(buildWeaponDetails\(def\)\)/);
+	assert.doesNotMatch(shopSource, /bindTooltip\(card/);
+	assert.match(cssSource, /\.backpack-shop-footprint-cell\s*\{[^}]*z-index:\s*1[^}]*border:\s*1px solid rgba\(255, 230, 180, \.3\)/);
+	assert.match(cssSource, /\.backpack-shop-preview-image-frame\s*\{[^}]*z-index:\s*3/);
+	assert.match(cssSource, /\.backpack-shop-preview-image-frame img\s*\{[^}]*object-fit:\s*contain[^}]*object-position:\s*center/);
+	assert.match(cssSource, /\.backpack-shop-card\s*\{[^}]*height:\s*540px[^}]*min-height:\s*540px[^}]*max-height:\s*540px[^}]*overflow:\s*hidden/);
+	assert.match(cssSource, /\.backpack-shop-details\s*\{[^}]*flex:\s*1 1 auto[^}]*min-height:\s*0[^}]*overflow-y:\s*auto/);
+	assert.match(cssSource, /\.backpack-shop-buy\s*\{[^}]*flex:\s*0 0 auto/);
+	assert.match(htmlSource, /<script src='libs\/thirdparty\/particles\.min\.js\?v=2\.0\.0'><\/script>/);
+	assert.match(shopSource, /const SHOP_PARTICLE_PROFILES = \{[\s\S]*?2:\s*\{ count:\s*18[\s\S]*?3:\s*\{ count:\s*34[\s\S]*?4:\s*\{ count:\s*56[\s\S]*?5:\s*\{ count:\s*84/);
+	assert.match(shopSource, /window\.particlesJS\(host\.id, makeShopParticleConfig\(profile, rarity\)\)/);
+	assert.match(shopSource, /particle\.vx = Math\.cos\(angle\) \* velocity[\s\S]*?particle\.vy = Math\.sin\(angle\) \* velocity/);
+	assert.match(shopSource, /Math\.sin\(Math\.PI \* \(0\.16 \+ progress \* 0\.84\)\)/);
+	assert.match(shopSource, /destroyShopParticleScenes\(\);[\s\S]*?grid\.innerHTML = ""/);
+	assert.match(cssSource, /\.backpack-shop-panel\s*\{[^}]*overflow-y:\s*auto[^}]*overflow-x:\s*hidden/);
+	assert.match(shopSource, /panel\.className = "backpack-shop-panel backpack-shop-reward-panel"/);
+	assert.match(cssSource, /\.backpack-shop-reward-panel\s*\{[^}]*height:\s*min\(670px, calc\(100vh - 12px\)\)[^}]*max-height:\s*calc\(100vh - 12px\)/);
+	assert.match(cssSource, /\.backpack-shop-particle-layer\s*\{[^}]*inset:\s*-52px[^}]*overflow:\s*hidden[^}]*pointer-events:\s*none/);
+	assert.match(cssSource, /\.backpack-shop-card\s*\{[^}]*z-index:\s*2[^}]*background:\s*linear-gradient/);
+	assert.doesNotMatch(cssSource, /backpack-shop-rarity-(?:particles|glints)-rise/);
+	assert.match(cssSource, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.backpack-shop-particle-layer\s*\{\s*display:\s*none/);
+	assert.match(cssSource, /\.backpack-shop-synergy-cell\s*\{[^}]*opacity:\s*0/);
+	assert.match(cssSource, /\.backpack-shop-card:hover \.backpack-shop-synergy-cell[\s\S]*?opacity:\s*1/);
+	assert.match(cssSource, /\.bui-inline-synergy\s*\{[^}]*background-image:[^}]*fff0a6[^}]*background-repeat:\s*repeat-y[^}]*animation:\s*bui-inline-synergy-flow \.62s linear infinite/);
+	assert.match(cssSource, /@keyframes bui-inline-synergy-flow\s*\{\s*from\s*\{\s*background-position:\s*center 9px;\s*\}\s*to\s*\{\s*background-position:\s*center 0;\s*\}/);
+	assert.match(cssSource, /\.bui-weapon-tip p\s*\{[^}]*white-space:\s*pre-line[^}]*word-break:\s*break-word/);
+});
+
+test("共享武器 Tooltip 保持纯属性布局，素材锤只读取实际可执行配方", () => {
+	const context = loadScripts([
+		"project/weapons.js",
+		"project/weaponRecipes.js",
+		"project/backpackUiCommon.js"
+	]);
+	const common = context.backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61;
+	const definitions = context.weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44;
+	const recipes = context.weaponRecipes_7f2e9c4a_3b5d_4f8a_9c1e_6d4b8a2f9c31.recipes;
+	const ingredientKey = recipes[0].a;
+	const ingredient = definitions[ingredientKey];
+	const full = common.buildWeaponTooltip({ weapon: ingredient, base: ingredient, current: ingredient });
+	assert.equal(common.canCraftWithWeapon(ingredient), true);
+	assert.ok(common.getWeaponRecipes(ingredient).length > 0);
+	assert.doesNotMatch(full, /bui-weapon-grid-preview/);
+	assert.match(full, /bui-rarity-row[\s\S]*?data-bui-craft-key=/);
+	assert.match(full, /data-bui-craft-key=/);
+	assert.equal(common.canCraftWithWeapon(definitions.I564), false);
+	assert.doesNotMatch(common.buildWeaponTooltip({ weapon: definitions.I564 }), /data-bui-craft-key='I564'/);
+
+	const attributesOnly = common.buildWeaponTooltip({
+		weapon: ingredient,
+		base: ingredient,
+		current: ingredient,
+		attributesOnly: true
+	});
+	assert.match(attributesOnly, /bui-weapon-tip-main attributes-only/);
+	assert.doesNotMatch(attributesOnly, /bui-weapon-grid-preview/);
+	assert.doesNotMatch(attributesOnly, /<h4>特殊效果<\/h4>/);
+
+	const ingredientKeys = new Set(recipes.flatMap((recipe) => [recipe.a, recipe.b]));
+	const resultOnlyKey = recipes.map((recipe) => recipe.result).find((key) => !ingredientKeys.has(key));
+	assert.ok(resultOnlyKey);
+	assert.equal(common.canCraftWithWeapon(definitions[resultOnlyKey]), false);
+	assert.doesNotMatch(common.buildWeaponTooltip({ weapon: definitions[resultOnlyKey] }), /data-bui-craft-key=/);
+	const commonSource = fs.readFileSync(path.join(root, "project/backpackUiCommon.js"), "utf8");
+	const cssSource = fs.readFileSync(path.join(root, "project/backpack.css"), "utf8");
+	assert.doesNotMatch(commonSource, /catalogOnly|catalog-only/);
+	assert.match(commonSource, /span\.classList\.add\("has-tooltip"\)[\s\S]*?bindTooltip\(span/);
+	assert.match(cssSource, /\.bui-craft-hammer\s*\{[^}]*border:\s*1px solid/);
+	assert.match(cssSource, /\.bui-recipe-preview-weapon\.has-tooltip \.bui-weapon-name-text/);
+});
+
+test("背包小分辨率为两侧面板预留空间并按真实工具栏高度重排", () => {
+	const backpackSource = fs.readFileSync(path.join(root, "project/backpackSystem.js"), "utf8");
+	const cssSource = fs.readFileSync(path.join(root, "project/backpack.css"), "utf8");
+
+	assert.match(backpackSource, /const narrow = rect\.width < 900/);
+	assert.match(backpackSource, /toolbarElement \? toolbarElement\.offsetHeight/);
+	assert.match(backpackSource, /availWidth = width - inventoryWidth - sellReserve - 24 \* scale/);
+	assert.match(backpackSource, /bagX = inventoryWidth \+ \(width - inventoryWidth - sellReserve - totalWidth\) \/ 2/);
+	assert.match(backpackSource, /panel:\s*panelBox,\s*sell:\s*sellBox/);
+	assert.match(backpackSource, /const renderSellZone = function \(\)/);
+	assert.match(backpackSource, /renderInventory\(\);\s*renderSellZone\(\);/);
+	assert.match(cssSource, /#backpack-system-root\[data-narrow='true'\] \.backpack-toolbar/);
+	assert.match(cssSource, /#backpack-system-root\[data-compact='true'\] \.backpack-toolbar\s*\{[^}]*flex-wrap:\s*wrap/);
+	assert.match(cssSource, /\.backpack-sell-zone\s*\{[^}]*transform:\s*none/);
+});
+
+test("合成界面按真实占格等比渲染武器且不展示联动与详情", () => {
+	const craftSource = fs.readFileSync(path.join(root, "project/backpackCraft.js"), "utf8");
+	const cssSource = fs.readFileSync(path.join(root, "project/backpack.css"), "utf8");
+
+	assert.match(craftSource, /const PREVIEW_IMAGE_INSET = 0\.12/);
+	assert.match(craftSource, /const getCraftPreviewGeometry = function \(definition\)/);
+	assert.match(craftSource, /weaponSystem\.getRotatedCells\(weapon, 0\)/);
+	assert.match(craftSource, /const uniformScale = Math\.min\(frameCols \/ cropWidth, frameRows \/ cropHeight\)/);
+	assert.match(craftSource, /gridCell\.className = "backpack-craft-grid-cell"/);
+	assert.match(craftSource, /cell\.className = "backpack-craft-footprint-cell"/);
+	assert.match(craftSource, /const containerRatio = options\.compact \? 1 : 168 \/ 108/);
+	assert.match(craftSource, /geometry\.cols \/ geometry\.rows >= containerRatio/);
+	assert.match(craftSource, /box\.appendChild\(buildCraftGridPreview\(weapon\)\)/);
+	assert.match(craftSource, /buildCraftGridPreview\(entry\.weapon, \{ compact: true \}\)/);
+	assert.match(craftSource, /uiCommon\.bindTooltip\(element/);
+	assert.match(craftSource, /uiCommon\.buildWeaponTooltip/);
+	assert.doesNotMatch(craftSource, /getSynergyCells|backpack-craft-synergy/);
+	assert.match(cssSource, /\.backpack-craft-grid-image-frame img\s*\{[^}]*object-fit:\s*contain[^}]*object-position:\s*center/);
+	assert.match(cssSource, /\.backpack-craft-grid-preview\.compact\s*\{[^}]*width:\s*48px[^}]*height:\s*48px/);
+});
+
+test("一级商店未使用任何免费购买时刷新免费且不累计涨价次数", () => {
+	const flags = {};
+	const core = {
+		status: { hero: { money: 300 }, thisMap: { ratio: 1 } },
+		getFlag(name) { return flags[name]; },
+		setFlag(name, value) { flags[name] = value; }
+	};
+	const context = loadScripts(["project/backpackShop.js"], {
+		weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44: { testWeapon: { id: "testWeapon", rarity: 1 } }
+	});
+	const shop = {};
+	context.installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6(core, shop);
+
+	assert.equal(shop.getShopState().buyCount, 0);
+	assert.equal(shop.getShopState().refreshCost, 0);
+
+	flags.__backpack_shop_buy__ = 1;
+	assert.equal(shop.getShopState().refreshCost, 10);
+
+	flags.__backpack_shop_refresh__ = 3;
+	assert.equal(shop.getShopState().refreshCost, 13);
+
+	const shopSource = fs.readFileSync(path.join(root, "project/backpackShop.js"), "utf8");
+	assert.match(shopSource, /const canRefreshForFree = function \(\) \{ return getBuyCount\(\) === 0; \}/);
+	assert.match(shopSource, /if \(cost > 0\) core\.setFlag\(FLAG_REFRESH, getRefreshCount\(\) \+ 1\)/);
 });
 
 test("背包用 keyup 消费关闭键，避免同一次 ESC 打开系统菜单", () => {
@@ -434,6 +626,44 @@ test("布局联动支持每 X 把匹配武器生效一次", () => {
 	assert.equal(result.byInstanceId.source.bonuses[0].stacks, 1);
 });
 
+test("打扰一下对区域内每把武器固定减0.2间隔，不乘区域武器数量", () => {
+	const core = {
+		material: { items: {} },
+		clone(value) { return value == null ? value : JSON.parse(JSON.stringify(value)); }
+	};
+	const context = loadScripts([
+		"project/backpackWeaponSynergy.js",
+		"project/weapons.js",
+		"project/backpackWeaponSystem.js"
+	], { core });
+	const plugin = {};
+	context.installBackpackWeaponSystem_41d4dd44_8f7d_4bbc_b890_80db42f1ad76(core, plugin);
+	const source = plugin.weaponSystem.normalizeWeapon(plugin.weaponSystem.getDefinition("I595"));
+	const sourceEntry = { instanceId: "interrupt", col: 4, row: 4, rotation: 0, weapon: source };
+	const affectedCells = plugin.weaponSystem.getSynergyCells(sourceEntry).slice(0, 3);
+	assert.equal(affectedCells.length, 3, "测试布局应取得三个真实联动格");
+	const target = (instanceId, col, row) => ({
+		instanceId, col, row, rotation: 0,
+		weapon: {
+			id: instanceId, name: instanceId, cells: [[0, 0]], weaponTypes: ["剑"],
+			minAttack: 1, maxAttack: 1, hitRate: 1, attackInterval: 1, ultimateGain: 0
+		}
+	});
+	const targetEntries = affectedCells.map((cell, index) => target("target" + index, cell.col, cell.row));
+	const result = plugin.weaponSystem.calculateAttributes([
+		sourceEntry
+	].concat(targetEntries));
+
+	targetEntries.forEach((entry) => {
+		const instanceId = entry.instanceId;
+		assert.equal(result.byInstanceId[instanceId].attackInterval, 0.8,
+			"区域内有3把武器时，每把仍只固定减少0.2");
+		assert.equal(result.byInstanceId[instanceId].bonuses[0].stacks, 1);
+	});
+	assert.equal(result.byInstanceId.interrupt.attackInterval, 4, "打扰一下自身不受该范围效果影响");
+	assert.equal(source.synergyRules[0].effects[0].perMatch, undefined);
+});
+
 test("预计伤害使用武器上下限平均值且只计算一个结果", () => {
 	const context = loadPure();
 	const kernel = context.backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71;
@@ -565,7 +795,7 @@ test("0.25 攻击间隔在 100 Tick 实际攻击四次", () => {
 	runtime.destroy();
 });
 
-test("战斗倍速支持 0.25、0.5、1、2、4、10 档并在后续战斗沿用", () => {
+test("背包可预设 0.25、0.5、1、2、3、10 与立即结算并在后续战斗沿用", () => {
 	let savedSpeed = 4;
 	const core = {
 		rand(num) { return num ? 0 : 0; },
@@ -581,22 +811,81 @@ test("战斗倍速支持 0.25、0.5、1、2、4、10 档并在后续战斗沿用
 	], { core });
 	const runtime = context.createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc(core);
 	runtime.start(makeInput({ enemy: Object.assign({}, makeInput().enemy, { hp: 1000, maxHp: 1000 }) }));
-	assert.equal(runtime.getSnapshot().speed, 4);
+	assert.equal(runtime.getSnapshot().speed, 3, "旧版 4× 偏好应迁移为 3×");
 	assert.equal(runtime.setSpeed(0.25), true);
 	assert.equal(savedSpeed, 0.25);
 	assert.equal(runtime.setSpeed(0.5), true);
 	assert.equal(runtime.setSpeed(1), true);
 	assert.equal(runtime.setSpeed(2), true);
-	assert.equal(runtime.setSpeed(4), true);
+	assert.equal(runtime.setSpeed(3), true);
 	assert.equal(runtime.setSpeed(10), true);
-	assert.equal(runtime.setSpeed(3), false);
+	assert.equal(runtime.setSpeed(4), false);
 	assert.equal(savedSpeed, 10);
 	runtime.abort();
+	assert.equal(runtime.setPreferredSpeed("instant"), true);
+	assert.equal(savedSpeed, "instant");
+	assert.equal(runtime.getPreferredSpeed(), "instant");
 	runtime.start(makeInput({ enemy: Object.assign({}, makeInput().enemy, { hp: 1000, maxHp: 1000 }) }));
-	assert.equal(runtime.getSnapshot().speed, 10);
+	assert.equal(runtime.getSnapshot().fastForwarding, true, "立即偏好应在下一场战斗自动直接结算");
+	runtime.abort();
+	assert.equal(runtime.setPreferredSpeed(3), true);
+	runtime.start(makeInput({ enemy: Object.assign({}, makeInput().enemy, { hp: 1000, maxHp: 1000 }) }));
+	assert.equal(runtime.getSnapshot().speed, 3);
 	const uiSource = fs.readFileSync(path.join(root, "project/backpackBattleUI.js"), "utf8");
-	assert.match(uiSource, /data-speed='0\.25'>0\.25×[\s\S]*data-speed='0\.5'>0\.5×[\s\S]*data-speed='1'>1×[\s\S]*data-speed='2'>2×[\s\S]*data-speed='4'>4×[\s\S]*data-speed='10'>10×/);
+	assert.match(uiSource, /data-speed='0\.25'>0\.25×[\s\S]*data-speed='0\.5'>0\.5×[\s\S]*data-speed='1'>1×[\s\S]*data-speed='2'>2×[\s\S]*data-speed='3'>3×[\s\S]*data-speed='10'>10×/);
+	assert.match(uiSource, /class='bb-button bb-fast'>立即</);
+	assert.match(uiSource, /INSTANT_OPEN_DELAY = 100/);
+	assert.match(uiSource, /preferredSpeed === "instant" && !root && !allowInstantOpen/);
+	assert.match(uiSource, /delayedOpenTimer = setTimeout\(function \(\) \{[\s\S]*?current && current\.active[\s\S]*?render\(current, true\)[\s\S]*?INSTANT_OPEN_DELAY/);
+	assert.match(uiSource, /var close = function \(\) \{\s*cancelDelayedOpen\(\)/);
+	const backpackSource = fs.readFileSync(path.join(root, "project/backpackSystem.js"), "utf8");
+	assert.match(backpackSource, /BATTLE_SPEED_OPTIONS[\s\S]*value: "0\.25"[\s\S]*value: "0\.5"[\s\S]*value: "1"[\s\S]*value: "2"[\s\S]*value: "3"[\s\S]*value: "10"[\s\S]*value: "instant"/);
+	assert.match(backpackSource, /aria-label", "默认战斗速度"/);
+	assert.match(backpackSource, /battle\.setPreferredSpeed\(value\)/);
 	runtime.destroy();
+});
+
+test("立即结算在 100ms 内完成时取消面板创建且不访问 DOM", () => {
+	let runtimeListener = null;
+	let nextTimerId = 1;
+	const timers = new Map();
+	let domAccesses = 0;
+	let snapshot = { active: true, speed: 1 };
+	const fakeSetTimeout = function (callback, delay) {
+		const id = nextTimerId++;
+		timers.set(id, { callback, delay });
+		return id;
+	};
+	const fakeClearTimeout = function (id) { timers.delete(id); };
+	const runtime = {
+		subscribe(listener) { runtimeListener = listener; return function () {}; },
+		getPreferredSpeed() { return "instant"; },
+		getSnapshot() { return snapshot; }
+	};
+	const context = loadScripts(["project/backpackBattleUI.js"], {
+		setTimeout: fakeSetTimeout,
+		clearTimeout: fakeClearTimeout,
+		window: { removeEventListener() {} },
+		document: new Proxy({}, {
+			get() { domAccesses++; throw new Error("快速立即结算不应创建战斗 DOM"); }
+		}),
+		backpackBattleStatusDefinitions_7d94f05e_2f6d_4b8e_9c23_5a317ccab120: {},
+		backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61: { hideTooltip() {} },
+		backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87: {}
+	});
+	const ui = context.createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2({}, runtime);
+	runtimeListener(snapshot);
+	assert.equal(timers.size, 1);
+	assert.equal(Array.from(timers.values())[0].delay, 100);
+	assert.equal(domAccesses, 0);
+	assert.equal(ui.isOpen(), false);
+
+	snapshot = { active: false };
+	runtimeListener(snapshot);
+	assert.equal(timers.size, 0, "战斗提前结束后应取消延迟显示计时器");
+	assert.equal(domAccesses, 0);
+	assert.equal(ui.isOpen(), false);
+	ui.destroy();
 });
 
 test("Miss 不造成伤害、不触发附带效果但仍获取奥义", () => {
