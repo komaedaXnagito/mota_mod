@@ -4884,15 +4884,10 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		]
 	},
 	"I523": {
-		"id": "发卡",
-		"name": "发卡",
+		"id": "甄选吉他拨片",
+		"name": "甄选吉他拨片",
 		"shape": [
 			[
-				1,
-				1
-			],
-			[
-				1,
 				1
 			]
 		],
@@ -4905,7 +4900,11 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			312,
 			312
 		],
-		"sourceName": "发卡"
+		"sourceName": "甄选吉他拨片",
+		"rarity": 3,
+		"weaponTypes": [
+			"道具"
+		]
 	},
 	"I524": {
 		"id": "吟游诗人之证",

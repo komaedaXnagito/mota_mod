@@ -1107,7 +1107,7 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 	},
 	"I523": {
 		"cls": "items",
-		"name": "发卡",
+		"name": "甄选吉他拨片",
 		"text": "null",
 		"backpackWeaponId": "I523",
 		"itemEffectTip": "，已放入背包"
