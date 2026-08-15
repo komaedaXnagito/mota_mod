@@ -2718,7 +2718,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 					}
 				]
 			}
-		]
+		],
+		"synergyText": "攻击命中时：敌方冰结+1"
 	},
 	"I420": {
 		"id": "waterDragonUmbrella",
@@ -3080,7 +3081,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 					}
 				]
 			}
-		]
+		],
+		"synergyText": "攻击命中时：随机净化自身1个debuff"
 	},
 	"I425": {
 		"id": "silverShield",
@@ -5289,9 +5291,6 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			],
 			[
 				1
-			],
-			[
-				1
 			]
 		],
 		"image": "project/images/weiershitianjiang.png",
@@ -7092,6 +7091,41 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 					}
 				]
 			}
+		],
+		"synergyRules": [
+			{
+				"id": "foodIntervalReduce",
+				"trigger": "layout",
+				"conditions": [
+					{
+						"id": "nearbyFoods",
+						"kind": "nearby",
+						"relation": "orthogonal",
+						"directions": [
+							"up",
+							"down",
+							"left",
+							"right"
+						],
+						"distance": 1,
+						"filter": {
+							"weaponTypes": [
+								"食物"
+							]
+						}
+					}
+				],
+				"effects": [
+					{
+						"target": "self",
+						"stat": "attackInterval",
+						"operation": "add",
+						"value": -0.1,
+						"perMatch": true,
+						"conditionId": "nearbyFoods"
+					}
+				]
+			}
 		]
 	},
 	"I558": {
@@ -8105,7 +8139,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击命中时：敌方黑暗+1\n被攻击时，上下左右一格内每有一个盾：本武器伤害"
+		"synergyText": "攻击命中时：敌方黑暗+1\n被攻击时，上下左右一格内每有一个盾：本武器伤害+1"
 	},
 	"I574": {
 		"id": "蓝色星球",
@@ -8313,9 +8347,6 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"id": "绽花瓶",
 		"name": "绽花瓶",
 		"shape": [
-			[
-				1
-			],
 			[
 				1
 			],
@@ -9021,6 +9052,45 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"rarity": 3,
 		"weaponTypes": [
 			"饮料"
+		],
+		"synergyText": "自身弱体效果10个以上时，仅发动一次：净化10个debuff，回复15HP，发动∧的饮料效果",
+		"combatRules": [
+			{
+				"id": "debuff10TriggerOnce",
+				"trigger": "afterTakeDamage",
+				"once": true,
+				"conditions": [
+					{
+						"kind": "debuffStacks",
+						"target": "self",
+						"operator": "gte",
+						"value": 10
+					}
+				],
+				"effects": [
+					{
+						"type": "heal",
+						"target": "self",
+						"value": 15
+					},
+					{
+						"type": "cleanseOneDebuff",
+						"target": "self"
+					},
+					{
+						"type": "triggerWeaponEffects",
+						"directions": [
+							"up"
+						],
+						"distance": 1,
+						"filter": {
+							"weaponTypes": [
+								"饮料"
+							]
+						}
+					}
+				]
+			}
 		]
 	},
 	"I587": {

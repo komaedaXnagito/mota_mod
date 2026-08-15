@@ -692,6 +692,15 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 				return compare(toNumber(state.player && state.player.ultimate, 0),
 					condition.operator || "gte", toNumber(condition.value, 100));
 			}
+			if (condition.kind === "debuffStacks") {
+				// 弱体层数条件：目标身上的全部 Debuff 总层数（各状态层数求和）与 value 比较
+				// （如"自身弱体效果10个以上"：target self、operator gte、value 10）。
+				var debuffSide = getSide(state, resolveSideKey(condition.target || "self", context.sourceSide));
+				var totalDebuffStacks = (debuffSide && debuffSide.debuffs || []).reduce(function (sum, debuff) {
+					return sum + Math.max(0, Number(debuff.stacks) || 0);
+				}, 0);
+				return compare(totalDebuffStacks, condition.operator || "gte", toNumber(condition.value, 10));
+			}
 			if (condition.kind === "chance") {
 				// 概率条件：base + 附近匹配武器数 × nearbyBonus；实际战斗经 handlers.rollChance 掷骰（计入随机数），
 				// 预计伤害固定按通过处理（与 dispelRandomBuff/applyRandomDebuff 的确定性策略一致）。

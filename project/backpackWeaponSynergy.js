@@ -82,11 +82,12 @@ var backpackWeaponSynergy_91f4c21e_7d37_4f12_9cc4_a9606ba62a83 = (function () {
 		});
 		(Array.isArray(weapon && weapon.combatRules) ? weapon.combatRules : []).forEach(function (rule, ruleIndex) {
 			(Array.isArray(rule.conditions) ? rule.conditions : []).forEach(function (condition, conditionIndex) {
-				// 空间条件才产生联动范围：附近武器数量 / 联动武器，以及带空间字段的概率条件
+				// 空间条件才产生联动范围：附近武器数量 / 联动武器 / 附近盾牌触发，以及带空间字段的概率条件
 				// （chance + relation/span/distance/directions/nearbyBonus，表示"附近武器越多概率越高"）。
 				// 纯 chance（只是概率修饰）不显示联动范围。
 				const isSpatial = condition && (condition.kind === "nearbyCount"
 					|| condition.kind === "linkedWeapon"
+					|| condition.kind === "nearbyShieldTriggered"
 					|| (condition.kind === "chance" && (condition.relation || condition.span
 						|| condition.distance || condition.directions || condition.nearbyBonus != null)));
 				if (isSpatial) {
@@ -121,6 +122,7 @@ var backpackWeaponSynergy_91f4c21e_7d37_4f12_9cc4_a9606ba62a83 = (function () {
 				// 让该效果作用的方向格显示箭头（如"上方一格内的饮料效果"在游戏内也显示向上联动提示）。
 				if (effect && Array.isArray(effect.directions) && effect.directions.length
 					&& (effect.type === "triggerWeaponEffects"
+						|| effect.type === "addExtraAttack"
 						|| effect.type === "nearbyExtraAttack"
 						|| effect.type === "nearbyIntervalBonus"
 						|| effect.type === "nearbyIntervalPercentBonus"
