@@ -3470,7 +3470,7 @@ test("同名武器机制：被攻击同名≥3 → 格挡+5+驱散敌方强化�
 		makeW("A3", "剑A", 2, ["剑"], []),
 		makeW("B1", "剑B", 3, ["剑"], [])
 	], []);
-	assert.equal(1000000 - s4.enemy.hp, 55, "A1/A2/A3 15×3 + B1 10 = 55");
+	assert.equal(1000000 - s4.enemy.hp, 45, "加成只属于注册武器 A1：A1 15 + A2/A3/B1 10×3 = 45");
 
 	// 静态断言。
 	const rulesSource = fs.readFileSync(path.join(root, "project/backpackBattleRules.js"), "utf8");

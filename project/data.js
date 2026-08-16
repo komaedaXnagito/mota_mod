@@ -368,7 +368,7 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 		]
 	},
 	"firstData": {
-		"title": "鸽窝小队50层样板",
+		"title": "碧蓝幻想",
 		"name": "51_gbf",
 		"version": "Ver 2.02",
 		"floorId": "MT1",

@@ -127,7 +127,8 @@ var backpackWeaponSynergy_91f4c21e_7d37_4f12_9cc4_a9606ba62a83 = (function () {
 						|| effect.type === "nearbyIntervalBonus"
 						|| effect.type === "nearbyIntervalPercentBonus"
 						|| effect.type === "nearbyDamageBonus"
-						|| effect.type === "nearbyRandomBuff")) {
+						|| effect.type === "nearbyRandomBuff"
+						|| (effect.type === "modifyWeaponStat" && effect.weaponTarget === "nearby"))) {
 					result.push({
 						kind: "combat",
 						ruleId: rule.id || "combatRule" + ruleIndex,

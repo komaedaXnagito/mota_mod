@@ -705,7 +705,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				"effects": [
 					{
 						"type": "goldMultiplier",
-						"value": 1
+						"value": 0.5
 					}
 				]
 			}
@@ -4061,7 +4061,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			312
 		],
 		"sourceName": "你与我的桃色水平线",
-		"synergyText": "攻击命中时：自身高扬+1\n∧每配置一个武器，本武器使用间隔-10%",
+		"synergyText": "攻击命中时：自身高扬+1\n∧每配置一个武器，本武器使用间隔-0.1",
 		"rarity": 3,
 		"weaponTypes": [
 			"杖"
@@ -4073,11 +4073,26 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"ultimateGain": 5,
 		"combatRules": [
 			{
+				"id": "hitHighSpirit",
+				"trigger": "afterHit",
+				"conditions": [],
+				"effects": [
+					{
+						"type": "applyStatus",
+						"target": "self",
+						"status": "highSpirit",
+						"stacks": 1
+					}
+				]
+			}
+		],
+		"synergyRules": [
+			{
 				"id": "nearbyWeaponIntervalReduce",
 				"trigger": "layout",
 				"conditions": [
 					{
-						"id": "nearbyWeapons",
+						"id": "nearbyAll",
 						"kind": "nearby",
 						"relation": "orthogonal",
 						"directions": [
@@ -4087,18 +4102,17 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 							"right"
 						],
 						"distance": 1,
-						"filter": {},
-						"min": 1
+						"filter": {}
 					}
 				],
 				"effects": [
 					{
 						"target": "self",
 						"stat": "attackInterval",
-						"operation": "multiply",
-						"value": 0.9,
+						"operation": "add",
+						"value": -0.1,
 						"perMatch": true,
-						"conditionId": "nearbyWeapons"
+						"conditionId": "nearbyAll"
 					}
 				]
 			}
@@ -4477,24 +4491,6 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"synergyText": "攻击时：自身HP+2，随机净化自身1个debuff\n∧每配置一个食物，本武器间隔-0.1",
 		"synergyRules": [
 			{
-				"id": "attackHealCleanse",
-				"trigger": "afterAttack",
-				"conditions": [],
-				"effects": [
-					{
-						"type": "heal",
-						"target": "self",
-						"value": 2
-					},
-					{
-						"type": "cleanseOneDebuff",
-						"target": "self"
-					}
-				]
-			}
-		],
-		"combatRules": [
-			{
 				"id": "foodIntervalReduce",
 				"trigger": "layout",
 				"conditions": [
@@ -4525,6 +4521,24 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"value": -0.1,
 						"perMatch": true,
 						"conditionId": "nearbyFoods"
+					}
+				]
+			}
+		],
+		"combatRules": [
+			{
+				"id": "attackHealCleanse",
+				"trigger": "afterAttack",
+				"conditions": [],
+				"effects": [
+					{
+						"type": "heal",
+						"target": "self",
+						"value": 2
+					},
+					{
+						"type": "cleanseOneDebuff",
+						"target": "self"
 					}
 				]
 			}
@@ -9902,7 +9916,10 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击时：回复自身4HP，\n∧内每配置1个食物，本武器使用间隔-0.1"
+		"synergyText": "攻击时：回复自身4HP，\n∧内每配置1个食物，本武器使用间隔-0.1",
+		"weaponTypes": [
+			"食物"
+		]
 	},
 	"I598": {
 		"id": "鬼丸国綱",

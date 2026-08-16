@@ -189,6 +189,7 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			}
 			core.setFlag(FLAG_BUY, getBuyCount() + 1);
 			refreshOffer(); // 购买后刷新货架（武器价格随之上涨）
+			pushBackpackReplay(); // 购买结果写入录像
 			render();
 			if (core.playSound) core.playSound("item.mp3");
 		};
@@ -699,16 +700,53 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			});
 			mountShopParticleScenes(grid);
 		};
+		/** 打开界面期间的持续锁定定时器（防止事件流程在打开后被误解锁导致仍可操作）。 */
+		let shopLockTimer = null;
+		/** 录像回放中：不创建商店/选择器 UI（结果由录像中的 "backpack:" 背包快照直接恢复）。 */
+		const isReplayingNow = function () {
+			return !!(core && ((typeof core.isReplaying === "function" && core.isReplaying())
+				|| (core.status && core.status.replay && core.status.replay.route)));
+		};
+		/** 打开界面时锁定控制：直接置位 + 定时器持续强制锁定（防止事件结束/流程中的解锁把锁清掉）。 */
+		const lockShopControls = function () {
+			if (core.status) core.status.lockControl = true;
+			if (core.lockControl) core.lockControl();
+			if (shopLockTimer) clearInterval(shopLockTimer);
+			shopLockTimer = setInterval(function () {
+				if (core && core.status && root) core.status.lockControl = true;
+				else if (shopLockTimer) { clearInterval(shopLockTimer); shopLockTimer = null; }
+			}, 100);
+		};
+		/** 把当前背包状态快照写入录像路线（购买/获得武器后调用，回放时由背包系统的 "backpack:" 行为恢复）。 */
+		const pushBackpackReplay = function () {
+			if (!core.status || !core.status.route || !Array.isArray(core.status.route)) return;
+			const bp = core.plugin;
+			if (!bp || typeof bp.getBackpackState !== "function") return;
+			try {
+				core.status.route.push("backpack:" + encodeURIComponent(JSON.stringify(bp.getBackpackState())));
+			} catch (error) {
+				if (console && console.error) console.error("商店录像记录失败", error);
+			}
+		};
 		const closeShop = function () {
+			if (shopLockTimer) { clearInterval(shopLockTimer); shopLockTimer = null; }
 			destroyShopParticleScenes();
 			if (root && root.parentNode) root.parentNode.removeChild(root);
 			root = null;
 			if (core.clearMap && core.clearMap("data")) core.clearMap("data");
+			// 关闭后无条件恢复操作：商店/选择器是玩家主动打开的，不因"打开前恰好处于锁定"而残留锁定。
+			if (core.status) core.status.lockControl = false;
+			if (core.unlockControl) core.unlockControl();
 		};
 		const openShop = function () {
 			if (root) { render(); return; }
+			// 录像回放时不显示商店界面（结果由录像快照恢复），避免 UI 挡住回放且无法关闭。
+			if (isReplayingNow()) return;
+			// 打开界面期间锁定控制，避免方向键/点击等意外操作；关闭时按原状态恢复。
+			lockShopControls();
 			if (getPool().length === 0) {
 				if (core.drawTip) core.drawTip("随机池为空：flags.randomList 里的武器 ID 均不存在，请检查（打开 project/weapons.js 查看有效 ID）");
+				closeShop(); // 清理锁定状态
 				return;
 			}
 			// 打开商店不自动刷新：已有存档货架则直接展示，仅首次生成。
@@ -779,11 +817,15 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 		 * 每次调用重新随机一批，不影响商店货架。
 		 */
 		const openRewardPicker = function () {
+			// 录像回放时不显示选择器界面（结果由录像快照恢复），避免 UI 挡住回放且无法关闭。
+			if (isReplayingNow()) return;
 			if (getPool().length === 0) {
 				if (core.drawTip) core.drawTip("随机池为空：flags.randomList 里的武器 ID 均不存在，请检查");
 				return;
 			}
 			if (root) closeShop();
+			// 打开界面期间锁定控制（关闭时由 closeShop 按原状态恢复）。
+			lockShopControls();
 			// 每次随机 5 把（独立于商店货架，不写入 FLAG_OFFER）。
 			const offer = [];
 			const seen = {};
@@ -827,6 +869,7 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 					}
 					if (core.playSound) core.playSound("item.mp3");
 					if (core.drawTip) core.drawTip("获得武器：" + (def.name || picked.id));
+					pushBackpackReplay(); // 赠予选择结果写入录像
 					closeShop();
 				}));
 			});

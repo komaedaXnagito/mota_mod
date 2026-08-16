@@ -354,6 +354,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a =
 		money += backpackBattleResult.goldBonus; // 背包乱斗联动规则：金币固定增加（如"战后获得金币增加5点"）
 	}
 	if (core.hasFlag('curse')) money = 0; // 诅咒效果
+	money = Math.round(money); // 最终四舍五入（针对"战后金币倍率"如 ×0.25/×1.25 等产生的小数结算）
 	core.status.hero.money += money;
 	core.status.hero.statistics.money += money;
 
@@ -919,8 +920,8 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a =
 	case 84: // T：打开道具栏
 		core.openToolbox(true);
 		break;
-	case 81: // Q：打开装备栏
-		core.openEquipbox(true);
+	case 81: // Q：打开背包
+	core.useItem('I385',true)
 		break;
 	case 90: // Z：转向
 		core.turnHero();

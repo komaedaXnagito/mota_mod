@@ -334,17 +334,39 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		return fixed(value);
 	};
 
-	/** 同名武器数量驱动的伤害加成：本武器 name 相同的武器数 ≥ threshold 时伤害 +value（满足条件即生效，与数量无关）。 */
+	/** 按分组统计场上武器数量（含自身）：
+	 * groupBy === "weaponTypes" 时统计与当前武器共享任意武器类型的武器数；
+	 * 默认统计场上"任意同名武器组"的最大数量——即只要场上存在 N 把相同名称的武器（不要求
+	 * 与当前武器同名、也不要求同类型）就计入，实现"一把a + 三把任意同名武器b 也触发a的效果"。 */
+	var countGroupedWeapons = function (state, weapon, groupBy) {
+		if (groupBy === "weaponTypes") {
+			var types = (weapon && (weapon.attributes && weapon.attributes.weaponTypes)) || (weapon && weapon.weaponTypes) || [];
+			return (state.weapons || []).filter(function (w) {
+				var wt = (w && (w.attributes && w.attributes.weaponTypes)) || (w && w.weaponTypes) || [];
+				return wt.some(function (type) { return types.indexOf(type) >= 0; });
+			}).length;
+		}
+		var nameCounts = {};
+		(state.weapons || []).forEach(function (w) {
+			var n = w.name || w.instanceId;
+			nameCounts[n] = (nameCounts[n] || 0) + 1;
+		});
+		var maxCount = 0;
+		for (var n in nameCounts) maxCount = Math.max(maxCount, nameCounts[n]);
+		return maxCount;
+	};
+
+	/** 同名武器数量驱动的伤害加成：本武器 name 相同的武器数（或 groupBy weaponTypes 时共享类型的武器数）
+	 * ≥ threshold 时伤害 +value（满足条件即生效，与数量无关）。 */
 	var getSameNameDamageBonus = function (state, weapon) {
 		var bonuses = Array.isArray(state.sameNameDamageBonuses) ? state.sameNameDamageBonuses : [];
 		if (!bonuses.length || !weapon) return 0;
 		var weaponTypes = (weapon && (weapon.attributes && weapon.attributes.weaponTypes)) || (weapon && weapon.weaponTypes) || [];
-		var sameName = weapon.name || weapon.instanceId;
-		var sameNameCount = (state.weapons || []).filter(function (w) {
-			return (w.name || w.instanceId) === sameName;
-		}).length;
 		var total = 0;
 		bonuses.forEach(function (bonus) {
+			// 加成只属于注册该效果的武器（"填在 a 武器上的效果"只作用于 a）；其他武器不吃。
+			if (bonus.sourceWeaponId && weapon.instanceId !== bonus.sourceWeaponId) return;
+			var sameNameCount = countGroupedWeapons(state, weapon, bonus.groupBy);
 			if (bonus.weaponTypes && !bonus.weaponTypes.some(function (type) { return weaponTypes.indexOf(type) >= 0; })) return;
 			if (sameNameCount >= bonus.threshold) total += bonus.value;
 		});
@@ -666,12 +688,10 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 				return compare(countNearbyWeapons(state, weapon, condition), condition.operator || "gte", toNumber(condition.value, 1));
 			}
 			if (condition.kind === "sameNameCount") {
-				// 同名武器数量条件：统计与当前武器 name 相同的武器数（含自身），如"配置3个及以上同名武器"。
-				var sameName = weapon.name || weapon.instanceId;
-				var sameNameCount = state.weapons.filter(function (w) {
-					return (w.name || w.instanceId) === sameName;
-				}).length;
-				return compare(sameNameCount, condition.operator || "gte", toNumber(condition.value, 3));
+				// 同名武器数量条件：统计与当前武器 name 相同的武器数（含自身），如"配置3个及以上同名武器"；
+				// 配置 groupBy: "weaponTypes" 时改为统计共享武器类型的武器数（含自身）。
+				return compare(countGroupedWeapons(state, weapon, condition.groupBy),
+					condition.operator || "gte", toNumber(condition.value, 3));
 			}
 			if (condition.kind === "hpPercent") {
 				// 生命值百分比条件：目标当前 HP 与本场战斗最大血量（进战斗时的血条满值）之比与 value 比较
@@ -982,7 +1002,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 				});
 			}
 			else if (effect.type === "sameNameDamageBonus") {
-				// 同名武器数量驱动的伤害加成：本武器 name 相同的武器数 ≥ threshold（默认3）时伤害 +value（与数量无关，满足条件即生效）。
+				// 同名武器数量驱动的伤害加成：本武器 name 相同的武器数（或 groupBy weaponTypes 时共享类型的武器数）
+				// ≥ threshold（默认3）时伤害 +value（与数量无关，满足条件即生效）。
 				// 按 effect.id 幂等注册，攻击时实时计算；weaponTypes 限定适用武器类型。
 				var sameNameBonuses = state.sameNameDamageBonuses || (state.sameNameDamageBonuses = []);
 				var sameNameBonusId = String(effect.id || "default");
@@ -994,8 +1015,10 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 				}
 				sameNameBonuses.push({
 					id: sameNameBonusId,
+					sourceWeaponId: weapon && weapon.instanceId,
 					threshold: Math.max(1, Math.floor(toNumber(effect.threshold, 3))),
 					value: Math.max(0, toNumber(effect.value, 0)),
+					groupBy: effect.groupBy === "weaponTypes" ? "weaponTypes" : null,
 					weaponTypes: Array.isArray(effect.weaponTypes) ? effect.weaponTypes.slice() : null
 				});
 			}
