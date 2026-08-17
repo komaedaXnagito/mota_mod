@@ -3120,7 +3120,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"盾"
 		],
-		"synergyText": "被攻击时：20%概率降低受到的10点伤害/敌方耐力降低0.4\n∧的武器攻击时：格挡+2\n∧的武器的使用间隔 -20%，伤害 +3",
+		"synergyText": "被攻击时：20%概率降低受到的10点伤害/敌方耐力降低0.4\n∧的武器攻击时：格挡+2\n∧的武器的使用间隔 -0.2，伤害 +3",
 		"synergyRules": [
 			{
 				"id": "nearbyWeaponBoost",
@@ -3144,8 +3144,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"target": "matches",
 						"conditionId": "nearbyWeapons",
 						"stat": "attackInterval",
-						"operation": "multiply",
-						"value": 0.8,
+						"operation": "add",
+						"value": -0.2,
 						"perMatch": true
 					},
 					{
@@ -9648,7 +9648,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			312,
 			312
 		],
-		"sourceName": "音响",
+		"sourceName": "亥姆霍兹",
 		"rarity": 3,
 		"minAttack": 3,
 		"maxAttack": 5,

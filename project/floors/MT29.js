@@ -88,7 +88,12 @@ main.floors.MT29=
                                         ]
                                     }
                                 ]
-                            }
+                            },
+                            {
+                                "type": "function",
+                                "function": "function(){\ncore.push(flags.randomList, ['I372', 'I421', 'I509', 'I598'])\n}"
+                            },
+                            "\t[小妖精,fairy]现在商店和盲盒可以获取‘刀’类武器了"
                         ]
                     },
                     {
@@ -106,7 +111,12 @@ main.floors.MT29=
                                                 "name": "item:I584",
                                                 "operator": "+=",
                                                 "value": "1"
-                                            }
+                                            },
+                                            {
+                                                "type": "function",
+                                                "function": "function(){\ncore.push(flags.randomList, ['I554', 'I574', 'I418', 'I508', 'I593', 'I567'])\n}"
+                                            },
+                                            "\t[小妖精,fairy]现在商店和盲盒可以获取黑猫道士特定使用的‘杖’了"
                                         ]
                                     },
                                     {
@@ -117,7 +127,12 @@ main.floors.MT29=
                                                 "name": "item:I513",
                                                 "operator": "+=",
                                                 "value": "1"
-                                            }
+                                            },
+                                            {
+                                                "type": "function",
+                                                "function": "function(){\ncore.push(flags.randomList, ['I514', 'I544', 'I409', 'I408', 'I389', 'I551', 'I556', 'I540'])\n}"
+                                            },
+                                            "\t[小妖精,fairy]现在商店和盲盒可以获取‘精灵’以及相关武器了"
                                         ]
                                     }
                                 ]
@@ -139,7 +154,12 @@ main.floors.MT29=
                                                 "name": "item:I516",
                                                 "operator": "+=",
                                                 "value": "1"
-                                            }
+                                            },
+                                            {
+                                                "type": "function",
+                                                "function": "function(){\ncore.push(flags.randomList, ['I588', 'I600', 'I601', 'I558', 'I572', 'I566'])\n}"
+                                            },
+                                            "\t[小妖精,fairy]现在商店和盲盒可以获取‘动物’以及相关武器了"
                                         ]
                                     },
                                     {
@@ -150,6 +170,33 @@ main.floors.MT29=
                                                 "name": "item:I539",
                                                 "operator": "+=",
                                                 "value": "1"
+                                            },
+                                            {
+                                                "type": "setValue",
+                                                "name": "item:I523",
+                                                "operator": "+=",
+                                                "value": "1"
+                                            },
+                                            "\t[小妖精,fairy]现在商店和盲盒可以获取‘吉他’以及甄选吉他拨片了",
+                                            {
+                                                "type": "function",
+                                                "function": "function(){\ncore.push(flags.randomList, ['I397', 'I403', 'I404', 'I523', 'I594'])\n}"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "text": "极乐净土",
+                                        "action": [
+                                            {
+                                                "type": "setValue",
+                                                "name": "item:I524",
+                                                "operator": "+=",
+                                                "value": "1"
+                                            },
+                                            "\t[小妖精,fairy]现在商店和盲盒可以获取‘吉他’了",
+                                            {
+                                                "type": "function",
+                                                "function": "function(){\ncore.push(flags.randomList, ['I397', 'I403', 'I404', 'I594'])\n}"
                                             }
                                         ]
                                     }

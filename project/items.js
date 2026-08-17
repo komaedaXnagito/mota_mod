@@ -1401,7 +1401,7 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 	},
 	"I566": {
 		"cls": "items",
-		"name": "琴师之证",
+		"name": "瑞普·凡·温克尔",
 		"text": "null",
 		"backpackWeaponId": "I566",
 		"itemEffectTip": "，已放入背包"
