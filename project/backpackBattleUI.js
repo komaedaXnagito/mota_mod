@@ -155,6 +155,11 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		nodes.log = root.querySelector(".bb-log-list");
 		nodes.pause = root.querySelector(".bb-pause");
 		nodes.fast = root.querySelector(".bb-fast");
+		if (common.registerModal) {
+			common.registerModal(root, function () {
+				if (!runtime.stop || runtime.stop("用户按 Esc 关闭战斗弹层") === false) close();
+			}, { name: "backpack-battle" });
+		}
 		buildStatusSprite();
 		buildStatusNodes(nodes.playerStatuses, "player");
 		buildStatusNodes(nodes.enemyStatuses, "enemy");
@@ -185,6 +190,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 			if (latestSnapshot && root) renderWeapons(latestSnapshot, true);
 		};
 		window.addEventListener("resize", resizeHandler);
+		if (nodes.pause && nodes.pause.focus) nodes.pause.focus();
 	};
 
 	var normalizeCells = function (cells) {
@@ -574,6 +580,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		common.hideTooltip();
 		if (resizeHandler) window.removeEventListener("resize", resizeHandler);
 		resizeHandler = null;
+		if (common.unregisterModal) common.unregisterModal(root);
 		if (root) root.remove();
 		root = null;
 		nodes = {};

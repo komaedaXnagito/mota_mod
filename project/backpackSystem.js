@@ -1414,6 +1414,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		renderBattleSpeedControl();
 
 		gameGroup.appendChild(root);
+		uiCommon.registerModal(root, closeBackpack, { name: "backpack" });
 		window.addEventListener("resize", renderAll);
 		document.addEventListener("pointermove", onPointerMove, true);
 		document.addEventListener("pointerup", onPointerUp, true);
@@ -1466,7 +1467,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	 * 同一次 ESC 的 keyup 会继续到达引擎 body.onkeyup，从而打开系统菜单。
 	 */
 	const onKeyDown = function (event) {
-		if (!root) return;
+		if (!root || !uiCommon.isTopModal(root)) return;
 		if (isBackpackCloseKey(event)) {
 			event.preventDefault();
 			event.stopImmediatePropagation();
@@ -1479,7 +1480,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 
 	/** 在捕获阶段消费 ESC/X 的 keyup，再关闭背包，避免事件落到系统菜单。 */
 	const onKeyUp = function (event) {
-		if (!root || !isBackpackCloseKey(event)) return;
+		if (!root || !uiCommon.isTopModal(root) || !isBackpackCloseKey(event)) return;
 		event.preventDefault();
 		event.stopImmediatePropagation();
 		closeBackpack();
@@ -1520,6 +1521,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		document.removeEventListener("pointercancel", onPointerCancel, true);
 		document.removeEventListener("keydown", onKeyDown, true);
 		document.removeEventListener("keyup", onKeyUp, true);
+		uiCommon.unregisterModal(root);
 		if (root) root.remove();
 		root = null;
 		sellZone = null;

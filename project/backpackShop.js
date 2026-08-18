@@ -15,6 +15,8 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 	"use strict";
 	return (function () {
 		const weaponDefs = weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44;
+		const uiCommon = (typeof backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 !== "undefined")
+			? backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 : null;
 
 		// 稀有度权重表：行 = ratio（1~5），列 = 稀有度（1~5），每行总和 100。
 		// 五级稀有度在 ratio=5 时为 15/100 = 15%；ratio 越低高稀有权重越小（ratio=1 时仅 0.8%）。
@@ -799,6 +801,7 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 		const closeShop = function () {
 			if (shopLockTimer) { clearInterval(shopLockTimer); shopLockTimer = null; }
 			destroyShopParticleScenes();
+			if (uiCommon) uiCommon.unregisterModal(root);
 			if (root && root.parentNode) root.parentNode.removeChild(root);
 			root = null;
 			if (core.clearMap && core.clearMap("data")) core.clearMap("data");
@@ -880,6 +883,8 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 				if (event.target === root) closeShop();
 			});
 			document.body.appendChild(root);
+			if (uiCommon) uiCommon.registerModal(root, closeShop, { name: "backpack-shop" });
+			close.focus();
 			if (core.insertAction) core.insertAction([]);
 			render();
 		};
@@ -941,6 +946,8 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 				if (event.target === root) closeShop();
 			});
 			document.body.appendChild(root);
+			if (uiCommon) uiCommon.registerModal(root, closeShop, { name: "backpack-reward-picker" });
+			close.focus();
 			mountShopParticleScenes(grid);
 			if (core.insertAction) core.insertAction([]);
 		};

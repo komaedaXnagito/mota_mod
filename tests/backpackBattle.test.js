@@ -408,12 +408,118 @@ test("商店 choices 录像回放刷新、购买和赠予，并在 bp 动作前�
 	assert.match(shopSource, /registerReplayAction\("backpackShopChoice"/);
 });
 
-test("背包用 keyup 消费关闭键，避免同一次 ESC 打开系统菜单", () => {
-	const source = fs.readFileSync(path.join(root, "project/backpackSystem.js"), "utf8");
-	assert.match(source, /document\.addEventListener\("keyup", onKeyUp, true\)/);
-	assert.match(source, /document\.removeEventListener\("keyup", onKeyUp, true\)/);
-	assert.match(source, /const onKeyDown[\s\S]*?isBackpackCloseKey\(event\)[\s\S]*?stopImmediatePropagation\(\)[\s\S]*?const onKeyUp/);
-	assert.match(source, /const onKeyUp[\s\S]*?stopImmediatePropagation\(\)[\s\S]*?closeBackpack\(\)/);
+test("统一弹层栈隔离游戏快捷键，并按后进先出顺序响应 ESC", () => {
+	const documentListeners = { keydown: [], keyup: [] };
+	const fakeDocument = {
+		activeElement: null,
+		addEventListener(type, listener) { documentListeners[type].push(listener); },
+		removeEventListener(type, listener) {
+			documentListeners[type] = documentListeners[type].filter((item) => item !== listener);
+		}
+	};
+	const makeModal = (name) => {
+		const listeners = { keydown: [], keyup: [] };
+		return {
+			className: name,
+			isConnected: true,
+			listeners,
+			addEventListener(type, listener) { listeners[type].push(listener); },
+			removeEventListener(type, listener) {
+				listeners[type] = listeners[type].filter((item) => item !== listener);
+			},
+			contains(target) { return target === this || target && target.modalRoot === this; },
+			hasAttribute() { return false; },
+			focus() { fakeDocument.activeElement = this; }
+		};
+	};
+	const context = loadScripts(["project/backpackUiCommon.js"], { document: fakeDocument });
+	const common = context.backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61;
+	const first = makeModal("first-modal");
+	const second = makeModal("second-modal");
+	const closed = [];
+	common.registerModal(first, () => {
+		closed.push("first");
+		common.unregisterModal(first);
+		first.isConnected = false;
+	});
+	common.registerModal(second, () => {
+		closed.push("second");
+		common.unregisterModal(second);
+		second.isConnected = false;
+	});
+	assert.equal(common.getModalDepth(), 2);
+	assert.equal(common.isTopModal(second), true);
+
+	let engineShortcutCount = 0;
+	const dispatchKey = (type, key, target) => {
+		const event = {
+			type,
+			key,
+			keyCode: key === "Escape" ? 27 : 0,
+			target,
+			defaultPrevented: false,
+			propagationStopped: false,
+			immediateStopped: false,
+			preventDefault() { this.defaultPrevented = true; },
+			stopPropagation() { this.propagationStopped = true; },
+			stopImmediatePropagation() {
+				this.immediateStopped = true;
+				this.propagationStopped = true;
+			}
+		};
+		documentListeners[type].slice().some((listener) => {
+			listener(event);
+			return event.immediateStopped;
+		});
+		if (!event.propagationStopped && target && target.modalRoot) {
+			target.modalRoot.listeners[type].slice().forEach((listener) => listener(event));
+		}
+		if (!event.propagationStopped) engineShortcutCount++;
+		return event;
+	};
+
+	// 弹层内普通按键可由弹层自己处理，但不会继续冒泡到游戏 body 快捷键。
+	const insideSecond = { modalRoot: second };
+	assert.equal(dispatchKey("keyup", "A", insideSecond).propagationStopped, true);
+	// 焦点即使意外落在弹层外，捕获监听也会直接拦截快捷键。
+	assert.equal(dispatchKey("keyup", "B", {}).immediateStopped, true);
+	assert.equal(engineShortcutCount, 0);
+
+	// ESC 在 keydown 只消费事件，在 keyup 才关闭，避免同一次 keyup 落入系统菜单。
+	dispatchKey("keydown", "Escape", insideSecond);
+	assert.deepEqual(closed, []);
+	dispatchKey("keyup", "Escape", insideSecond);
+	assert.deepEqual(closed, ["second"]);
+	assert.equal(common.isTopModal(first), true);
+	assert.equal(fakeDocument.activeElement, first);
+	dispatchKey("keydown", "Escape", first);
+	dispatchKey("keyup", "Escape", first);
+	assert.deepEqual(closed, ["second", "first"]);
+	assert.equal(common.hasOpenModal(), false);
+	assert.equal(documentListeners.keydown.length, 0);
+	assert.equal(documentListeners.keyup.length, 0);
+
+	// 所有弹层关闭后，游戏快捷键恢复。
+	dispatchKey("keyup", "C", {});
+	assert.equal(engineShortcutCount, 1);
+});
+
+test("背包、商店、合成、配方预览和战斗都接入统一弹层栈", () => {
+	const commonSource = fs.readFileSync(path.join(root, "project/backpackUiCommon.js"), "utf8");
+	const backpackSource = fs.readFileSync(path.join(root, "project/backpackSystem.js"), "utf8");
+	const shopSource = fs.readFileSync(path.join(root, "project/backpackShop.js"), "utf8");
+	const craftSource = fs.readFileSync(path.join(root, "project/backpackCraft.js"), "utf8");
+	const battleSource = fs.readFileSync(path.join(root, "project/backpackBattleUI.js"), "utf8");
+	assert.match(commonSource, /document\.addEventListener\("keydown", handleModalKeyboard, true\)/);
+	assert.match(commonSource, /document\.addEventListener\("keyup", handleModalKeyboard, true\)/);
+	assert.match(commonSource, /event\.type === "keyup"\) closeTopModal\(\)/);
+	assert.match(commonSource, /registerModal\(root, closeWeaponRecipePreview/);
+	assert.match(backpackSource, /registerModal\(root, closeBackpack/);
+	assert.match(backpackSource, /unregisterModal\(root\)/);
+	assert.match(backpackSource, /!uiCommon\.isTopModal\(root\)/);
+	assert.match(shopSource, /registerModal\(root, closeShop/);
+	assert.match(craftSource, /registerModal\(root, closeCraft/);
+	assert.match(battleSource, /registerModal\(root,[\s\S]*?runtime\.stop\("用户按 Esc 关闭战斗弹层"\)/);
 });
 
 test("武器联动范围严格按结构化空间规则生成格子和方向", () => {

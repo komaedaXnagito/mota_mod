@@ -625,6 +625,7 @@ var installBackpackCraft_9c4e7b2a_6f1d_4a8c_9e3b_5d7f2c1a8e64 = function (core, 
 		};
 		const closeCraft = function () {
 			if (uiCommon) uiCommon.hideTooltip();
+			if (uiCommon) uiCommon.unregisterModal(root);
 			if (root && root.parentNode) root.parentNode.removeChild(root);
 			root = null;
 		};
@@ -702,6 +703,8 @@ var installBackpackCraft_9c4e7b2a_6f1d_4a8c_9e3b_5d7f2c1a8e64 = function (core, 
 				if (event.target === root) closeCraft();
 			});
 			document.body.appendChild(root);
+			if (uiCommon) uiCommon.registerModal(root, closeCraft, { name: "backpack-craft" });
+			close.focus();
 			render();
 		};
 

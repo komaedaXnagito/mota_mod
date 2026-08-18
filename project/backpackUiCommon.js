@@ -11,6 +11,148 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	var lastTooltipHtml = null;
 	var TOOLTIP_HIDE_DELAY = 0;
 	var recipePreviewRoot = null;
+	var modalStack = [];
+	var modalKeyboardInstalled = false;
+
+	var isEscapeKey = function (event) {
+		return event && (event.key === "Escape" || event.key === "Esc" || event.keyCode === 27);
+	};
+
+	var removeModalEntry = function (entry) {
+		if (!entry) return;
+		if (entry.root && entry.keyGuard && typeof entry.root.removeEventListener === "function") {
+			entry.root.removeEventListener("keydown", entry.keyGuard);
+			entry.root.removeEventListener("keyup", entry.keyGuard);
+		}
+		var index = modalStack.indexOf(entry);
+		if (index >= 0) modalStack.splice(index, 1);
+	};
+
+	/** 丢弃已被外部代码移除的弹层，避免失效节点继续拦截键盘。 */
+	var pruneModalStack = function () {
+		for (var index = modalStack.length - 1; index >= 0; index--) {
+			var entry = modalStack[index];
+			if (!entry.root || entry.root.isConnected === false) removeModalEntry(entry);
+		}
+	};
+
+	var getTopModal = function () {
+		pruneModalStack();
+		return modalStack.length ? modalStack[modalStack.length - 1] : null;
+	};
+
+	/**
+	 * 捕获所有键盘事件：Esc 在 keyup 时关闭栈顶，避免同一次按键继续触发引擎菜单；
+	 * 其他按键仅允许送入栈顶弹层，随后由根节点阻止它冒泡到 body 快捷键。
+	 */
+	var handleModalKeyboard = function (event) {
+		var top = getTopModal();
+		if (!top) return;
+		if (isEscapeKey(event)) {
+			if (event.preventDefault) event.preventDefault();
+			if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+			else if (event.stopPropagation) event.stopPropagation();
+			if (event.type === "keyup") closeTopModal();
+			return;
+		}
+		if (!top.root.contains || !top.root.contains(event.target)) {
+			if (event.preventDefault) event.preventDefault();
+			if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+			else if (event.stopPropagation) event.stopPropagation();
+		}
+	};
+
+	var installModalKeyboard = function () {
+		if (modalKeyboardInstalled || typeof document === "undefined") return;
+		document.addEventListener("keydown", handleModalKeyboard, true);
+		document.addEventListener("keyup", handleModalKeyboard, true);
+		modalKeyboardInstalled = true;
+	};
+
+	var uninstallModalKeyboard = function () {
+		if (!modalKeyboardInstalled || modalStack.length || typeof document === "undefined") return;
+		document.removeEventListener("keydown", handleModalKeyboard, true);
+		document.removeEventListener("keyup", handleModalKeyboard, true);
+		modalKeyboardInstalled = false;
+	};
+
+	/** 把弹层压入栈；同一根节点重复注册时会移动到栈顶。 */
+	var registerModal = function (root, close, options) {
+		if (!root || typeof close !== "function") return false;
+		unregisterModal(root, { restoreFocus: false });
+		options = options || {};
+		var entry = {
+			root: root,
+			close: close,
+			name: options.name || root.className || "modal",
+			closing: false,
+			previousFocus: typeof document !== "undefined" ? document.activeElement : null,
+			keyGuard: null
+		};
+		entry.keyGuard = function (event) {
+			if (getTopModal() === entry && event.stopPropagation) event.stopPropagation();
+		};
+		if (typeof root.addEventListener === "function") {
+			root.addEventListener("keydown", entry.keyGuard);
+			root.addEventListener("keyup", entry.keyGuard);
+		}
+		if (typeof root.hasAttribute === "function" && !root.hasAttribute("tabindex")) root.tabIndex = -1;
+		modalStack.push(entry);
+		installModalKeyboard();
+		if (options.focus !== false && typeof root.focus === "function") root.focus();
+		return true;
+	};
+
+	/** 从弹层栈移除指定节点，并把焦点还给打开它之前的弹层。 */
+	var unregisterModal = function (root, options) {
+		options = options || {};
+		var removed = null;
+		var wasTop = false;
+		for (var index = modalStack.length - 1; index >= 0; index--) {
+			if (modalStack[index].root !== root) continue;
+			wasTop = index === modalStack.length - 1;
+			removed = modalStack[index];
+			removeModalEntry(removed);
+		}
+		uninstallModalKeyboard();
+		if (removed && wasTop && options.restoreFocus !== false) {
+			var focusTarget = removed.previousFocus;
+			if (!focusTarget || focusTarget.isConnected === false) {
+				var top = getTopModal();
+				focusTarget = top && top.root;
+			}
+			if (focusTarget && typeof focusTarget.focus === "function") focusTarget.focus();
+		}
+		return !!removed;
+	};
+
+	/** 只关闭当前栈顶弹层，形成后进先出的 Esc 行为。 */
+	var closeTopModal = function () {
+		var top = getTopModal();
+		if (!top || top.closing) return false;
+		top.closing = true;
+		try {
+			top.close();
+		} finally {
+			top.closing = false;
+			unregisterModal(top.root);
+		}
+		return true;
+	};
+
+	var isTopModal = function (root) {
+		var top = getTopModal();
+		return !!top && top.root === root;
+	};
+
+	var hasOpenModal = function () {
+		return !!getTopModal();
+	};
+
+	var getModalDepth = function () {
+		pruneModalStack();
+		return modalStack.length;
+	};
 
 	var escapeHtml = function (value) {
 		return String(value == null ? "" : value)
@@ -295,6 +437,7 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	};
 
 	var closeWeaponRecipePreview = function () {
+		unregisterModal(recipePreviewRoot);
 		if (recipePreviewRoot && recipePreviewRoot.parentNode) recipePreviewRoot.parentNode.removeChild(recipePreviewRoot);
 		recipePreviewRoot = null;
 	};
@@ -399,6 +542,7 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		});
 		document.body.appendChild(root);
 		recipePreviewRoot = root;
+		registerModal(root, closeWeaponRecipePreview, { name: "weapon-recipe-preview" });
 		close.focus();
 		return true;
 	};
@@ -577,6 +721,12 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		appendCraftHammer: appendCraftHammer,
 		openWeaponRecipePreview: openWeaponRecipePreview,
 		closeWeaponRecipePreview: closeWeaponRecipePreview,
+		registerModal: registerModal,
+		unregisterModal: unregisterModal,
+		closeTopModal: closeTopModal,
+		isTopModal: isTopModal,
+		hasOpenModal: hasOpenModal,
+		getModalDepth: getModalDepth,
 		bindTooltip: bindTooltip,
 		showTooltip: showTooltip,
 		hideTooltip: hideTooltip
