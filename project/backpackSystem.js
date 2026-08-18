@@ -32,7 +32,6 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	};
 	let openedStateSignature = null; // 打开背包时的状态签名，用于判断整理后是否需要写入录像。
 	let dragState = null; // 正在拖拽的实例、旋转角、鼠标位置和抓取偏移。
-	let instanceSeed = 0; // 同一毫秒创建多个实例时使用的递增序号。
 	let root = null; // 背包界面的根 DOM 节点；null 表示界面未打开。
 	let bagCanvas = null; // 绘制背景、网格和拖拽合法性提示的画布。
 	let bagContext = null; // bagCanvas 对应的 2D 绘图上下文。
@@ -195,10 +194,14 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	const getWeaponDefinition = function (itemId) {
 		return getWeaponSystem().getDefinition(itemId);
 	};
-	/** 为每一次武器拾取创建不会与已有实例重复的 ID。 */
+	/** 为每一次武器拾取创建不会与已有实例重复的 ID。
+	 * 采用 flag 自增计数器（__backpack_instance_id__），保证录像回放时实例 ID 确定性复现
+	 * （不再依赖 Date.now 时间戳）。 */
 	const makeInstanceId = function () {
-		instanceSeed++;
-		return "backpack_" + Date.now().toString(36) + "_" + instanceSeed.toString(36);
+		const counter = Math.max(0, Math.floor(Number(core.getFlag("__backpack_instance_id__", 0)) || 0));
+		const nextId = counter + 1;
+		core.setFlag("__backpack_instance_id__", nextId);
+		return String(nextId);
 	};
 
 	/** 把角度吸附为武器系统支持的四种旋转角。 */

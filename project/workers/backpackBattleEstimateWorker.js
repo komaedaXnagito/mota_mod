@@ -13,11 +13,14 @@ self.onmessage = function (event) {
 		requestId: message.requestId,
 		cacheKey: message.cacheKey,
 		layoutRevision: message.layoutRevision,
-		battleRuleVersion: message.battleRuleVersion
+		battleRuleVersion: message.battleRuleVersion,
+		randomSeed: message.randomSeed
 	};
 	try {
+		var inputSnapshot = message.inputSnapshot || {};
+		inputSnapshot.randomSeed = message.randomSeed;
 		response.result = backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71
-			.simulate(message.inputSnapshot || {});
+			.simulate(inputSnapshot);
 	} catch (error) {
 		response.error = error && error.message ? error.message : String(error);
 	}

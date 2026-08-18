@@ -503,10 +503,10 @@ test("格挡在防御前抵扣且剩余层数保留", () => {
 	rules.applyStatus(state, "player", "block", 15, "player");
 	const first = rules.applyDamage(state, "player", 10);
 	assert.equal(first.damage, 0);
-	assert.equal(rules.getStatusStacks(state.player, "block"), 5);
+	assert.equal(rules.getStatusStacks(state.player, "block"), 11); // 每层挡3点：10伤害耗 ceil(10/3)=4 层 → 15-4=11
 	const second = rules.applyDamage(state, "player", 10);
-	assert.equal(second.damage, 5);
-	assert.equal(rules.getStatusStacks(state.player, "block"), 0);
+	assert.equal(second.damage, 0); // 剩余 11 层足够再挡 10（耗 4 层）
+	assert.equal(rules.getStatusStacks(state.player, "block"), 7);  // 11-4=7
 });
 
 test("反射逐层消耗且不会二次反射", () => {
@@ -535,9 +535,13 @@ test("烧伤与再生只在整百 Tick 结算", () => {
 	assert.equal(state.player.hp, 900);
 	state.tick = 100;
 	rules.settlePeriodicStatuses(state);
-	assert.equal(state.player.hp, 910);
+	assert.equal(state.player.hp, 880); // 烧伤 2×10=20；再生每 2 秒触发，tick100 不触发
 	assert.equal(rules.getStatusStacks(state.player, "burn"), 2);
-	assert.equal(rules.getStatusStacks(state.player, "regeneration"), 2);
+	assert.equal(rules.getStatusStacks(state.player, "regeneration"), 3);
+	state.tick = 200;
+	rules.settlePeriodicStatuses(state);
+	assert.equal(state.player.hp, 875); // tick200：烧伤再-20 + 再生 3×5=15 → 880-20+15
+	assert.equal(rules.getStatusStacks(state.player, "regeneration"), 1); // 掉 2 层
 });
 
 test("预计驱散固定选择最后一个有效 Buff", () => {
@@ -664,7 +668,7 @@ test("打扰一下对区域内每把武器固定减0.2间隔，不乘区域武�
 	assert.equal(source.synergyRules[0].effects[0].perMatch, undefined);
 });
 
-test("预计伤害使用武器上下限平均值且只计算一个结果", () => {
+test("预计伤害使用种子确定性模拟（同一种子结果可复现）", () => {
 	const context = loadPure();
 	const kernel = context.backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71;
 	const weapon = makeWeapon({
@@ -678,15 +682,19 @@ test("预计伤害使用武器上下限平均值且只计算一个结果", () =>
 			weaponTypes: ["剑"]
 		}
 	});
-	const result = kernel.simulate(makeInput({ weapons: [weapon] }));
-	assert.equal(result.damage, 260);
-	assert.equal(result.rounds, 14);
+	const result = kernel.simulate(Object.assign(makeInput({ weapons: [weapon] }), { randomSeed: 123 }));
+	assert.equal(result.damage, 280);
+	assert.equal(result.rounds, 15);
 	assert.equal(result.roundsExceeded, false);
 	assert.equal("minDamage" in result, false);
 	assert.equal("maxDamage" in result, false);
+	// 同一种子两次模拟结果完全一致（确定性可复现）。
+	const again = kernel.simulate(Object.assign(makeInput({ weapons: [weapon] }), { randomSeed: 123 }));
+	assert.equal(again.damage, 280);
+	assert.equal(again.rounds, 15);
 });
 
-test("预计命中率使用数学期望且不生成小数层状态", () => {
+test("预计命中率按种子掷骰且结果可复现", () => {
 	const context = loadPure();
 	const kernel = context.backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71;
 	const weapon = makeWeapon({
@@ -704,11 +712,13 @@ test("预计命中率使用数学期望且不生成小数层状态", () => {
 			effects: [{ type: "applyStatus", target: "enemy", status: "burn", stacks: 1 }]
 		}]
 	});
-	const result = kernel.simulate(makeInput({
+	const result = kernel.simulate(Object.assign(makeInput({
 		enemy: Object.assign({}, makeInput().enemy, { hp: 15, atk: 0 }),
 		weapons: [weapon]
-	}));
-	assert.equal(result.rounds, 3);
+	}), { randomSeed: 456 }));
+	assert.equal(result.rounds, 2);
+	assert.equal(result.damage, 0);
+	assert.equal(result.roundsExceeded, false);
 });
 
 test("预计计算即使勇士会先死亡也返回最终数值", () => {
@@ -1351,13 +1361,14 @@ test("预计伤害缓存合并同键任务并丢弃旧布局结果", () => {
 	coordinator.destroy();
 });
 
-test("预计模块和 Worker 不包含游戏取值接口或种子状态字段", () => {
+test("预计模块和 Worker 不包含游戏随机源或取值接口", () => {
 	const files = [
 		"project/backpackBattleEstimate.js",
 		"project/backpackBattleEstimateKernel.js",
 		"project/workers/backpackBattleEstimateWorker.js"
 	];
-	const forbidden = ["core.rand(", "core.rand2(", "Math.random(", "crypto.getRandomValues(", "__seed__", "__rand__"];
+	// 内核使用局部 createSeededRandom 复刻随机流，不应调用游戏随机源/取值接口。
+	const forbidden = ["core.rand(", "core.rand2(", "Math.random(", "crypto.getRandomValues(", "core.getFlag("];
 	files.forEach((file) => {
 		const source = fs.readFileSync(path.join(root, file), "utf8");
 		forbidden.forEach((token) => assert.equal(source.includes(token), false, `${file} 包含 ${token}`));
@@ -1793,7 +1804,7 @@ test("战斗规则支持随机弱体效果 applyRandomDebuff（命中时敌方�
 	assert.match(coreSource, /gameRandom\.pick\(pool\)/);
 	const kernelSource = fs.readFileSync(path.join(root, "project/backpackBattleEstimateKernel.js"), "utf8");
 	assert.match(kernelSource, /applyRandomDebuff: function/);
-	assert.match(kernelSource, /固定选取池中第一个 Debuff/);
+	assert.match(kernelSource, /random\.pick\(pool\)/);
 	const battleSource = fs.readFileSync(path.join(root, "project/backpackBattle.js"), "utf8");
 	assert.match(battleSource, /applyRandomDebuff/);
 	assert.match(battleSource, /随机施加1个/);
@@ -2503,8 +2514,8 @@ test("火伤>=10 驱散敌方强化 + 命中火伤+2 + 刻印>=5 无视敌方格
 	assert.equal(b1.damage, 10, "刻印6层：伤害10 无视格挡抵扣");
 	const sB2 = run([{ id: "block", stacks: 5, acquiredTick: 0 }], [], [{ id: "mark", stacks: 3, acquiredTick: 0 }], [makeWeapon(ruleB)], [0.1], 25);
 	const b2 = blockState(sB2);
-	assert.equal(b2.blockLeft, 0, "刻印3层：格挡被消耗");
-	assert.equal(b2.damage, 5, "刻印3层：伤害5 照常抵扣");
+	assert.equal(b2.blockLeft, 1, "刻印3层：格挡被消耗（每层挡3点：伤害10耗4层 → 5-4=1）");
+	assert.equal(b2.damage, 0, "刻印3层：伤害10 被格挡完全抵挡");
 
 	// 静态断言。
 	const rulesSource = fs.readFileSync(path.join(root, "project/backpackBattleRules.js"), "utf8");
@@ -2796,8 +2807,8 @@ test("命中后格挡/反射-8+随机驱散 / 上下左右一格每2食物攻击
 			{ type: "dispelBuff", target: "opponent" }
 		] }])], [0.1], 25);
 	const findS = (snap, id) => snap.enemy.buffs.find((b) => b.id === id) || { stacks: 0 };
-	assert.equal(findS(s1, "block").stacks, 0, "block 18-10(伤害抵扣)-8=0");
-	assert.equal(findS(s1, "reflection").stacks, 3, "reflection 12-8-1(随机驱散选中)=3");
+	assert.equal(findS(s1, "block").stacks, 5, "block 18-5(每层挡3点,伤害15耗5层)-8=5");
+	assert.equal(findS(s1, "reflection").stacks, 4, "reflection 12-8-0(随机驱散未选中)=4");
 	assert.equal(findS(s1, "highSpirit").stacks, 2, "highSpirit 未被驱散选中");
 
 	// 场景2：上下左右一格内 4 食物（F1~F4 各1格内、F5 距离2 不计）→ floor(4/2)=2 → 每击3段。
@@ -3786,14 +3797,15 @@ test("自身HP回复时仅触发一次：激奏5/HP+15/发动上方一格饮料"
 	runtime1.start(baseInput());
 	const snap1 = runtime1.stepTicks(100);
 	runtime1.destroy();
-	assert.equal(snap1.player.hp, 565, "500+再生30+规则15+饮料20=565");
+	assert.equal(snap1.player.hp, 535, "500+规则15+饮料20=535（再生每2秒触发，tick100 未触发）");
 	assert.equal((snap1.player.buffs.find((b) => b.id === "excitation") || { stacks: 0 }).stacks, 5, "激奏5层");
 
-	// 场景2：200 ticks 后再生再次回血，afterHeal 不重复触发（once）。
+	// 场景2：200 ticks 时再生触发回血（3×5=15），afterHeal 不重复触发（once）。
 	const runtime2 = context1.createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc(makeCore([0.1]));
 	runtime2.start(baseInput());
 	const snap2 = runtime2.stepTicks(200);
 	runtime2.destroy();
+	assert.equal(snap2.player.hp, 550, "535+再生15=550（tick200 再生触发）");
 	assert.equal((snap2.player.buffs.find((b) => b.id === "excitation") || { stacks: 0 }).stacks, 5, "once：激奏不重复");
 
 	// 静态断言。

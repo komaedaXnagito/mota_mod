@@ -108,7 +108,7 @@ var backpackBattleStatusDefinitions_7d94f05e_2f6d_4b8e_9c23_5a317ccab120 = {
 			"periodTicks": 0,
 			"priority": 60,
 			"description": function (stacks) {
-				return "可抵扣接下来共 " + stacks + " 点税前伤害";
+				return "每层抵挡 3 点税前伤害，当前最多可挡 " + (stacks * 3) + " 点（不足 3 点的伤害也会消耗 1 层）";
 			}
 		},
 		"mark": {
@@ -166,11 +166,11 @@ var backpackBattleStatusDefinitions_7d94f05e_2f6d_4b8e_9c23_5a317ccab120 = {
 			"color": "#ff6b72",
 			"stackable": true,
 			"periodic": true,
-			"periodTicks": 100,
+			"periodTicks": 200,
 			"priority": 100,
 			"description": function (stacks) {
-				return "下次恢复 " + (stacks * 10) + " HP，随后变为 "
-					+ Math.max(0, stacks - 1) + " 层";
+				return "每 2 秒触发一次：恢复 " + (stacks * 5) + " HP（每层回 5），随后变为 "
+					+ Math.max(0, stacks - 2) + " 层";
 			}
 		},
 		"wolfSkin": {

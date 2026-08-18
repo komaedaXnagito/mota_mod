@@ -10,7 +10,7 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 	var activeBattleContext = null;
 	var lastLayoutSignature = null;
 	var EVENT_ID = "backpackBattle";
-	var BATTLE_RULE_VERSION = 3;
+	var BATTLE_RULE_VERSION = 4;
 	var WEAPON_CONFIG_VERSION = 1;
 
 	var clone = function (value) {
@@ -421,11 +421,15 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 		workerUrl: "project/workers/backpackBattleEstimateWorker.js?v=" + encodeURIComponent(version),
 		maximumCacheSize: 256,
 		createInput: function (enemyId, x, y, floorId) {
+			var randomSeed = Math.floor(Number(core.getFlag("__rand__", 0)) || 0);
+			var input = createBattleInput(enemyId, x, y, floorId, true);
+			input.randomSeed = randomSeed;
 			return {
 				battleRuleVersion: BATTLE_RULE_VERSION,
 				weaponConfigVersion: WEAPON_CONFIG_VERSION,
 				currentHp: Math.max(0, Number((core.status.hero || {}).hp) || 0),
-				input: createBattleInput(enemyId, x, y, floorId, true)
+				randomSeed: randomSeed,
+				input: input
 			};
 		},
 		onRefresh: refreshEstimateViews

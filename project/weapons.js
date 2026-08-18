@@ -32,7 +32,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"刀"
 		],
-		"synergyText": "奥义发动时，自身hp+，再生+1\n配置在∧内剑和刀命中时，自身高扬+1",
+		"synergyText": "奥义发动时，自身hp+5，再生+1\n配置在∧内剑和刀命中时，自身高扬+1",
 		"combatRules": [
 			{
 				"id": "ultimateHealAndRegen",
@@ -743,20 +743,37 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		],
 		"combatRules": [
 			{
-				"id": "selfDamageAfterHit",
-				"trigger": "beforeAttack",
+				"id": "attackSelfDamage5",
+				"trigger": "afterAttack",
 				"conditions": [],
 				"effects": [
 					{
-						"type": "dealDamage",
+						"type": "damageSelf",
+						"value": 5
+					}
+				]
+			},
+			{
+				"id": "hpBelow80DamageUp",
+				"trigger": "beforeAttack",
+				"conditions": [
+					{
+						"kind": "hpPercent",
 						"target": "self",
-						"value": 5,
-						"direct": true
+						"operator": "lte",
+						"value": 0.8
+					}
+				],
+				"effects": [
+					{
+						"type": "modifyAttackDamage",
+						"operation": "add",
+						"value": 10
 					}
 				]
 			}
 		],
-		"synergyText": "攻击后自身hp-5"
+		"synergyText": "攻击后自身hp-5\n自身hp在80%以下时，伤害增加10点"
 	},
 	"I396": {
 		"id": "windDagger",
@@ -1082,12 +1099,17 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 					{
 						"type": "heal",
 						"target": "self",
-						"value": 5
+						"value": 2
+					},
+					{
+						"type": "modifyBattleMaxHp",
+						"target": "self",
+						"value": 3
 					}
 				]
 			}
 		],
-		"synergyText": "攻击命中时：自身hp+5"
+		"synergyText": "攻击命中时：自身hp+2,最大hp+3"
 	},
 	"I401": {
 		"id": "lightDragonFist",
@@ -1121,9 +1143,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		],
 		"combatRules": [
 			{
-				"id": "battleStartRegenAndHighSpirit",
+				"id": "battleStartRegenHighSpiritMaxHp",
 				"trigger": "battleStart",
-				"once": true,
 				"effects": [
 					{
 						"type": "applyStatus",
@@ -1136,11 +1157,16 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"target": "self",
 						"status": "highSpirit",
 						"stacks": 5
+					},
+					{
+						"type": "modifyBattleMaxHp",
+						"target": "self",
+						"value": 25
 					}
 				]
 			}
 		],
-		"synergyText": "战斗开始时：自身再生 +5,高扬 +5"
+		"synergyText": "战斗开始时：自身再生 +5,高扬 +5，最大hp+25"
 	},
 	"I402": {
 		"id": "pan",
@@ -1175,7 +1201,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"剑"
 		],
-		"synergyText": "∧每配置一个食物，伤害+1；\n∧配置的食物使用间隔-10%",
+		"synergyText": "∧每配置一个食物，伤害+1；\n∧配置的食物使用间隔-0.1",
 		"synergyRules": [
 			{
 				"id": "foodBonusSelfAttack",
@@ -1239,8 +1265,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"target": "matches",
 						"conditionId": "nearbyFoods2",
 						"stat": "attackInterval",
-						"operation": "multiply",
-						"value": 0.9,
+						"operation": "add",
+						"value": -0.1,
 						"perMatch": true
 					}
 				]
@@ -1652,7 +1678,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"乐器"
 		],
-		"synergyText": "配置在∧的武器每攻击3回时：自身回复5HP/再生 +1/随机获得3个buff",
+		"synergyText": "配置在∧的武器每攻击3回时：自身回复5hp，再生 +1，最大hp+5，随机获得3个buff",
 		"combatRules": [
 			{
 				"id": "sideWeaponHitsTriggerHealRegenBuffs",
@@ -1673,6 +1699,10 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 					{
 						"type": "heal",
 						"target": "self",
+						"value": 5
+					},
+					{
+						"type": "modifyBattleMaxHp",
 						"value": 5
 					},
 					{
@@ -1966,11 +1996,11 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			"短"
 		],
 		"synergyText": "攻击命中时：敌方火伤 +1\n敌方每有1层火伤，自身伤害 +1\n敌方每有5层火伤，配置在∧的武器伤害 +1",
-		"synergyRules": [
+		"synergyRules": null,
+		"combatRules": [
 			{
 				"id": "hitBurn1",
 				"trigger": "afterHit",
-				"conditions": [],
 				"effects": [
 					{
 						"type": "applyStatus",
@@ -1981,13 +2011,12 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			},
 			{
-				"id": "burnDamageBonusSelf",
+				"id": "burnDamageSelf",
 				"trigger": "battleStart",
-				"conditions": [],
 				"effects": [
 					{
 						"type": "statusDamageBonus",
-						"id": "burnSelfBonus",
+						"id": "burnSelf",
 						"target": "enemy",
 						"status": "burn",
 						"every": 1,
@@ -1996,13 +2025,12 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			},
 			{
-				"id": "burnDamageBonusNearby",
+				"id": "burnDamageVertical",
 				"trigger": "battleStart",
-				"conditions": [],
 				"effects": [
 					{
 						"type": "statusDamageBonus",
-						"id": "burnNearbyBonus",
+						"id": "burnVertical",
 						"scope": "nearby",
 						"target": "enemy",
 						"status": "burn",
@@ -2759,9 +2787,19 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		],
 		"combatRules": [
 			{
+				"id": "battleStartMaxHp15",
+				"trigger": "battleStart",
+				"effects": [
+					{
+						"type": "modifyBattleMaxHp",
+						"target": "self",
+						"value": 15
+					}
+				]
+			},
+			{
 				"id": "hitIceBlockHealDispel",
 				"trigger": "afterHit",
-				"conditions": [],
 				"effects": [
 					{
 						"type": "applyStatus",
@@ -2781,7 +2819,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"value": 5
 					},
 					{
-						"type": "dispelRandomBuff",
+						"type": "dispelBuff",
 						"target": "opponent"
 					}
 				]
@@ -2789,7 +2827,6 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			{
 				"id": "iceDamageBonus",
 				"trigger": "battleStart",
-				"conditions": [],
 				"effects": [
 					{
 						"type": "statusDamageBonus",
@@ -2801,7 +2838,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 					}
 				]
 			}
-		]
+		],
+		"synergyText": "战斗开始时：自身最大HP+15\n攻击命中时：敌方冰结+1，自身格挡+5，自身hp+5，敌方强化效果随机1个无效化\n敌方每2层冰结伤害+1"
 	},
 	"I421": {
 		"id": "ameNoHabakiri",
@@ -3234,7 +3272,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"乐器"
 		],
-		"synergyText": "∧的武器每攻击4次：自身HP+5，再生+1",
+		"synergyText": "∧的武器每攻击4次：自身HP+3，再生+1，最大hp+5",
 		"combatRules": [
 			{
 				"id": "nearbyWeaponHitsHealRegen",
@@ -3255,13 +3293,18 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 					{
 						"type": "heal",
 						"target": "self",
-						"value": 5
+						"value": 3
 					},
 					{
 						"type": "applyStatus",
 						"target": "self",
 						"status": "regeneration",
 						"stacks": 1
+					},
+					{
+						"type": "modifyBattleMaxHp",
+						"target": "self",
+						"value": 5
 					}
 				]
 			}
@@ -4041,7 +4084,91 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"枪"
 		],
-		"synergyText": "战斗开始时：∧内每配置1物品，自身HP-50\n自身HP50%以下时，攻击次数+2，本武器伤害+20"
+		"synergyText": "战斗开始时：∧内每配置1物品，自身HP-50\n自身HP50%以下时，攻击次数+2，本武器伤害+20",
+		"combatRules": [
+			{
+				"id": "registerLowHpExtra",
+				"trigger": "battleStart",
+				"effects": [
+					{
+						"type": "statusExtraAttack",
+						"id": "lowHpExtra",
+						"status": "lowHpMark",
+						"every": 1,
+						"value": 2
+					}
+				]
+			},
+			{
+				"id": "lowHpStateAndDamage",
+				"trigger": "beforeAttack",
+				"conditions": [
+					{
+						"kind": "hpPercent",
+						"target": "self",
+						"operator": "lte",
+						"value": 0.5
+					}
+				],
+				"effects": [
+					{
+						"type": "removeStatus",
+						"target": "self",
+						"status": "lowHpMark",
+						"stacks": 100
+					},
+					{
+						"type": "applyStatus",
+						"target": "self",
+						"status": "lowHpMark",
+						"stacks": 1
+					},
+					{
+						"type": "modifyAttackDamage",
+						"operation": "add",
+						"value": 20
+					}
+				]
+			},
+			{
+				"id": "removeLowHpState",
+				"trigger": "beforeAttack",
+				"conditions": [
+					{
+						"kind": "hpPercent",
+						"target": "self",
+						"operator": "gt",
+						"value": 0.5
+					}
+				],
+				"effects": [
+					{
+						"type": "removeStatus",
+						"target": "self",
+						"status": "lowHpMark",
+						"stacks": 100
+					}
+				]
+			},
+			{
+				"trigger": "battleStart",
+				"effects": [
+					{
+						"type": "nearbyDamageSelf",
+						"value": 50,
+						"directions": [
+							"up",
+							"down"
+						],
+						"distance": 1,
+						"relation": "sideBox",
+						"span": 3,
+						"filter": {},
+						"every": 1
+					}
+				]
+			}
+		]
 	},
 	"I512": {
 		"id": "你与我的桃色水平线",
@@ -5133,7 +5260,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击命中时：自身高扬+1，自身强化效果10个以上时，额外高扬+1；\n∧每配置一个乐器，本武器使用间隔-10%"
+		"synergyText": "攻击命中时：自身高扬+1，自身强化效果10个以上时，额外高扬+1；\n∧每配置一个乐器，本武器使用间隔-0.1"
 	},
 	"I527": {
 		"id": "合一之魂",
@@ -5293,7 +5420,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 					}
 				]
 			}
-		]
+		],
+		"synergyText": "攻击时：自身高扬 +1/激奏 +1\n每有1个配置在∧的食物，使用间隔-0.1"
 	},
 	"I529": {
 		"id": "威尔士天浆",
@@ -5399,7 +5527,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		],
 		"combatRules": [
 			{
-				"id": "hit60Heal3",
+				"id": "hitChanceHealAndMaxHp",
 				"trigger": "afterHit",
 				"conditions": [
 					{
@@ -5411,12 +5539,17 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 					{
 						"type": "heal",
 						"target": "self",
-						"value": 3
+						"value": 1
+					},
+					{
+						"type": "modifyBattleMaxHp",
+						"target": "self",
+						"value": 2
 					}
 				]
 			}
 		],
-		"synergyText": "攻击命中时：60%概率回复自身3HP"
+		"synergyText": "攻击命中时：60%概率回复自身1HP,最大HP+2"
 	},
 	"I531": {
 		"id": "世界树的晶剑",
@@ -5448,13 +5581,13 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"hitRate": 0.8,
 		"attackInterval": 1.6,
 		"ultimateGain": 5,
-		"synergyText": "攻击命中时：60%概率回复自身3HP",
+		"synergyText": "攻击命中时：60%概率回复自身1HP,最大HP+2",
 		"weaponTypes": [
 			"剑"
 		],
 		"combatRules": [
 			{
-				"id": "hit60Heal3",
+				"id": "hitChanceHealAndMaxHp",
 				"trigger": "afterHit",
 				"conditions": [
 					{
@@ -5466,7 +5599,12 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 					{
 						"type": "heal",
 						"target": "self",
-						"value": 3
+						"value": 1
+					},
+					{
+						"type": "modifyBattleMaxHp",
+						"target": "self",
+						"value": 2
 					}
 				]
 			}
@@ -5808,8 +5946,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 					{
 						"target": "self",
 						"stat": "attackInterval",
-						"operation": "multiply",
-						"value": 0.9,
+						"operation": "add",
+						"value": -0.1,
 						"perMatch": true,
 						"conditionId": "leftAxes"
 					}
@@ -5839,7 +5977,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "∧每配置一把斧，本物品伤害+2/使用间隔-10%\n狼皮效果中：攻击命中时，格挡-10",
+		"synergyText": "∧每配置一把斧，本物品伤害+2/使用间隔-0.1\n狼皮效果中：攻击命中时，格挡-10",
 		"minAttack": 19,
 		"maxAttack": 22,
 		"hitRate": 0.75,
@@ -8068,7 +8206,6 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"ultimateGain": 0,
 		"combatRules": [
 			{
-				"id": "battleStartRegeneration1",
 				"trigger": "battleStart",
 				"effects": [
 					{
@@ -8076,11 +8213,28 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"target": "self",
 						"status": "regeneration",
 						"stacks": 1
+					},
+					{
+						"type": "nearbyMaxHpBonus",
+						"directions": [
+							"up",
+							"down",
+							"left",
+							"right"
+						],
+						"distance": 1,
+						"filter": {
+							"weaponTypes": [
+								"乐器",
+								"动物"
+							]
+						},
+						"value": 3
 					}
 				]
 			}
 		],
-		"synergyText": "战斗开始时：自身再生+1"
+		"synergyText": "战斗开始时：自身再生+1\n∧每配置一的乐器或动物，自身最大HP+3"
 	},
 	"I573": {
 		"id": "鹰眼",
@@ -8495,6 +8649,11 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 					{
 						"type": "heal",
 						"target": "self",
+						"value": 5
+					},
+					{
+						"type": "modifyBattleMaxHp",
+						"target": "self",
 						"value": 10
 					},
 					{
@@ -8516,7 +8675,10 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击时：自身HP+10，∧的武器1秒内伤害+1；\n∧内每配置一个食物，本物品使用间隔-0.1"
+		"synergyText": "攻击时：自身hp+5，最大HP+10，∧的武器1秒内伤害+1；\n∧内每配置一个食物，本物品使用间隔-0.1",
+		"weaponTypes": [
+			"食物"
+		]
 	},
 	"I579": {
 		"id": "蔚蓝闪电",
@@ -8564,33 +8726,39 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"ultimateGain": 30,
 		"combatRules": [
 			{
-				"id": "attackHealAndCleanse",
+				"id": "attackCleanseHealMaxHp",
 				"trigger": "afterAttack",
+				"conditions": [],
 				"effects": [
+					{
+						"type": "cleanseOneDebuff",
+						"target": "self"
+					},
+					{
+						"type": "cleanseOneDebuff",
+						"target": "self"
+					},
+					{
+						"type": "cleanseOneDebuff",
+						"target": "self"
+					},
+					{
+						"type": "cleanseOneDebuff",
+						"target": "self"
+					},
+					{
+						"type": "cleanseOneDebuff",
+						"target": "self"
+					},
 					{
 						"type": "heal",
 						"target": "self",
-						"value": 10
+						"value": 3
 					},
 					{
-						"type": "cleanseOneDebuff",
-						"target": "self"
-					},
-					{
-						"type": "cleanseOneDebuff",
-						"target": "self"
-					},
-					{
-						"type": "cleanseOneDebuff",
-						"target": "self"
-					},
-					{
-						"type": "cleanseOneDebuff",
-						"target": "self"
-					},
-					{
-						"type": "cleanseOneDebuff",
-						"target": "self"
+						"type": "modifyBattleMaxHp",
+						"target": "self",
+						"value": 5
 					}
 				]
 			},
@@ -8607,7 +8775,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击时：净化自身5个debuff，自身HP+5\n奥义发动时：额外造成10点的伤害"
+		"synergyText": "攻击时：净化自身5个debuff，自身HP+3，最大hp+5\n奥义发动时：额外造成10点的伤害"
 	},
 	"I581": {
 		"id": "虹之弓",
@@ -8950,72 +9118,90 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"ultimateGain": 2,
 		"combatRules": [
 			{
-				"id": "battleStartNearbyWeaponsBuff",
+				"id": "battleStartNearbyBonuses",
 				"trigger": "battleStart",
 				"effects": [
 					{
-						"type": "applyStatus",
+						"type": "nearbyApplyStatus",
 						"target": "self",
 						"status": "block",
-						"stacksFrom": {
-							"kind": "nearbyCount",
-							"relation": "sideBox",
-							"directions": [
-								"up"
-							],
-							"distance": 1,
-							"span": 3,
-							"filter": {},
-							"multiplier": 5
-						}
+						"stacks": 5,
+						"directions": [
+							"up"
+						],
+						"distance": 1,
+						"relation": "sideBox",
+						"span": 3,
+						"filter": {},
+						"every": 1
 					},
 					{
-						"type": "applyStatus",
+						"type": "nearbyApplyStatus",
 						"target": "self",
 						"status": "block",
-						"stacksFrom": {
-							"kind": "nearbyCount",
-							"relation": "sideBox",
-							"directions": [
-								"down"
-							],
-							"distance": 1,
-							"span": 3,
-							"filter": {},
-							"multiplier": 5
-						}
+						"stacks": 5,
+						"directions": [
+							"down"
+						],
+						"distance": 1,
+						"relation": "sideBox",
+						"span": 3,
+						"filter": {},
+						"every": 1
 					},
 					{
-						"type": "applyStatus",
+						"type": "nearbyApplyStatus",
 						"target": "self",
 						"status": "regeneration",
-						"stacksFrom": {
-							"kind": "nearbyCount",
-							"relation": "sideBox",
-							"directions": [
-								"up"
-							],
-							"distance": 1,
-							"span": 3,
-							"filter": {},
-							"multiplier": 3
-						}
+						"stacks": 1,
+						"directions": [
+							"up"
+						],
+						"distance": 1,
+						"relation": "sideBox",
+						"span": 3,
+						"filter": {},
+						"every": 1
 					},
 					{
-						"type": "applyStatus",
+						"type": "nearbyApplyStatus",
 						"target": "self",
 						"status": "regeneration",
-						"stacksFrom": {
-							"kind": "nearbyCount",
-							"relation": "sideBox",
-							"directions": [
-								"down"
-							],
-							"distance": 1,
-							"span": 3,
-							"filter": {},
-							"multiplier": 3
-						}
+						"stacks": 1,
+						"directions": [
+							"down"
+						],
+						"distance": 1,
+						"relation": "sideBox",
+						"span": 3,
+						"filter": {},
+						"every": 1
+					},
+					{
+						"type": "nearbyMaxHpBonus",
+						"target": "self",
+						"value": 10,
+						"directions": [
+							"up"
+						],
+						"distance": 1,
+						"relation": "sideBox",
+						"span": 3,
+						"filter": {},
+						"every": 1
+					},
+					{
+						"type": "nearbyMaxHpBonus",
+						"target": "self",
+						"value": 10,
+						"directions": [
+							"down"
+						],
+						"distance": 1,
+						"relation": "sideBox",
+						"span": 3,
+						"filter": {},
+						"every": 1
 					}
 				]
 			},
@@ -9039,7 +9225,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "战斗开始时：上方三格和下方三格内每配置1个武器，格挡+5，再生+3\n自身血量在50%以上时，伤害增加5点"
+		"synergyText": "战斗开始时：∧内每配置1个武器，格挡+5，再生+1，最大hp+10\n自身血量在50%以上时，伤害增加5点"
 	},
 	"I586": {
 		"id": "这就是生活",

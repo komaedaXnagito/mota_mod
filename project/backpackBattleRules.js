@@ -272,8 +272,12 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		}
 		var blocked = 0;
 		if (!options.direct && !options.ignoreBlock && remainingRawDamage > 0) {
-			blocked = Math.min(getStatusStacks(target, "block"), remainingRawDamage);
-			if (blocked > 0) removeStatusStacks(target, "block", blocked);
+			// 格挡：每层抵挡 3 点伤害；即使只造成 1 点伤害也会消耗掉 1 层（按伤害/3 向上取整消耗层数）。
+			var blockStacks = getStatusStacks(target, "block");
+			var blockPerLayer = 3;
+			var blocksNeeded = Math.min(blockStacks, Math.ceil(remainingRawDamage / blockPerLayer));
+			blocked = Math.min(remainingRawDamage, blocksNeeded * blockPerLayer);
+			if (blocksNeeded > 0) removeStatusStacks(target, "block", blocksNeeded);
 			remainingRawDamage = fixed(remainingRawDamage - blocked);
 		}
 		var damage = fixed(remainingRawDamage);
@@ -532,9 +536,11 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 			var burnStacks = getStatusStacks(side, "burn");
 			if (burnStacks > 0) applyDamage(state, sideKey, burnStacks * 10, { direct: true });
 			var regenerationStacks = getStatusStacks(side, "regeneration");
-			if (regenerationStacks > 0) {
-				heal(state, sideKey, regenerationStacks * 10, handlers);
-				removeStatusStacks(side, "regeneration", 1);
+			if (regenerationStacks > 0 && state.tick % 200 === 0) {
+				// 再生：每 2 秒（200 Tick）触发一次（周期结算每 100 Tick 调用，这里按偶数秒过滤），
+				// 触发时按层数回血（每层回 5 HP）并消耗 2 层。
+				heal(state, sideKey, regenerationStacks * 5, handlers);
+				removeStatusStacks(side, "regeneration", 2);
 			}
 			// 狼皮：每秒减 1 层（层数仅控制持续时间）
 			if (getStatusStacks(side, "wolfSkin") > 0) {
@@ -809,7 +815,9 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 				var nearbyCleanseCount = Math.floor(countNearbyWeapons(state, weapon, effect)
 					/ Math.max(1, Math.floor(toNumber(effect.every, 1))));
 				for (var cleanseIndex = 0; cleanseIndex < nearbyCleanseCount; cleanseIndex++) {
-					cleanseOneDebuff(state, targetKey);
+					// 净化走 handlers（战斗与预估都从各自随机流中选择），保持与单次净化一致。
+					if (handlers.cleanseOneDebuff) handlers.cleanseOneDebuff(targetKey);
+					else cleanseOneDebuff(state, targetKey);
 				}
 			}
 			else if (effect.type === "nearbyApplyStatus") {
@@ -821,6 +829,17 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 				if (nearbyStatusCount > 0 && nearbyStatusPer > 0 && effect.status) {
 					applyStatus(state, targetKey, String(effect.status),
 						fixed(nearbyStatusCount * nearbyStatusPer), context.sourceSide);
+				}
+			}
+			else if (effect.type === "nearbyDamageSelf") {
+				// 每有 every 个附近匹配武器，自身扣除 value HP（直接扣血，不经过格挡/防御；
+				// 如"上方横向三格和下方横向三格内每配置1个武器，自身HP-50"）。
+				var nearbySelfCount = Math.floor(countNearbyWeapons(state, weapon, effect)
+					/ Math.max(1, Math.floor(toNumber(effect.every, 1))));
+				var selfDamagePer = Math.max(0, Math.floor(toNumber(effect.value, 0)));
+				if (nearbySelfCount > 0 && selfDamagePer > 0) {
+					state.player.hp = fixed(Math.max(0, state.player.hp - nearbySelfCount * selfDamagePer));
+					appendLog(state, "自身扣除" + (nearbySelfCount * selfDamagePer) + " HP（附近" + nearbySelfCount + "件匹配）", "damage");
 				}
 			}
 			else if (effect.type === "removeStatus") removeStatusStacks(getSide(state, targetKey), effect.status, amount);
@@ -920,6 +939,31 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 			}
 			else if (effect.type === "dealDamage") applyDamage(state, targetKey, amount, { direct: effect.direct === true });
 			else if (effect.type === "heal") heal(state, targetKey, amount, handlers);
+			else if (effect.type === "modifyBattleMaxHp") {
+				// 自身最大生命值增加 value（如"攻击命中时：自身最大HP+10"）。
+				// 这里"最大HP"指进入战斗时的最大生命值 battleMaxHp（hpPercent/回血上限的分母），
+				// 不是样板自带的 hpmax；同时同步本场战斗的血条上限 maxHp（当前 HP 不补）。
+				const maxHpBonus = Math.max(0, Math.floor(toNumber(effect.value, 0)));
+				if (maxHpBonus > 0) {
+					state.battleMaxHp = fixed((state.battleMaxHp || state.player.maxHp || 1) + maxHpBonus);
+					state.player.maxHp = fixed((state.player.maxHp || 1) + maxHpBonus);
+					appendLog(state, "最大生命值 +" + maxHpBonus, "status");
+				}
+			}
+			else if (effect.type === "nearbyMaxHpBonus") {
+				// 附近武器数量驱动的最大生命加成：每有 every 个附近匹配武器（directions/distance/filter），
+				// 自身最大HP（battleMaxHp，进入战斗时的最大生命值）+value。
+				// 如"上下左右一格内每配置1个乐器或动物，自身最大HP+3"（battleStart 一次性结算）。
+				const nearbyCount = Math.floor(countNearbyWeapons(state, weapon, effect)
+					/ Math.max(1, Math.floor(toNumber(effect.every, 1))));
+				const bonusPer = Math.max(0, Math.floor(toNumber(effect.value, 0)));
+				if (nearbyCount > 0 && bonusPer > 0) {
+					const totalBonus = nearbyCount * bonusPer;
+					state.battleMaxHp = fixed((state.battleMaxHp || state.player.maxHp || 1) + totalBonus);
+					state.player.maxHp = fixed((state.player.maxHp || 1) + totalBonus);
+					appendLog(state, "最大生命值 +" + totalBonus + "（附近" + nearbyCount + "件匹配）", "status");
+				}
+			}
 			else if (effect.type === "consumeStatus") {
 				// 消耗状态层数（语义上用于消耗资源）；消耗 MP 走 consumeMp 以同步 MP 消耗总量与 MP 消耗计数。
 				if (effect.status === "mp") consumeMp(state, targetKey, amount);
