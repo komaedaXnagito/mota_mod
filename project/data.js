@@ -62,6 +62,7 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			"bg2.jpg",
 			"bgVer.png",
 			"bigRedPotion.png",
+			"blindBoxSet06Volcanic.png",
 			"blueDagger.png",
 			"brave.png",
 			"bronzeShield.png",

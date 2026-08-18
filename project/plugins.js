@@ -4,6 +4,19 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 =
 	this._afterLoadResources = function () {
 		// 本函数将在所有资源加载完毕后，游戏开启前被执行
 		core.ui.statusBar.init();
+		// I373 使用独立的盲盒贴图；覆盖到 items 图集格位，保证所有绘制入口显示一致。
+		var blindBoxImage = core.material.images.images["blindBoxSet06Volcanic.png"];
+		var itemIcon = core.material.icons.items.I373;
+		if (blindBoxImage && core.material.images.items && itemIcon != null) {
+			var itemAtlas = document.createElement("canvas");
+			itemAtlas.width = core.material.images.items.width;
+			itemAtlas.height = core.material.images.items.height;
+			var itemAtlasContext = itemAtlas.getContext("2d");
+			itemAtlasContext.drawImage(core.material.images.items, 0, 0);
+			itemAtlasContext.clearRect(0, itemIcon * 32, 32, 32);
+			itemAtlasContext.drawImage(blindBoxImage, 0, 0, blindBoxImage.width, blindBoxImage.height, 0, itemIcon * 32, 32, 32);
+			core.material.images.items = itemAtlas;
+		}
 		core.registerEvent("setanimate", function (data) {
 			data.px = data.px ?? 0;
 			data.py = data.py ?? 0;

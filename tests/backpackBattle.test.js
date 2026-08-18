@@ -76,6 +76,15 @@ test("开局地图背包道具使用背包名称和专用图标槽", () => {
 	assert.equal(fs.existsSync(path.join(root, "project/images/backpackSlot.png")), true);
 });
 
+test("I373 使用火山盲盒独立贴图", () => {
+	const dataSource = fs.readFileSync(path.join(root, "project/data.js"), "utf8");
+	const pluginsSource = fs.readFileSync(path.join(root, "project/plugins.js"), "utf8");
+	assert.match(dataSource, /"blindBoxSet06Volcanic\.png"/);
+	assert.match(pluginsSource, /core\.material\.icons\.items\.I373/);
+	assert.match(pluginsSource, /core\.material\.images\.images\["blindBoxSet06Volcanic\.png"\]/);
+	assert.equal(fs.existsSync(path.join(root, "project/images/blindBoxSet06Volcanic.png")), true);
+});
+
 test("MT1 怪物能力初始化使用战斗随机流", () => {
 	const floorSource = fs.readFileSync(path.join(root, "project/floors/MT1.js"), "utf8");
 	const initializer = floorSource.match(/给 MT1~MT50 的怪物按首次出现楼层随机加能力[\s\S]*?core\.setEnemy\(id, field, value, null, null, true\)/);
@@ -845,9 +854,41 @@ test("作用于匹配对象的固定联动不按匹配数量重复叠加", () =>
 
 	const forestCertificate = plugin.weaponSystem.normalizeWeapon(plugin.weaponSystem.getDefinition("I516"));
 	const forestEffect = forestCertificate.synergyRules[0].effects[0];
-	assert.match(forestCertificate.synergyText, /使用间隔 -0\.1/);
+	assert.match(forestCertificate.synergyText, /使用间隔-0\.1/);
 	assert.equal(forestEffect.operation, "add");
 	assert.equal(forestEffect.value, -0.1);
+});
+
+test("联动说明统一使用范围、属性和状态术语", () => {
+	const context = loadScripts([
+		"project/backpackWeaponSynergy.js",
+		"project/weapons.js"
+	]);
+	const definitions = context.weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44;
+	const synergy = context.backpackWeaponSynergy_91f4c21e_7d37_4f12_9cc4_a9606ba62a83;
+	const forbiddenPatterns = [
+		/配置在∧|∧每配置|配置∧|∧的|∧内每配置|上下左右一格|上方一格/,
+		/饮品|本物品|该武器|攻击回数/,
+		/[a-z]hp|\bbuff\b|\bdebuff\b/i,
+		/ \+[0-9]| -[0-9]/,
+		/,[^\n]/,
+		/只能触发1次|仅生效一次|仅发动一次|仅触发一次/
+	];
+	Object.values(definitions).forEach((weapon) => {
+		const text = weapon.synergyText || "";
+		forbiddenPatterns.forEach((pattern) => assert.doesNotMatch(text, pattern, weapon.name + "存在未统一的联动说明"));
+		if (synergy.collectSpatialRules(weapon).length) {
+			assert.match(text, /∧内/, weapon.name + "的空间联动应统一使用∧内");
+		}
+	});
+
+	const flyingA = definitions.I404;
+	assert.deepEqual(Array.from(flyingA.combatRules[0].conditions[0].filter.weaponTypes), ["吉他", "乐器"]);
+	[definitions.I529, definitions.I536].forEach((weapon) => {
+		assert.doesNotMatch(JSON.stringify(weapon.combatRules), /饮品/);
+		assert.match(JSON.stringify(weapon.combatRules), /饮料/);
+	});
+	assert.match(definitions.I600.synergyText, /∧内每有1个食物或动物，本武器使用间隔-0\.1/);
 });
 
 test("预计伤害按 core.rand 同算法从当前种子计算真实命中与伤害", () => {
@@ -1390,7 +1431,11 @@ test("冰洁、激奏、黑暗、高扬和虚脱按层数修改实时属性", ()
 	rules.applyStatus(state, "player", "highSpirit", 5, "player");
 	rules.applyStatus(state, "player", "exhaustion", 2, "enemy");
 	assert.equal(rules.getWeaponIntervalTicks(state, weapon), 97);
-	assert.equal(rules.getEffectiveHitRate(state.player, 0.8), 0.65);
+	assert.equal(rules.getEffectiveHitRate(state.player, 0.8), 0.8 * Math.pow(0.92, 3));
+	assert.equal(
+		context.backpackBattleStatusDefinitions_7d94f05e_2f6d_4b8e_9c23_5a317ccab120.definitions.darkness.description(3),
+		"每层命中率×0.92（3层：×0.7787）"
+	);
 	assert.equal(rules.getUltimateGain(state.player, 6), 12);
 	assert.equal(rules.getUltimateGain(state.player, 1), 7);
 });
@@ -2556,7 +2601,7 @@ test("chance 概率条件（20%+附近武器20%）与 guaranteeHit 必定命中"
 	assert.equal(wNear.runtimeCounters.hits, 4, "附近武器场景 w 全部命中");
 	assert.ok(1000000 - sNear.enemy.hp > 4 * 10, "w 有概率加成（总伤害高于纯 10 伤害）");
 
-	// guaranteeHit：hitRate 0 仍必中；黑暗 20 层（命中率-100%）仍必中。
+	// guaranteeHit：hitRate 0 仍必中；黑暗 20 层乘算衰减后仍由必中特性覆盖。
 	const sMiss = run([makeWeapon("w", 0, 0, [])], [0, 0], 100);
 	const wMiss = sMiss.weapons.find((x) => x.instanceId === "w");
 	assert.equal(wMiss.runtimeCounters.hits || 0, 0, "hitRate 0 无必中 → Miss");

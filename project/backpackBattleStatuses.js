@@ -63,7 +63,9 @@ var backpackBattleStatusDefinitions_7d94f05e_2f6d_4b8e_9c23_5a317ccab120 = {
 			"periodTicks": 0,
 			"priority": 30,
 			"description": function (stacks) {
-				return "命中率 -" + (stacks * 5) + "%";
+				stacks = Math.max(0, Math.floor(Number(stacks) || 0));
+				var multiplier = Math.pow(0.92, stacks).toFixed(4).replace(/0+$/, "").replace(/\.$/, "");
+				return "每层命中率×0.92（" + stacks + "层：×" + multiplier + "）";
 			}
 		},
 		"exhaustion": {

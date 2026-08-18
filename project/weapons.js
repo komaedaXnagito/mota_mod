@@ -32,7 +32,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"刀"
 		],
-		"synergyText": "奥义发动时，自身hp+5，再生+1\n配置在∧内剑和刀命中时，自身高扬+1",
+		"synergyText": "奥义发动时：自身HP+5、再生+1\n∧内的剑和刀攻击命中时：自身高扬+1",
 		"combatRules": [
 			{
 				"id": "ultimateHealAndRegen",
@@ -160,7 +160,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击命中时：敌方烧伤+2/自身高扬+1\n敌方每有2层烧伤，伤害+1"
+		"synergyText": "攻击命中时：敌方烧伤+2、自身高扬+1\n敌方每有2层烧伤，本武器伤害+1"
 	},
 	"I386": {
 		"id": "darkDragonSpear",
@@ -206,7 +206,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"枪"
 		],
-		"synergyText": "攻击命中时：敌方虚脱+2/随机弱体效果+1",
+		"synergyText": "攻击命中时：敌方虚脱+2，并随机获得1个弱体效果",
 		"combatRules": [
 			{
 				"id": "hitExhaustAndRandomDebuff",
@@ -355,7 +355,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"杖"
 		],
-		"synergyText": "配置在∧的武器攻击每命中3回：自身刻印 +1\n精灵攻击时：不消耗奥义值\n自身每拥有10层刻印，精灵的伤害 +5",
+		"synergyText": "∧内的武器每命中3次：自身刻印+1\n精灵攻击时：不消耗奥义值\n自身每有10层刻印，精灵伤害+5",
 		"synergyRules": [
 			{
 				"id": "setElfUltimateGainZero",
@@ -466,7 +466,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"枪"
 		],
-		"synergyText": "战斗后获得的金币增加1倍",
+		"synergyText": "战后获得的金币+100%",
 		"combatRules": [
 			{
 				"id": "doubleGold",
@@ -508,7 +508,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"饮料"
 		],
-		"synergyText": "生命值跌落到1/3以下时，仅生效一次：回复10HP/5秒内武器伤害+2/发动∧的饮料效果",
+		"synergyText": "自身HP低于最大HP的1/3时：回复10HP、所有武器在5秒内伤害+2，并立即发动∧内的饮料效果（每场战斗仅触发1次）",
 		"combatRules": [
 			{
 				"id": "lowHpTriggerOnce",
@@ -593,7 +593,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			"斧",
 			"食物"
 		],
-		"synergyText": "攻击命中时：敌方虚脱 +1/黑暗 +1/拥有的强化效果层数减半\n每有2个配置在∧内的食物，自身使用间隔-0.1",
+		"synergyText": "攻击命中时：敌方虚脱+1、黑暗+1，敌方强化效果层数减半\n∧内每有2个食物，本武器使用间隔-0.1",
 		"combatRules": [
 			{
 				"id": "hitApplyDebuffsAndDispel",
@@ -696,7 +696,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"枪"
 		],
-		"synergyText": "战斗后获得的金币增加0.5倍",
+		"synergyText": "战后获得的金币+50%",
 		"combatRules": [
 			{
 				"id": "doubleGold",
@@ -773,7 +773,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击后自身hp-5\n自身hp在80%以下时，伤害增加10点"
+		"synergyText": "攻击时：自身HP-5\n自身HP低于最大HP的80%时：本武器伤害+10"
 	},
 	"I396": {
 		"id": "windDagger",
@@ -805,7 +805,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"短"
 		],
-		"synergyText": "每攻击5次，自身和配置在∧的武器间隔-0.1",
+		"synergyText": "本武器每攻击5次：本武器和∧内的武器使用间隔-0.1",
 		"combatRules": [
 			{
 				"id": "intervalReduceEvery5Hits",
@@ -866,7 +866,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			"斧",
 			"吉他"
 		],
-		"synergyText": "攻击命中时：有吉他配置在∧时，驱散敌方1个强化效果\n奥义发动时：自身拥有10层以上激奏时，敌方黑暗 +3\n每拥有1层激奏，伤害 +1",
+		"synergyText": "攻击命中时：若∧内存在吉他，驱散敌方1个强化效果\n奥义发动时：自身激奏达到10层时，敌方黑暗+3\n自身每有1层激奏，本武器伤害+1",
 		"combatRules": [
 			{
 				"id": "hitDispelsIfGuitarAbove",
@@ -1016,7 +1016,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"枪"
 		],
-		"synergyText": "攻击时：20%概率使该武器伤害 +30，每有一个配置在∧内的武器，该发动概率 +20%\n本武器攻击必定命中（不受黑暗效果影响）",
+		"synergyText": "攻击时：20%概率使本武器伤害+30；∧内每有1个武器，触发概率+20%\n本武器攻击必定命中（不受黑暗效果影响）",
 		"combatRules": [
 			{
 				"id": "chanceDamageBoost",
@@ -1109,7 +1109,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击命中时：自身hp+2,最大hp+3"
+		"synergyText": "攻击命中时：自身HP+2、最大HP+3"
 	},
 	"I401": {
 		"id": "lightDragonFist",
@@ -1166,7 +1166,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "战斗开始时：自身再生 +5,高扬 +5，最大hp+25"
+		"synergyText": "战斗开始时：自身再生+5、高扬+5、最大HP+25"
 	},
 	"I402": {
 		"id": "pan",
@@ -1201,7 +1201,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"剑"
 		],
-		"synergyText": "∧每配置一个食物，伤害+1；\n∧配置的食物使用间隔-0.1",
+		"synergyText": "∧内每有1个食物，本武器伤害+1\n∧内的食物使用间隔-0.1",
 		"synergyRules": [
 			{
 				"id": "foodBonusSelfAttack",
@@ -1306,7 +1306,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			"斧",
 			"吉他"
 		],
-		"synergyText": "攻击命中时：有吉他配置在∧时，敌方黑暗 +1\n奥义发动时：自身拥有10层以上激奏时，每有1个配置在∧的吉他，自身高扬 +2\n每拥有1层激奏，伤害 +1",
+		"synergyText": "攻击命中时：若∧内存在吉他，敌方黑暗+1\n奥义发动时：自身激奏达到10层时，∧内每有1个吉他，自身高扬+2\n自身每有1层激奏，本武器伤害+1",
 		"combatRules": [
 			{
 				"id": "hitDarknessIfGuitarAbove",
@@ -1422,7 +1422,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			"斧",
 			"吉他"
 		],
-		"synergyText": "攻击命中时：有乐器配置在∧时，敌方格挡-10\n奥义发动时：自身拥有10层以上激奏时，本次伤害+10\n每拥有1层激奏，伤害+1",
+		"synergyText": "攻击命中时：若∧内存在乐器，敌方格挡-10\n奥义发动时：自身激奏达到10层时，本次伤害+10\n自身每有1层激奏，本武器伤害+1",
 		"combatRules": [
 			{
 				"id": "hitRemoveBlockIfGuitarAbove",
@@ -1438,7 +1438,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"span": 3,
 						"filter": {
 							"weaponTypes": [
-								"吉他"
+								"吉他",
+								"乐器"
 							]
 						},
 						"operator": "gte",
@@ -1529,7 +1530,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"盾"
 		],
-		"synergyText": "被攻击时：20%概率降低受到的7点伤害\n被攻击时：自身再生 +1,奥义值 +10%,敌方奥义值 -10%\n配置在∧的盾牌的被攻击效果发动时：自身格挡 +1",
+		"synergyText": "被攻击时：20%概率使受到的伤害-7\n被攻击时：自身再生+1、奥义值+10%，敌方奥义值-10%\n∧内的盾牌触发被攻击效果时：自身格挡+1",
 		"combatRules": [
 			{
 				"id": "defenseDamageReduction",
@@ -1643,7 +1644,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击后随机获得6个buff"
+		"synergyText": "攻击时：自身随机获得6个强化效果"
 	},
 	"I407": {
 		"id": "goldJar",
@@ -1677,7 +1678,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"乐器"
 		],
-		"synergyText": "配置在∧的武器每攻击3回时：自身回复5hp，再生 +1，最大hp+5，随机获得3个buff",
+		"synergyText": "∧内的武器每攻击3次：自身HP+5、再生+1、最大HP+5，并随机获得3个强化效果",
 		"combatRules": [
 			{
 				"id": "sideWeaponHitsTriggerHealRegenBuffs",
@@ -1838,7 +1839,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"精灵"
 		],
-		"synergyText": "攻击命中时：敌方冰结 +2\n敌方每有10层冰结，自身攻击次数+1\n自身刻印5层以上时，攻击无视敌方格挡",
+		"synergyText": "攻击命中时：敌方冰结+2\n敌方每有10层冰结，本武器攻击次数+1\n自身刻印达到5层时：本武器造成的伤害无视敌方格挡",
 		"combatRules": [
 			{
 				"id": "hitIce2",
@@ -1962,7 +1963,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击命中时：敌方冰结 +1\n攻击每发动2次，伤害 +1\n敌方每有1层冰洁，伤害 +1"
+		"synergyText": "攻击命中时：敌方冰结+1\n本武器每攻击2次：伤害+1\n敌方每有1层冰结，本武器伤害+1"
 	},
 	"I411": {
 		"id": "comboDagger",
@@ -1994,7 +1995,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"短"
 		],
-		"synergyText": "攻击命中时：敌方火伤 +1\n敌方每有1层火伤，自身伤害 +1\n敌方每有5层火伤，配置在∧的武器伤害 +1",
+		"synergyText": "攻击命中时：敌方火伤+1\n敌方每有1层火伤，本武器伤害+1\n敌方每有5层火伤，∧内的武器伤害+1",
 		"synergyRules": null,
 		"combatRules": [
 			{
@@ -2076,7 +2077,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			"剑",
 			"食物"
 		],
-		"synergyText": "战后获得金币增加5点\n攻击时：随机消耗10个强化效果使∧内食物发动次数+1\n∧内每配置一个食物，本武器伤害+3",
+		"synergyText": "战后获得金币+5\n攻击时：随机消耗10个强化效果，使∧内的食物攻击次数+1\n∧内每有1个食物，本武器伤害+3",
 		"synergyRules": [
 			{
 				"id": "rightFoodBoostsMeal",
@@ -2216,7 +2217,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			"剑",
 			"食物"
 		],
-		"synergyText": "攻击命中时：敌方格挡和反射-8层，随机驱散1个强化效果\n∧每配置2个食物，本物品攻击次数+1\n本武器的伤害无视敌方的格挡",
+		"synergyText": "攻击命中时：敌方格挡和反射-8，并随机驱散敌方1个强化效果\n∧内每有2个食物，本武器攻击次数+1\n本武器造成的伤害无视敌方格挡",
 		"combatRules": [
 			{
 				"id": "hitRemoveBlockReflectionAndDispel",
@@ -2339,7 +2340,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "战斗开始时：自身奥义值 +10\n被攻击时：10%概率自身格挡 +2"
+		"synergyText": "战斗开始时：自身奥义值+10\n被攻击时：10%概率使自身格挡+2"
 	},
 	"I415": {
 		"id": "oilGun",
@@ -2371,7 +2372,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"铳"
 		],
-		"synergyText": "攻击命中时：敌方黑暗 +1\n配置在∧的盾牌的被攻击效果发动时：本武器伤害+2，使用间隔-0.3",
+		"synergyText": "攻击命中时：敌方黑暗+1\n∧内的盾牌触发被攻击效果时：本武器伤害+2、使用间隔-0.3",
 		"combatRules": [
 			{
 				"id": "hitDarkness1",
@@ -2471,7 +2472,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"斧"
 		],
-		"synergyText": "每有1个配置在∧的物品，伤害 +5/使用间隔 -0.1\n狼皮效果中：命中率 +50%\n该武器造成的伤害无视敌方格挡",
+		"synergyText": "∧内每有1个武器，本武器伤害+5、使用间隔-0.1\n狼皮效果中：本武器命中率+50%\n本武器造成的伤害无视敌方格挡",
 		"synergyRules": [
 			{
 				"id": "nearbyWeaponBoost",
@@ -2567,7 +2568,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"弓"
 		],
-		"synergyText": "战斗开始时：配置在∧的武器攻击回数+1",
+		"synergyText": "战斗开始时：∧内的武器攻击次数+1",
 		"combatRules": [
 			{
 				"id": "hitDarkness1",
@@ -2632,7 +2633,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"杖"
 		],
-		"synergyText": "战斗开始时：自身MP +5\n攻击命中时：自身MP +3，回复3HP，再生+1，净化一个弱体状态\n奥义发动时：额外造成本次战斗中累计消耗的MP值×1的伤害\n黑之魅力效果中：攻击时，5秒内受到的伤害降至0，每场战斗只能触发1次",
+		"synergyText": "战斗开始时：自身MP+5\n攻击命中时：自身MP+3、HP+3、再生+1，并净化1个弱体效果\n奥义发动时：额外造成本场战斗累计消耗MP等量的伤害\n黑之魅力效果中：攻击时，5秒内受到的伤害降至0（每场战斗仅触发1次）",
 		"combatRules": [
 			{
 				"trigger": "battleStart",
@@ -2876,7 +2877,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"刀"
 		],
-		"synergyText": "攻击命中时：随机驱散敌方1个强化效果，自身反射 +1\n奥义发动时：30%概率使该武器的攻击发动9次，每有1把配置在∧的刀，发动概率 +10%\n该武器造成的伤害无视敌方格挡",
+		"synergyText": "攻击命中时：随机驱散敌方1个强化效果，自身反射+1\n奥义发动时：30%概率使本武器攻击9次；∧内每有1把刀，触发概率+10%\n本武器造成的伤害无视敌方格挡",
 		"combatRules": [
 			{
 				"id": "hitDispelAndReflection",
@@ -3033,7 +3034,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"杖"
 		],
-		"synergyText": "被攻击时：配置3个以上同名道具时，自身格挡+5，随机驱散敌方1个强化效果\n配置3个以上同名道具时，伤害+5",
+		"synergyText": "被攻击时：同名武器达到3个时，自身格挡+5，并随机驱散敌方1个强化效果\n同名武器达到3个时：本武器伤害+5",
 		"synergyRules": null,
 		"combatRules": [
 			{
@@ -3119,7 +3120,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击命中时：随机净化自身1个debuff"
+		"synergyText": "攻击命中时：随机净化1个弱体效果"
 	},
 	"I425": {
 		"id": "silverShield",
@@ -3157,7 +3158,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"盾"
 		],
-		"synergyText": "被攻击时：20%概率降低受到的10点伤害/敌方耐力降低0.4\n∧的武器攻击时：格挡+2\n∧的武器的使用间隔 -0.2，伤害 +3",
+		"synergyText": "被攻击时：20%概率使受到的伤害-10，并使敌方耐力-0.4\n∧内的武器攻击时：自身格挡+2\n∧内的武器使用间隔-0.2、伤害+3",
 		"synergyRules": [
 			{
 				"id": "nearbyWeaponBoost",
@@ -3269,7 +3270,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"乐器"
 		],
-		"synergyText": "∧的武器每攻击4次：自身HP+3，再生+1，最大hp+5",
+		"synergyText": "∧内的武器每攻击4次：自身HP+3、再生+1、最大HP+5",
 		"combatRules": [
 			{
 				"id": "nearbyWeaponHitsHealRegen",
@@ -3340,7 +3341,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"剑"
 		],
-		"synergyText": "∧每配置一个食物，本物品使用间隔-0.1\n攻击命中时：每有1个配置在∧的食物，自身随机获得1个buff，并净化1个debuff",
+		"synergyText": "∧内每有1个食物，本武器使用间隔-0.1\n攻击命中时：∧内每有1个食物，自身随机获得1个强化效果，并净化1个弱体效果",
 		"synergyRules": [
 			{
 				"id": "foodIntervalReduce",
@@ -3603,7 +3604,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"hitRate": 0.75,
 		"attackInterval": 2.2,
 		"ultimateGain": 5,
-		"synergyText": "攻击命中时：60%概率随机驱散敌方1个buff",
+		"synergyText": "攻击命中时：60%概率随机驱散敌方1个强化效果",
 		"combatRules": [
 			{
 				"id": "hit60Dispel",
@@ -3923,7 +3924,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击命中时：自身MP+1，随机驱散敌方一个buff\n奥义发动时：自身再生+5\n若有黑之魅力buff，本武器伤害+3，本武器攻击次数+1"
+		"synergyText": "攻击命中时：自身MP+1，并随机驱散敌方1个强化效果\n奥义发动时：自身再生+5\n黑之魅力效果中：本武器伤害+3、攻击次数+1"
 	},
 	"I509": {
 		"id": "一期一振",
@@ -4081,7 +4082,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"枪"
 		],
-		"synergyText": "战斗开始时：∧内每配置1物品，自身HP-50\n自身HP50%以下时，攻击次数+2，本武器伤害+20",
+		"synergyText": "战斗开始时：∧内每有1个武器，自身HP-50\n自身HP低于最大HP的50%时：本武器攻击次数+2、伤害+20",
 		"combatRules": [
 			{
 				"id": "registerLowHpExtra",
@@ -4185,7 +4186,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			312
 		],
 		"sourceName": "你与我的桃色水平线",
-		"synergyText": "攻击命中时：自身高扬+1\n∧每配置一个武器，本武器使用间隔-0.1",
+		"synergyText": "攻击命中时：自身高扬+1\n∧内每有1个武器，本武器使用间隔-0.1",
 		"rarity": 3,
 		"weaponTypes": [
 			"杖"
@@ -4266,7 +4267,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		],
 		"sourceName": "使役者之证",
 		"rarity": 4,
-		"synergyText": "使役者的证明，持有本证明时，可获得精灵\n自身所有武器的奥义获得量+20\n配置在∧的武器每攻击10次：自身刻印+1，奥义值+10",
+		"synergyText": "使役者的证明，持有本证明时可获得精灵\n所有武器奥义获得量+20\n∧内的武器每攻击10次：自身刻印+1、奥义值+10",
 		"synergyRules": [
 			{
 				"id": "allWeaponsUltimateGainPlus20",
@@ -4380,7 +4381,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击命中时：自身随机buff+1；\n自身刻印5个以上时，造成的伤害无视格挡"
+		"synergyText": "攻击命中时：自身随机获得1个强化效果\n自身刻印达到5层时：本武器造成的伤害无视敌方格挡"
 	},
 	"I515": {
 		"id": "充气露·欧",
@@ -4414,7 +4415,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"乐器"
 		],
-		"synergyText": "配置在∧的武器攻击命中时：50%概率使自身再生+1和高扬+1",
+		"synergyText": "∧内的武器攻击命中时：50%概率使自身再生+1、高扬+1",
 		"combatRules": [
 			{
 				"id": "nearbyHitRegenAndHighSpirit",
@@ -4474,7 +4475,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			"道具"
 		],
 		"attackInterval": 5,
-		"synergyText": "森林兽王的证明，持有本证明时，可获得动物\n攻击命中时：每有1个配置在∧的动物，自身随机获得1个强化效果\n配置在∧的动物的使用间隔 -0.1",
+		"synergyText": "森林兽王的证明，持有本证明时可获得动物\n攻击命中时：∧内每有1个动物，自身随机获得1个强化效果\n∧内的动物使用间隔-0.1",
 		"combatRules": [
 			{
 				"trigger": "afterHit",
@@ -4559,7 +4560,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"sourceName": "格里姆尼尔(解放1)",
 		"rarity": 5,
 		"attackInterval": 8,
-		"synergyText": "战斗开始时：自身格挡 +20\n攻击时：自身反射+3",
+		"synergyText": "战斗开始时：自身格挡+20\n攻击时：自身反射+3",
 		"minAttack": 3,
 		"maxAttack": 3,
 		"hitRate": 1,
@@ -4611,7 +4612,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"sourceName": "追忆的咖啡冻",
 		"rarity": 3,
 		"attackInterval": 2.8,
-		"synergyText": "攻击时：自身HP+2，随机净化自身1个debuff\n∧每配置一个食物，本武器间隔-0.1",
+		"synergyText": "攻击时：自身HP+2，并随机净化1个弱体效果\n∧内每有1个食物，本武器使用间隔-0.1",
 		"synergyRules": [
 			{
 				"id": "foodIntervalReduce",
@@ -4781,7 +4782,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击时：自身hp-20，\n自身hp掉到1/3以下时：恢复1/3的hp，仅触发一次，该效果触发后，本武器攻击不再扣除自身hp"
+		"synergyText": "攻击时：自身HP-20\n自身HP低于最大HP的1/3时：回复最大HP的1/3（每场战斗仅触发1次）；触发后，本武器攻击不再扣除自身HP"
 	},
 	"I520": {
 		"id": "切片菠萝",
@@ -4807,7 +4808,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		],
 		"sourceName": "切片菠萝",
 		"attackInterval": 4,
-		"synergyText": "攻击时：自身格挡+2；\n∧每配置一个食物，本武器使用间隔-0.1",
+		"synergyText": "攻击时：自身格挡+2\n∧内每有1个食物，本武器使用间隔-0.1",
 		"combatRules": [
 			{
 				"id": "attackGainBlock",
@@ -4926,7 +4927,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "被攻击时：每有一个配置在∧的盾，自身格挡+1",
+		"synergyText": "被攻击时：∧内每有1个盾牌，自身格挡+1",
 		"minAttack": 7,
 		"maxAttack": 11,
 		"hitRate": 0.75,
@@ -5015,7 +5016,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "双剑士的证明\n所有武器奥义获得量+20\n配置在∧的刀和剑的间隔-0.1，攻击次数+1",
+		"synergyText": "双剑士的证明\n所有武器奥义获得量+20\n∧内的刀和剑使用间隔-0.1、攻击次数+1",
 		"weaponTypes": [
 			"道具"
 		]
@@ -5105,7 +5106,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "吟游诗人的证明\n自身每获得10个强化效果时：对敌方造成10点伤害\n配置在∧的乐器的攻击命中时：自身随机获得5个强化效果"
+		"synergyText": "吟游诗人的证明\n自身每获得10个强化效果时：对敌方造成10点伤害\n∧内的乐器攻击命中时：自身随机获得5个强化效果"
 	},
 	"I525": {
 		"id": "充气伽莱翁",
@@ -5256,7 +5257,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击命中时：自身高扬+1，自身强化效果10个以上时，额外高扬+1；\n∧每配置一个乐器，本武器使用间隔-0.1"
+		"synergyText": "攻击命中时：自身高扬+1；自身强化效果达到10层时，额外高扬+1\n∧内每有1个乐器，本武器使用间隔-0.1"
 	},
 	"I527": {
 		"id": "合一之魂",
@@ -5334,7 +5335,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"盾"
 		],
-		"synergyText": "被攻击时：20%概率降低受到的5点伤害\n被攻击时：每有1个配置在∧的盾，自身格挡+1"
+		"synergyText": "被攻击时：20%概率使受到的伤害-5\n被攻击时：∧内每有1个盾牌，自身格挡+1"
 	},
 	"I528": {
 		"id": "塔赫尔玛萨拉",
@@ -5417,7 +5418,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击时：自身高扬 +1/激奏 +1\n每有1个配置在∧的食物，使用间隔-0.1"
+		"synergyText": "攻击时：自身高扬+1、激奏+1\n∧内每有1个食物，本武器使用间隔-0.1"
 	},
 	"I529": {
 		"id": "威尔士天浆",
@@ -5472,14 +5473,14 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"distance": 1,
 						"filter": {
 							"weaponTypes": [
-								"饮品"
+								"饮料"
 							]
 						}
 					}
 				]
 			}
 		],
-		"synergyText": "自身拥有10个以上强化效果时：随机获得5个强化效果，回复20HP，立即发动配置在∧的饮品的效果，每场战斗只能触发1次",
+		"synergyText": "自身强化效果达到10层时：随机获得5个强化效果、回复20HP，并立即发动∧内的饮料效果（每场战斗仅触发1次）",
 		"minAttack": null,
 		"maxAttack": null,
 		"attackInterval": null,
@@ -5545,7 +5546,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击命中时：60%概率回复自身1HP,最大HP+2"
+		"synergyText": "攻击命中时：60%概率使自身HP+1、最大HP+2"
 	},
 	"I531": {
 		"id": "世界树的晶剑",
@@ -5577,7 +5578,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"hitRate": 0.8,
 		"attackInterval": 1.6,
 		"ultimateGain": 5,
-		"synergyText": "攻击命中时：60%概率回复自身1HP,最大HP+2",
+		"synergyText": "攻击命中时：60%概率使自身HP+1、最大HP+2",
 		"weaponTypes": [
 			"剑"
 		],
@@ -5642,7 +5643,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"枪"
 		],
-		"synergyText": "战斗后获得的金币增加0.25倍",
+		"synergyText": "战后获得的金币+25%",
 		"combatRules": [
 			{
 				"id": "doubleGold",
@@ -5728,7 +5729,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		],
 		"sourceName": "小红",
 		"rarity": 1,
-		"synergyText": "生命值跌落到1/3以下时，仅生效一次：回复5HP,发动∧的饮料效果",
+		"synergyText": "自身HP低于最大HP的1/3时：回复5HP，并立即发动∧内的饮料效果（每场战斗仅触发1次）",
 		"combatRules": [
 			{
 				"id": "lowHpTriggerOnce",
@@ -5820,7 +5821,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "自身HP回复时仅触发一次：5层激奏/HP+15/发动上方一格内的饮料效果",
+		"synergyText": "自身HP回复时：自身激奏+5、HP+15，并立即发动∧内的饮料效果（每场战斗仅触发1次）",
 		"weaponTypes": [
 			"饮料"
 		]
@@ -5873,14 +5874,14 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"distance": 1,
 						"filter": {
 							"weaponTypes": [
-								"饮品"
+								"饮料"
 							]
 						}
 					}
 				]
 			}
 		],
-		"synergyText": "被攻击时：自身格挡 +60/回复20HP/立即发动配置在∧的饮品的效果，每场战斗只能触发1次"
+		"synergyText": "被攻击时：自身格挡+60、HP+20，并立即发动∧内的饮料效果（每场战斗仅触发1次）"
 	},
 	"I537": {
 		"id": "痛苦与苦难",
@@ -5973,7 +5974,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "∧每配置一把斧，本物品伤害+2/使用间隔-0.1\n狼皮效果中：攻击命中时，格挡-10",
+		"synergyText": "∧内每有1把斧，本武器伤害+2、使用间隔-0.1\n狼皮效果中：攻击命中时，敌方格挡-10",
 		"minAttack": 19,
 		"maxAttack": 22,
 		"hitRate": 0.75,
@@ -6058,7 +6059,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "被攻击时：20%概率降低受到的7点伤害\n配置在∧的武器的使用间隔-0.1",
+		"synergyText": "被攻击时：20%概率使受到的伤害-7\n∧内的武器使用间隔-0.1",
 		"rarity": 4
 	},
 	"I539": {
@@ -6159,7 +6160,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"道具"
 		],
-		"synergyText": "乐师的证明，你才是真正的摇滚巨星！！\n配置在∧的吉他的攻击命中时：自身激奏 +1/高扬 +1\n自身拥有15层以上激奏时，配置在∧的吉他奥义发动时的攻击次数 +1"
+		"synergyText": "乐师的证明，你才是真正的摇滚巨星！\n∧内的吉他攻击命中时：自身激奏+1、高扬+1\n自身激奏达到15层时：∧内的吉他发动奥义时，攻击次数+1"
 	},
 	"I540": {
 		"id": "彗星猎手",
@@ -6219,7 +6220,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "获得本武器时，提高商店出现精灵的概率\n攻击时：∧的使魔伤害+1"
+		"synergyText": "获得本武器时：提高商店出现精灵的概率\n攻击时：∧内的精灵伤害+1"
 	},
 	"I541": {
 		"id": "恶灭之雷",
@@ -6282,7 +6283,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击命中时：敌方火伤 +1\n奥义发动时，若敌方火伤≥10，伤害+20"
+		"synergyText": "攻击命中时：敌方火伤+1\n奥义发动时：敌方火伤达到10层时，本次伤害+20"
 	},
 	"I542": {
 		"id": "拉卡姆铳",
@@ -6308,7 +6309,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			312
 		],
 		"sourceName": "贝尼迪",
-		"synergyText": "奥义发动时的伤害 +3\n被攻击时：每有一个配置∧的盾牌，本武器使用间隔-0.2",
+		"synergyText": "奥义发动时：本次伤害+3\n被攻击时：∧内每有1个盾牌，本武器使用间隔-0.2",
 		"combatRules": [
 			{
 				"trigger": "beforeAttack",
@@ -6423,7 +6424,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "战斗开始时，自身受到20点伤害\n配置在∧的武器伤害+1"
+		"synergyText": "战斗开始时：自身HP-20\n∧内的武器伤害+1"
 	},
 	"I544": {
 		"id": "恶戏妖",
@@ -6486,7 +6487,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击命中时：敌方随机debuff+1；\n自身刻印5个以上时，造成的伤害无视格挡"
+		"synergyText": "攻击命中时：敌方随机获得1个弱体效果\n自身刻印达到5层时：本武器造成的伤害无视敌方格挡"
 	},
 	"I545": {
 		"id": "充气菲迪埃尔",
@@ -6548,7 +6549,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "配置在∧的武器命中时：50%概率使敌方随机debuff+1"
+		"synergyText": "∧内的武器攻击命中时：50%概率使敌方随机获得1个弱体效果"
 	},
 	"I548": {
 		"id": "斯拉德战斧",
@@ -6701,7 +6702,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "∧的武器命中时：50%概率使敌方冰结+1",
+		"synergyText": "∧内的武器攻击命中时：50%概率使敌方冰结+1",
 		"rarity": 3,
 		"minAttack": 4,
 		"maxAttack": 5,
@@ -6741,7 +6742,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"精灵"
 		],
-		"synergyText": "攻击发动6次\n自身拥有5层以上刻印时，伤害 +5，造成的伤害无视敌方格挡\n攻击时，自身hp-5",
+		"synergyText": "本武器攻击次数为6\n自身刻印达到5层时：本武器伤害+5，且造成的伤害无视敌方格挡\n攻击时：自身HP-5",
 		"combatRules": [
 			{
 				"id": "battleStartMark",
@@ -6920,7 +6921,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "∧的武器命中时：50%概率使敌方随机debuff+1\n敌方每有一个debuff，本武器伤害+1"
+		"synergyText": "∧内的武器攻击命中时：50%概率使敌方随机获得1个弱体效果\n敌方每有1个弱体效果，本武器伤害+1"
 	},
 	"I553": {
 		"id": "湿婆（解放1）",
@@ -6959,7 +6960,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "战斗开始时：所有武器伤害 +1"
+		"synergyText": "所有武器伤害+1"
 	},
 	"I554": {
 		"id": "红色星球",
@@ -7033,7 +7034,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击命中时：消耗3MP，使敌方火伤+1；\n∧的武器攻击时，自身MP+1",
+		"synergyText": "攻击命中时：消耗3MP，使敌方火伤+1\n∧内的武器攻击时：自身MP+1",
 		"rarity": 2,
 		"weaponTypes": [
 			"杖"
@@ -7102,7 +7103,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "∧的武器命中时：50%概率使敌方火伤+1"
+		"synergyText": "∧内的武器攻击命中时：50%概率使敌方火伤+1"
 	},
 	"I556": {
 		"id": "迷你乌洛波洛斯",
@@ -7167,7 +7168,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"精灵"
 		],
-		"synergyText": "攻击命中时：对敌方随机施加1个debuff\n自身拥有5层以上刻印时，伤害 +5，造成的伤害无视格挡",
+		"synergyText": "攻击命中时：对敌方随机施加1个弱体效果\n自身刻印达到5层时：本武器伤害+5，且造成的伤害无视敌方格挡",
 		"minAttack": 12,
 		"maxAttack": 17,
 		"hitRate": 1,
@@ -7201,7 +7202,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			"食物"
 		],
 		"attackInterval": 2.5,
-		"synergyText": "攻击时：再生+1；\n∧每配置1个食物，本武器使用间隔-0.1",
+		"synergyText": "攻击时：自身再生+1\n∧内每有1个食物，本武器使用间隔-0.1",
 		"combatRules": [
 			{
 				"id": "foodIntervalReduce",
@@ -7313,7 +7314,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"hitRate": 0.9,
 		"attackInterval": 3.5,
 		"ultimateGain": 0,
-		"synergyText": "每有1个配置在∧的食物或动物，伤害 +2\n在∧配置的食物与动物达到5个以上时，攻击回数 +2",
+		"synergyText": "∧内每有1个食物或动物，本武器伤害+2\n∧内的食物和动物达到5个时：本武器攻击次数+2",
 		"synergyRules": [
 			{
 				"id": "foodAnimalDamageBoost",
@@ -7453,7 +7454,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "生命值50%以下时仅触发一次：自身奥义+100%；\n狼皮效果中：造成的伤害+4"
+		"synergyText": "自身HP低于最大HP的50%时：自身奥义值+100%（每场战斗仅触发1次）\n狼皮效果中：本武器伤害+4"
 	},
 	"I560": {
 		"id": "狂战士之证",
@@ -7590,7 +7591,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"弓"
 		],
-		"synergyText": "生命值在50%以上时，伤害+3",
+		"synergyText": "自身HP高于最大HP的50%时：本武器伤害+3",
 		"combatRules": [
 			{
 				"id": "hpAboveHalfDamageBonus",
@@ -7673,7 +7674,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "∧每配置一个食物或动物，本物品使用间隔-0.1",
+		"synergyText": "∧内每有1个食物或动物，本武器使用间隔-0.1",
 		"weaponTypes": [
 			"动物"
 		],
@@ -7762,7 +7763,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		],
 		"attackInterval": 4.2,
 		"ultimateGain": 3,
-		"synergyText": "攻击时：自身反射+2；\n∧每配置一个食物，本物品使用间隔-0.1",
+		"synergyText": "攻击时：自身反射+2\n∧内每有1个食物，本武器使用间隔-0.1",
 		"weaponTypes": [
 			"食物"
 		]
@@ -7794,7 +7795,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"道具"
 		],
-		"synergyText": "战斗开始时：∧的武器伤害+1",
+		"synergyText": "∧内的武器伤害+1",
 		"synergyRules": [
 			{
 				"id": "boostNearbyWeapons",
@@ -7931,7 +7932,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "战斗开始时：∧每配置1个杖，自身MP+2：\n∧配置的武器攻击命中时，自身MP+1",
+		"synergyText": "战斗开始时：∧内每有1个杖，自身MP+2\n∧内的武器攻击命中时：自身MP+1",
 		"rarity": 3,
 		"minAttack": 5,
 		"maxAttack": 9,
@@ -8030,7 +8031,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "盾骑士的证书，最坚实的城墙！\n∧的盾牌被攻击时的效果触发概率+20%\n所有铳和斧伤害+3\n被攻击时：∧每配置一个盾牌，自身格挡+2，高扬+1",
+		"synergyText": "盾骑士的证书，最坚实的城墙！\n∧内的盾牌触发被攻击效果的概率+20%\n所有铳和斧伤害+3\n被攻击时：∧内每有1个盾牌，自身格挡+2、高扬+1",
 		"synergyRules": [
 			{
 				"id": "allAxeGunDamageUp",
@@ -8120,7 +8121,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "奥义发动后：10秒内，∧的武器伤害+1"
+		"synergyText": "奥义发动后：∧内的武器在10秒内伤害+1"
 	},
 	"I571": {
 		"id": "神域守护·布洛蒂亚(解放1)",
@@ -8229,7 +8230,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "战斗开始时：自身再生+1\n∧每配置一的乐器或动物，自身最大HP+3"
+		"synergyText": "战斗开始时：自身再生+1\n∧内每有1个乐器或动物，自身最大HP+3"
 	},
 	"I573": {
 		"id": "鹰眼",
@@ -8301,7 +8302,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击命中时：敌方黑暗+1\n被攻击时，上下左右一格内每有一个盾：本武器伤害+1"
+		"synergyText": "攻击命中时：敌方黑暗+1\n被攻击时：∧内每有1个盾牌，本武器伤害+1"
 	},
 	"I574": {
 		"id": "蓝色星球",
@@ -8330,7 +8331,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"杖"
 		],
-		"synergyText": "攻击命中时：消耗3MP，使敌方冰结+1；\n每消耗10点MP：自身奥义+5；\n∧的武器攻击时，自身MP+1",
+		"synergyText": "攻击命中时：消耗3MP，使敌方冰结+1\n每消耗10MP：自身奥义值+5\n∧内的武器攻击时：自身MP+1",
 		"combatRules": [
 			{
 				"trigger": "afterHit",
@@ -8503,7 +8504,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击时：自身随机获得6个buff"
+		"synergyText": "攻击时：自身随机获得6个强化效果"
 	},
 	"I577": {
 		"id": "绽花瓶",
@@ -8530,7 +8531,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"饮料"
 		],
-		"synergyText": "HP50以下时仅触发一次：回复自身30HP，随机净化自身1个debuff，发动∧的饮料效果",
+		"synergyText": "自身HP低于50时：回复30HP、随机净化1个弱体效果，并立即发动∧内的饮料效果（每场战斗仅触发1次）",
 		"combatRules": [
 			{
 				"id": "lowHpHealCleanseDrink",
@@ -8670,7 +8671,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击时：自身hp+5，最大HP+10，∧的武器1秒内伤害+1；\n∧内每配置一个食物，本物品使用间隔-0.1",
+		"synergyText": "攻击时：自身HP+5、最大HP+10，∧内的武器在1秒内伤害+1\n∧内每有1个食物，本武器使用间隔-0.1",
 		"weaponTypes": [
 			"食物"
 		]
@@ -8770,7 +8771,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击时：净化自身5个debuff，自身HP+3，最大hp+5\n奥义发动时：额外造成10点的伤害"
+		"synergyText": "攻击时：净化自身5个弱体效果、自身HP+3、最大HP+5\n奥义发动时：额外造成10点伤害"
 	},
 	"I581": {
 		"id": "虹之弓",
@@ -8796,7 +8797,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			312
 		],
 		"sourceName": "虹之弓",
-		"synergyText": "攻击命中时：敌方冰结 +1\n奥义发动时：敌方每有1层冰结，伤害 +2",
+		"synergyText": "攻击命中时：敌方冰结+1\n奥义发动时：敌方每有1层冰结，本次伤害+2",
 		"rarity": 4,
 		"weaponTypes": [
 			"弓"
@@ -8873,7 +8874,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "敌方每有5个debuff，本武器伤害+1",
+		"synergyText": "敌方每有5个弱体效果，本武器伤害+1",
 		"rarity": 2,
 		"minAttack": 2,
 		"maxAttack": 3,
@@ -8912,7 +8913,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"乐器"
 		],
-		"synergyText": "攻击命中时：随机净化一个debuff，若自身buff10个以上，再随机净化一个debuff\n∧每配置一个乐器，本武器使用间隔-0.1",
+		"synergyText": "攻击命中时：随机净化1个弱体效果；自身强化效果达到10层时，再随机净化1个弱体效果\n∧内每有1个乐器，本武器使用间隔-0.1",
 		"synergyRules": [
 			{
 				"id": "instrumentIntervalReduce",
@@ -9001,7 +9002,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			312
 		],
 		"sourceName": "贤者之证",
-		"synergyText": "贤者的证明，偷偷告诉你，贤者喜欢黑猫\nMP20以上时：自身获得黑之魅力效果\n黑之魅力效果中：配置在∧的武器的攻击命中时，所有配置在∧的武器伤害+1，并驱散敌方1个buff",
+		"synergyText": "贤者的证明，偷偷告诉你，贤者喜欢黑猫\n自身MP达到20时：获得黑之魅力效果\n黑之魅力效果中：∧内的武器攻击命中时，∧内的所有武器伤害+1，并驱散敌方1个强化效果",
 		"combatRules": [
 			{
 				"id": "applyBlackCharmIfMp20",
@@ -9220,7 +9221,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "战斗开始时：∧内每配置1个武器，格挡+5，再生+1，最大hp+10\n自身血量在50%以上时，伤害增加5点"
+		"synergyText": "战斗开始时：∧内每有1个武器，自身格挡+5、再生+1、最大HP+10\n自身HP高于最大HP的50%时：本武器伤害+5"
 	},
 	"I586": {
 		"id": "这就是生活",
@@ -9247,7 +9248,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"饮料"
 		],
-		"synergyText": "自身弱体效果10个以上时，仅发动一次：净化10个debuff，回复15HP，发动∧的饮料效果",
+		"synergyText": "自身弱体效果达到10层时：净化10个弱体效果、回复15HP，并立即发动∧内的饮料效果（每场战斗仅触发1次）",
 		"combatRules": [
 			{
 				"id": "debuff10TriggerOnce",
@@ -9412,7 +9413,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击命中时：自身反射+1，若自身buff10个以上，额外反射+1；\n∧每配置一个乐器，本物品使用间隔-0.1",
+		"synergyText": "攻击命中时：自身反射+1；自身强化效果达到10层时，额外反射+1\n∧内每有1个乐器，本武器使用间隔-0.1",
 		"minAttack": 2,
 		"maxAttack": 5,
 		"hitRate": 0.95,
@@ -9492,7 +9493,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击时：敌方格挡-5\n∧内每配置一个食物或动物，本物品使用间隔-0.1",
+		"synergyText": "攻击时：敌方格挡-5\n∧内每有1个食物或动物，本武器使用间隔-0.1",
 		"minAttack": 7,
 		"maxAttack": 10,
 		"hitRate": 0.9,
@@ -9535,7 +9536,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "战斗开始时：自身随机buff+2"
+		"synergyText": "战斗开始时：自身随机获得2个强化效果"
 	},
 	"I590": {
 		"id": "决斗盾",
@@ -9645,7 +9646,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "∧每配置一个食物，本物品伤害+1",
+		"synergyText": "∧内每有1个食物，本武器伤害+1",
 		"minAttack": 3,
 		"maxAttack": 5,
 		"hitRate": 0.8,
@@ -9718,7 +9719,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "∧的武器每攻击5次，回复5HP,再生+1"
+		"synergyText": "∧内的武器每攻击5次：自身HP+5、再生+1"
 	},
 	"I593": {
 		"id": "阿斯克勒庇俄斯之杖",
@@ -9751,7 +9752,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		],
 		"sourceName": "阿斯克勒庇俄斯之杖",
 		"rarity": 4,
-		"synergyText": "攻击命中时：自身MP +1，净化1个debuff\n生命值50%以下时：若处于黑之魅力中，仅触发一次，恢复100生命值",
+		"synergyText": "攻击命中时：自身MP+1，并净化1个弱体效果\n自身HP低于最大HP的50%且处于黑之魅力效果中时：回复100HP（每场战斗仅触发1次）",
 		"combatRules": [
 			{
 				"id": "hitMpCleanse",
@@ -9887,7 +9888,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "∧的吉他命中时：自身激奏+1，高扬+1；\n自身激奏每10层,本武器攻击次数+1"
+		"synergyText": "∧内的吉他攻击命中时：自身激奏+1、高扬+1\n自身每有10层激奏，本武器攻击次数+1"
 	},
 	"I595": {
 		"id": "打扰一下",
@@ -10021,7 +10022,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击命中时：∧内每配置一个物品自身随机buff+1，\n自身buff20个以上时，伤害+3"
+		"synergyText": "攻击命中时：∧内每有1个武器，自身随机获得1个强化效果\n自身强化效果达到20层时：本武器伤害+3"
 	},
 	"I597": {
 		"id": "好香蕉",
@@ -10097,7 +10098,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击时：回复自身4HP，\n∧内每配置1个食物，本武器使用间隔-0.1",
+		"synergyText": "攻击时：自身HP+4\n∧内每有1个食物，本武器使用间隔-0.1",
 		"weaponTypes": [
 			"食物"
 		]
@@ -10163,7 +10164,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击时：50%概率使本次攻击伤害 +3\n该武器造成的伤害无视敌方格挡",
+		"synergyText": "攻击时：50%概率使本次伤害+3\n本武器造成的伤害无视敌方格挡",
 		"weaponTypes": [
 			"刀"
 		]
@@ -10186,7 +10187,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			312
 		],
 		"sourceName": "魔剑士之证",
-		"synergyText": "魔剑士的证明，混沌的魔剑士擅长干坏事\n战斗开始时：每有1个配置在∧内的武器，对敌方随机施加1个debuff\n奥义发动时：对敌方随机施加12个debuff\n配置∧内的武器的武器攻击命中时：对敌方随机施加1个debuff",
+		"synergyText": "魔剑士的证明，混沌的魔剑士擅长干坏事\n战斗开始时：∧内每有1个武器，对敌方随机施加1个弱体效果\n奥义发动时：对敌方随机施加12个弱体效果\n∧内的武器攻击命中时：对敌方随机施加1个弱体效果",
 		"combatRules": [
 			{
 				"id": "battleStartRandomDebuffPerNearby",
@@ -10340,7 +10341,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击命中时：敌方黑暗 +1\n每有1个配置∧内的食物或动物，使用间隔 -0.1"
+		"synergyText": "攻击命中时：敌方黑暗+1\n∧内每有1个食物或动物，本武器使用间隔-0.1"
 	},
 	"I601": {
 		"id": "守卫之鹿",
@@ -10367,7 +10368,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"动物"
 		],
-		"synergyText": "攻击命中时：自身格挡+3\n每有1个配置在∧内的食物或动物，使用间隔-0.1",
+		"synergyText": "攻击命中时：自身格挡+3\n∧内每有1个食物或动物，本武器使用间隔-0.1",
 		"minAttack": 5,
 		"maxAttack": 8,
 		"hitRate": 0.9,

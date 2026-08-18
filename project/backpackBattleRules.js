@@ -317,7 +317,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 	};
 
 	var getEffectiveHitRate = function (side, baseHitRate) {
-		return clamp(toNumber(baseHitRate, 1) - getStatusStacks(side, "darkness") * 0.05, 0, 1);
+		var darknessStacks = Math.max(0, getStatusStacks(side, "darkness"));
+		return clamp(toNumber(baseHitRate, 1) * Math.pow(0.92, darknessStacks), 0, 1);
 	};
 
 	var getUltimateGain = function (side, baseGain, combatState) {
