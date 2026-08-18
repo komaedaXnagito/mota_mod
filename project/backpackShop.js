@@ -19,7 +19,7 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 		// 稀有度权重表：行 = ratio（1~5），列 = 稀有度（1~5），每行总和 100。
 		// 五级稀有度在 ratio=5 时为 15/100 = 15%；ratio 越低高稀有权重越小（ratio=1 时仅 0.8%）。
 		const RARITY_WEIGHTS = [
-			[70, 20, 8, 1.2, 0],
+			[70, 20, 8, 1.2, 0.8],
 			[55, 22, 15, 5, 3],
 			[40, 22, 22, 10, 6],
 			[28, 20, 28, 15, 9],
@@ -37,6 +37,8 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 
 		let root = null;                 // 商店根节点；null 表示未打开。
 		let currentOffer = [];           // 当前货架：[{ id, price }] 共 5 把。
+		let replayChoiceMode = null;      // 回放时最近打开的是普通商店还是免费赠予选择器。
+		let replayRewardOffer = [];       // 回放时按相同随机序列生成的免费赠予候选。
 
 		// ---- 数值辅助 ----
 		const toInt = function (value) { return Math.max(0, Math.floor(Number(value) || 0)); };
@@ -137,18 +139,32 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 		const saveOffer = function () {
 			core.setFlag(FLAG_OFFER, { ids: currentOffer.map(function (item) { return item.id; }) });
 		};
+		/** 生成免费赠予的 5 个候选；录制和回放共用，确保随机调用次数及顺序一致。 */
+		const createRewardOffer = function () {
+			const offer = [];
+			const seen = {};
+			for (let i = 0; i < SLOT_COUNT; i++) {
+				let id = rollOne();
+				let guard = 0;
+				while (id && seen[id] && guard++ < 25) id = rollOne();
+				if (id && !seen[id]) { seen[id] = true; offer.push({ id: id }); }
+			}
+			const pool = getPool();
+			let fillGuard = 0;
+			while (offer.length < SLOT_COUNT && pool.length && fillGuard++ < 100) {
+				const id = pool[typeof core.rand === "function" ? core.rand(pool.length) : Math.floor(Math.random() * pool.length)];
+				if (!seen[id]) { seen[id] = true; offer.push({ id: id }); }
+			}
+			// 随机池不足 5 种时允许重复，避免为了“尽量不重复”陷入死循环。
+			while (offer.length < SLOT_COUNT && pool.length) {
+				const id = pool[typeof core.rand === "function" ? core.rand(pool.length) : Math.floor(Math.random() * pool.length)];
+				offer.push({ id: id });
+			}
+			return offer;
+		};
 
 		// ---- 交互 ----
-		const deductMoney = function (cost) {
-			if (getMoney() < cost) {
-				if (core.drawTip) core.drawTip("金币不足");
-				return false;
-			}
-			core.status.hero.money = toInt(core.status.hero.money) - cost;
-			if (core.updateStatusBar) core.updateStatusBar();
-			return true;
-		};
-		/** 正常游戏中记录一条商店选择；沿用样板的 choices:n 格式（choices:0 刷新、1～5 购买/赠予选择）。 */
+		/** 正常游戏中记录一条商店选择；沿用样板的 choices:n 格式。 */
 		const pushShopChoice = function (choiceIndex) {
 			if (core.isReplaying && core.isReplaying()) return false;
 			if (core.isPlaying && !core.isPlaying()) return false;
@@ -161,6 +177,15 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			if (!recorded || !core.status || !Array.isArray(core.status.route)) return;
 			const action = "choices:" + choiceIndex;
 			if (core.status.route[core.status.route.length - 1] === action) core.status.route.pop();
+		};
+		const deductMoney = function (cost) {
+			if (getMoney() < cost) {
+				if (core.drawTip) core.drawTip("金币不足");
+				return false;
+			}
+			core.status.hero.money = toInt(core.status.hero.money) - cost;
+			if (core.updateStatusBar) core.updateStatusBar();
+			return true;
 		};
 		const doRefresh = function (options) {
 			options = options || {};
@@ -194,7 +219,6 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			if (backpack && typeof backpack.updateBackpack === "function") backpack.updateBackpack();
 			return true;
 		};
-		/** 购买：记录 choices 后获得武器（购买失败时撤销刚写入的选择）。 */
 		const buyWeapon = function (item, choiceIndex, options) {
 			options = options || {};
 			const def = weaponDefs[item.id];
@@ -730,7 +754,7 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			buy.style.marginTop = "auto"; // flex 列布局：把购买按钮推到卡片底部
 			buy.addEventListener("click", function (event) {
 				event.stopPropagation();
-				if (onPick) onPick(item);
+				if (onPick) onPick(item, choiceIndex);
 				else applyShopChoice(choiceIndex);
 			});
 			card.appendChild(buy);
@@ -752,7 +776,7 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 		};
 		/** 打开界面期间的持续锁定定时器（防止事件流程在打开后被误解锁导致仍可操作）。 */
 		let shopLockTimer = null;
-		/** 录像回放中：不创建商店/选择器 UI（结果由录像中的 "backpack:" 背包快照直接恢复）。 */
+		/** 录像回放中不创建商店 DOM；选择由 choices:n 回放动作执行。 */
 		const isReplayingNow = function () {
 			return !!(core && ((typeof core.isReplaying === "function" && core.isReplaying())
 				|| (core.status && core.status.replay && core.status.replay.route)));
@@ -767,9 +791,6 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 				else if (shopLockTimer) { clearInterval(shopLockTimer); shopLockTimer = null; }
 			}, 100);
 		};
-		/** 录像回放相关状态：最近打开的是普通商店还是免费赠予选择器。 */
-		let replayChoiceMode = null;   // 回放时最近打开的是 "shop" / "reward"。
-		let replayRewardOffer = [];    // 回放时按相同随机序列生成的免费赠予候选。
 		const closeShop = function () {
 			if (shopLockTimer) { clearInterval(shopLockTimer); shopLockTimer = null; }
 			destroyShopParticleScenes();
@@ -782,10 +803,11 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 		};
 		const openShop = function () {
 			if (root) { render(); return; }
-			// 录像回放中不创建商店 DOM：加载货架并标记回放上下文，由 choices:n 回放动作执行购买/刷新。
+			// 回放时不创建 DOM，但必须按录制时相同的方式加载/首次生成货架，随后由 choices:n 执行操作。
 			if (isReplayingNow()) {
-				if (!loadOffer()) refreshOffer();
 				replayChoiceMode = "shop";
+				replayRewardOffer = [];
+				if (getPool().length && !loadOffer()) refreshOffer();
 				return;
 			}
 			// 打开界面期间锁定控制，避免方向键/点击等意外操作；关闭时按原状态恢复。
@@ -829,7 +851,7 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			refresh.type = "button";
 			refresh.className = "backpack-shop-refresh";
 			refresh.textContent = "刷新（" + refreshCost() + " 金币）";
-			refresh.addEventListener("click", doRefresh);
+			refresh.addEventListener("click", function () { applyShopChoice(0); });
 			const ratioHint = document.createElement("div");
 			ratioHint.className = "backpack-shop-ratio";
 			// 显示"1级商店 概率为：★ xx% ★★ xx% ..."（按当前 ratio 权重表实时计算）。
@@ -862,39 +884,21 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 		 * 随机给出 5 把武器，点击"获得"后免费得到该武器（不扣钱、不涨商店购买次数），随后自动关闭。
 		 * 每次调用重新随机一批，不影响商店货架。
 		 */
-		/** 随机生成 5 把候选（独立于商店货架，不写入 FLAG_OFFER）。正常打开与录像回放共用。 */
-		const generateOffer = function () {
-			const offer = [];
-			const seen = {};
-			for (let i = 0; i < SLOT_COUNT; i++) {
-				let id = rollOne();
-				let guard = 0;
-				while (id && seen[id] && guard++ < 25) id = rollOne();
-				if (id && !seen[id]) { seen[id] = true; offer.push({ id: id }); }
-			}
-			const pool = getPool();
-			while (offer.length < SLOT_COUNT && pool.length) {
-				const id = pool[typeof core.rand === "function" ? core.rand(pool.length) : Math.floor(Math.random() * pool.length)];
-				if (!seen[id]) { seen[id] = true; offer.push({ id: id }); }
-			}
-			return offer;
-		};
 		const openRewardPicker = function () {
-			// 录像回放中不创建选择器 DOM：按相同随机序列生成候选并标记回放上下文，由 choices:n 回放动作执行选择。
-			if (isReplayingNow()) {
-				replayChoiceMode = "reward";
-				replayRewardOffer = generateOffer();
-				return;
-			}
 			if (getPool().length === 0) {
 				if (core.drawTip) core.drawTip("随机池为空：flags.randomList 里的武器 ID 均不存在，请检查");
+				return;
+			}
+			// 录制和回放都在打开选择器时生成候选，保证 core.rand() 调用次数完全一致。
+			const offer = createRewardOffer();
+			if (isReplayingNow()) {
+				replayChoiceMode = "reward";
+				replayRewardOffer = offer;
 				return;
 			}
 			if (root) closeShop();
 			// 打开界面期间锁定控制（关闭时由 closeShop 按原状态恢复）。
 			lockShopControls();
-			// 每次随机 5 把（独立于商店货架，不写入 FLAG_OFFER）。
-			const offer = generateOffer();
 			root = document.createElement("div");
 			root.className = "backpack-shop-root";
 			const panel = document.createElement("div");
@@ -915,9 +919,8 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			const grid = document.createElement("div");
 			grid.className = "backpack-shop-grid";
 			offer.forEach(function (item, index) {
-				grid.appendChild(buildCard(item, function (picked) {
-					// 统一走 choices 入口：记录选择 → 获得武器（录像回放时同入口执行、不记录）。
-					if (applyRewardChoice(offer, index + 1)) closeShop();
+				grid.appendChild(buildCard(item, function (picked, choiceIndex) {
+					if (applyRewardChoice(offer, choiceIndex)) closeShop();
 				}, index + 1));
 			});
 			panel.appendChild(grid);

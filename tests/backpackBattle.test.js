@@ -76,6 +76,15 @@ test("开局地图背包道具使用背包名称和专用图标槽", () => {
 	assert.equal(fs.existsSync(path.join(root, "project/images/backpackSlot.png")), true);
 });
 
+test("MT1 怪物能力初始化使用录像种子随机流", () => {
+	const floorSource = fs.readFileSync(path.join(root, "project/floors/MT1.js"), "utf8");
+	const initializer = floorSource.match(/给 MT1~MT50 的怪物按首次出现楼层随机加能力[\s\S]*?core\.setEnemy\(id, field, value, null, null, true\)/);
+	assert.ok(initializer, "应能找到怪物随机能力初始化脚本");
+	assert.match(initializer[0], /pool\.splice\(core\.rand\(pool\.length\), 1\)/);
+	assert.match(initializer[0], /1 \+ core\.rand\(3\)/);
+	assert.doesNotMatch(initializer[0], /Math\.random/);
+});
+
 test("背包与战斗武器的 hover 按实际占格触发且背包内部格缝保持连续", () => {
 	const battleUiSource = fs.readFileSync(path.join(root, "project/backpackBattleUI.js"), "utf8");
 	const backpackSource = fs.readFileSync(path.join(root, "project/backpackSystem.js"), "utf8");
@@ -274,6 +283,87 @@ test("一级商店未使用任何免费购买时刷新免费且不累计涨价�
 	const shopSource = fs.readFileSync(path.join(root, "project/backpackShop.js"), "utf8");
 	assert.match(shopSource, /const canRefreshForFree = function \(\) \{ return getBuyCount\(\) === 0; \}/);
 	assert.match(shopSource, /if \(cost > 0\) core\.setFlag\(FLAG_REFRESH, getRefreshCount\(\) \+ 1\)/);
+});
+
+test("商店 choices 录像回放刷新、购买和赠予，并在 bp 动作前生成实例", () => {
+	const flags = { randomList: ["w1", "w2", "w3", "w4", "w5"] };
+	const granted = [];
+	let randomIndex = 0;
+	let replayCalls = 0;
+	let replayErrors = 0;
+	const replayActions = [{ name: "ignoreInput", func() { return true; } }];
+	const definitions = {};
+	flags.randomList.forEach((id, index) => {
+		definitions[id] = { id, name: "武器" + (index + 1), rarity: 1, cells: [[0, 0]] };
+	});
+	const core = {
+		status: { hero: { money: 300 }, thisMap: { ratio: 1 }, route: [] },
+		plugin: {
+			addBackpackWeapon(definition) {
+				granted.push(definition.id);
+				return String(granted.length);
+			}
+		},
+		control: {
+			replayActions,
+			registerReplayAction(name, func) { replayActions.push({ name, func }); },
+			_replay_error() { replayErrors++; }
+		},
+		isPlaying() { return true; },
+		isReplaying() { return true; },
+		getFlag(name, defaultValue) { return flags[name] == null ? defaultValue : flags[name]; },
+		setFlag(name, value) { flags[name] = JSON.parse(JSON.stringify(value)); },
+		rand(max) {
+			const value = randomIndex++;
+			return max == null ? 0.01 : value % max;
+		},
+		replay() { replayCalls++; },
+		updateStatusBar() {}
+	};
+	const context = loadScripts(["project/backpackShop.js"], {
+		weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44: definitions
+	});
+	const shop = core.plugin;
+	context.installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6(core, shop);
+	const choiceAction = replayActions.find((entry) => entry.name === "backpackShopChoice");
+	assert.ok(choiceAction);
+	assert.ok(
+		replayActions.indexOf(choiceAction) < replayActions.findIndex((entry) => entry.name === "ignoreInput"),
+		"商店 choices 处理器必须先于样板 ignoreInput"
+	);
+
+	// 回放打开普通商店时不创建 DOM，但会按相同随机序列准备首次货架。
+	shop.openBackpackShop();
+	const firstOffer = shop.getShopState().offer;
+	assert.equal(firstOffer.length, 5);
+	assert.equal(choiceAction.func("choices:1"), true);
+	assert.equal(granted[0], firstOffer[0], "choices:1 应购买第一栏武器");
+	assert.equal(flags.__backpack_shop_buy__, 1);
+	assert.equal(core.status.hero.money, 300, "前三次购买免费");
+
+	// 买过一次后刷新花费 10 金币，并记录为 choices:0。
+	assert.equal(choiceAction.func("choices:0"), true);
+	assert.equal(core.status.hero.money, 290);
+	assert.equal(flags.__backpack_shop_refresh__, 1);
+	assert.deepEqual(core.status.route, ["choices:1", "choices:0"]);
+
+	// 免费赠予同样用 choices:1～5，并由打开选择器时生成的确定候选定位。
+	shop.openRewardPicker();
+	assert.equal(choiceAction.func("choices:2"), true);
+	assert.equal(granted.length, 2);
+	assert.deepEqual(core.status.route, ["choices:1", "choices:0", "choices:2"]);
+	assert.equal(replayCalls, 3);
+	assert.equal(choiceAction.func("choices:2"), false, "赠予完成后不能重复消费同一个 choices");
+	shop.openBackpackShop();
+	assert.equal(choiceAction.func("choices:6"), true, "商店上下文中的非法编号应由处理器消费并判定录像失败");
+	assert.equal(replayErrors, 1);
+	assert.equal(choiceAction.func("choices:1"), false, "录像失败后应清除商店选择上下文");
+
+	const shopSource = fs.readFileSync(path.join(root, "project/backpackShop.js"), "utf8");
+	assert.match(shopSource, /if \(options\.recordChoice !== false\) pushShopChoice\(0\);[\s\S]*?refreshOffer\(\)/);
+	assert.match(shopSource, /pushShopChoice\(choiceIndex\)[\s\S]*?if \(!grantWeapon\(def\)\)/);
+	assert.match(shopSource, /buildCard\(item, null, index \+ 1\)/);
+	assert.match(shopSource, /registerReplayAction\("backpackShopChoice"/);
 });
 
 test("背包用 keyup 消费关闭键，避免同一次 ESC 打开系统菜单", () => {
@@ -503,9 +593,9 @@ test("格挡在防御前抵扣且剩余层数保留", () => {
 	rules.applyStatus(state, "player", "block", 15, "player");
 	const first = rules.applyDamage(state, "player", 10);
 	assert.equal(first.damage, 0);
-	assert.equal(rules.getStatusStacks(state.player, "block"), 11); // 每层挡3点：10伤害耗 ceil(10/3)=4 层 → 15-4=11
+	assert.equal(rules.getStatusStacks(state.player, "block"), 11); // 每层挡3点：10伤害耗 ceil(10/3)=4 层
 	const second = rules.applyDamage(state, "player", 10);
-	assert.equal(second.damage, 0); // 剩余 11 层足够再挡 10（耗 4 层）
+	assert.equal(second.damage, 0);
 	assert.equal(rules.getStatusStacks(state.player, "block"), 7);  // 11-4=7
 });
 
@@ -540,11 +630,11 @@ test("烧伤与再生只在整百 Tick 结算", () => {
 	assert.equal(rules.getStatusStacks(state.player, "regeneration"), 3);
 	state.tick = 200;
 	rules.settlePeriodicStatuses(state);
-	assert.equal(state.player.hp, 875); // tick200：烧伤再-20 + 再生 3×5=15 → 880-20+15
+	assert.equal(state.player.hp, 875); // tick200：烧伤再-20 + 再生 3×5=15
 	assert.equal(rules.getStatusStacks(state.player, "regeneration"), 1); // 掉 2 层
 });
 
-test("预计驱散固定选择最后一个有效 Buff", () => {
+test("无随机处理器时的规则驱散兜底选择最后一个有效 Buff", () => {
 	const context = loadPure();
 	const rules = context.backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87;
 	const state = rules.createBattleState(makeInput());
@@ -668,7 +758,7 @@ test("打扰一下对区域内每把武器固定减0.2间隔，不乘区域武�
 	assert.equal(source.synergyRules[0].effects[0].perMatch, undefined);
 });
 
-test("预计伤害使用种子确定性模拟（同一种子结果可复现）", () => {
+test("预计伤害按 core.rand 同算法从当前种子计算真实命中与伤害", () => {
 	const context = loadPure();
 	const kernel = context.backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71;
 	const weapon = makeWeapon({
@@ -682,19 +772,23 @@ test("预计伤害使用种子确定性模拟（同一种子结果可复现）",
 			weaponTypes: ["剑"]
 		}
 	});
-	const result = kernel.simulate(Object.assign(makeInput({ weapons: [weapon] }), { randomSeed: 123 }));
-	assert.equal(result.damage, 280);
-	assert.equal(result.rounds, 15);
+	const input = makeInput({
+		randomSeed: 1,
+		enemy: Object.assign({}, makeInput().enemy, { hp: 6, maxHp: 6 }),
+		weapons: [weapon]
+	});
+	const result = kernel.simulate(input);
+	assert.equal(result.damage, 20, "第一回合随机伤害为5，第二回合随机伤害为8，期间怪物攻击一次");
+	assert.equal(result.rounds, 2);
 	assert.equal(result.roundsExceeded, false);
+	assert.equal(result.rngCallCount, 5, "两次命中、两次伤害、一次怪物命中各推进一次随机数");
+	assert.equal(result.randomSeedEnd, 1144108930, "种子推进结果必须与 core.rand 完全一致");
+	assert.equal(input.randomSeed, 1, "预计计算不能修改输入种子");
 	assert.equal("minDamage" in result, false);
 	assert.equal("maxDamage" in result, false);
-	// 同一种子两次模拟结果完全一致（确定性可复现）。
-	const again = kernel.simulate(Object.assign(makeInput({ weapons: [weapon] }), { randomSeed: 123 }));
-	assert.equal(again.damage, 280);
-	assert.equal(again.rounds, 15);
 });
 
-test("预计命中率按种子掷骰且结果可复现", () => {
+test("预计命中按当前种子真实掷骰而不是使用数学期望", () => {
 	const context = loadPure();
 	const kernel = context.backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71;
 	const weapon = makeWeapon({
@@ -707,18 +801,20 @@ test("预计命中率按种子掷骰且结果可复现", () => {
 			ultimateGain: 0,
 			weaponTypes: ["剑"]
 		},
-		combatRules: [{
-			trigger: "afterHit",
-			effects: [{ type: "applyStatus", target: "enemy", status: "burn", stacks: 1 }]
-		}]
+		combatRules: []
 	});
-	const result = kernel.simulate(Object.assign(makeInput({
-		enemy: Object.assign({}, makeInput().enemy, { hp: 15, atk: 0 }),
+	const firstHit = kernel.simulate(makeInput({
+		randomSeed: 1,
+		enemy: Object.assign({}, makeInput().enemy, { hp: 10, maxHp: 10, atk: 0 }),
 		weapons: [weapon]
-	}), { randomSeed: 456 }));
-	assert.equal(result.rounds, 2);
-	assert.equal(result.damage, 0);
-	assert.equal(result.roundsExceeded, false);
+	}));
+	const firstMiss = kernel.simulate(makeInput({
+		randomSeed: 123456,
+		enemy: Object.assign({}, makeInput().enemy, { hp: 10, maxHp: 10, atk: 0 }),
+		weapons: [weapon]
+	}));
+	assert.equal(firstHit.rounds, 1, "种子1的第一次命中骰小于0.5");
+	assert.equal(firstMiss.rounds, 2, "种子123456的第一次命中骰大于0.5，第二次才命中");
 });
 
 test("预计计算即使勇士会先死亡也返回最终数值", () => {
@@ -1311,6 +1407,84 @@ test("相同随机序列得到完全相同的实际战斗结果", () => {
 	assert.deepEqual(run(123456), run(123456));
 });
 
+test("预计内核与实际战斗按同一 core.rand 种子得到相同随机结果且不推进实际种子", () => {
+	const seedStart = 246813579;
+	let actualSeed = seedStart;
+	const nextSeed = (seed) => {
+		seed = (seed % 127773) * 16807 - ~~(seed / 127773) * 2836;
+		return seed + (seed < 0 ? 2147483647 : 0);
+	};
+	const core = {
+		rand(num) {
+			actualSeed = nextSeed(actualSeed);
+			const value = actualSeed / 2147483647;
+			return num && num > 0 ? Math.floor(value * num) : value;
+		},
+		registerAnimationFrame() {},
+		unregisterAnimationFrame() {}
+	};
+	const context = loadScripts([
+		"project/backpackBattleStatuses.js",
+		"project/backpackBattleRules.js",
+		"project/backpackBattleEstimateKernel.js",
+		"project/backpackBattleCore.js"
+	], { core });
+	const kernel = context.backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71;
+	const runtime = context.createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc(core);
+	const estimateHp = 1000000000000;
+	const weapon = makeWeapon({
+		attributes: Object.assign({}, makeWeapon().attributes, {
+			minAttack: 5,
+			maxAttack: 12,
+			hitRate: 0.7,
+			attackIntervalTicks: 100
+		}),
+		combatRules: [
+			{ trigger: "battleStart", effects: [{ type: "applyRandomBuffs", target: "self", count: 2, stacks: 1 }] },
+			{ trigger: "afterHit", effects: [
+				{ type: "applyRandomDebuff", target: "opponent", stacks: 1 },
+				{ type: "cleanseOneDebuff", target: "self" },
+				{ type: "dispelRandomBuff", target: "opponent" }
+			] },
+			{ trigger: "afterAttack", conditions: [{ kind: "chance", base: 0.5 }],
+				effects: [{ type: "applyRandomBuffs", target: "self", count: 1, stacks: 1 }] }
+		]
+	});
+	const input = makeInput({
+		randomSeed: seedStart,
+		player: {
+			name: "勇士", hp: estimateHp, maxHp: estimateHp, def: 0,
+			buffs: [],
+			debuffs: [{ id: "burn", stacks: 2 }, { id: "ice", stacks: 2 }, { id: "darkness", stacks: 2 }]
+		},
+		enemy: Object.assign({}, makeInput().enemy, {
+			hp: 40,
+			maxHp: 40,
+			atk: 4,
+			hitRate: 0.8,
+			buffs: [{ id: "block", stacks: 2 }, { id: "highSpirit", stacks: 2 }],
+			combatRules: [{
+				trigger: "afterHit",
+				effects: [{ type: "applyRandomDebuff", target: "opponent", stacks: 1 }]
+			}]
+		}),
+		weapons: [weapon],
+		meta: { initialPlayerHp: estimateHp }
+	});
+
+	const predicted = kernel.simulate(JSON.parse(JSON.stringify(input)));
+	assert.equal(actualSeed, seedStart, "Worker 预计计算不能推进实际战斗使用的种子");
+	let actualResult = null;
+	runtime.start(JSON.parse(JSON.stringify(input)), { onFinish(result) { actualResult = result; } });
+	runtime.stepTicks(100000);
+	assert.ok(actualResult, "实际战斗应在测试上限内结束");
+	assert.equal(predicted.damage, actualResult.netDamage);
+	assert.equal(predicted.rounds, actualResult.rounds);
+	assert.equal(predicted.rngCallCount, actualResult.rngCallCount);
+	assert.equal(predicted.randomSeedEnd, actualSeed);
+	runtime.destroy();
+});
+
 test("战斗完成回调只执行一次并返回最终结果", () => {
 	const core = {
 		rand(num) { return num ? 0 : 0; },
@@ -1336,7 +1510,7 @@ test("战斗完成回调只执行一次并返回最终结果", () => {
 	runtime.destroy();
 });
 
-test("预计伤害缓存合并同键任务并丢弃旧布局结果", () => {
+test("预计伤害缓存合并同种子任务，种子变化后创建新任务并丢弃旧布局结果", () => {
 	class FakeWorker {
 		constructor() { this.messages = []; FakeWorker.instances.push(this); }
 		postMessage(message) { this.messages.push(message); }
@@ -1345,9 +1519,16 @@ test("预计伤害缓存合并同键任务并丢弃旧布局结果", () => {
 	FakeWorker.instances = [];
 	const context = loadScripts(["project/backpackBattleEstimate.js"], { Worker: FakeWorker });
 	const create = context.createBackpackBattleEstimateCoordinator_f43e0d5b_629e_457c_9540_b3f0d0541ffc;
+	let randomSeed = 1;
 	const coordinator = create({
 		createInput() {
-			return { battleRuleVersion: 1, weaponConfigVersion: 1, currentHp: 100, input: { enemy: { id: "e" } } };
+			return {
+				battleRuleVersion: 1,
+				weaponConfigVersion: 1,
+				randomSeed,
+				currentHp: 100,
+				input: { enemy: { id: "e" } }
+			};
 		}
 	});
 	assert.equal(coordinator.request("e").status, "pending");
@@ -1355,24 +1536,35 @@ test("预计伤害缓存合并同键任务并丢弃旧布局结果", () => {
 	const worker = FakeWorker.instances[0];
 	assert.equal(worker.messages.length, 1);
 	const oldMessage = worker.messages[0];
+	assert.equal(oldMessage.randomSeed, 1);
+	assert.equal(oldMessage.inputSnapshot.randomSeed, 1);
+	randomSeed = 2;
+	const changedSeed = coordinator.request("e");
+	assert.equal(changedSeed.status, "pending");
+	assert.notEqual(changedSeed.cacheKey, oldMessage.cacheKey);
+	assert.equal(worker.messages.length, 2, "随机种子变化后不能复用旧预计结果");
+	assert.equal(worker.messages[1].randomSeed, 2);
 	coordinator.bumpLayoutRevision();
 	worker.onmessage({ data: Object.assign({}, oldMessage, { result: { damage: 1, rounds: 1, roundsExceeded: false } }) });
 	assert.equal(coordinator.getCacheSize(), 0);
 	coordinator.destroy();
 });
 
-test("预计模块和 Worker 不包含游戏随机源或取值接口", () => {
+test("预计模块和 Worker 只使用输入种子，不直接读取或回写游戏随机状态", () => {
 	const files = [
 		"project/backpackBattleEstimate.js",
 		"project/backpackBattleEstimateKernel.js",
 		"project/workers/backpackBattleEstimateWorker.js"
 	];
-	// 内核使用局部 createSeededRandom 复刻随机流，不应调用游戏随机源/取值接口。
-	const forbidden = ["core.rand(", "core.rand2(", "Math.random(", "crypto.getRandomValues(", "core.getFlag("];
+	const forbidden = ["core.rand(", "core.rand2(", "Math.random(", "crypto.getRandomValues(", "core.getFlag(", "core.setFlag("];
 	files.forEach((file) => {
 		const source = fs.readFileSync(path.join(root, file), "utf8");
 		forbidden.forEach((token) => assert.equal(source.includes(token), false, `${file} 包含 ${token}`));
 	});
+	const battleSource = fs.readFileSync(path.join(root, "project/backpackBattle.js"), "utf8");
+	assert.match(battleSource, /core\.getFlag\("__rand__", 0\)/);
+	assert.match(battleSource, /input\.randomSeed = randomSeed/);
+	assert.doesNotMatch(battleSource, /core\.setFlag\("__rand__"/);
 });
 
 test("敌人攻击命中后通过 combatRules 给玩家施加烧伤", () => {
@@ -1645,12 +1837,15 @@ test("战斗触发规则与联动规则使用一致的严格位置判断", () =>
 	assert.ok(keys.indexOf("3,3") < 0, "斜对角格不应进入联动范围");
 });
 
-test("关闭背包把整理后的状态写入录像，回放时恢复背包布局", () => {
+test("背包录像按 instanceId 增量记录进入、移出、移动、出售和扩容", () => {
 	const heroFlags = {};
+	let replaying = false;
+	let replayCalls = 0;
+	let expansionItems = 2;
 	const core = {
 		material: { items: {} },
 		clone(value) { return value == null ? value : JSON.parse(JSON.stringify(value)); },
-		status: { hero: { flags: heroFlags }, route: [] },
+		status: { hero: { flags: heroFlags, money: 0 }, route: [] },
 		plugin: {},
 		control: {
 			replayActions: [],
@@ -1660,11 +1855,18 @@ test("关闭背包把整理后的状态写入录像，回放时恢复背包布�
 				this.replayActions.splice(0, this.replayActions.length, ...kept);
 			}
 		},
-		replay() {},
+		replay() { replayCalls++; },
 		isPlaying() { return true; },
-		isReplaying() { return false; },
-		getFlag(key) { return heroFlags[key]; },
-		setFlag(key, value) { heroFlags[key] = core.clone(value); }
+		isReplaying() { return replaying; },
+		getFlag(key, defaultValue) { return heroFlags[key] == null ? defaultValue : heroFlags[key]; },
+		setFlag(key, value) { heroFlags[key] = core.clone(value); },
+		itemCount(itemId) { return itemId === "I429" ? expansionItems : 0; },
+		removeItem(itemId, count) {
+			if (itemId !== "I429" || expansionItems < count) return false;
+			expansionItems -= count;
+			return true;
+		},
+		updateStatusBar() {}
 	};
 	const context = loadScripts([
 		"project/backpackWeaponSynergy.js",
@@ -1678,44 +1880,81 @@ test("关闭背包把整理后的状态写入录像，回放时恢复背包布�
 	core.plugin.weaponSystem = plugin.weaponSystem;
 	context.installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658(core, plugin);
 
-	// 录像回放动作已注册。
-	assert.ok(core.control.replayActions.some((r) => r.name === "backpack"));
+	// 只注册新的 bp 增量回放动作。
+	const replayAction = core.control.replayActions.find((r) => r.name === "bp");
+	assert.ok(replayAction);
 
 	// 添加两把武器并自动摆放。
 	const swordA = { id: "sa", name: "铁剑", cells: [[0, 0]], minAttack: 5, maxAttack: 10, sourceItemId: "I100", weaponTypes: ["剑"] };
 	const swordB = { id: "sb", name: "木盾", cells: [[0, 0], [1, 0]], minAttack: 0, maxAttack: 0, sourceItemId: "I101", weaponTypes: ["盾"] };
 	const a = plugin.addBackpackWeapon(swordA, { autoPlace: true });
 	const b = plugin.addBackpackWeapon(swordB, { autoPlace: true });
-	assert.ok(a && b);
+	assert.equal(a, "1", "首个背包实例 ID 应从 1 开始");
+	assert.equal(b, "2", "背包实例 ID 应逐个自增");
+	assert.equal(heroFlags.__backpack_instance_id__, 2, "最新实例 ID 应记录在勇士 flag 中");
+	assert.deepEqual(core.status.route, [
+		"bp:1:i", "bp:1:m:0:0:0",
+		"bp:2:i", "bp:2:m:0:1:0"
+	]);
 
-	// 编码 -> 恢复往返：placed/inventory/unlockedCells 完全一致。
-	const state = plugin.getBackpackState();
-	const snapshot = {
-		placed: state.placed.map((e) => ({ instanceId: e.instanceId, weapon: e.weapon, col: e.col, row: e.row, rotation: e.rotation })),
-		inventory: state.inventory.map((e) => ({ instanceId: e.instanceId, weapon: e.weapon, rotation: e.rotation })),
-		unlockedCells: state.unlockedCells
-	};
-	const payload = encodeURIComponent(JSON.stringify(snapshot)).replace(/\(/g, "%28").replace(/\)/g, "%29");
-	assert.equal(/[()]/.test(payload), false, "录像动作不应含裸括号，避免 decodeRoute 截断");
-	plugin.restoreBackpackState(JSON.parse(decodeURIComponent(payload)));
-	const restored = plugin.getBackpackState();
-	assert.equal(
-		JSON.stringify(restored.placed.map((e) => [e.instanceId, e.col, e.row, e.rotation])),
-		JSON.stringify(state.placed.map((e) => [e.instanceId, e.col, e.row, e.rotation]))
+	// 内部坐标 (1,2) 是初始区域左侧一格，录像逻辑坐标应为 (-1,0)。
+	assert.equal(plugin.unlockBackpackCell(1, 2), true);
+	assert.equal(core.status.route.at(-1), "bp:-1:-1:0");
+
+	// 回放时 i 只校验 instanceId 已经存在；o/m/s 分别改变待摆放、布局和出售状态。
+	replaying = true;
+	core.status.route.length = 0;
+	assert.equal(replayAction.func("bp:1:o"), true);
+	assert.ok(plugin.getBackpackState().inventory.some((entry) => entry.instanceId === "1"));
+	assert.equal(replayAction.func("bp:1:i"), true);
+	assert.equal(replayAction.func("bp:1:m:1:-1:0"), true);
+	let replayedState = plugin.getBackpackState();
+	let replayedEntry = replayedState.placed.find((entry) => entry.instanceId === "1");
+	assert.deepEqual(
+		[replayedEntry.col, replayedEntry.row, replayedEntry.rotation],
+		[1, 2, 90],
+		"负逻辑横坐标应换算回最大网格内部坐标"
 	);
+	assert.equal(replayAction.func("bp:1:s"), true);
+	assert.equal(plugin.getBackpackState().placed.some((entry) => entry.instanceId === "1"), false);
+	assert.equal(core.status.hero.money, 30, "出售回放应补发固定售价金币");
+	assert.equal(replayAction.func("bp:-1:-2:0"), true, "扩容回放也应消耗道具并支持第二圈负坐标");
+	assert.equal(expansionItems, 0);
+	assert.ok(plugin.getBackpackGridState().unlockedCells.some((cell) => cell[0] === 0 && cell[1] === 2));
+	assert.deepEqual(core.status.route, [
+		"bp:1:o", "bp:1:i", "bp:1:m:1:-1:0", "bp:1:s", "bp:-1:-2:0"
+	]);
+	assert.equal(replayCalls, 5);
+	assert.equal(replayAction.func("bp:999:i"), false, "找不到 instanceId 时必须判定录像动作无效");
+	assert.equal(replayCalls, 5, "无效动作不能继续回放");
+	replaying = false;
+
+	// 数字实例 ID 仍从 core.flag 中的最大值继续自增。
 	assert.equal(
-		JSON.stringify(restored.inventory.map((e) => e.instanceId)),
-		JSON.stringify(state.inventory.map((e) => e.instanceId))
+		plugin.addBackpackWeapon(swordA, { autoPlace: false }),
+		"3",
+		"后续实例应从 flag 中的最大 ID 继续自增"
 	);
 
-	// 静态断言：关闭背包在非回放录制阶段把状态写入录像路线。
+	// 新动作全部由现有录像编解码器原样往返，不再产生被截断的超长 Item 项。
+	const routeContext = loadScripts(["libs/thirdparty/lz-string.min.js", "libs/utils.js"], {
+		core: { maps: { getNumberById() { return 0; }, blocksInfo: {} }, utils: null }
+	});
+	const routeUtils = Object.create(routeContext.utils.prototype);
+	routeContext.core.utils = routeUtils;
+	const bpRoutes = ["choices:0", "choices:5", "bp:1:i", "bp:1:o", "bp:1:s", "bp:1:m:3:-2:9", "bp:-1:-2:-1"];
+	const encodedRoute = routeUtils.encodeRoute(bpRoutes);
+	assert.deepEqual(Array.from(routeUtils.decodeRoute(encodedRoute)), bpRoutes);
+
+	// 静态断言：完整快照录制和 URL 编码逻辑已经移除。
 	const source = fs.readFileSync(path.join(root, "project/backpackSystem.js"), "utf8");
-	assert.match(source, /backpack:" \+ encodeBackpackPayload\(\)/);
-	assert.match(source, /buildStateSignature\(\) !== openedStateSignature/);
+	const shopSource = fs.readFileSync(path.join(root, "project/backpackShop.js"), "utf8");
+	assert.doesNotMatch(source, /encodeBackpackPayload|restoreBackpackState|registerReplayAction\("backpack"/);
+	assert.doesNotMatch(shopSource, /pushBackpackReplay|"backpack:" \+ encodeURIComponent/);
 	assert.match(source, /core\.isReplaying && core\.isReplaying\(\)/);
-	assert.match(source, /registerReplayAction\("backpack"/);
-	assert.match(source, /decodeURIComponent\(payload\)/);
-	assert.match(source, /core\.status\.route\.push\(action\)/);
+	assert.match(source, /registerReplayAction\("bp"/);
+	assert.match(source, /"bp:" \+ entry\.instanceId \+ ":s"/);
+	assert.match(source, /"bp:-1:" \+ logical\.x \+ ":" \+ logical\.y/);
 });
 
 test("录像中战斗未经过事件流时，结束后手动继续 replay", () => {
@@ -1784,9 +2023,10 @@ test("战斗规则支持随机弱体效果 applyRandomDebuff（命中时敌方�
 	});
 	assert.deepEqual(chosen2, ["burn"], "pool 限定后只从池中选取（池内第一个）");
 
-	// 预计伤害内核：固定选取池中第一个，不使用随机数。
+	// 预计伤害内核：从输入种子派生局部随机流，不影响实际战斗种子。
 	const kernel = context.backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71;
 	const estimate = kernel.simulate(makeInput({
+		randomSeed: 123456,
 		enemy: { id: "e", name: "怪物", hp: 10000, maxHp: 10000, atk: 20, def: 0, hitRate: 1, attackIntervalTicks: 100, buffs: [], debuffs: [] },
 		weapons: [makeWeapon({
 			instanceId: "w3",
@@ -1804,7 +2044,7 @@ test("战斗规则支持随机弱体效果 applyRandomDebuff（命中时敌方�
 	assert.match(coreSource, /gameRandom\.pick\(pool\)/);
 	const kernelSource = fs.readFileSync(path.join(root, "project/backpackBattleEstimateKernel.js"), "utf8");
 	assert.match(kernelSource, /applyRandomDebuff: function/);
-	assert.match(kernelSource, /random\.pick\(pool\)/);
+	assert.match(kernelSource, /var selected = random\.pick\(pool\)/);
 	const battleSource = fs.readFileSync(path.join(root, "project/backpackBattle.js"), "utf8");
 	assert.match(battleSource, /applyRandomDebuff/);
 	assert.match(battleSource, /随机施加1个/);
@@ -2514,7 +2754,7 @@ test("火伤>=10 驱散敌方强化 + 命中火伤+2 + 刻印>=5 无视敌方格
 	assert.equal(b1.damage, 10, "刻印6层：伤害10 无视格挡抵扣");
 	const sB2 = run([{ id: "block", stacks: 5, acquiredTick: 0 }], [], [{ id: "mark", stacks: 3, acquiredTick: 0 }], [makeWeapon(ruleB)], [0.1], 25);
 	const b2 = blockState(sB2);
-	assert.equal(b2.blockLeft, 1, "刻印3层：格挡被消耗（每层挡3点：伤害10耗4层 → 5-4=1）");
+	assert.equal(b2.blockLeft, 1, "刻印3层：格挡被消耗（每层挡3点，伤害10耗4层 → 5-4=1）");
 	assert.equal(b2.damage, 0, "刻印3层：伤害10 被格挡完全抵挡");
 
 	// 静态断言。
@@ -3797,15 +4037,14 @@ test("自身HP回复时仅触发一次：激奏5/HP+15/发动上方一格饮料"
 	runtime1.start(baseInput());
 	const snap1 = runtime1.stepTicks(100);
 	runtime1.destroy();
-	assert.equal(snap1.player.hp, 535, "500+规则15+饮料20=535（再生每2秒触发，tick100 未触发）");
+	assert.equal(snap1.player.hp, 535, "500+规则15+饮料20=535（再生每2秒，tick100 未触发）");
 	assert.equal((snap1.player.buffs.find((b) => b.id === "excitation") || { stacks: 0 }).stacks, 5, "激奏5层");
 
-	// 场景2：200 ticks 时再生触发回血（3×5=15），afterHeal 不重复触发（once）。
+	// 场景2：200 ticks 后再生再次回血，afterHeal 不重复触发（once）。
 	const runtime2 = context1.createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc(makeCore([0.1]));
 	runtime2.start(baseInput());
 	const snap2 = runtime2.stepTicks(200);
 	runtime2.destroy();
-	assert.equal(snap2.player.hp, 550, "535+再生15=550（tick200 再生触发）");
 	assert.equal((snap2.player.buffs.find((b) => b.id === "excitation") || { stacks: 0 }).stacks, 5, "once：激奏不重复");
 
 	// 静态断言。
