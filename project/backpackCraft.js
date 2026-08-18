@@ -239,8 +239,10 @@ var installBackpackCraft_9c4e7b2a_6f1d_4a8c_9e3b_5d7f2c1a8e64 = function (core, 
 				});
 				state.placed = [];
 				state.inventory = keep;
+				const nextInstanceId = Math.floor(Number(core.getFlag("__backpack_instance_id__", 0)) || 0) + 1;
+				core.setFlag("__backpack_instance_id__", nextInstanceId);
 				state.inventory.push({
-					instanceId: "bw_" + Date.now() + "_" + Math.floor(100000 * (typeof core.rand === "function" ? core.rand() : Math.random())),
+					instanceId: String(nextInstanceId),
 					weapon: JSON.parse(JSON.stringify(getWeaponDef(recipe.result))),
 					rotation: 0
 				});

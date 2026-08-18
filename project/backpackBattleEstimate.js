@@ -27,6 +27,7 @@ var createBackpackBattleEstimateCoordinator_f43e0d5b_629e_457c_9540_b3f0d0541ffc
 			battleRuleVersion: requestData.battleRuleVersion,
 			weaponConfigVersion: requestData.weaponConfigVersion,
 			layoutRevision: layoutRevision,
+			randomSeed: requestData.randomSeed,
 			input: requestData.input
 		});
 	};
@@ -82,7 +83,8 @@ var createBackpackBattleEstimateCoordinator_f43e0d5b_629e_457c_9540_b3f0d0541ffc
 				pendingByRequestId.delete(message.requestId);
 				if (message.cacheKey !== pending.cacheKey
 					|| message.layoutRevision !== layoutRevision
-					|| message.battleRuleVersion !== pending.battleRuleVersion) return;
+					|| message.battleRuleVersion !== pending.battleRuleVersion
+					|| message.randomSeed !== pending.randomSeed) return;
 				var entry = cache.get(message.cacheKey);
 				if (!entry || entry.requestId !== message.requestId || entry.status !== "pending") return;
 				if (message.error) {
@@ -118,6 +120,13 @@ var createBackpackBattleEstimateCoordinator_f43e0d5b_629e_457c_9540_b3f0d0541ffc
 		requestData.battleRuleVersion = requestData.battleRuleVersion || 1;
 		requestData.weaponConfigVersion = requestData.weaponConfigVersion || 1;
 		requestData.currentHp = Math.max(0, Number(requestData.currentHp) || 0);
+		requestData.input = requestData.input || {};
+		var randomSeed = requestData.randomSeed;
+		if (randomSeed == null) randomSeed = requestData.input.randomSeed;
+		randomSeed = Math.floor(Number(randomSeed));
+		if (!isFinite(randomSeed)) randomSeed = 0;
+		requestData.randomSeed = randomSeed;
+		requestData.input.randomSeed = randomSeed;
 		requestData.cacheKey = makeCacheKey(requestData);
 		return requestData;
 	};
@@ -160,13 +169,15 @@ var createBackpackBattleEstimateCoordinator_f43e0d5b_629e_457c_9540_b3f0d0541ffc
 		touch(requestData.cacheKey, entry);
 		pendingByRequestId.set(requestId, {
 			cacheKey: requestData.cacheKey,
-			battleRuleVersion: requestData.battleRuleVersion
+			battleRuleVersion: requestData.battleRuleVersion,
+			randomSeed: requestData.randomSeed
 		});
 		activeWorker.postMessage({
 			requestId: requestId,
 			cacheKey: requestData.cacheKey,
 			layoutRevision: layoutRevision,
 			battleRuleVersion: requestData.battleRuleVersion,
+			randomSeed: requestData.randomSeed,
 			inputSnapshot: requestData.input
 		});
 		return getPublicEntry(entry, requestData);

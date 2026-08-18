@@ -2,7 +2,7 @@
  * 背包乱斗的纯确定性规则。
  *
  * 这里只实现公式、状态和数据驱动效果，不读取 core、DOM、Canvas，也不持有随机服务。
- * 实际战斗在外层提供已经确定的命中、伤害和驱散目标；预计模拟则提供数学期望结果。
+ * 实际战斗和预计模拟都由外层提供随机服务；预计模拟使用当前 core.rand 种子的局部副本。
  */
 var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 	"use strict";
@@ -186,7 +186,7 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		return removed;
 	};
 
-	/** 净化 1 个弱体状态（随机选取 1 个 stacks>0 的 Debuff 移除 1 层）。实际战斗经 handlers 随机，预计固定第一个。 */
+	/** 无随机处理器时的净化兜底：移除第一个 stacks>0 的 Debuff；战斗与预估均优先使用 handlers 随机选择。 */
 	var cleanseOneDebuff = function (state, sideKey) {
 		var side = getSide(state, sideKey);
 		if (!side) return 0;
@@ -722,8 +722,7 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 				return compare(totalDebuffStacks, condition.operator || "gte", toNumber(condition.value, 10));
 			}
 			if (condition.kind === "chance") {
-				// 概率条件：base + 附近匹配武器数 × nearbyBonus；实际战斗经 handlers.rollChance 掷骰（计入随机数），
-				// 预计伤害固定按通过处理（与 dispelRandomBuff/applyRandomDebuff 的确定性策略一致）。
+				// 概率条件：base + 附近匹配武器数 × nearbyBonus；战斗与预估均经 handlers.rollChance 掷骰。
 				if (!handlers || !handlers.rollChance) return true;
 				var chance = toNumber(condition.base, 0)
 					+ countNearbyWeapons(state, weapon, condition) * toNumber(condition.nearbyBonus, 0);
@@ -809,7 +808,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 				var nearbyCleanseCount = Math.floor(countNearbyWeapons(state, weapon, effect)
 					/ Math.max(1, Math.floor(toNumber(effect.every, 1))));
 				for (var cleanseIndex = 0; cleanseIndex < nearbyCleanseCount; cleanseIndex++) {
-					cleanseOneDebuff(state, targetKey);
+					if (handlers.cleanseOneDebuff) handlers.cleanseOneDebuff(targetKey);
+					else cleanseOneDebuff(state, targetKey);
 				}
 			}
 			else if (effect.type === "nearbyApplyStatus") {
@@ -892,7 +892,7 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 				});
 			}
 			else if (effect.type === "cleanseOneDebuff") {
-				// 净化 1 个弱体状态：随机选取 1 个 stacks>0 的 Debuff 移除 1 层（实际战斗经 handlers 随机、预计固定第一个）。
+				// 净化 1 个弱体状态：战斗与预估都从 stacks>0 的 Debuff 中按各自随机流选择。
 				if (handlers.cleanseOneDebuff) handlers.cleanseOneDebuff(targetKey);
 				else cleanseOneDebuff(state, targetKey);
 			}
@@ -908,7 +908,7 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 			}
 			else if (effect.type === "repeatAttack") {
 				// 触发该武器立即再攻击 count 次（如"奥义发动时30%概率使该武器的攻击发动9次"）。
-				// 实际战斗经 handlers.repeatAttack 循环 attackWeapon（origin=ultimate、不消耗奥义）；预计固定按 ×count 期望。
+				// 战斗与预估都经 handlers.repeatAttack 循环 attackWeapon（origin=ultimate、不消耗奥义）。
 				if (handlers.repeatAttack) {
 					handlers.repeatAttack(weapon, Math.max(1, Math.floor(toNumber(effect.count, 1))));
 				}
@@ -1228,7 +1228,7 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 				state.goldBonus = fixed((state.goldBonus || 0) + Math.max(0, toNumber(effect.value, 0)));
 			}
 			else if (effect.type === "consumeBuffs") {
-				// 随机消耗自身强化效果层数：逐个随机选取 1 层扣减（实际战斗消耗随机数，预计固定按 buffs 顺序扣减）。
+				// 随机消耗自身强化效果层数：战斗与预估都逐层随机选取并消耗随机数。
 				var consumeCount = Math.max(0, Math.floor(toNumber(effect.count, toNumber(effect.value, 1))));
 				if (consumeCount > 0 && handlers.consumeBuffs) handlers.consumeBuffs(consumeCount, context.sourceSide);
 			}

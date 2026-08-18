@@ -9,12 +9,13 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		// 初始区域会在最大网格内居中；最大行列可分别独立修改。
 		initialCols: 8, // 新游戏默认解锁的列数。
 		initialRows: 8, // 新游戏默认解锁的行数。
-		maxCols: 10, // 背包允许扩展到的最大列数。
-		maxRows: 10, // 背包允许扩展到的最大行数。
+		maxCols: 12, // 背包允许向左右各扩展两圈（初始 8 列，最大 12 列）。
+		maxRows: 12, // 背包允许向上下各扩展两圈（初始 8 行，最大 12 行）。
 		maxCellSize: 40, // 单个格子的最大屏幕像素尺寸。
 		expansionItemId: "I429", // 解锁一个格子时消耗的地图道具 ID。
 		stateFlag: "__backpack_state__", // 保存完整背包状态的勇士 flag 名称。
 		attackFlag: "__backpack_attack__", // 缓存已摆放武器总攻击的 flag 名称。
+		instanceIdFlag: "__backpack_instance_id__", // 已分配的最大实例 ID；新游戏从 1 开始自增。
 		stateVersion: 5, // v5：武器攻击改为上下限，并加入命中、间隔和奥义获取。
 		eventId: "backpack", // 背包界面占用的事件面板 ID。
 		sellPrice: 30, // 拖到售卖区出售武器时的固定售价（金币）。
@@ -30,9 +31,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		inventory: [],
 		unlockedCells: []
 	};
-	let openedStateSignature = null; // 打开背包时的状态签名，用于判断整理后是否需要写入录像。
 	let dragState = null; // 正在拖拽的实例、旋转角、鼠标位置和抓取偏移。
-	let instanceSeed = 0; // 同一毫秒创建多个实例时使用的递增序号。
 	let root = null; // 背包界面的根 DOM 节点；null 表示界面未打开。
 	let bagCanvas = null; // 绘制背景、网格和拖拽合法性提示的画布。
 	let bagContext = null; // bagCanvas 对应的 2D 绘图上下文。
@@ -55,49 +54,6 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		return JSON.parse(JSON.stringify(data));
 	};
 
-	/** 计算背包摆放布局的紧凑签名，用于判断打开前后是否发生整理。 */
-	const buildStateSignature = function () {
-		return JSON.stringify([
-			state.placed.map(function (entry) {
-				return [entry.instanceId, entry.col, entry.row, entry.rotation];
-			}),
-			state.inventory.map(function (entry) {
-				return entry.instanceId;
-			}),
-			state.unlockedCells
-		]);
-	};
-
-	/**
-	 * 把当前背包状态编码为录像路线中的安全字符串。
-	 * 先 URL 编码 JSON，再把裸括号转义为 %28/%29，
-	 * 避免 decodeRoute 按第一个 ')' 截断自定义录像动作。
-	 */
-	const encodeBackpackPayload = function () {
-		const snapshot = {
-			placed: state.placed.map(function (entry) {
-				return {
-					instanceId: entry.instanceId,
-					weapon: entry.weapon,
-					col: entry.col,
-					row: entry.row,
-					rotation: entry.rotation
-				};
-			}),
-			inventory: state.inventory.map(function (entry) {
-				return {
-					instanceId: entry.instanceId,
-					weapon: entry.weapon,
-					rotation: entry.rotation
-				};
-			}),
-			unlockedCells: cloneData(state.unlockedCells)
-		};
-		return encodeURIComponent(JSON.stringify(snapshot))
-			.replace(/\(/g, "%28")
-			.replace(/\)/g, "%29");
-	};
-
 	/** 校验配置并计算初始可用区域在最大网格中的居中起点。 */
 	const getGridConfig = function () {
 		const maxCols = Math.max(1, Math.floor(Number(CONFIG.maxCols) || 10));
@@ -111,6 +67,24 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 			initialRows: initialRows,
 			initialCol: Math.floor((maxCols - initialCols) / 2),
 			initialRow: Math.floor((maxRows - initialRows) / 2)
+		};
+	};
+
+	/** 最大网格内部坐标转为以初始 8×8 左上角为 (0,0) 的录像逻辑坐标。 */
+	const toLogicalCell = function (col, row) {
+		const grid = getGridConfig();
+		return {
+			x: Math.floor(Number(col)) - grid.initialCol,
+			y: Math.floor(Number(row)) - grid.initialRow
+		};
+	};
+
+	/** 录像逻辑坐标转回最大网格内部坐标；向上、向左扩展时逻辑坐标可以为负数。 */
+	const fromLogicalCell = function (x, y) {
+		const grid = getGridConfig();
+		return {
+			col: Math.floor(Number(x)) + grid.initialCol,
+			row: Math.floor(Number(y)) + grid.initialRow
 		};
 	};
 
@@ -195,15 +169,75 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	const getWeaponDefinition = function (itemId) {
 		return getWeaponSystem().getDefinition(itemId);
 	};
-	/** 为每一次武器拾取创建不会与已有实例重复的 ID。 */
+	/** 读取保存在勇士 flag 中的实例 ID 计数器。 */
+	const getInstanceIdCounter = function () {
+		const counter = Math.floor(Number(core.getFlag(CONFIG.instanceIdFlag, 0)) || 0);
+		return Number.isFinite(counter) && counter > 0 ? counter : 0;
+	};
+
+	/** 把已有纯数字实例 ID 同步到计数器，兼容读档和旧存档迁移。 */
+	const syncInstanceIdCounter = function (entries) {
+		let counter = getInstanceIdCounter();
+		(entries || []).forEach(function (entry) {
+			const instanceId = entry && String(entry.instanceId || "");
+			if (!/^[1-9]\d*$/.test(instanceId)) return;
+			const numericId = Number(instanceId);
+			if (Number.isSafeInteger(numericId)) counter = Math.max(counter, numericId);
+		});
+		core.setFlag(CONFIG.instanceIdFlag, counter);
+		return counter;
+	};
+
+	/** 为每一次武器拾取创建从 1 开始、记录在勇士 flag 中的自增 ID。 */
 	const makeInstanceId = function () {
-		instanceSeed++;
-		return "backpack_" + Date.now().toString(36) + "_" + instanceSeed.toString(36);
+		const instanceId = getInstanceIdCounter() + 1;
+		core.setFlag(CONFIG.instanceIdFlag, instanceId);
+		// DOM dataset 只保存字符串，因此实例 ID 在背包系统内统一使用数字字符串。
+		return String(instanceId);
 	};
 
 	/** 把角度吸附为武器系统支持的四种旋转角。 */
 	const normalizeRotation = function (rotation) {
 		return getWeaponSystem().normalizeRotation(rotation);
+	};
+
+	/** 只有正常游戏录制阶段才允许追加背包增量录像动作。 */
+	const canRecordBackpackRoute = function () {
+		if (core.isReplaying && core.isReplaying()) return false;
+		if (core.isPlaying && !core.isPlaying()) return false;
+		return !!(core.status && Array.isArray(core.status.route));
+	};
+
+	/** 追加一条不含 JSON/URL 编码的 bp 增量录像动作。 */
+	const pushBackpackRoute = function (action) {
+		if (!canRecordBackpackRoute()) return false;
+		core.status.route.push(action);
+		return true;
+	};
+
+	/** 记录武器由待摆放区进入装备格；实际角度和位置紧随其后的 m 动作记录。 */
+	const recordWeaponEnter = function (entry) {
+		return entry ? pushBackpackRoute("bp:" + entry.instanceId + ":i") : false;
+	};
+
+	/** 记录武器由装备格移回待摆放区。 */
+	const recordWeaponOut = function (entry) {
+		return entry ? pushBackpackRoute("bp:" + entry.instanceId + ":o") : false;
+	};
+
+	/** 记录武器出售；出售与移回待摆放区是两个不同动作。 */
+	const recordWeaponSale = function (entry) {
+		return entry ? pushBackpackRoute("bp:" + entry.instanceId + ":s") : false;
+	};
+
+	/** 记录已摆放武器最终的旋转象限及其旋转后包围盒左上角逻辑坐标。 */
+	const recordWeaponMove = function (entry) {
+		if (!entry) return false;
+		const logical = toLogicalCell(entry.col, entry.row);
+		const rotationIndex = Math.floor(normalizeRotation(entry.rotation) / 90);
+		return pushBackpackRoute(
+			"bp:" + entry.instanceId + ":m:" + rotationIndex + ":" + logical.x + ":" + logical.y
+		);
 	};
 
 	/** 通过武器系统校验并统一武器定义。 */
@@ -349,6 +383,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 				next.inventory.push(entry);
 			});
 		}
+		syncInstanceIdCounter(next.placed.concat(next.inventory));
 		return next;
 	};
 
@@ -790,21 +825,26 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	 * 消耗一个扩容道具并解锁指定候选格。失败时不修改道具或存档。
 	 * @returns {boolean} 是否成功完成解锁。
 	 */
-	const unlockBackpackCell = function (col, row) {
+	const unlockBackpackCell = function (col, row, options) {
+		options = options || {};
 		col = Math.floor(Number(col));
 		row = Math.floor(Number(row));
 		if (!isExpansionCell(col, row)) return false;
 		if (getExpansionItemCount() <= 0) {
-			if (core.playSound) core.playSound("操作失败");
-			if (core.drawTip) core.drawTip("需要一个背包格子才能解锁", CONFIG.expansionItemId);
+			if (!options.silent && core.playSound) core.playSound("操作失败");
+			if (!options.silent && core.drawTip) core.drawTip("需要一个背包格子才能解锁", CONFIG.expansionItemId);
 			return false;
 		}
 		if (!core.removeItem || !core.removeItem(CONFIG.expansionItemId, 1)) return false;
 		state.unlockedCells = normalizeUnlockedCells(state.unlockedCells.concat([[col, row]]));
 		persistState();
 		renderAll();
-		if (core.playSound) core.playSound("打开界面");
-		if (core.drawTip) {
+		if (options.recordRoute !== false) {
+			const logical = toLogicalCell(col, row);
+			pushBackpackRoute("bp:-1:" + logical.x + ":" + logical.y);
+		}
+		if (!options.silent && core.playSound) core.playSound("打开界面");
+		if (!options.silent && core.drawTip) {
 			core.drawTip("背包格子已解锁，剩余 " + getExpansionItemCount() + " 个", CONFIG.expansionItemId);
 		}
 		return true;
@@ -1085,13 +1125,15 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 			dragState = null;
 			if (dragLayer) dragLayer.innerHTML = "";
 			if (sellZone) sellZone.classList.remove("backpack-sell-zone-active");
-			removeBackpackWeapon(instanceId); // 内部完成删除、持久化与界面刷新
+			if (!removeBackpackWeapon(instanceId)) return; // 内部完成删除、持久化与界面刷新
 			core.status.hero.money = Math.floor(Number(core.status.hero.money) || 0) + CONFIG.sellPrice;
+			recordWeaponSale(entry);
 			if (core.updateStatusBar) core.updateStatusBar();
 			if (core.drawTip) core.drawTip("已出售：" + soldName + "，+" + CONFIG.sellPrice + " 金币");
 			return;
 		}
 
+		let replayOperation = null;
 		if (entry && isPointInInventory(point)) {
 			if (dragState.source === "placed") {
 				removeEntryFromLists(entry.instanceId);
@@ -1100,24 +1142,37 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 				entry.rotation = dragState.rotation;
 				state.inventory.push(entry);
 				changed = true;
+				replayOperation = "out";
 			} else if (entry.rotation !== dragState.rotation) {
 				entry.rotation = dragState.rotation;
 				changed = true;
 			}
 		} else if (entry && target.valid) {
+			const moved = dragState.source !== "placed"
+				|| entry.col !== target.col
+				|| entry.row !== target.row
+				|| entry.rotation !== dragState.rotation;
 			removeEntryFromLists(entry.instanceId);
 			entry.col = target.col;
 			entry.row = target.row;
 			entry.rotation = dragState.rotation;
 			state.placed.push(entry);
-			changed = true;
+			changed = moved;
+			replayOperation = dragState.source === "placed" ? (moved ? "move" : null) : "enter";
 		} else if (core.drawTip) {
 			core.drawTip("这里放不下，物品已回到原位");
 		}
 
 		dragState = null;
 		if (dragLayer) dragLayer.innerHTML = "";
-		if (changed) persistState();
+		if (changed) {
+			persistState();
+			if (replayOperation === "out") recordWeaponOut(entry);
+			else if (replayOperation === "enter") {
+				recordWeaponEnter(entry);
+				recordWeaponMove(entry);
+			} else if (replayOperation === "move") recordWeaponMove(entry);
+		}
 		renderAll();
 	};
 
@@ -1142,6 +1197,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		}
 		entry.rotation = rotation;
 		persistState();
+		recordWeaponMove(entry);
 		renderAll();
 		return true;
 	};
@@ -1149,6 +1205,18 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	/** 按占格数量从大到小重新寻找位置，放不下的实例保留在库存。 */
 	const autoArrange = function () {
 		readState();
+		const previous = {};
+		state.placed.forEach(function (entry) {
+			previous[entry.instanceId] = {
+				placed: true,
+				col: entry.col,
+				row: entry.row,
+				rotation: entry.rotation
+			};
+		});
+		state.inventory.forEach(function (entry) {
+			previous[entry.instanceId] = { placed: false };
+		});
 		const entries = getAllEntries().sort(function (a, b) {
 			return b.weapon.cells.length - a.weapon.cells.length;
 		});
@@ -1168,6 +1236,20 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 			}
 		});
 		persistState();
+		state.placed.forEach(function (entry) {
+			const before = previous[entry.instanceId];
+			if (!before || !before.placed) {
+				recordWeaponEnter(entry);
+				recordWeaponMove(entry);
+			} else if (before.col !== entry.col || before.row !== entry.row
+				|| before.rotation !== entry.rotation) {
+				recordWeaponMove(entry);
+			}
+		});
+		state.inventory.forEach(function (entry) {
+			const before = previous[entry.instanceId];
+			if (before && before.placed) recordWeaponOut(entry);
+		});
 		renderAll();
 		if (core.drawTip) {
 			core.drawTip(state.inventory.length ? "已整理，仍有物品放不下" : "背包整理完成");
@@ -1178,6 +1260,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	/** 把所有已摆放实例收回库存，并清除它们的列、行坐标。 */
 	const collectAll = function () {
 		readState();
+		const collected = state.placed.slice();
 		state.placed.forEach(function (entry) {
 			delete entry.col;
 			delete entry.row;
@@ -1185,6 +1268,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		});
 		state.placed = [];
 		persistState();
+		collected.forEach(recordWeaponOut);
 		renderAll();
 	};
 
@@ -1420,9 +1504,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		core.lockControl();
 		core.status.event.id = CONFIG.eventId;
 		core.status.event.data = null;
-		const opened = buildInterface();
-		if (opened) openedStateSignature = buildStateSignature();
-		return opened;
+		return buildInterface();
 	};
 
 	/**
@@ -1430,16 +1512,6 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	 */
 	const closeBackpack = function (options) {
 		options = options || {};
-		const wasOpen = !!root;
-		// 整理后背包状态与打开前不同时，把关闭时的状态写入录像路线，
-		// 保证录像重放时背包布局与录制进程一致。
-		const recordStateToReplay = wasOpen
-			&& openedStateSignature != null
-			&& buildStateSignature() !== openedStateSignature
-			&& !(core.isReplaying && core.isReplaying())
-			&& (core.isPlaying && core.isPlaying())
-			&& core.status.route && Array.isArray(core.status.route);
-		openedStateSignature = null;
 		uiCommon.hideTooltip();
 		cancelDrag();
 		window.removeEventListener("resize", renderAll);
@@ -1472,9 +1544,6 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 			if (!options.keepLocked) core.unlockControl();
 			if (core.updateStatusBar) core.updateStatusBar(true);
 		}
-		if (recordStateToReplay) {
-			core.status.route.push("backpack:" + encodeBackpackPayload());
-		}
 		return true;
 	};
 
@@ -1499,7 +1568,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 			normalized.uniqueKey = uniqueKey;
 		}
 		const entry = {
-			instanceId: options.instanceId || makeInstanceId(),
+			instanceId: String(options.instanceId || makeInstanceId()),
 			weapon: normalized,
 			rotation: normalizeRotation(options.rotation)
 		};
@@ -1516,7 +1585,12 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		} else {
 			state.inventory.push(entry);
 		}
+		syncInstanceIdCounter([entry]);
 		persistState();
+		if (state.placed.indexOf(entry) >= 0) {
+			recordWeaponEnter(entry);
+			recordWeaponMove(entry);
+		}
 		renderAll();
 		return entry.instanceId;
 	};
@@ -1671,56 +1745,67 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	this.closeBoxbar = closeBackpack;
 	this.updateBackpack = renderAll;
 
-	/**
-	 * 恢复背包到指定布局快照（录像回放用）。
-	 * snapshot.placed/inventory 中每个实例只需 instanceId、weapon 定义、rotation、
-	 * 以及 placed 的 col/row；weapon.sourceItemId 存在时会自动迁移到最新中央定义。
-	 */
-	this.restoreBackpackState = function (snapshot) {
-		if (!snapshot || typeof snapshot !== "object") return false;
-		readState();
-		const next = {
-			version: CONFIG.stateVersion,
-			placed: [],
-			inventory: [],
-			unlockedCells: normalizeUnlockedCells(snapshot.unlockedCells)
-		};
-		state = next;
-		(Array.isArray(snapshot.placed) ? snapshot.placed : []).forEach(function (item) {
-			const entry = normalizeEntry(item, true);
-			if (!entry) return;
-			if (canPlace(entry, entry.col, entry.row, entry.rotation, entry.instanceId)) {
-				next.placed.push(entry);
-			} else {
-				delete entry.col;
-				delete entry.row;
-				next.inventory.push(entry);
-			}
-		});
-		(Array.isArray(snapshot.inventory) ? snapshot.inventory : []).forEach(function (item) {
-			const entry = normalizeEntry(item, false);
-			if (entry) next.inventory.push(entry);
-		});
-		persistState();
+	/** 成功执行一条背包录像后，把动作纳入当前路线并继续回放。 */
+	const finishBackpackReplayAction = function (action) {
+		if (core.status && Array.isArray(core.status.route)) core.status.route.push(action);
+		if (typeof core.replay === "function") core.replay();
 		return true;
 	};
 
-	// 录像回放：执行 "backpack:<payload>" 动作，恢复背包状态并继续回放。
+	/**
+	 * 录像回放：只接受 bp 增量动作。instanceId 找不到、位置冲突或扩容不合法时返回 false，
+	 * 由录像系统按无法识别的错误动作处理，避免静默产生与原录像不同的背包。
+	 */
 	if (core.control && typeof core.control.registerReplayAction === "function") {
-		core.control.registerReplayAction("backpack", function (action) {
-			if (typeof action !== "string" || action.indexOf("backpack:") !== 0) return false;
-			try {
-				const payload = action.substring("backpack:".length);
-				const snapshot = JSON.parse(decodeURIComponent(payload));
-				plugin.restoreBackpackState(snapshot);
-				if (core.status.route && Array.isArray(core.status.route)) {
-					core.status.route.push(action);
-				}
-			} catch (error) {
-				if (console && console.error) console.error("背包状态回放失败", error);
+		core.control.registerReplayAction("bp", function (action) {
+			if (typeof action !== "string" || action.indexOf("bp:") !== 0) return false;
+			readState();
+
+			let matched = action.match(/^bp:-1:(-?\d+):(-?\d+)$/);
+			if (matched) {
+				const cell = fromLogicalCell(Number(matched[1]), Number(matched[2]));
+				if (!unlockBackpackCell(cell.col, cell.row, { recordRoute: false, silent: true })) return false;
+				return finishBackpackReplayAction(action);
 			}
-			if (typeof core.replay === "function") core.replay();
-			return true;
+
+			matched = action.match(/^bp:([^:]+):([ios])$/);
+			if (matched) {
+				const instanceId = matched[1];
+				const operation = matched[2];
+				const entry = findEntry(instanceId);
+				if (!entry) return false;
+				if (operation === "i") return finishBackpackReplayAction(action);
+				if (operation === "o") {
+					if (!state.placed.some(function (placed) { return placed.instanceId === instanceId; })) return false;
+					removeEntryFromLists(instanceId);
+					delete entry.col;
+					delete entry.row;
+					state.inventory.push(entry);
+					persistState();
+					return finishBackpackReplayAction(action);
+				}
+				removeEntryFromLists(instanceId);
+				persistState();
+				core.status.hero.money = Math.floor(Number(core.status.hero.money) || 0) + CONFIG.sellPrice;
+				if (core.updateStatusBar) core.updateStatusBar();
+				return finishBackpackReplayAction(action);
+			}
+
+			matched = action.match(/^bp:([^:]+):m:([0-3]):(-?\d+):(-?\d+)$/);
+			if (!matched) return false;
+			const instanceId = matched[1];
+			const entry = findEntry(instanceId);
+			if (!entry) return false;
+			const rotation = Number(matched[2]) * 90;
+			const cell = fromLogicalCell(Number(matched[3]), Number(matched[4]));
+			if (!canPlace(entry, cell.col, cell.row, rotation, instanceId)) return false;
+			removeEntryFromLists(instanceId);
+			entry.col = cell.col;
+			entry.row = cell.row;
+			entry.rotation = rotation;
+			state.placed.push(entry);
+			persistState();
+			return finishBackpackReplayAction(action);
 		});
 	}
 	}).call(plugin);
