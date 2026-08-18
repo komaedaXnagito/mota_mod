@@ -75,14 +75,19 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			return BUY_COST_BASE + (count - 3) * BUY_COST_STEP;
 		};
 		const getMoney = function () { return toInt(core.status.hero.money); };
+		const randShop = function (num) {
+			if (typeof core.randShop === "function") return core.randShop(num);
+			if (typeof core.rand === "function") return core.rand(num);
+			return num && num > 0 ? Math.floor(Math.random() * num) : Math.random();
+		};
 
 		// ---- 抽卡逻辑 ----
 		const rollRarity = function () {
 			const weights = RARITY_WEIGHTS[getRatio() - 1];
 			let total = 0;
 			weights.forEach(function (w) { total += w; });
-			// 使用样板自带的 core.rand()（基于 __rand__ 种子）：读档后随机序列恢复，货架结果可复现。
-			let r = (typeof core.rand === "function" ? core.rand() : Math.random()) * total;
+			// 使用商店独立的 core.randShop()：读档后随机序列恢复，且不会影响战斗随机数。
+			let r = randShop() * total;
 			for (let i = 0; i < weights.length; i++) {
 				r -= weights[i];
 				if (r <= 0) return i + 1;
@@ -96,9 +101,9 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			});
 			if (!candidates.length) {
 				const all = pool.filter(function (id) { return !!weaponDefs[id]; });
-				return all.length ? all[(typeof core.rand === "function" ? core.rand(all.length) : Math.floor(Math.random() * all.length))] : null;
+				return all.length ? all[randShop(all.length)] : null;
 			}
-			return candidates[(typeof core.rand === "function" ? core.rand(candidates.length) : Math.floor(Math.random() * candidates.length))];
+			return candidates[randShop(candidates.length)];
 		};
 		const rollOne = function () { return rollWeaponOfRarity(rollRarity()); };
 
@@ -117,7 +122,7 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			}
 			const pool = getPool();
 			while (ids.length < SLOT_COUNT && pool.length) {
-				const id = pool[(typeof core.rand === "function" ? core.rand(pool.length) : Math.floor(Math.random() * pool.length))];
+				const id = pool[randShop(pool.length)];
 				ids.push(id);
 			}
 			currentOffer = ids.map(function (id) { return { id: id }; });
@@ -152,12 +157,12 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			const pool = getPool();
 			let fillGuard = 0;
 			while (offer.length < SLOT_COUNT && pool.length && fillGuard++ < 100) {
-				const id = pool[typeof core.rand === "function" ? core.rand(pool.length) : Math.floor(Math.random() * pool.length)];
+				const id = pool[randShop(pool.length)];
 				if (!seen[id]) { seen[id] = true; offer.push({ id: id }); }
 			}
 			// 随机池不足 5 种时允许重复，避免为了“尽量不重复”陷入死循环。
 			while (offer.length < SLOT_COUNT && pool.length) {
-				const id = pool[typeof core.rand === "function" ? core.rand(pool.length) : Math.floor(Math.random() * pool.length)];
+				const id = pool[randShop(pool.length)];
 				offer.push({ id: id });
 			}
 			return offer;
@@ -889,7 +894,7 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 				if (core.drawTip) core.drawTip("随机池为空：flags.randomList 里的武器 ID 均不存在，请检查");
 				return;
 			}
-			// 录制和回放都在打开选择器时生成候选，保证 core.rand() 调用次数完全一致。
+			// 录制和回放都在打开选择器时生成候选，保证 core.randShop() 调用次数完全一致。
 			const offer = createRewardOffer();
 			if (isReplayingNow()) {
 				replayChoiceMode = "reward";

@@ -76,13 +76,46 @@ test("开局地图背包道具使用背包名称和专用图标槽", () => {
 	assert.equal(fs.existsSync(path.join(root, "project/images/backpackSlot.png")), true);
 });
 
-test("MT1 怪物能力初始化使用录像种子随机流", () => {
+test("MT1 怪物能力初始化使用战斗随机流", () => {
 	const floorSource = fs.readFileSync(path.join(root, "project/floors/MT1.js"), "utf8");
 	const initializer = floorSource.match(/给 MT1~MT50 的怪物按首次出现楼层随机加能力[\s\S]*?core\.setEnemy\(id, field, value, null, null, true\)/);
 	assert.ok(initializer, "应能找到怪物随机能力初始化脚本");
-	assert.match(initializer[0], /pool\.splice\(core\.rand\(pool\.length\), 1\)/);
-	assert.match(initializer[0], /1 \+ core\.rand\(3\)/);
+	assert.match(initializer[0], /pool\.splice\(core\.randBattle\(pool\.length\), 1\)/);
+	assert.match(initializer[0], /1 \+ core\.randBattle\(3\)/);
 	assert.doesNotMatch(initializer[0], /Math\.random/);
+});
+
+test("randShop 与 randBattle 使用独立且可存档的确定性随机流", () => {
+	const flags = { __seed__: 246813579, __rand__: 13579 };
+	const nextSeed = (seed) => {
+		seed = (seed % 127773) * 16807 - ~~(seed / 127773) * 2836;
+		return seed + (seed < 0 ? 2147483647 : 0);
+	};
+	const core = {
+		utils: { __next_rand: nextSeed },
+		getFlag(name, defaultValue) { return flags[name] == null ? defaultValue : flags[name]; },
+		setFlag(name, value) { flags[name] = value; }
+	};
+	const context = loadScripts(["project/randomStreams.js"]);
+	context.installGameRandomStreams_5f63c10e_25de_47de_99aa_4d0e300d7a3f(core);
+
+	const firstSeed = nextSeed(flags.__seed__);
+	assert.equal(core.randShop(), firstSeed / 2147483647);
+	assert.equal(flags.__randShop__, firstSeed);
+	assert.equal(flags.__randBattle__, undefined, "商店随机不能推进战斗随机流");
+	assert.equal(flags.__rand__, 13579, "独立随机流不能推进通用 core.rand 状态");
+
+	assert.equal(core.randBattle(), firstSeed / 2147483647);
+	assert.equal(flags.__randBattle__, firstSeed);
+	const secondSeed = nextSeed(firstSeed);
+	assert.equal(core.randShop(10), Math.floor(secondSeed / 2147483647 * 10));
+	assert.equal(flags.__randShop__, secondSeed);
+	assert.equal(flags.__randBattle__, firstSeed, "商店后续随机仍不能推进战斗随机流");
+
+	const mainSource = fs.readFileSync(path.join(root, "main.js"), "utf8");
+	const pluginsSource = fs.readFileSync(path.join(root, "project/plugins.js"), "utf8");
+	assert.match(mainSource, /'randomStreams'/);
+	assert.match(pluginsSource, /installGameRandomStreams_5f63c10e_25de_47de_99aa_4d0e300d7a3f\(core\)/);
 });
 
 test("背包与战斗武器的 hover 按实际占格触发且背包内部格缝保持连续", () => {
@@ -313,7 +346,7 @@ test("商店 choices 录像回放刷新、购买和赠予，并在 bp 动作前�
 		isReplaying() { return true; },
 		getFlag(name, defaultValue) { return flags[name] == null ? defaultValue : flags[name]; },
 		setFlag(name, value) { flags[name] = JSON.parse(JSON.stringify(value)); },
-		rand(max) {
+		randShop(max) {
 			const value = randomIndex++;
 			return max == null ? 0.01 : value % max;
 		},
@@ -825,6 +858,67 @@ test("预计计算即使勇士会先死亡也返回最终数值", () => {
 	}));
 	assert.equal(result.roundsExceeded, false);
 	assert.equal(result.damage, 10000);
+	assert.equal(result.rounds, 3);
+});
+
+test("预计计算使用当前生命与最大生命处理回血和血量条件", () => {
+	const context = loadPure();
+	const kernel = context.backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71;
+	const healingWeapon = makeWeapon({
+		combatRules: [{
+			trigger: "battleStart",
+			effects: [{ type: "heal", target: "self", value: 100 }]
+		}]
+	});
+	const healed = kernel.simulate(makeInput({
+		player: Object.assign({}, makeInput().player, { hp: 50, maxHp: 1000 }),
+		enemy: Object.assign({}, makeInput().enemy, { hp: 20, maxHp: 20, atk: 100 }),
+		weapons: [healingWeapon]
+	}));
+	assert.equal(healed.damage, 0, "50 HP 开战回复至 150，承受 100 后净伤害应为 0");
+	assert.equal(healed.rounds, 2);
+
+	const lowHpWeapon = makeWeapon({
+		combatRules: [{
+			trigger: "beforeAttack",
+			conditions: [{ kind: "hpPercent", target: "self", operator: "lte", value: 0.5 }],
+			effects: [{ type: "modifyAttackDamage", operation: "add", value: 10 }]
+		}]
+	});
+	const lowHp = kernel.simulate(makeInput({
+		player: Object.assign({}, makeInput().player, { hp: 400, maxHp: 1000 }),
+		enemy: Object.assign({}, makeInput().enemy, { hp: 20, maxHp: 20, atk: 0 }),
+		weapons: [lowHpWeapon]
+	}));
+	assert.equal(lowHp.rounds, 1, "当前生命为 40% 时应立即触发半血增伤");
+});
+
+test("预计计算在负生命后继续行动并保留后续自伤", () => {
+	const context = loadPure();
+	const kernel = context.backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71;
+	const selfDamageWeapon = makeWeapon({
+		combatRules: [{
+			trigger: "afterAttack",
+			effects: [{ type: "damageSelf", value: 20 }]
+		}]
+	});
+	const result = kernel.simulate(makeInput({
+		player: Object.assign({}, makeInput().player, { hp: 5, maxHp: 1000 }),
+		enemy: Object.assign({}, makeInput().enemy, { hp: 20, maxHp: 20, atk: 10 }),
+		weapons: [selfDamageWeapon]
+	}));
+	assert.equal(result.roundsExceeded, false);
+	assert.equal(result.rounds, 2, "首回合降到负生命后，第二回合仍应攻击并击杀怪物");
+	assert.equal(result.damage, 50, "负生命期间的敌方伤害和后续自伤都应计入显伤");
+});
+
+test("预计输入保留当前生命，生命变化会进入完整输入缓存键", () => {
+	const battleSource = fs.readFileSync(path.join(root, "project/backpackBattle.js"), "utf8");
+	const kernelSource = fs.readFileSync(path.join(root, "project/backpackBattleEstimateKernel.js"), "utf8");
+	assert.match(battleSource, /hp:\s*hp,[\s\S]*?maxHp:\s*Math\.max\(hp, hpmax\)/);
+	assert.doesNotMatch(battleSource, /hp:\s*forEstimate\s*\?/);
+	assert.doesNotMatch(kernelSource, /ESTIMATE_HP/);
+	assert.match(kernelSource, /initialPlayerHp\s*-\s*state\.player\.hp/);
 });
 
 test("恰好 10000 回合返回数值，进入第 10001 回合才超限", () => {
@@ -1407,7 +1501,7 @@ test("相同随机序列得到完全相同的实际战斗结果", () => {
 	assert.deepEqual(run(123456), run(123456));
 });
 
-test("预计内核与实际战斗按同一 core.rand 种子得到相同随机结果且不推进实际种子", () => {
+test("预计内核与实际战斗按同一 core.randBattle 种子得到相同随机结果且不推进实际种子", () => {
 	const seedStart = 246813579;
 	let actualSeed = seedStart;
 	const nextSeed = (seed) => {
@@ -1415,7 +1509,7 @@ test("预计内核与实际战斗按同一 core.rand 种子得到相同随机结
 		return seed + (seed < 0 ? 2147483647 : 0);
 	};
 	const core = {
-		rand(num) {
+		randBattle(num) {
 			actualSeed = nextSeed(actualSeed);
 			const value = actualSeed / 2147483647;
 			return num && num > 0 ? Math.floor(value * num) : value;
@@ -1473,7 +1567,7 @@ test("预计内核与实际战斗按同一 core.rand 种子得到相同随机结
 	});
 
 	const predicted = kernel.simulate(JSON.parse(JSON.stringify(input)));
-	assert.equal(actualSeed, seedStart, "Worker 预计计算不能推进实际战斗使用的种子");
+	assert.equal(actualSeed, seedStart, "Worker 预计计算不能推进实际 randBattle 种子");
 	let actualResult = null;
 	runtime.start(JSON.parse(JSON.stringify(input)), { onFinish(result) { actualResult = result; } });
 	runtime.stepTicks(100000);
@@ -1562,9 +1656,9 @@ test("预计模块和 Worker 只使用输入种子，不直接读取或回写游
 		forbidden.forEach((token) => assert.equal(source.includes(token), false, `${file} 包含 ${token}`));
 	});
 	const battleSource = fs.readFileSync(path.join(root, "project/backpackBattle.js"), "utf8");
-	assert.match(battleSource, /core\.getFlag\("__rand__", 0\)/);
+	assert.match(battleSource, /core\.getFlag\("__randBattle__", null\)/);
 	assert.match(battleSource, /input\.randomSeed = randomSeed/);
-	assert.doesNotMatch(battleSource, /core\.setFlag\("__rand__"/);
+	assert.doesNotMatch(battleSource, /core\.setFlag\("__randBattle__"/);
 });
 
 test("敌人攻击命中后通过 combatRules 给玩家施加烧伤", () => {

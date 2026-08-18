@@ -11210,6 +11210,9 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 =
 			core.clearMap('animate');
 	}
 },
+	"独立随机数": function () {
+	installGameRandomStreams_5f63c10e_25de_47de_99aa_4d0e300d7a3f(core);
+},
     "武器系统": function () {
 	installBackpackWeaponSystem_41d4dd44_8f7d_4bbc_b890_80db42f1ad76(core, this);
 },

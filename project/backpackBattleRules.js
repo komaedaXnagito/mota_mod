@@ -311,6 +311,11 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		return recovered;
 	};
 
+	var subtractPlayerHp = function (state, amount) {
+		var nextHp = state.player.hp - Math.max(0, toNumber(amount, 0));
+		state.player.hp = fixed(state.allowNegativePlayerHp ? nextHp : Math.max(0, nextHp));
+	};
+
 	var getEffectiveHitRate = function (side, baseHitRate) {
 		return clamp(toNumber(baseHitRate, 1) - getStatusStacks(side, "darkness") * 0.05, 0, 1);
 	};
@@ -837,7 +842,7 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 					/ Math.max(1, Math.floor(toNumber(effect.every, 1))));
 				var selfDamagePer = Math.max(0, Math.floor(toNumber(effect.value, 0)));
 				if (nearbySelfCount > 0 && selfDamagePer > 0) {
-					state.player.hp = fixed(Math.max(0, state.player.hp - nearbySelfCount * selfDamagePer));
+					subtractPlayerHp(state, nearbySelfCount * selfDamagePer);
 					appendLog(state, "自身扣除" + (nearbySelfCount * selfDamagePer) + " HP（附近" + nearbySelfCount + "件匹配）", "damage");
 				}
 			}
@@ -847,7 +852,7 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 				// 自身扣除 HP（如"攻击时：自身hp-20"）；amount 为 effect.value/stacks 数值。
 				var selfDamage = Math.max(0, Math.floor(toNumber(effect.value, 0) + toNumber(effect.stacks, 0)));
 				if (selfDamage > 0) {
-					state.player.hp = fixed(Math.max(0, state.player.hp - selfDamage));
+					subtractPlayerHp(state, selfDamage);
 					appendLog(state, "自身受到 " + selfDamage + " 点自伤", "damage");
 				}
 			}

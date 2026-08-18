@@ -1,9 +1,9 @@
 /**
  * 预计伤害的种子确定性计算内核。
  *
- * 输入只包含战斗快照和当前 core.rand 种子；内核复制同一套 Park-Miller 随机流，
+ * 输入只包含战斗快照和当前 core.randBattle 种子；内核复制同一套 Park-Miller 随机流，
  * 按实际战斗的调用顺序计算命中、伤害、净化、驱散、随机 Buff/Debuff 与概率条件。
- * 随机种子只在本次模拟的局部变量中推进，不会回写游戏的 __rand__ flag。
+ * 随机种子只在本次模拟的局部变量中推进，不会回写游戏的 __randBattle__ flag。
  * 该文件可直接被 Web Worker 加载。
  */
 var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71 = (function () {
@@ -11,7 +11,6 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71 = (functio
 
 	var rules = null;
 	var MAX_TICKS = 1000000;
-	var ESTIMATE_HP = 1000000000000;
 	var getRules = function () {
 		if (!rules) rules = backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87;
 		return rules;
@@ -79,7 +78,7 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71 = (functio
 			},
 			repeatAttack: function (weapon, count) {
 				for (var repeatIndex = 0; repeatIndex < count; repeatIndex++) {
-					if (state.enemy.hp <= 0 || state.player.hp <= 0) break;
+					if (state.enemy.hp <= 0) break;
 					attackWeapon(weapon, { origin: "ultimate", ultimateMode: "costOnly", suppressLinkage: false });
 				}
 			},
@@ -177,9 +176,10 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71 = (functio
 		getRules();
 		var simulationInput = rules.clone(input || {});
 		simulationInput.player = simulationInput.player || {};
-		simulationInput.player.hp = ESTIMATE_HP;
-		simulationInput.player.maxHp = ESTIMATE_HP;
 		var state = rules.createBattleState(simulationInput);
+		var initialPlayerHp = state.player.hp;
+		// 显伤需要算完整场战斗；勇士生命降到 0 以下后仍继续行动，直到击杀怪物或达到回合上限。
+		state.allowNegativePlayerHp = true;
 		state.rngCallCount = 0;
 		var random = createSeededRandom(simulationInput.randomSeed, state);
 		var ultimateResolving = false;
@@ -216,7 +216,7 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71 = (functio
 		};
 
 		var attackWeapon = function (weapon, options) {
-			if (state.enemy.hp <= 0 || state.player.hp <= 0) return { attacked: false, hit: false };
+			if (state.enemy.hp <= 0) return { attacked: false, hit: false };
 			options = normalizeAttackOptions(options);
 			var ultimateChange = rules.getUltimateGain(state.player, weapon.attributes.ultimateGain, state);
 			if (!canPayWeaponUltimate(weapon, options)) return { attacked: false, hit: false };
@@ -296,7 +296,7 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71 = (functio
 			if (ultimateResolving || state.ultimateDisabled) return;
 			ultimateResolving = true;
 			var guard = 0;
-			while (state.player.ultimate >= 100 && state.enemy.hp > 0 && state.player.hp > 0 && guard++ < 1000) {
+			while (state.player.ultimate >= 100 && state.enemy.hp > 0 && guard++ < 1000) {
 				state.player.ultimate = rules.fixed(state.player.ultimate - 100);
 				state.weapons.forEach(function (weapon) {
 					if (state.enemy.hp > 0 && rules.getWeaponIntervalTicks(state, weapon) > 0
@@ -321,7 +321,7 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71 = (functio
 			if (enemyUltimateResolving || state.ultimateDisabled) return;
 			enemyUltimateResolving = true;
 			var guard = 0;
-			while (state.enemy.ultimate >= 100 && state.enemy.hp > 0 && state.player.hp > 0 && guard++ < 1000) {
+			while (state.enemy.ultimate >= 100 && state.enemy.hp > 0 && guard++ < 1000) {
 				state.enemy.ultimate = rules.fixed(state.enemy.ultimate - 100);
 				attackEnemy({ origin: "ultimate", gainUltimate: false });
 				attackEnemy({ origin: "ultimate", gainUltimate: false });
@@ -452,7 +452,7 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71 = (functio
 		}
 
 		return {
-			damage: rules.fixed(Math.max(0, ESTIMATE_HP - state.player.hp)),
+			damage: rules.fixed(Math.max(0, initialPlayerHp - state.player.hp)),
 			rounds: rules.fixed(state.tick / 100),
 			ticks: state.tick,
 			rngCallCount: state.rngCallCount,

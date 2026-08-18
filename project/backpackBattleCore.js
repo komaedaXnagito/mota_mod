@@ -1,7 +1,7 @@
 /**
  * 背包乱斗实际战斗运行时。
  *
- * 该文件只在安装时接收 core；所有玩法随机行为统一经 core.rand()，逻辑 Tick 与渲染帧分离。
+ * 该文件只在安装时接收 core；所有战斗随机行为统一经 core.randBattle()，逻辑 Tick 与渲染帧分离。
  */
 var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function (core) {
 	"use strict";
@@ -17,6 +17,10 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 	var speedStorageKey = "backpackBattleSpeed";
 	var instantSpeedValue = "instant";
 	var validSpeeds = [0.25, 0.5, 1, 2, 3, 10];
+	var randBattle = function (num) {
+		if (typeof core.randBattle === "function") return core.randBattle(num);
+		return core.rand(num);
+	};
 
 	var normalizeSpeed = function (speed, fallback) {
 		speed = Number(speed);
@@ -48,7 +52,7 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 	var gameRandom = {
 		next: function () {
 			if (state) state.rngCallCount++;
-			return core.rand();
+			return randBattle();
 		},
 		int: function (minimum, maximum) {
 			minimum = Math.ceil(Number(minimum) || 0);
@@ -59,7 +63,7 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 				maximum = temporary;
 			}
 			if (state) state.rngCallCount++;
-			return minimum + core.rand(maximum - minimum + 1);
+			return minimum + randBattle(maximum - minimum + 1);
 		},
 		pick: function (list) {
 			if (!Array.isArray(list) || !list.length) return null;

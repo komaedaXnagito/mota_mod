@@ -10,7 +10,7 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 	var activeBattleContext = null;
 	var lastLayoutSignature = null;
 	var EVENT_ID = "backpackBattle";
-	var BATTLE_RULE_VERSION = 4;
+	var BATTLE_RULE_VERSION = 5;
 	var WEAPON_CONFIG_VERSION = 1;
 
 	var clone = function (value) {
@@ -52,15 +52,15 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 		});
 	};
 
-	var getHeroSnapshot = function (forEstimate) {
+	var getHeroSnapshot = function () {
 		var hero = core.status.hero || {};
 		var hp = Math.max(0, Number(core.getRealStatus ? core.getRealStatus("hp") : hero.hp) || 0);
 		var hpmax = Number(core.getRealStatus ? core.getRealStatus("hpmax") : hero.hpmax);
 		if (!Number.isFinite(hpmax) || hpmax <= 0) hpmax = hp;
 		return {
 			name: hero.name || "勇士",
-			hp: forEstimate ? 0 : hp,
-			maxHp: forEstimate ? 0 : Math.max(hp, hpmax),
+			hp: hp,
+			maxHp: Math.max(hp, hpmax),
 			atk: Math.max(0, Number(core.getRealStatus ? core.getRealStatus("atk") : hero.atk) || 0),
 			def: Math.max(0, Number(core.getRealStatus ? core.getRealStatus("def") : hero.def) || 0),
 			hitRate: 1,
@@ -391,7 +391,7 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 
 	var createBattleInput = function (enemyId, x, y, floorId, forEstimate) {
 		floorId = floorId || core.status.floorId;
-		var player = getHeroSnapshot(forEstimate);
+		var player = getHeroSnapshot();
 		return {
 			version: BATTLE_RULE_VERSION,
 			player: player,
@@ -416,19 +416,26 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 		}
 	};
 
+	var getBattleRandomSeed = function () {
+		var seed = core.getFlag("__randBattle__", null);
+		if (seed == null) seed = core.getFlag("__seed__", core.getFlag("__rand__", 0));
+		seed = Math.floor(Number(seed));
+		return Number.isFinite(seed) ? seed : 0;
+	};
+
 	var version = (typeof main !== "undefined" && main.version) ? main.version : "1";
 	var estimate = createBackpackBattleEstimateCoordinator_f43e0d5b_629e_457c_9540_b3f0d0541ffc({
 		workerUrl: "project/workers/backpackBattleEstimateWorker.js?v=" + encodeURIComponent(version),
 		maximumCacheSize: 256,
 		createInput: function (enemyId, x, y, floorId) {
-			var randomSeed = Math.floor(Number(core.getFlag("__rand__", 0)) || 0);
+			var randomSeed = getBattleRandomSeed();
 			var input = createBattleInput(enemyId, x, y, floorId, true);
 			input.randomSeed = randomSeed;
 			return {
 				battleRuleVersion: BATTLE_RULE_VERSION,
 				weaponConfigVersion: WEAPON_CONFIG_VERSION,
 				randomSeed: randomSeed,
-				currentHp: Math.max(0, Number((core.status.hero || {}).hp) || 0),
+				currentHp: input.player.hp,
 				input: input
 			};
 		},
