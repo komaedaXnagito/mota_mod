@@ -791,6 +791,65 @@ test("打扰一下对区域内每把武器固定减0.2间隔，不乘区域武�
 	assert.equal(source.synergyRules[0].effects[0].perMatch, undefined);
 });
 
+test("作用于匹配对象的固定联动不按匹配数量重复叠加", () => {
+	const core = {
+		material: { items: {} },
+		clone(value) { return value == null ? value : JSON.parse(JSON.stringify(value)); }
+	};
+	const context = loadScripts([
+		"project/backpackWeaponSynergy.js",
+		"project/weapons.js",
+		"project/backpackWeaponSystem.js"
+	], { core });
+	const plugin = {};
+	context.installBackpackWeaponSystem_41d4dd44_8f7d_4bbc_b890_80db42f1ad76(core, plugin);
+	const cases = [
+		{ id: "I402", name: "圣诞炒锅", targetTypes: ["食物"], expectedInterval: 0.9, expectedAttack: 10 },
+		{ id: "I425", name: "神意之盾", targetTypes: ["剑"], expectedInterval: 0.8, expectedAttack: 13 },
+		{ id: "I516", name: "森人之证", targetTypes: ["动物"], expectedInterval: 0.9, expectedAttack: 10 },
+		{ id: "I538", name: "巴哈姆特之盾", targetTypes: ["剑"], expectedInterval: 0.9, expectedAttack: 10 }
+	];
+	const target = (instanceId, col, row, weaponTypes) => ({
+		instanceId, col, row, rotation: 0,
+		weapon: {
+			id: instanceId, name: instanceId, cells: [[0, 0]], weaponTypes,
+			minAttack: 10, maxAttack: 10, hitRate: 1, attackInterval: 1, ultimateGain: 0
+		}
+	});
+
+	cases.forEach((testCase) => {
+		const source = plugin.weaponSystem.normalizeWeapon(plugin.weaponSystem.getDefinition(testCase.id));
+		const sourceEntry = { instanceId: testCase.id, col: 10, row: 10, rotation: 0, weapon: source };
+		const affectedCells = plugin.weaponSystem.getSynergyCells(sourceEntry).slice(0, 2);
+		assert.equal(affectedCells.length, 2, testCase.name + "应至少具有两个可测试的联动格");
+		const targetEntries = affectedCells.map((cell, index) => target(
+			testCase.id + "Target" + index,
+			cell.col,
+			cell.row,
+			testCase.targetTypes
+		));
+		const result = plugin.weaponSystem.calculateAttributes([sourceEntry].concat(targetEntries));
+
+		targetEntries.forEach((entry) => {
+			const attributes = result.byInstanceId[entry.instanceId];
+			assert.equal(attributes.attackInterval, testCase.expectedInterval,
+				testCase.name + "应对每个匹配对象只应用一层间隔效果");
+			assert.equal(attributes.minAttack, testCase.expectedAttack,
+				testCase.name + "应对每个匹配对象只应用一层伤害效果");
+		});
+		const matchedEffects = source.synergyRules.flatMap((rule) => rule.effects || [])
+			.filter((effect) => effect.target === "matches");
+		matchedEffects.forEach((effect) => assert.equal(effect.perMatch, undefined,
+			testCase.name + "作用于 matches 的固定效果不应设置 perMatch"));
+	});
+
+	const forestCertificate = plugin.weaponSystem.normalizeWeapon(plugin.weaponSystem.getDefinition("I516"));
+	const forestEffect = forestCertificate.synergyRules[0].effects[0];
+	assert.match(forestCertificate.synergyText, /使用间隔 -0\.1/);
+	assert.equal(forestEffect.operation, "add");
+	assert.equal(forestEffect.value, -0.1);
+});
+
 test("预计伤害按 core.rand 同算法从当前种子计算真实命中与伤害", () => {
 	const context = loadPure();
 	const kernel = context.backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71;

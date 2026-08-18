@@ -1266,8 +1266,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"conditionId": "nearbyFoods2",
 						"stat": "attackInterval",
 						"operation": "add",
-						"value": -0.1,
-						"perMatch": true
+						"value": -0.1
 					}
 				]
 			}
@@ -3183,16 +3182,14 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"conditionId": "nearbyWeapons",
 						"stat": "attackInterval",
 						"operation": "add",
-						"value": -0.2,
-						"perMatch": true
+						"value": -0.2
 					},
 					{
 						"target": "matches",
 						"conditionId": "nearbyWeapons",
 						"stat": "attack",
 						"operation": "add",
-						"value": 3,
-						"perMatch": true
+						"value": 3
 					}
 				]
 			}
@@ -4477,7 +4474,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			"道具"
 		],
 		"attackInterval": 5,
-		"synergyText": "森林兽王的证明，持有本证明时，可获得动物\n攻击命中时：每有1个配置在∧的动物，自身随机获得1个强化效果\n配置在∧的动物的使用间隔 -10%",
+		"synergyText": "森林兽王的证明，持有本证明时，可获得动物\n攻击命中时：每有1个配置在∧的动物，自身随机获得1个强化效果\n配置在∧的动物的使用间隔 -0.1",
 		"combatRules": [
 			{
 				"trigger": "afterHit",
@@ -4532,9 +4529,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"target": "matches",
 						"conditionId": "nearbyAnimals",
 						"stat": "attackInterval",
-						"operation": "multiply",
-						"value": 0.9,
-						"perMatch": true
+						"operation": "add",
+						"value": -0.1
 					}
 				]
 			}
@@ -6038,8 +6034,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"conditionId": "sideWeapons",
 						"stat": "attackInterval",
 						"operation": "add",
-						"value": -0.1,
-						"perMatch": true
+						"value": -0.1
 					}
 				]
 			}
