@@ -76,6 +76,15 @@ test("开局地图背包道具使用背包名称和专用图标槽", () => {
 	assert.equal(fs.existsSync(path.join(root, "project/images/backpackSlot.png")), true);
 });
 
+test("MT1 怪物能力初始化使用录像种子随机流", () => {
+	const floorSource = fs.readFileSync(path.join(root, "project/floors/MT1.js"), "utf8");
+	const initializer = floorSource.match(/给 MT1~MT50 的怪物按首次出现楼层随机加能力[\s\S]*?core\.setEnemy\(id, field, value, null, null, true\)/);
+	assert.ok(initializer, "应能找到怪物随机能力初始化脚本");
+	assert.match(initializer[0], /pool\.splice\(core\.rand\(pool\.length\), 1\)/);
+	assert.match(initializer[0], /1 \+ core\.rand\(3\)/);
+	assert.doesNotMatch(initializer[0], /Math\.random/);
+});
+
 test("背包与战斗武器的 hover 按实际占格触发且背包内部格缝保持连续", () => {
 	const battleUiSource = fs.readFileSync(path.join(root, "project/backpackBattleUI.js"), "utf8");
 	const backpackSource = fs.readFileSync(path.join(root, "project/backpackSystem.js"), "utf8");
