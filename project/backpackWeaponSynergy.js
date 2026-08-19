@@ -131,6 +131,7 @@ var backpackWeaponSynergy_91f4c21e_7d37_4f12_9cc4_a9606ba62a83 = (function () {
 						|| effect.type === "nearbyApplyStatus"
 						|| effect.type === "nearbyMaxHpBonus"
 						|| effect.type === "nearbyDamageSelf"
+						|| effect.type === "nearbyChanceBonus"
 						|| (effect.type === "modifyWeaponStat" && effect.weaponTarget === "nearby")
 						|| (effect.type === "statusDamageBonus" && effect.scope === "nearby"))) {
 					result.push({

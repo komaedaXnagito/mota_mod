@@ -734,10 +734,13 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 				return compare(totalDebuffStacks, condition.operator || "gte", toNumber(condition.value, 10));
 			}
 			if (condition.kind === "chance") {
-				// 概率条件：base + 附近匹配武器数 × nearbyBonus；战斗与预估均经 handlers.rollChance 掷骰。
+				// 概率条件：base + 附近匹配武器数 × nearbyBonus + 来自 nearbyChanceBonus 的登记加成；
+				// 战斗与预估均经 handlers.rollChance 掷骰。
 				if (!handlers || !handlers.rollChance) return true;
 				var chance = toNumber(condition.base, 0)
-					+ countNearbyWeapons(state, weapon, condition) * toNumber(condition.nearbyBonus, 0);
+					+ countNearbyWeapons(state, weapon, condition) * toNumber(condition.nearbyBonus, 0)
+					+ (state.weaponChanceBonus && state.weaponChanceBonus[weapon.instanceId]
+						? state.weaponChanceBonus[weapon.instanceId] : 0);
 				return handlers.rollChance(clamp(chance, 0, 1));
 			}
 			if (condition.kind === "linkedWeapon") {
@@ -845,6 +848,18 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 				if (nearbySelfCount > 0 && selfDamagePer > 0) {
 					subtractPlayerHp(state, nearbySelfCount * selfDamagePer);
 					appendLog(state, "自身扣除" + (nearbySelfCount * selfDamagePer) + " HP（附近" + nearbySelfCount + "件匹配）", "damage");
+				}
+			}
+			else if (effect.type === "nearbyChanceBonus") {
+				// 给附近匹配武器登记概率加成（如"∧内的盾牌触发被攻击效果的概率+20%"）；
+				// chance 条件掷骰时叠加读取（state.weaponChanceBonus[instanceId]），battleStart 一次性结算。
+				var chanceBonusList = findNearbyWeapons(state, weapon, effect);
+				var chanceBonusVal = toNumber(effect.value, 0);
+				if (chanceBonusList.length && chanceBonusVal) {
+					if (!state.weaponChanceBonus) state.weaponChanceBonus = {};
+					chanceBonusList.forEach(function (w) {
+						state.weaponChanceBonus[w.instanceId] = (state.weaponChanceBonus[w.instanceId] || 0) + chanceBonusVal;
+					});
 				}
 			}
 			else if (effect.type === "removeStatus") removeStatusStacks(getSide(state, targetKey), effect.status, amount);
@@ -1073,6 +1088,14 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 			}
 			else if (effect.type === "modifyAttackDamage" && context.minimumDamage != null) {
 				var modifierValue = toNumber(effect.value, 0);
+				// 支持按目标状态层数动态计算（如"奥义发动时：敌方每有1层冰结，本次伤害+2"：
+				// stacksFrom: true 时读取 effect.target（默认 opponent）身上 effect.status 的层数 × value）。
+				if (effect.stacksFrom && effect.status) {
+					var stacksTargetKey = effect.stacksFrom === true || effect.stacksFrom === "target"
+						? (effect.target || "opponent") : String(effect.stacksFrom);
+					var stacksSide = getSide(state, resolveSideKey(stacksTargetKey, context.sourceSide));
+					if (stacksSide) modifierValue *= getStatusStacks(stacksSide, String(effect.status));
+				}
 				if (effect.operation === "multiply") {
 					context.minimumDamage = fixed(context.minimumDamage * modifierValue);
 					context.maximumDamage = fixed(context.maximumDamage * modifierValue);
@@ -1088,7 +1111,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 			else if (effect.type === "modifyWeaponStat") {
 				var recipients;
 				if (effect.weaponTarget === "all") {
-					recipients = state.weapons;
+					// 全局：所有（可被 filter 过滤的）武器，如"所有铳和斧伤害+3"。
+					recipients = state.weapons.filter(function (w) { return matchesFilter(w, effect.filter); });
 				} else if (effect.weaponTarget === "nearby") {
 					// 本武器 + 附近匹配武器（directions/distance/filter 从 effect 读取，严格正交）。
 					recipients = [weapon].concat(findNearbyWeapons(state, weapon, effect));

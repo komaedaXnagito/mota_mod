@@ -152,10 +152,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"target": "enemy",
 						"status": "burn",
 						"every": 2,
-						"value": 1,
-						"weaponTypes": [
-							"你的武器类型"
-						]
+						"value": 1
 					}
 				]
 			}
@@ -258,19 +255,21 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"拳"
 		],
-		"combatRules": {
-			"id": "hitAddsBurn",
-			"trigger": "afterHit",
-			"conditions": [],
-			"effects": [
-				{
-					"type": "applyStatus",
-					"target": "opponent",
-					"status": "burn",
-					"stacks": 1
-				}
-			]
-		},
+		"combatRules": [
+			{
+				"id": "hitAddsBurn",
+				"trigger": "afterHit",
+				"conditions": [],
+				"effects": [
+					{
+						"type": "applyStatus",
+						"target": "opponent",
+						"status": "burn",
+						"stacks": 1
+					}
+				]
+			}
+		],
 		"synergyText": "攻击命中时：敌方烧伤+1"
 	},
 	"I388": {
@@ -965,19 +964,21 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"铳"
 		],
-		"combatRules": {
-			"id": "hitAddsExhaustion",
-			"trigger": "afterHit",
-			"conditions": [],
-			"effects": [
-				{
-					"type": "applyStatus",
-					"target": "opponent",
-					"status": "exhaustion",
-					"stacks": 1
-				}
-			]
-		},
+		"combatRules": [
+			{
+				"id": "hitAddsExhaustion",
+				"trigger": "afterHit",
+				"conditions": [],
+				"effects": [
+					{
+						"type": "applyStatus",
+						"target": "opponent",
+						"status": "exhaustion",
+						"stacks": 1
+					}
+				]
+			}
+		],
 		"synergyText": "攻击命中时：敌方虚脱+1"
 	},
 	"I399": {
@@ -1753,7 +1754,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"精灵"
 		],
-		"synergyText": "战斗开始时，周围每有一把武器或精灵，使敌人烧伤+2",
+		"synergyText": "攻击时：敌方拥有10层以上火伤时，驱散敌方1个强化效果\n攻击命中时：敌方火伤 +2\n自身拥有5层以上刻印时，造成的伤害无视盾牌效果",
 		"combatRules": [
 			{
 				"id": "burn10Dispel",
@@ -2372,7 +2373,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"铳"
 		],
-		"synergyText": "攻击命中时：敌方黑暗+1\n∧内的盾牌触发被攻击效果时：本武器伤害+2、使用间隔-0.3",
+		"synergyText": "攻击命中时：敌方黑暗+1\n被攻击时：∧内的每配置一个盾牌，本武器伤害+2、使用间隔-0.3",
 		"combatRules": [
 			{
 				"id": "hitDarkness1",
@@ -2571,21 +2572,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"synergyText": "战斗开始时：∧内的武器攻击次数+1",
 		"combatRules": [
 			{
-				"id": "hitDarkness1",
-				"trigger": "afterHit",
-				"effects": [
-					{
-						"type": "applyStatus",
-						"target": "opponent",
-						"status": "darkness",
-						"stacks": 1
-					}
-				]
-			},
-			{
-				"id": "addExtraAttackToNearbyOnce",
-				"trigger": "beforeAttack",
-				"once": true,
+				"id": "battleStartNearbyExtraAttack",
+				"trigger": "battleStart",
 				"effects": [
 					{
 						"type": "addExtraAttack",
@@ -3158,7 +3146,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"盾"
 		],
-		"synergyText": "被攻击时：20%概率使受到的伤害-10，并使敌方耐力-0.4\n∧内的武器攻击时：自身格挡+2\n∧内的武器使用间隔-0.2、伤害+3",
+		"synergyText": "被攻击时：20%概率使受到的伤害-10\n∧内的武器攻击时：自身格挡+2\n∧内的武器使用间隔-0.2、伤害+3",
 		"synergyRules": [
 			{
 				"id": "nearbyWeaponBoost",
@@ -6122,7 +6110,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			},
 			{
-				"id": "ultimateGuitarExtraAttack",
+				"id": "guitarUltimateExtraAttack",
 				"trigger": "beforeAttack",
 				"conditions": [
 					{
@@ -6135,6 +6123,21 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"status": "excitation",
 						"operator": "gte",
 						"value": 15
+					},
+					{
+						"kind": "linkedWeapon",
+						"directions": [
+							"up",
+							"down",
+							"left",
+							"right"
+						],
+						"distance": 1,
+						"filter": {
+							"weaponTypes": [
+								"吉他"
+							]
+						}
 					}
 				],
 				"effects": [
@@ -6260,6 +6263,19 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		],
 		"combatRules": [
 			{
+				"id": "hitBurn1",
+				"trigger": "afterHit",
+				"effects": [
+					{
+						"type": "applyStatus",
+						"target": "opponent",
+						"status": "burn",
+						"stacks": 1
+					}
+				]
+			},
+			{
+				"id": "ultimateBurn10Damage",
 				"trigger": "beforeAttack",
 				"conditions": [
 					{
@@ -6742,7 +6758,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"精灵"
 		],
-		"synergyText": "本武器攻击次数为6\n自身刻印达到5层时：本武器伤害+5，且造成的伤害无视敌方格挡\n攻击时：自身HP-5",
+		"synergyText": "战斗开始时，自身刻印+1\n本武器攻击次数为6\n自身刻印达到5层时：本武器伤害+5，且造成的伤害无视敌方格挡\n攻击时：自身HP-5",
 		"combatRules": [
 			{
 				"id": "battleStartMark",
@@ -7205,36 +7221,15 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"synergyText": "攻击时：自身再生+1\n∧内每有1个食物，本武器使用间隔-0.1",
 		"combatRules": [
 			{
-				"id": "foodIntervalReduce",
-				"trigger": "layout",
-				"conditions": [
-					{
-						"id": "nearbyFoods",
-						"kind": "nearby",
-						"relation": "orthogonal",
-						"directions": [
-							"up",
-							"down",
-							"left",
-							"right"
-						],
-						"distance": 1,
-						"filter": {
-							"weaponTypes": [
-								"食物"
-							]
-						},
-						"min": 1
-					}
-				],
+				"id": "attackRegen1",
+				"trigger": "afterAttack",
+				"conditions": [],
 				"effects": [
 					{
+						"type": "applyStatus",
 						"target": "self",
-						"stat": "attackInterval",
-						"operation": "add",
-						"value": -0.1,
-						"perMatch": true,
-						"conditionId": "nearbyFoods"
+						"status": "regeneration",
+						"stacks": 1
 					}
 				]
 			}
@@ -7967,12 +7962,11 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		],
 		"combatRules": [
 			{
-				"trigger": "beforeReceiveDamage",
-				"conditions": [
+				"trigger": "battleStart",
+				"effects": [
 					{
-						"kind": "chance",
-						"base": 0,
-						"nearbyBonus": 0.2,
+						"type": "nearbyChanceBonus",
+						"value": 0.2,
 						"directions": [
 							"up",
 							"down",
@@ -7986,11 +7980,31 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 							]
 						}
 					}
-				],
+				]
+			},
+			{
+				"trigger": "battleStart",
+				"effects": [
+					{
+						"type": "modifyWeaponStat",
+						"weaponTarget": "all",
+						"stat": "damage",
+						"operation": "add",
+						"value": 3,
+						"filter": {
+							"weaponTypes": [
+								"铳",
+								"斧"
+							]
+						}
+					}
+				]
+			},
+			{
+				"trigger": "afterTakeDamage",
 				"effects": [
 					{
 						"type": "nearbyApplyStatus",
-						"id": "shieldBlock",
 						"target": "self",
 						"status": "block",
 						"stacks": 2,
@@ -8010,7 +8024,6 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 					},
 					{
 						"type": "nearbyApplyStatus",
-						"id": "shieldHigh",
 						"target": "self",
 						"status": "highSpirit",
 						"stacks": 1,
@@ -8032,35 +8045,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			}
 		],
 		"synergyText": "盾骑士的证书，最坚实的城墙！\n∧内的盾牌触发被攻击效果的概率+20%\n所有铳和斧伤害+3\n被攻击时：∧内每有1个盾牌，自身格挡+2、高扬+1",
-		"synergyRules": [
-			{
-				"id": "allAxeGunDamageUp",
-				"trigger": "layout",
-				"conditions": [
-					{
-						"id": "axeGunWeapons",
-						"kind": "count",
-						"filter": {
-							"weaponTypes": [
-								"斧",
-								"铳"
-							]
-						},
-						"includeSelf": true,
-						"min": 1
-					}
-				],
-				"effects": [
-					{
-						"target": "matches",
-						"conditionId": "axeGunWeapons",
-						"stat": "attack",
-						"operation": "add",
-						"value": 3
-					}
-				]
-			}
-		]
+		"synergyRules": null
 	},
 	"I569": {
 		"id": "石像鬼之刃",
@@ -8531,7 +8516,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"饮料"
 		],
-		"synergyText": "自身HP低于50时：回复30HP、随机净化1个弱体效果，并立即发动∧内的饮料效果（每场战斗仅触发1次）",
+		"synergyText": "自身HP低于50%时：回复30HP、随机净化1个弱体效果，并立即发动∧内的饮料效果（每场战斗仅触发1次）",
 		"combatRules": [
 			{
 				"id": "lowHpHealCleanseDrink",
@@ -8809,28 +8794,26 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"ultimateGain": 3,
 		"combatRules": [
 			{
-				"id": "hitIce1",
 				"trigger": "afterHit",
 				"effects": [
 					{
 						"type": "applyStatus",
-						"target": "opponent",
+						"target": "enemy",
 						"status": "ice",
 						"stacks": 1
 					}
 				]
 			},
 			{
-				"id": "iceDamageBonus",
-				"trigger": "battleStart",
+				"trigger": "afterUltimate",
 				"effects": [
 					{
-						"type": "statusDamageBonus",
-						"id": "iceBonus",
+						"type": "modifyAttackDamage",
+						"operation": "add",
+						"value": 2,
 						"target": "enemy",
-						"status": "ice",
-						"every": 1,
-						"value": 2
+						"stacksFrom": true,
+						"status": "ice"
 					}
 				]
 			}
@@ -9267,6 +9250,42 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"type": "heal",
 						"target": "self",
 						"value": 15
+					},
+					{
+						"type": "cleanseOneDebuff",
+						"target": "self"
+					},
+					{
+						"type": "cleanseOneDebuff",
+						"target": "self"
+					},
+					{
+						"type": "cleanseOneDebuff",
+						"target": "self"
+					},
+					{
+						"type": "cleanseOneDebuff",
+						"target": "self"
+					},
+					{
+						"type": "cleanseOneDebuff",
+						"target": "self"
+					},
+					{
+						"type": "cleanseOneDebuff",
+						"target": "self"
+					},
+					{
+						"type": "cleanseOneDebuff",
+						"target": "self"
+					},
+					{
+						"type": "cleanseOneDebuff",
+						"target": "self"
+					},
+					{
+						"type": "cleanseOneDebuff",
+						"target": "self"
 					},
 					{
 						"type": "cleanseOneDebuff",

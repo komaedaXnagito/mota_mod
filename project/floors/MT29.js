@@ -51,7 +51,12 @@ main.floors.MT29=
                                                 "name": "item:I560",
                                                 "operator": "+=",
                                                 "value": "1"
-                                            }
+                                            },
+                                            {
+                                                "type": "function",
+                                                "function": "function(){\ncore.push(flags.randomList, ['I559', 'I416', 'I537', 'I548'])\n}"
+                                            },
+                                            "\t[小妖精,fairy]现在商店和盲盒可以获取狂战专属的‘斧’类武器了"
                                         ]
                                     },
                                     {
