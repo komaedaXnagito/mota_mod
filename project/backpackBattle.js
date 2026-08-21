@@ -4,6 +4,57 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 
 	var rules = backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87;
 	var statusRegistry = backpackBattleStatusDefinitions_7d94f05e_2f6d_4b8e_9c23_5a317ccab120;
+	var debugLogEntries = [];
+	var debugLogSequence = 0;
+	var debugSessionStartedAt = null;
+	var cloneDebugValue = function (value) {
+		try { return JSON.parse(JSON.stringify(value)); }
+		catch (error) { return { serializationError: error.message || String(error) }; }
+	};
+	var recordBackpackBattleDebugLog = function (phase, payload) {
+		var entry = cloneDebugValue(payload || {});
+		var replay = core.status && core.status.replay || {};
+		entry.logIndex = ++debugLogSequence;
+		entry.recordedAt = new Date().toISOString();
+		entry.sessionStartedAt = debugSessionStartedAt;
+		entry.phase = String(phase || entry.phase || "debug");
+		entry.replaying = replay.replaying === true;
+		entry.replayStep = replay.steps == null ? null : replay.steps;
+		entry.replayRemainingActions = Array.isArray(replay.toReplay) ? replay.toReplay.length : null;
+		entry.routeLength = core.status && Array.isArray(core.status.route) ? core.status.route.length : null;
+		debugLogEntries.push(entry);
+		if (typeof console !== "undefined" && typeof console.log === "function") {
+			console.log("[背包战斗调试][" + entry.phase + "]", entry);
+		}
+		return cloneDebugValue(entry);
+	};
+	var clearBackpackBattleDebugLog = function () {
+		debugLogEntries = [];
+		debugLogSequence = 0;
+		debugSessionStartedAt = new Date().toISOString();
+		return true;
+	};
+	var getBackpackBattleDebugLog = function () {
+		return cloneDebugValue(debugLogEntries);
+	};
+	var downloadBackpackBattleDebugLog = function (filename) {
+		if (!debugLogEntries.length) {
+			if (core.drawTip) core.drawTip("当前没有背包战斗调试日志");
+			return false;
+		}
+		var stamp = core.formatDate2 ? core.formatDate2(new Date()) : String(Date.now());
+		filename = filename || ((core.firstData && core.firstData.name || "backpack-battle")
+			+ "_背包战斗调试日志_" + stamp + ".jsonl");
+		var content = debugLogEntries.map(function (entry) { return JSON.stringify(entry); }).join("\n");
+		core.download(filename, content);
+		return true;
+	};
+	plugin.recordBackpackBattleDebugLog = recordBackpackBattleDebugLog;
+	plugin.clearBackpackBattleDebugLog = clearBackpackBattleDebugLog;
+	plugin.getBackpackBattleDebugLog = getBackpackBattleDebugLog;
+	plugin.downloadBackpackBattleDebugLog = downloadBackpackBattleDebugLog;
+	clearBackpackBattleDebugLog();
+
 	var runtime = createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc(core);
 	var battleUi = createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2(core, runtime);
 	var pendingSettlement = null;
@@ -755,6 +806,56 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 		return originalResetGame.apply(this, arguments);
 	};
 
+	var getReplayDebugDetails = function (extra) {
+		var replay = core.status && core.status.replay || {};
+		var details = {
+			battleRandomSequence: core.getFlag ? core.getFlag("__randBattle__", null) : null,
+			replayIndex: replay.steps == null ? null : replay.steps,
+			remainingActions: Array.isArray(replay.toReplay) ? replay.toReplay.length : null
+		};
+		Object.keys(extra || {}).forEach(function (key) { details[key] = extra[key]; });
+		return details;
+	};
+	var originalStartReplay = core.control && core.control.startReplay;
+	var originalStopReplay = core.control && core.control.stopReplay;
+	var originalReplayFinished = core.control && core.control._replay_finished;
+	var originalReplayError = core.control && core.control._replay_error;
+	var wrappedStartReplay = null;
+	var wrappedStopReplay = null;
+	var wrappedReplayFinished = null;
+	var wrappedReplayError = null;
+	if (typeof originalStartReplay === "function") {
+		wrappedStartReplay = function (list) {
+			clearBackpackBattleDebugLog();
+			recordBackpackBattleDebugLog("录像播放开始", getReplayDebugDetails({
+				replayActionCount: Array.isArray(list) ? list.length : null
+			}));
+			return originalStartReplay.apply(this, arguments);
+		};
+		core.control.startReplay = wrappedStartReplay;
+	}
+	if (typeof originalStopReplay === "function") {
+		wrappedStopReplay = function (force) {
+			recordBackpackBattleDebugLog("录像播放停止", getReplayDebugDetails({ force: force === true }));
+			return originalStopReplay.apply(this, arguments);
+		};
+		core.control.stopReplay = wrappedStopReplay;
+	}
+	if (typeof originalReplayFinished === "function") {
+		wrappedReplayFinished = function () {
+			recordBackpackBattleDebugLog("录像播放完成", getReplayDebugDetails());
+			return originalReplayFinished.apply(this, arguments);
+		};
+		core.control._replay_finished = wrappedReplayFinished;
+	}
+	if (typeof originalReplayError === "function") {
+		wrappedReplayError = function (action) {
+			recordBackpackBattleDebugLog("录像播放失败", getReplayDebugDetails({ action: action }));
+			return originalReplayError.apply(this, arguments);
+		};
+		core.control._replay_error = wrappedReplayError;
+	}
+
 	var cleanup = function () {
 		pendingSettlement = null;
 		activeBattleContext = null;
@@ -762,6 +863,12 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 		battleUi.destroy();
 		runtime.destroy();
 		estimate.destroy();
+		if (core.control) {
+			if (core.control.startReplay === wrappedStartReplay) core.control.startReplay = originalStartReplay;
+			if (core.control.stopReplay === wrappedStopReplay) core.control.stopReplay = originalStopReplay;
+			if (core.control._replay_finished === wrappedReplayFinished) core.control._replay_finished = originalReplayFinished;
+			if (core.control._replay_error === wrappedReplayError) core.control._replay_error = originalReplayError;
+		}
 	};
 	window.addEventListener("beforeunload", cleanup, { once: true });
 
@@ -779,6 +886,11 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 		fastForward: runtime.fastForward,
 		stop: runtime.stop,
 		isActive: runtime.isActive,
+		debugLog: {
+			clear: clearBackpackBattleDebugLog,
+			get: getBackpackBattleDebugLog,
+			download: downloadBackpackBattleDebugLog
+		},
 		applyStatus: function (targetKey, statusId, stacks) {
 			var snapshot = runtime.getSnapshot();
 			if (!snapshot || !snapshot.active) return false;

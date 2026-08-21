@@ -1,0 +1,1275 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>H5Save 编辑器</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f4f6f7;
+      --surface: #ffffff;
+      --surface-2: #eef2f2;
+      --ink: #172022;
+      --muted: #647174;
+      --line: #d7dfe0;
+      --accent: #087b72;
+      --accent-strong: #06655e;
+      --accent-soft: #dff3ef;
+      --warning: #a45a0a;
+      --warning-soft: #fff1d6;
+      --danger: #b43b45;
+      --danger-soft: #fde7e9;
+      --focus: #2e8dcc;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      background: var(--page);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 14px;
+      letter-spacing: 0;
+    }
+    button, input, textarea { font: inherit; letter-spacing: 0; }
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .48; }
+    :focus-visible { outline: 3px solid color-mix(in srgb, var(--focus) 38%, transparent); outline-offset: 2px; }
+
+    .app { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar {
+      min-height: 68px;
+      padding: 12px clamp(16px, 3vw, 36px);
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .brand { min-width: 0; }
+    .brand h1 { margin: 0; font-size: 21px; line-height: 1.2; font-weight: 740; }
+    .file-meta { margin-top: 4px; color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 54vw; }
+    .top-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .button {
+      min-height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--ink);
+      padding: 7px 12px;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+    .button:hover:not(:disabled) { border-color: #aebabb; background: #f8fafa; }
+    .button.primary { border-color: var(--accent); background: var(--accent); color: #fff; }
+    .button.primary:hover:not(:disabled) { border-color: var(--accent-strong); background: var(--accent-strong); }
+    .button.ghost { background: transparent; border-color: transparent; color: var(--muted); }
+    .button.danger { color: var(--danger); }
+    .file-button input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+    .workspace { width: min(1480px, 100%); margin: 0 auto; flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .empty-state {
+      flex: 1;
+      min-height: 520px;
+      display: grid;
+      place-items: center;
+      padding: 28px 18px;
+    }
+    .drop-zone {
+      width: min(620px, 100%);
+      min-height: 260px;
+      border: 1px dashed #9facad;
+      border-radius: 8px;
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      padding: 32px;
+      text-align: center;
+      transition: border-color .15s ease, background .15s ease;
+    }
+    .drop-zone.dragging { border-color: var(--accent); background: var(--accent-soft); }
+    .drop-mark {
+      width: 56px;
+      height: 56px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface-2);
+      color: var(--accent);
+      font-size: 30px;
+      line-height: 1;
+      font-family: var(--mono);
+    }
+    .drop-zone strong { font-size: 18px; }
+    .drop-zone p { margin: -7px 0 0; color: var(--muted); }
+
+    .editor-shell { display: none; flex: 1; min-height: 0; }
+    .editor-shell.ready { display: flex; flex-direction: column; }
+    .summary-band {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .summary-item { min-width: 0; padding: 13px 16px; border-right: 1px solid var(--line); }
+    .summary-item:last-child { border-right: 0; }
+    .summary-item span { display: block; color: var(--muted); font-size: 11px; line-height: 1.3; }
+    .summary-item strong { display: block; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; }
+
+    .tabs-band {
+      padding: 10px clamp(12px, 2vw, 22px) 0;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+    .tabs { display: flex; gap: 4px; overflow-x: auto; }
+    .tab {
+      min-height: 38px;
+      border: 0;
+      border-bottom: 3px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      padding: 7px 13px 8px;
+      font-weight: 680;
+      white-space: nowrap;
+    }
+    .tab:hover { color: var(--ink); }
+    .tab[aria-selected="true"] { color: var(--accent-strong); border-bottom-color: var(--accent); }
+
+    .panel { display: none; flex: 1; min-height: 0; }
+    .panel.active { display: flex; flex-direction: column; }
+    .panel-toolbar {
+      min-height: 52px;
+      padding: 8px clamp(12px, 2vw, 22px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .toolbar-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+    .toolbar-note { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .segmented { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); padding: 2px; }
+    .segment { min-height: 30px; padding: 5px 10px; border: 0; border-radius: 4px; color: var(--muted); background: transparent; font-weight: 650; }
+    .segment[aria-pressed="true"] { color: var(--ink); background: var(--surface); box-shadow: 0 1px 2px rgba(16, 35, 37, .12); }
+
+    .overview { padding: clamp(18px, 3vw, 30px); overflow: auto; }
+    .section { max-width: 1120px; width: 100%; margin: 0 auto 28px; }
+    .section h2 { margin: 0 0 13px; font-size: 15px; }
+    .form-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 16px; }
+    .field { min-width: 0; }
+    .field.wide { grid-column: span 2; }
+    .field label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 12px; font-weight: 650; }
+    .field input {
+      width: 100%;
+      height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: var(--surface);
+      color: var(--ink);
+      padding: 7px 10px;
+    }
+    .field input:focus { border-color: var(--focus); }
+    .inventory-table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--line); }
+    .inventory-table th, .inventory-table td { border-bottom: 1px solid var(--line); padding: 9px 11px; text-align: left; }
+    .inventory-table th { color: var(--muted); font-size: 11px; background: var(--surface-2); }
+    .inventory-table tr:last-child td { border-bottom: 0; }
+    .inventory-table input { width: 100%; min-width: 80px; height: 32px; border: 1px solid transparent; background: transparent; border-radius: 4px; padding: 4px 6px; }
+    .inventory-table input:hover, .inventory-table input:focus { border-color: var(--line); background: var(--surface); }
+
+    .code-area-wrap { flex: 1; min-height: 0; position: relative; background: #101719; }
+    .code-area {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      resize: none;
+      border: 0;
+      outline: 0;
+      padding: 18px clamp(14px, 2.4vw, 28px) 60px;
+      background: #101719;
+      color: #e2eded;
+      caret-color: #75d7ca;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.55;
+      tab-size: 2;
+      white-space: pre;
+      overflow: auto;
+    }
+    .editor-status {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      min-height: 34px;
+      padding: 7px clamp(14px, 2.4vw, 28px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      border-top: 1px solid #2e3a3c;
+      background: #172123;
+      color: #9eb0b2;
+      font-family: var(--mono);
+      font-size: 11px;
+      pointer-events: none;
+    }
+    .valid { color: #72d6a3; }
+    .invalid { color: #ff8e96; }
+
+    .route-stats { display: flex; gap: 12px; color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .route-stats b { color: var(--ink); font-weight: 700; }
+    .route-list-warning { color: var(--warning); }
+
+    .toast {
+      position: fixed;
+      z-index: 30;
+      left: 50%;
+      bottom: 22px;
+      transform: translate(-50%, 18px);
+      min-width: min(420px, calc(100vw - 28px));
+      max-width: 720px;
+      padding: 11px 14px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--ink);
+      box-shadow: 0 10px 28px rgba(13, 27, 29, .17);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .15s ease, transform .15s ease;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .toast.error { border-color: #e5a7ac; background: var(--danger-soft); color: #7f2029; }
+
+    .busy {
+      position: fixed;
+      z-index: 40;
+      inset: 0;
+      display: none;
+      place-items: center;
+      background: rgba(244, 246, 247, .78);
+      backdrop-filter: blur(2px);
+    }
+    .busy.show { display: grid; }
+    .busy-box { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); font-weight: 700; }
+    .spinner { width: 19px; height: 19px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 900px) {
+      .summary-band { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .summary-item:nth-child(3) { border-right: 0; }
+      .summary-item:nth-child(-n+3) { border-bottom: 1px solid var(--line); }
+      .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 620px) {
+      .topbar { align-items: flex-start; flex-direction: column; gap: 10px; }
+      .file-meta { max-width: calc(100vw - 32px); }
+      .top-actions { width: 100%; justify-content: flex-start; }
+      .top-actions .button { flex: 1 1 auto; }
+      .summary-band { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .summary-item:nth-child(2n) { border-right: 0; }
+      .summary-item:nth-child(3) { border-right: 1px solid var(--line); }
+      .summary-item:nth-child(-n+4) { border-bottom: 1px solid var(--line); }
+      .panel-toolbar { align-items: flex-start; flex-direction: column; }
+      .form-grid { grid-template-columns: 1fr; }
+      .field.wide { grid-column: span 1; }
+      .route-stats { width: 100%; overflow-x: auto; padding-bottom: 2px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <h1>H5Save 编辑器</h1>
+        <div class="file-meta" id="fileMeta">未打开文件</div>
+      </div>
+      <div class="top-actions">
+        <label class="button file-button">
+          打开文件
+          <input id="fileInput" type="file" accept=".h5save,.h5route,.txt,application/octet-stream,text/plain">
+        </label>
+        <button class="button ghost" id="resetButton" type="button" disabled>恢复原始</button>
+        <button class="button" id="jsonExportButton" type="button" disabled>导出 JSON</button>
+        <button class="button primary" id="saveButton" type="button" disabled>下载存档</button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <section class="empty-state" id="emptyState">
+        <label class="drop-zone" id="dropZone">
+          <span class="drop-mark" aria-hidden="true">+</span>
+          <strong>选择或拖入 .h5save 文件</strong>
+          <p>文件仅在当前浏览器中处理</p>
+          <span class="button primary">选择文件</span>
+          <input id="dropFileInput" type="file" accept=".h5save,.h5route,.txt,application/octet-stream,text/plain" hidden>
+        </label>
+      </section>
+
+      <section class="editor-shell" id="editorShell">
+        <div class="summary-band" aria-label="存档摘要">
+          <div class="summary-item"><span>游戏</span><strong id="sumName">-</strong></div>
+          <div class="summary-item"><span>版本</span><strong id="sumVersion">-</strong></div>
+          <div class="summary-item"><span>楼层</span><strong id="sumFloor">-</strong></div>
+          <div class="summary-item"><span>生命</span><strong id="sumHp">-</strong></div>
+          <div class="summary-item"><span>路线步数</span><strong id="sumRoute">-</strong></div>
+          <div class="summary-item"><span>存档时间</span><strong id="sumTime">-</strong></div>
+        </div>
+
+        <div class="tabs-band">
+          <div class="tabs" role="tablist" aria-label="编辑区域">
+            <button class="tab" type="button" role="tab" aria-selected="true" data-panel="overviewPanel">概览编辑</button>
+            <button class="tab" type="button" role="tab" aria-selected="false" data-panel="jsonPanel">完整 JSON</button>
+            <button class="tab" type="button" role="tab" aria-selected="false" data-panel="routePanel">路线</button>
+          </div>
+        </div>
+
+        <section class="panel active" id="overviewPanel" role="tabpanel">
+          <div class="overview">
+            <div class="section">
+              <h2>存档信息</h2>
+              <div class="form-grid" id="saveForm"></div>
+            </div>
+            <div class="section" id="inventorySection">
+              <h2>道具与钥匙</h2>
+              <table class="inventory-table">
+                <thead><tr><th>分类</th><th>标识</th><th>数量</th></tr></thead>
+                <tbody id="inventoryBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="jsonPanel" role="tabpanel">
+          <div class="panel-toolbar">
+            <div class="toolbar-note" id="jsonRouteNote">路线字段由“路线”页管理</div>
+            <div class="toolbar-group">
+              <button class="button" id="formatJsonButton" type="button">格式化</button>
+              <button class="button primary" id="applyJsonButton" type="button">应用 JSON</button>
+            </div>
+          </div>
+          <div class="code-area-wrap">
+            <textarea class="code-area" id="jsonEditor" aria-label="完整 JSON 编辑器" spellcheck="false" wrap="off"></textarea>
+            <div class="editor-status"><span id="jsonStatus">JSON 就绪</span><span id="jsonSize">0 字符</span></div>
+          </div>
+        </section>
+
+        <section class="panel" id="routePanel" role="tabpanel">
+          <div class="panel-toolbar">
+            <div class="toolbar-group">
+              <div class="segmented" aria-label="路线编辑模式">
+                <button class="segment" id="routeSourceMode" type="button" aria-pressed="true">压缩前源码</button>
+                <button class="segment" id="routeListMode" type="button" aria-pressed="false">逐步路线</button>
+              </div>
+              <button class="button" id="copyRouteButton" type="button">复制</button>
+            </div>
+            <div class="route-stats" id="routeStats"><span>动作 <b>0</b></span><span>移动 <b>0</b></span><span>其他 <b>0</b></span></div>
+          </div>
+          <div class="code-area-wrap">
+            <textarea class="code-area" id="routeEditor" aria-label="路线编辑器" spellcheck="false" wrap="off"></textarea>
+            <div class="editor-status"><span id="routeStatus">LZString 已解压</span><span id="routeSize">0 字符</span></div>
+          </div>
+        </section>
+      </section>
+    </div>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="busy" id="busy" aria-live="polite"><div class="busy-box"><span class="spinner" aria-hidden="true"></span><span id="busyText">正在处理</span></div></div>
+
+  <script>
+    /* lz-string 1.4.5, Pieroxy, WTFPL v2 */
+    var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",n="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-$",e={};function t(r,o){if(!e[r]){e[r]={};for(var n=0;n<r.length;n++)e[r][r.charAt(n)]=n}return e[r][o]}var i={compressToBase64:function(r){if(null==r)return"";var n=i._compress(r,6,function(r){return o.charAt(r)});switch(n.length%4){default:case 0:return n;case 1:return n+"===";case 2:return n+"==";case 3:return n+"="}},decompressFromBase64:function(r){return null==r?"":""==r?null:i._decompress(r.length,32,function(n){return t(o,r.charAt(n))})},compressToUTF16:function(o){return null==o?"":i._compress(o,15,function(o){return r(o+32)})+" "},decompressFromUTF16:function(r){return null==r?"":""==r?null:i._decompress(r.length,16384,function(o){return r.charCodeAt(o)-32})},compressToUint8Array:function(r){for(var o=i.compress(r),n=new Uint8Array(2*o.length),e=0,t=o.length;e<t;e++){var s=o.charCodeAt(e);n[2*e]=s>>>8,n[2*e+1]=s%256}return n},decompressFromUint8Array:function(o){if(null==o)return i.decompress(o);for(var n=new Array(o.length/2),e=0,t=n.length;e<t;e++)n[e]=256*o[2*e]+o[2*e+1];var s=[];return n.forEach(function(o){s.push(r(o))}),i.decompress(s.join(""))},compressToEncodedURIComponent:function(r){return null==r?"":i._compress(r,6,function(r){return n.charAt(r)})},decompressFromEncodedURIComponent:function(r){return null==r?"":""==r?null:(r=r.replace(/ /g,"+"),i._decompress(r.length,32,function(o){return t(n,r.charAt(o))}))},compress:function(o){return i._compress(o,16,function(o){return r(o)})},_compress:function(r,o,n){if(null==r)return"";var e,t,i,s={},u={},a="",p="",c="",l=2,f=3,h=2,d=[],m=0,v=0;for(i=0;i<r.length;i+=1)if(a=r.charAt(i),Object.prototype.hasOwnProperty.call(s,a)||(s[a]=f++,u[a]=!0),p=c+a,Object.prototype.hasOwnProperty.call(s,p))c=p;else{if(Object.prototype.hasOwnProperty.call(u,c)){if(c.charCodeAt(0)<256){for(e=0;e<h;e++)m<<=1,v==o-1?(v=0,d.push(n(m)),m=0):v++;for(t=c.charCodeAt(0),e=0;e<8;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}else{for(t=1,e=0;e<h;e++)m=m<<1|t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t=0;for(t=c.charCodeAt(0),e=0;e<16;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}0==--l&&(l=Math.pow(2,h),h++),delete u[c]}else for(t=s[c],e=0;e<h;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;0==--l&&(l=Math.pow(2,h),h++),s[p]=f++,c=String(a)}if(""!==c){if(Object.prototype.hasOwnProperty.call(u,c)){if(c.charCodeAt(0)<256){for(e=0;e<h;e++)m<<=1,v==o-1?(v=0,d.push(n(m)),m=0):v++;for(t=c.charCodeAt(0),e=0;e<8;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}else{for(t=1,e=0;e<h;e++)m=m<<1|t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t=0;for(t=c.charCodeAt(0),e=0;e<16;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}0==--l&&(l=Math.pow(2,h),h++),delete u[c]}else for(t=s[c],e=0;e<h;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;0==--l&&(l=Math.pow(2,h),h++)}for(t=2,e=0;e<h;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;for(;;){if(m<<=1,v==o-1){d.push(n(m));break}v++}return d.join("")},decompress:function(r){return null==r?"":""==r?null:i._decompress(r.length,32768,function(o){return r.charCodeAt(o)})},_decompress:function(o,n,e){var t,i,s,u,a,p,c,l=[],f=4,h=4,d=3,m="",v=[],g={val:e(0),position:n,index:1};for(t=0;t<3;t+=1)l[t]=t;for(s=0,a=Math.pow(2,2),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;switch(s){case 0:for(s=0,a=Math.pow(2,8),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;c=r(s);break;case 1:for(s=0,a=Math.pow(2,16),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;c=r(s);break;case 2:return""}for(l[3]=c,i=c,v.push(c);;){if(g.index>o)return"";for(s=0,a=Math.pow(2,d),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;switch(c=s){case 0:for(s=0,a=Math.pow(2,8),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;l[h++]=r(s),c=h-1,f--;break;case 1:for(s=0,a=Math.pow(2,16),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;l[h++]=r(s),c=h-1,f--;break;case 2:return v.join("")}if(0==f&&(f=Math.pow(2,d),d++),l[c])m=l[c];else{if(c!==h)return null;m=i+i.charAt(0)}v.push(m),l[h++]=i+m.charAt(0),i=m,0==--f&&(f=Math.pow(2,d),d++)}}};return i}();
+  </script>
+  <script>
+    (() => {
+      'use strict';
+
+      const LegacyLZString = (() => {
+        const base64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+        const reverse = Object.create(null);
+        for (let i = 0; i < base64.length; i += 1) reverse[base64.charAt(i)] = i;
+
+        function compress(uncompressed, bitsPerChar, getCharFromInt) {
+          if (uncompressed == null) return '';
+          let i;
+          let value;
+          const dictionary = Object.create(null);
+          const dictionaryToCreate = Object.create(null);
+          let c = '';
+          let wc = '';
+          let w = '';
+          let enlargeIn = 2;
+          let dictSize = 3;
+          let numBits = 2;
+          const data = [];
+          let dataVal = 0;
+          let dataPosition = 0;
+
+          const writeBit = bit => {
+            dataVal = (dataVal << 1) | bit;
+            if (dataPosition === bitsPerChar - 1) {
+              dataPosition = 0;
+              data.push(getCharFromInt(dataVal));
+              dataVal = 0;
+            } else dataPosition += 1;
+          };
+          const writeBits = (count, bits) => {
+            for (let j = 0; j < count; j += 1) {
+              writeBit(bits & 1);
+              bits >>= 1;
+            }
+          };
+
+          for (let ii = 0; ii < uncompressed.length; ii += 1) {
+            c = uncompressed.charAt(ii);
+            if (!Object.prototype.hasOwnProperty.call(dictionary, c)) {
+              dictionary[c] = dictSize++;
+              dictionaryToCreate[c] = true;
+            }
+            wc = w + c;
+            if (Object.prototype.hasOwnProperty.call(dictionary, wc)) {
+              w = wc;
+            } else {
+              if (Object.prototype.hasOwnProperty.call(dictionaryToCreate, w)) {
+                if (w.charCodeAt(0) < 256) {
+                  writeBits(numBits, 0);
+                  writeBits(8, w.charCodeAt(0));
+                } else {
+                  writeBits(numBits, 1);
+                  writeBits(16, w.charCodeAt(0));
+                }
+                enlargeIn -= 1;
+                if (enlargeIn === 0) {
+                  enlargeIn = 1 << numBits;
+                  numBits += 1;
+                }
+                delete dictionaryToCreate[w];
+              } else {
+                value = dictionary[w];
+                writeBits(numBits, value);
+              }
+              enlargeIn -= 1;
+              if (enlargeIn === 0) {
+                enlargeIn = 1 << numBits;
+                numBits += 1;
+              }
+              dictionary[wc] = dictSize++;
+              w = String(c);
+            }
+          }
+
+          if (w !== '') {
+            if (Object.prototype.hasOwnProperty.call(dictionaryToCreate, w)) {
+              if (w.charCodeAt(0) < 256) {
+                writeBits(numBits, 0);
+                writeBits(8, w.charCodeAt(0));
+              } else {
+                writeBits(numBits, 1);
+                writeBits(16, w.charCodeAt(0));
+              }
+              enlargeIn -= 1;
+              if (enlargeIn === 0) {
+                enlargeIn = 1 << numBits;
+                numBits += 1;
+              }
+              delete dictionaryToCreate[w];
+            } else {
+              value = dictionary[w];
+              writeBits(numBits, value);
+            }
+            enlargeIn -= 1;
+            if (enlargeIn === 0) {
+              enlargeIn = 1 << numBits;
+              numBits += 1;
+            }
+          }
+
+          writeBits(numBits, 2);
+          while (true) {
+            dataVal <<= 1;
+            if (dataPosition === bitsPerChar - 1) {
+              data.push(getCharFromInt(dataVal));
+              break;
+            }
+            dataPosition += 1;
+          }
+          return data.join('');
+        }
+
+        function decompress(length, resetValue, getNextValue) {
+          const dictionary = [];
+          let enlargeIn = 4;
+          let dictSize = 4;
+          let numBits = 3;
+          let entry = '';
+          const result = [];
+          let i;
+          let w;
+          let bits;
+          let resb;
+          let maxpower;
+          let power;
+          let c;
+          const data = { val: getNextValue(0), position: resetValue, index: 1 };
+
+          for (i = 0; i < 3; i += 1) dictionary[i] = i;
+          bits = 0;
+          maxpower = 4;
+          power = 1;
+          while (power !== maxpower) {
+            resb = data.val & data.position;
+            data.position >>= 1;
+            if (data.position === 0) {
+              data.position = resetValue;
+              data.val = getNextValue(data.index++);
+            }
+            bits |= (resb > 0 ? 1 : 0) * power;
+            power <<= 1;
+          }
+          if (bits === 0) {
+            bits = 0;
+            maxpower = 256;
+            power = 1;
+            while (power !== maxpower) {
+              resb = data.val & data.position;
+              data.position >>= 1;
+              if (data.position === 0) {
+                data.position = resetValue;
+                data.val = getNextValue(data.index++);
+              }
+              bits |= (resb > 0 ? 1 : 0) * power;
+              power <<= 1;
+            }
+            c = String.fromCharCode(bits);
+          } else if (bits === 1) {
+            bits = 0;
+            maxpower = 65536;
+            power = 1;
+            while (power !== maxpower) {
+              resb = data.val & data.position;
+              data.position >>= 1;
+              if (data.position === 0) {
+                data.position = resetValue;
+                data.val = getNextValue(data.index++);
+              }
+              bits |= (resb > 0 ? 1 : 0) * power;
+              power <<= 1;
+            }
+            c = String.fromCharCode(bits);
+          } else return '';
+
+          dictionary[3] = c;
+          w = c;
+          result.push(c);
+          while (true) {
+            if (data.index > length) return '';
+            bits = 0;
+            maxpower = 1 << numBits;
+            power = 1;
+            while (power !== maxpower) {
+              resb = data.val & data.position;
+              data.position >>= 1;
+              if (data.position === 0) {
+                data.position = resetValue;
+                data.val = getNextValue(data.index++);
+              }
+              bits |= (resb > 0 ? 1 : 0) * power;
+              power <<= 1;
+            }
+            c = bits;
+            if (c === 0) {
+              bits = 0;
+              maxpower = 256;
+              power = 1;
+              while (power !== maxpower) {
+                resb = data.val & data.position;
+                data.position >>= 1;
+                if (data.position === 0) {
+                  data.position = resetValue;
+                  data.val = getNextValue(data.index++);
+                }
+                bits |= (resb > 0 ? 1 : 0) * power;
+                power <<= 1;
+              }
+              dictionary[dictSize++] = String.fromCharCode(bits);
+              c = dictSize - 1;
+              enlargeIn -= 1;
+            } else if (c === 1) {
+              bits = 0;
+              maxpower = 65536;
+              power = 1;
+              while (power !== maxpower) {
+                resb = data.val & data.position;
+                data.position >>= 1;
+                if (data.position === 0) {
+                  data.position = resetValue;
+                  data.val = getNextValue(data.index++);
+                }
+                bits |= (resb > 0 ? 1 : 0) * power;
+                power <<= 1;
+              }
+              dictionary[dictSize++] = String.fromCharCode(bits);
+              c = dictSize - 1;
+              enlargeIn -= 1;
+            } else if (c === 2) return result.join('');
+
+            if (enlargeIn === 0) {
+              enlargeIn = 1 << numBits;
+              numBits += 1;
+            }
+            if (dictionary[c]) entry = dictionary[c];
+            else if (c === dictSize) entry = w + w.charAt(0);
+            else return null;
+            result.push(entry);
+            dictionary[dictSize++] = w + entry.charAt(0);
+            enlargeIn -= 1;
+            w = entry;
+            if (enlargeIn === 0) {
+              enlargeIn = 1 << numBits;
+              numBits += 1;
+            }
+          }
+        }
+
+        return {
+          compressToBase64(input) {
+            if (input == null) return '';
+            const output = compress(input, 6, value => base64.charAt(value));
+            if (output.length % 4 === 0) return output;
+            if (output.length % 4 === 1) return output + '===';
+            if (output.length % 4 === 2) return output + '==';
+            return output + '=';
+          },
+          decompressFromBase64(input) {
+            if (input == null) return '';
+            if (input === '') return null;
+            return decompress(input.length, 32, index => reverse[input.charAt(index)]);
+          }
+        };
+      })();
+
+      const routeMarker = '[由“路线”页管理，保存时自动回填]';
+      const state = {
+        save: null,
+        routePath: null,
+        routeSource: '',
+        routeCompressionLayers: 0,
+        routeStats: { actions: 0, moves: 0, other: 0 },
+        fileName: '',
+        originalText: '',
+        dirty: false,
+        jsonDirty: false,
+        routeDirty: false,
+        routeMode: 'source',
+        listDirty: false
+      };
+
+      const $ = id => document.getElementById(id);
+      const elements = {
+        fileInput: $('fileInput'), dropFileInput: $('dropFileInput'), dropZone: $('dropZone'), emptyState: $('emptyState'),
+        editorShell: $('editorShell'), fileMeta: $('fileMeta'), resetButton: $('resetButton'), saveButton: $('saveButton'),
+        jsonExportButton: $('jsonExportButton'), saveForm: $('saveForm'), inventoryBody: $('inventoryBody'),
+        inventorySection: $('inventorySection'), jsonEditor: $('jsonEditor'), jsonStatus: $('jsonStatus'), jsonSize: $('jsonSize'),
+        routeEditor: $('routeEditor'), routeStatus: $('routeStatus'), routeSize: $('routeSize'), routeStats: $('routeStats'),
+        routeSourceMode: $('routeSourceMode'), routeListMode: $('routeListMode'), toast: $('toast'), busy: $('busy'), busyText: $('busyText')
+      };
+
+      const formatNumber = value => Number.isFinite(Number(value)) ? new Intl.NumberFormat('zh-CN').format(Number(value)) : String(value ?? '-');
+      const formatBytes = bytes => {
+        if (!Number.isFinite(bytes)) return '-';
+        if (bytes < 1024) return `${bytes} B`;
+        if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
+        return `${(bytes / 1048576).toFixed(2)} MB`;
+      };
+      const clone = value => JSON.parse(JSON.stringify(value));
+      const nextFrame = () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+      let toastTimer = 0;
+      function notify(message, error = false) {
+        clearTimeout(toastTimer);
+        elements.toast.textContent = message;
+        elements.toast.classList.toggle('error', error);
+        elements.toast.classList.add('show');
+        toastTimer = setTimeout(() => elements.toast.classList.remove('show'), 2800);
+      }
+
+      async function withBusy(message, task) {
+        elements.busyText.textContent = message;
+        elements.busy.classList.add('show');
+        await nextFrame();
+        try { return await task(); }
+        finally { elements.busy.classList.remove('show'); }
+      }
+
+      function getAtPath(object, path) {
+        return path.reduce((value, key) => value == null ? undefined : value[key], object);
+      }
+      function setAtPath(object, path, value) {
+        let target = object;
+        for (let i = 0; i < path.length - 1; i += 1) target = target[path[i]];
+        target[path[path.length - 1]] = value;
+      }
+      function findRoutePath(object) {
+        const preferred = [['data', 'route'], ['route'], ['data', 'routes'], ['routes']];
+        for (const path of preferred) if (typeof getAtPath(object, path) === 'string') return path;
+        const seen = new WeakSet();
+        const queue = [{ value: object, path: [] }];
+        while (queue.length) {
+          const current = queue.shift();
+          if (!current.value || typeof current.value !== 'object' || seen.has(current.value) || current.path.length > 6) continue;
+          seen.add(current.value);
+          for (const [key, value] of Object.entries(current.value)) {
+            const path = current.path.concat(key);
+            if (/^routes?$/i.test(key) && typeof value === 'string') return path;
+            if (value && typeof value === 'object') queue.push({ value, path });
+          }
+        }
+        return null;
+      }
+
+      function readNumber(source, cursor) {
+        let text = '';
+        let first = true;
+        while (cursor.index < source.length) {
+          const char = source.charAt(cursor.index);
+          if (char >= '0' && char <= '9') text += char;
+          else if (char === '-' && first) text += char;
+          else break;
+          first = false;
+          cursor.index += 1;
+        }
+        return text === '' ? 1 : Number.parseInt(text, 10);
+      }
+      function readString(source, cursor) {
+        const start = cursor.index;
+        const end = source.indexOf(':', start);
+        if (end < 0) {
+          cursor.index = source.length;
+          return source.slice(start);
+        }
+        cursor.index = end + 1;
+        return source.slice(start, end);
+      }
+
+      function inspectRoute(source, expand = false) {
+        const cursor = { index: 0 };
+        const actions = expand ? [] : null;
+        const stats = { actions: 0, moves: 0, other: 0 };
+        const moveMap = { U: 'up', D: 'down', L: 'left', R: 'right' };
+        const stringTokens = new Set(['I', 'e', 'F', 'S', 'Q', 't']);
+        const add = (action, count = 1, move = false) => {
+          stats.actions += count;
+          if (move) stats.moves += count;
+          else stats.other += count;
+          if (!expand) return;
+          if (count > 5000000) throw new Error('单段移动次数过大，无法展开');
+          for (let i = 0; i < count; i += 1) actions.push(action);
+        };
+
+        while (cursor.index < source.length) {
+          const c = source.charAt(cursor.index++);
+          if (c === '(') {
+            const end = source.indexOf(')', cursor.index);
+            if (end >= 0) {
+              add(source.slice(cursor.index, end));
+              cursor.index = end + 1;
+              continue;
+            }
+          }
+          const next = stringTokens.has(c) ? readString(source, cursor) : readNumber(source, cursor);
+          if (moveMap[c]) add(moveMap[c], Math.max(0, Number(next) || 0), true);
+          else if (c === 'I') add(`item:${next}`);
+          else if (c === 'u') add(`unEquip:${next}`);
+          else if (c === 'e') add(`equip:${next}`);
+          else if (c === 's') add(`saveEquip:${next}`);
+          else if (c === 'l') add(`loadEquip:${next}`);
+          else if (c === 'F') add(`fly:${next}`);
+          else if (c === 'c') add('choices:none');
+          else if (c === 'C') add(`choices:${next}`);
+          else if (c === 'S') add(`shop:${next}`);
+          else if (c === 'T') add('turn');
+          else if (c === 't') add(`turn:${moveMap[next] || next}`);
+          else if (c === 'G') add('getNext');
+          else if (c === 'p') add('input:none');
+          else if (c === 'P') add(`input:${next}`);
+          else if (c === 'Q') add(`input2:${next}`);
+          else if (c === 'N') add('no');
+          else if (c === 'M') {
+            if (source.charAt(cursor.index) === ':') cursor.index += 1;
+            add(`move:${next}:${readNumber(source, cursor)}`);
+          } else if (c === 'K') add(`key:${next}`);
+          else if (c === 'k') {
+            if (source.charAt(cursor.index) === ':') cursor.index += 1;
+            const px = readNumber(source, cursor);
+            if (source.charAt(cursor.index) === ':') cursor.index += 1;
+            add(`click:${next}:${px}:${readNumber(source, cursor)}`);
+          } else if (c === 'X') add(`random:${next}`);
+        }
+        return { stats, actions };
+      }
+
+      function encodeRouteActions(actions) {
+        let output = '';
+        let lastMove = '';
+        let count = 0;
+        const flushMove = () => {
+          if (!count) return;
+          output += lastMove.charAt(0).toUpperCase();
+          if (count > 1) output += count;
+          count = 0;
+        };
+        const encodeOne = action => {
+          if (action.startsWith('item:')) return `I${action.slice(5)}:`;
+          if (action.startsWith('unEquip:')) return `u${action.slice(8)}`;
+          if (action.startsWith('equip:')) return `e${action.slice(6)}:`;
+          if (action.startsWith('saveEquip:')) return `s${action.slice(10)}`;
+          if (action.startsWith('loadEquip:')) return `l${action.slice(10)}`;
+          if (action.startsWith('fly:')) return `F${action.slice(4)}:`;
+          if (action === 'choices:none') return 'c';
+          if (action.startsWith('choices:')) return `C${action.slice(8)}`;
+          if (action.startsWith('shop:')) return `S${action.slice(5)}:`;
+          if (action === 'turn') return 'T';
+          if (action.startsWith('turn:')) return `t${action.slice(5, 6).toUpperCase()}:`;
+          if (action === 'getNext') return 'G';
+          if (action === 'input:none') return 'p';
+          if (action.startsWith('input2:')) return `Q${action.slice(7)}:`;
+          if (action.startsWith('input:')) return `P${action.slice(6)}`;
+          if (action === 'no') return 'N';
+          if (action.startsWith('move:')) return `M${action.slice(5)}`;
+          if (action.startsWith('key:')) return `K${action.slice(4)}`;
+          if (action.startsWith('click:')) return `k${action.slice(6)}`;
+          if (action.startsWith('random:')) return `X${action.slice(7)}`;
+          return `(${action.replaceAll(')', '')})`;
+        };
+
+        for (const rawAction of actions) {
+          const action = rawAction.trim();
+          if (!action) continue;
+          if (['up', 'down', 'left', 'right'].includes(action)) {
+            if (lastMove && action !== lastMove) flushMove();
+            lastMove = action;
+            count += 1;
+          } else {
+            flushMove();
+            lastMove = '';
+            output += encodeOne(action);
+          }
+        }
+        flushMove();
+        return output;
+      }
+
+      function setDirty(value = true) {
+        state.dirty = value;
+        document.title = `${value ? '* ' : ''}H5Save 编辑器`;
+        updateFileMeta();
+      }
+
+      function updateFileMeta() {
+        if (!state.save) {
+          elements.fileMeta.textContent = '未打开文件';
+          return;
+        }
+        const suffix = state.dirty ? ' · 有未下载的修改' : ' · 已解析';
+        elements.fileMeta.textContent = `${state.fileName}${suffix}`;
+      }
+
+      function timestampLabel(value) {
+        const number = Number(value);
+        if (!Number.isFinite(number)) return String(value ?? '-');
+        const date = new Date(number < 100000000000 ? number * 1000 : number);
+        return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString('zh-CN', { hour12: false });
+      }
+
+      function updateSummary() {
+        const save = state.save || {};
+        const data = save.data || save;
+        const hero = data.hero || {};
+        $('sumName').textContent = save.name ?? data.name ?? '-';
+        $('sumVersion').textContent = save.version ?? data.version ?? '-';
+        $('sumFloor').textContent = data.floorId ?? '-';
+        $('sumHp').textContent = formatNumber(hero.hp);
+        $('sumRoute').textContent = formatNumber(state.routeStats.actions);
+        $('sumTime').textContent = timestampLabel(data.time);
+      }
+
+      function makeField(label, path, type = 'text', wide = false) {
+        const wrapper = document.createElement('div');
+        wrapper.className = `field${wide ? ' wide' : ''}`;
+        const labelElement = document.createElement('label');
+        const input = document.createElement('input');
+        const id = `field-${path.join('-')}`;
+        labelElement.htmlFor = id;
+        labelElement.textContent = label;
+        input.id = id;
+        input.type = type;
+        input.value = getAtPath(state.save, path) ?? '';
+        input.addEventListener('change', () => {
+          let value = input.value;
+          if (type === 'number') value = value === '' ? null : Number(value);
+          setAtPath(state.save, path, value);
+          setDirty();
+          updateSummary();
+          refreshJsonUnlessDirty();
+        });
+        wrapper.append(labelElement, input);
+        return wrapper;
+      }
+
+      function renderOverview() {
+        elements.saveForm.replaceChildren();
+        const dataPath = state.save && state.save.data ? ['data'] : [];
+        const fields = [
+          ['游戏名称', ['name'], 'text', false],
+          ['存档版本', ['version'], 'text', false],
+          ['当前楼层', dataPath.concat('floorId'), 'text', false],
+          ['难度', dataPath.concat('hard'), 'text', false],
+          ['角色名', dataPath.concat('hero', 'name'), 'text', false],
+          ['等级', dataPath.concat('hero', 'lv'), 'number', false],
+          ['生命', dataPath.concat('hero', 'hp'), 'number', false],
+          ['魔力', dataPath.concat('hero', 'mana'), 'number', false],
+          ['攻击', dataPath.concat('hero', 'atk'), 'number', false],
+          ['防御', dataPath.concat('hero', 'def'), 'number', false],
+          ['魔防', dataPath.concat('hero', 'mdef'), 'number', false],
+          ['金币', dataPath.concat('hero', 'money'), 'number', false],
+          ['经验', dataPath.concat('hero', 'exp'), 'number', false],
+          ['横坐标', dataPath.concat('hero', 'loc', 'x'), 'number', false],
+          ['纵坐标', dataPath.concat('hero', 'loc', 'y'), 'number', false],
+          ['朝向', dataPath.concat('hero', 'loc', 'direction'), 'text', false]
+        ];
+        for (const field of fields) {
+          if (getAtPath(state.save, field[1].slice(0, -1)) !== undefined) elements.saveForm.append(makeField(...field));
+        }
+
+        elements.inventoryBody.replaceChildren();
+        const items = getAtPath(state.save, dataPath.concat('hero', 'items'));
+        if (!items || typeof items !== 'object') {
+          elements.inventorySection.hidden = true;
+          return;
+        }
+        elements.inventorySection.hidden = false;
+        for (const [category, collection] of Object.entries(items)) {
+          if (!collection || typeof collection !== 'object' || Array.isArray(collection)) continue;
+          for (const [key, value] of Object.entries(collection)) {
+            const row = document.createElement('tr');
+            const categoryCell = document.createElement('td');
+            const keyCell = document.createElement('td');
+            const valueCell = document.createElement('td');
+            const input = document.createElement('input');
+            categoryCell.textContent = category;
+            keyCell.textContent = key;
+            input.type = typeof value === 'number' ? 'number' : 'text';
+            input.value = value;
+            input.setAttribute('aria-label', `${category} ${key} 数量`);
+            input.addEventListener('change', () => {
+              collection[key] = input.type === 'number' ? Number(input.value) : input.value;
+              setDirty();
+              refreshJsonUnlessDirty();
+            });
+            valueCell.append(input);
+            row.append(categoryCell, keyCell, valueCell);
+            elements.inventoryBody.append(row);
+          }
+        }
+      }
+
+      function jsonForEditor() {
+        const copy = clone(state.save);
+        if (state.routePath) setAtPath(copy, state.routePath, routeMarker);
+        return JSON.stringify(copy, null, 2);
+      }
+      function refreshJsonUnlessDirty() {
+        if (state.jsonDirty) return;
+        elements.jsonEditor.value = jsonForEditor();
+        updateJsonStatus(true);
+      }
+      function updateJsonStatus(valid = null, message = '') {
+        elements.jsonSize.textContent = `${formatNumber(elements.jsonEditor.value.length)} 字符`;
+        elements.jsonStatus.className = '';
+        if (valid === true) {
+          elements.jsonStatus.className = 'valid';
+          elements.jsonStatus.textContent = message || 'JSON 有效';
+        } else if (valid === false) {
+          elements.jsonStatus.className = 'invalid';
+          elements.jsonStatus.textContent = message || 'JSON 无效';
+        } else elements.jsonStatus.textContent = message || '尚未校验';
+      }
+
+      function applyJson(showMessage = true) {
+        if (!state.jsonDirty) return true;
+        try {
+          const parsed = JSON.parse(elements.jsonEditor.value);
+          if (state.routePath) setAtPath(parsed, state.routePath, getAtPath(state.save, state.routePath));
+          state.save = parsed;
+          state.jsonDirty = false;
+          setDirty();
+          updateJsonStatus(true, 'JSON 已应用');
+          renderOverview();
+          updateSummary();
+          if (showMessage) notify('JSON 修改已应用');
+          return true;
+        } catch (error) {
+          updateJsonStatus(false, error.message);
+          if (showMessage) notify(`JSON 无法应用：${error.message}`, true);
+          return false;
+        }
+      }
+
+      function updateRouteStats(stats = state.routeStats) {
+        state.routeStats = stats;
+        elements.routeStats.innerHTML = `<span>动作 <b>${formatNumber(stats.actions)}</b></span><span>移动 <b>${formatNumber(stats.moves)}</b></span><span>其他 <b>${formatNumber(stats.other)}</b></span>`;
+        updateSummary();
+      }
+
+      function setRouteSource(source, dirty = false) {
+        state.routeSource = source;
+        state.routeStats = inspectRoute(source, false).stats;
+        state.routeMode = 'source';
+        state.listDirty = false;
+        state.routeDirty = dirty;
+        elements.routeSourceMode.setAttribute('aria-pressed', 'true');
+        elements.routeListMode.setAttribute('aria-pressed', 'false');
+        elements.routeEditor.value = source;
+        elements.routeStatus.textContent = state.routeCompressionLayers ? `LZString 已解压 ${state.routeCompressionLayers} 层` : '路线未压缩';
+        elements.routeStatus.className = 'valid';
+        elements.routeSize.textContent = `${formatNumber(source.length)} 字符`;
+        updateRouteStats(state.routeStats);
+      }
+
+      function syncRouteEditor() {
+        if (state.routeMode === 'list' && state.listDirty) {
+          state.routeSource = encodeRouteActions(elements.routeEditor.value.split(/\r?\n/));
+          state.listDirty = false;
+          state.routeDirty = true;
+          updateRouteStats(inspectRoute(state.routeSource, false).stats);
+        } else if (state.routeMode === 'source' && state.routeDirty) {
+          state.routeSource = elements.routeEditor.value.trim();
+          updateRouteStats(inspectRoute(state.routeSource, false).stats);
+        }
+      }
+
+      async function switchRouteMode(mode) {
+        if (mode === state.routeMode) return;
+        if (state.routeMode === 'source') {
+          state.routeSource = elements.routeEditor.value.trim();
+          state.routeDirty = true;
+          const inspection = inspectRoute(state.routeSource, false);
+          updateRouteStats(inspection.stats);
+          if (inspection.stats.actions > 300000 && !window.confirm(`路线将展开为 ${formatNumber(inspection.stats.actions)} 行，浏览器可能会短暂卡顿。继续吗？`)) return;
+          await withBusy('正在展开路线', async () => {
+            const expanded = inspectRoute(state.routeSource, true);
+            elements.routeEditor.value = expanded.actions.join('\n');
+          });
+          state.routeMode = 'list';
+          state.listDirty = false;
+          elements.routeStatus.textContent = '每行一个动作';
+        } else {
+          syncRouteEditor();
+          elements.routeEditor.value = state.routeSource;
+          state.routeMode = 'source';
+          elements.routeStatus.textContent = 'LZString 压缩前源码';
+        }
+        elements.routeSourceMode.setAttribute('aria-pressed', String(state.routeMode === 'source'));
+        elements.routeListMode.setAttribute('aria-pressed', String(state.routeMode === 'list'));
+        elements.routeSize.textContent = `${formatNumber(elements.routeEditor.value.length)} 字符`;
+      }
+
+      function renderAll() {
+        renderOverview();
+        updateSummary();
+        elements.jsonEditor.value = jsonForEditor();
+        state.jsonDirty = false;
+        updateJsonStatus(true);
+        elements.emptyState.style.display = 'none';
+        elements.editorShell.classList.add('ready');
+        elements.resetButton.disabled = false;
+        elements.saveButton.disabled = false;
+        elements.jsonExportButton.disabled = false;
+        updateFileMeta();
+      }
+
+      async function parseText(text, fileName, preserveOriginal = true) {
+        const input = text.trim();
+        if (!input) throw new Error('文件内容为空');
+        let jsonText = LZString.decompressFromBase64(input);
+        if (!jsonText || !jsonText.trim().startsWith('{')) {
+          if (input.startsWith('{')) jsonText = input;
+          else throw new Error('外层 LZString 解压失败');
+        }
+        const save = JSON.parse(jsonText);
+        if (!save || typeof save !== 'object' || Array.isArray(save)) throw new Error('存档根节点不是 JSON 对象');
+        const routePath = findRoutePath(save);
+        let routeSource = '';
+        let routeCompressionLayers = 0;
+        if (routePath) {
+          const routeEncoded = getAtPath(save, routePath);
+          routeSource = routeEncoded;
+          for (let layer = 0; layer < 8; layer += 1) {
+            const decoded = LZString.decompressFromBase64(routeSource);
+            if (decoded == null || (decoded === '' && routeSource.length >= 8)) break;
+            const recompressed = LZString.compressToBase64(decoded);
+            if (recompressed.replace(/=+$/, '') !== routeSource.replace(/=+$/, '')) break;
+            routeSource = decoded;
+            routeCompressionLayers += 1;
+          }
+        }
+        state.save = save;
+        state.routePath = routePath;
+        state.routeCompressionLayers = routeCompressionLayers;
+        state.fileName = fileName || 'save.h5save';
+        if (preserveOriginal) state.originalText = input;
+        setRouteSource(routeSource, false);
+        setDirty(false);
+        renderAll();
+        const routeMessage = routePath ? `，路线字段 ${routePath.join('.')} 已解压 ${routeCompressionLayers} 层` : '，未检测到路线字段';
+        notify(`存档已打开${routeMessage}`);
+      }
+
+      async function openFile(file) {
+        if (!file) return;
+        await withBusy('正在解析存档', async () => {
+          const text = await file.text();
+          await parseText(text, file.name, true);
+        }).catch(error => notify(`无法打开：${error.message}`, true));
+      }
+
+      function prepareSaveObject() {
+        if (!applyJson(false)) throw new Error('JSON 存在错误，请先修正');
+        syncRouteEditor();
+        if (state.routePath) {
+          let routeValue = state.routeSource;
+          for (let layer = 0; layer < state.routeCompressionLayers; layer += 1) routeValue = LZString.compressToBase64(routeValue);
+          setAtPath(state.save, state.routePath, routeValue);
+        }
+        return state.save;
+      }
+
+      function downloadText(text, name, type) {
+        const url = URL.createObjectURL(new Blob([text], { type }));
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = name;
+        document.body.append(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+      }
+
+      function outputName(extension) {
+        const base = (state.fileName || 'save').replace(/\.(h5save|h5route|txt|json)$/i, '');
+        return `${base}_edited.${extension}`;
+      }
+
+      async function exportSave() {
+        await withBusy('正在压缩并生成存档', async () => {
+          const save = prepareSaveObject();
+          const output = LZString.compressToBase64(JSON.stringify(save));
+          const check = LZString.decompressFromBase64(output);
+          if (!check || JSON.parse(check) == null) throw new Error('导出校验失败');
+          downloadText(output, outputName('h5save'), 'text/plain;charset=utf-8');
+          setDirty(false);
+          notify(`已生成 ${outputName('h5save')}（${formatBytes(output.length)}）`);
+        }).catch(error => notify(`下载失败：${error.message}`, true));
+      }
+
+      async function exportJson() {
+        try {
+          const save = clone(prepareSaveObject());
+          if (state.routePath) setAtPath(save, state.routePath, state.routeSource);
+          downloadText(JSON.stringify(save, null, 2), outputName('json'), 'application/json;charset=utf-8');
+          notify('已导出可读 JSON，路线字段为解压后的源码');
+        } catch (error) { notify(`导出失败：${error.message}`, true); }
+      }
+
+      async function restoreOriginal() {
+        if (!state.originalText) return;
+        if (state.dirty && !window.confirm('放弃当前修改并恢复刚打开的文件？')) return;
+        await withBusy('正在恢复原始存档', () => parseText(state.originalText, state.fileName, false)).catch(error => notify(error.message, true));
+      }
+
+      elements.fileInput.addEventListener('change', event => openFile(event.target.files[0]));
+      elements.dropFileInput.addEventListener('change', event => openFile(event.target.files[0]));
+      for (const eventName of ['dragenter', 'dragover']) {
+        elements.dropZone.addEventListener(eventName, event => {
+          event.preventDefault();
+          elements.dropZone.classList.add('dragging');
+        });
+      }
+      for (const eventName of ['dragleave', 'drop']) {
+        elements.dropZone.addEventListener(eventName, event => {
+          event.preventDefault();
+          elements.dropZone.classList.remove('dragging');
+        });
+      }
+      elements.dropZone.addEventListener('drop', event => openFile(event.dataTransfer.files[0]));
+
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          const current = document.querySelector('.tab[aria-selected="true"]');
+          if (current?.dataset.panel === 'jsonPanel' && !applyJson(false)) {
+            notify('JSON 有错误，修正后再切换', true);
+            return;
+          }
+          document.querySelectorAll('.tab').forEach(item => item.setAttribute('aria-selected', String(item === tab)));
+          document.querySelectorAll('.panel').forEach(panel => panel.classList.toggle('active', panel.id === tab.dataset.panel));
+        });
+      });
+
+      elements.jsonEditor.addEventListener('input', () => {
+        state.jsonDirty = true;
+        setDirty();
+        updateJsonStatus(null);
+      });
+      $('formatJsonButton').addEventListener('click', () => {
+        try {
+          elements.jsonEditor.value = JSON.stringify(JSON.parse(elements.jsonEditor.value), null, 2);
+          state.jsonDirty = true;
+          updateJsonStatus(true);
+        } catch (error) { updateJsonStatus(false, error.message); }
+      });
+      $('applyJsonButton').addEventListener('click', () => applyJson(true));
+
+      elements.routeEditor.addEventListener('input', () => {
+        if (state.routeMode === 'list') state.listDirty = true;
+        else state.routeDirty = true;
+        setDirty();
+        elements.routeSize.textContent = `${formatNumber(elements.routeEditor.value.length)} 字符`;
+        elements.routeStatus.className = '';
+        elements.routeStatus.textContent = state.routeMode === 'list' ? '逐步路线已修改' : '源码已修改';
+      });
+      elements.routeSourceMode.addEventListener('click', () => switchRouteMode('source').catch(error => notify(error.message, true)));
+      elements.routeListMode.addEventListener('click', () => switchRouteMode('list').catch(error => notify(error.message, true)));
+      $('copyRouteButton').addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(elements.routeEditor.value);
+          notify('路线已复制');
+        } catch (_) {
+          elements.routeEditor.select();
+          document.execCommand('copy');
+          notify('路线已复制');
+        }
+      });
+
+      elements.resetButton.addEventListener('click', restoreOriginal);
+      elements.saveButton.addEventListener('click', exportSave);
+      elements.jsonExportButton.addEventListener('click', exportJson);
+      window.addEventListener('beforeunload', event => {
+        if (!state.dirty) return;
+        event.preventDefault();
+        event.returnValue = '';
+      });
+    })();
+  </script>
+</body>
+</html>

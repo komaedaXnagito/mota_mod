@@ -17,15 +17,44 @@ var installGameRandomStreams_5f63c10e_25de_47de_99aa_4d0e300d7a3f = function (co
 		return isFinite(seed) ? seed : 0;
 	};
 
+	var recordBattleRandom = function (payload) {
+		try {
+			if (core.plugin && typeof core.plugin.recordBackpackBattleDebugLog === "function") {
+				core.plugin.recordBackpackBattleDebugLog("battleRand获取", payload);
+				return;
+			}
+			if (typeof console !== "undefined" && typeof console.log === "function") {
+				console.log("[背包战斗调试][battleRand获取]", payload);
+			}
+		}
+		catch (error) {
+			if (typeof console !== "undefined" && typeof console.error === "function") {
+				console.error("记录 battleRand 调试日志失败", error);
+			}
+		}
+	};
+
 	var createRandom = function (flagName) {
-		return function (num) {
+		return function (num, debugContext) {
 			var seed = core.getFlag(flagName, null);
 			if (seed == null || !isFinite(Number(seed))) seed = getInitialSeed();
-			seed = nextRand(Math.floor(Number(seed)));
+			var sequenceBefore = Math.floor(Number(seed));
+			seed = nextRand(sequenceBefore);
 			core.setFlag(flagName, seed);
-			var value = seed / 2147483647;
-			if (num && num > 0) return Math.floor(value * num);
-			return value;
+			var normalizedValue = seed / 2147483647;
+			var result = num && num > 0 ? Math.floor(normalizedValue * num) : normalizedValue;
+			if (flagName === "__randBattle__") {
+				var context = debugContext && typeof debugContext === "object"
+					? Object.assign({}, debugContext)
+					: { source: debugContext || "core.randBattle" };
+				context.argument = num == null ? null : Number(num);
+				context.sequenceBefore = sequenceBefore;
+				context.sequenceAfter = seed;
+				context.normalizedValue = normalizedValue;
+				context.result = result;
+				recordBattleRandom(context);
+			}
+			return result;
 		};
 	};
 

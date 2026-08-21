@@ -89,19 +89,27 @@ test("MT1 怪物能力初始化使用战斗随机流", () => {
 	const floorSource = fs.readFileSync(path.join(root, "project/floors/MT1.js"), "utf8");
 	const initializer = floorSource.match(/给 MT1~MT50 的怪物按首次出现楼层随机加能力[\s\S]*?core\.setEnemy\(id, field, value, null, null, true\)/);
 	assert.ok(initializer, "应能找到怪物随机能力初始化脚本");
-	assert.match(initializer[0], /pool\.splice\(core\.randBattle\(pool\.length\), 1\)/);
-	assert.match(initializer[0], /1 \+ core\.randBattle\(3\)/);
+	assert.match(initializer[0], /core\.randBattle\(pool\.length, \{/);
+	assert.match(initializer[0], /MT1\.monsterAbility\.field/);
+	assert.match(initializer[0], /core\.randBattle\(3, \{/);
+	assert.match(initializer[0], /MT1\.monsterAbility\.value/);
 	assert.doesNotMatch(initializer[0], /Math\.random/);
 });
 
 test("randShop 与 randBattle 使用独立且可存档的确定性随机流", () => {
 	const flags = { __seed__: 246813579, __rand__: 13579 };
+	const battleRandomLogs = [];
 	const nextSeed = (seed) => {
 		seed = (seed % 127773) * 16807 - ~~(seed / 127773) * 2836;
 		return seed + (seed < 0 ? 2147483647 : 0);
 	};
 	const core = {
 		utils: { __next_rand: nextSeed },
+		plugin: {
+			recordBackpackBattleDebugLog(phase, payload) {
+				battleRandomLogs.push(Object.assign({ phase }, payload));
+			}
+		},
 		getFlag(name, defaultValue) { return flags[name] == null ? defaultValue : flags[name]; },
 		setFlag(name, value) { flags[name] = value; }
 	};
@@ -116,15 +124,32 @@ test("randShop 与 randBattle 使用独立且可存档的确定性随机流", ()
 
 	assert.equal(core.randBattle(), firstSeed / 2147483647);
 	assert.equal(flags.__randBattle__, firstSeed);
+	assert.equal(battleRandomLogs.length, 1);
+	assert.equal(battleRandomLogs[0].phase, "battleRand获取");
+	assert.equal(battleRandomLogs[0].source, "core.randBattle");
+	assert.equal(battleRandomLogs[0].sequenceBefore, flags.__seed__);
+	assert.equal(battleRandomLogs[0].sequenceAfter, firstSeed);
+	assert.equal(battleRandomLogs[0].result, firstSeed / 2147483647);
 	const secondSeed = nextSeed(firstSeed);
 	assert.equal(core.randShop(10), Math.floor(secondSeed / 2147483647 * 10));
 	assert.equal(flags.__randShop__, secondSeed);
 	assert.equal(flags.__randBattle__, firstSeed, "商店后续随机仍不能推进战斗随机流");
+	assert.equal(battleRandomLogs.length, 1, "商店随机不能写入 battleRand 日志");
 
 	const mainSource = fs.readFileSync(path.join(root, "main.js"), "utf8");
 	const pluginsSource = fs.readFileSync(path.join(root, "project/plugins.js"), "utf8");
 	assert.match(mainSource, /'randomStreams'/);
 	assert.match(pluginsSource, /installGameRandomStreams_5f63c10e_25de_47de_99aa_4d0e300d7a3f\(core\)/);
+});
+
+test("录像调试日志在播放开始时清空并支持下载 JSONL", () => {
+	const source = fs.readFileSync(path.join(root, "project/backpackBattle.js"), "utf8");
+	assert.match(source, /var recordBackpackBattleDebugLog = function/);
+	assert.match(source, /debugLogEntries\.map\(function \(entry\) \{ return JSON\.stringify\(entry\); \}\)\.join\("\\n"\)/);
+	assert.match(source, /plugin\.downloadBackpackBattleDebugLog = downloadBackpackBattleDebugLog/);
+	assert.match(source, /wrappedStartReplay = function \(list\) \{\s*clearBackpackBattleDebugLog\(\)/);
+	assert.match(source, /recordBackpackBattleDebugLog\("录像播放完成"/);
+	assert.match(source, /recordBackpackBattleDebugLog\("录像播放失败"/);
 });
 
 test("背包与战斗武器的 hover 按实际占格触发且背包内部格缝保持连续", () => {
@@ -1789,6 +1814,81 @@ test("预计内核与实际战斗按同一 core.randBattle 种子得到相同随
 	runtime.destroy();
 });
 
+test("实际战斗调试日志记录阶段与随机序号且不额外推进随机流", () => {
+	const logs = [];
+	const debugConsole = {
+		log(message, payload) { logs.push({ message, payload }); },
+		error() {}
+	};
+	const flags = { __seed__: 123, __randBattle__: 123 };
+	const nextSeed = (seed) => {
+		seed = (seed % 127773) * 16807 - ~~(seed / 127773) * 2836;
+		return seed + (seed < 0 ? 2147483647 : 0);
+	};
+	const core = {
+		utils: { __next_rand: nextSeed },
+		getFlag(name, defaultValue) { return flags[name] == null ? defaultValue : flags[name]; },
+		setFlag(name, value) { flags[name] = value; },
+		plugin: {
+			recordBackpackBattleDebugLog(phase, payload) {
+				debugConsole.log("[背包战斗调试][" + phase + "]", Object.assign({ phase }, payload));
+			}
+		},
+		registerAnimationFrame() {},
+		unregisterAnimationFrame() {}
+	};
+	const context = loadScripts([
+		"project/randomStreams.js",
+		"project/backpackBattleStatuses.js",
+		"project/backpackBattleRules.js",
+		"project/backpackBattleCore.js"
+	], { core, console: debugConsole });
+	context.installGameRandomStreams_5f63c10e_25de_47de_99aa_4d0e300d7a3f(core);
+	const runtime = context.createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc(core);
+	const weapon = makeWeapon({
+		attributes: Object.assign({}, makeWeapon().attributes, { attackIntervalTicks: 1 })
+	});
+	runtime.start(makeInput({
+		enemy: Object.assign({}, makeInput().enemy, { hp: 100, maxHp: 100, attackIntervalTicks: 1 }),
+		weapons: [weapon]
+	}));
+	const snapshot = runtime.stepTicks(1);
+
+	const phases = logs.map((entry) => entry.payload.phase);
+	assert.equal(logs[0].message, "[背包战斗调试][战斗开始]");
+	assert.equal(logs[0].payload.initialRandomSequence, 123);
+	[
+		"战斗开始", "全武器 battleStart 开始", "全武器 battleStart 结束",
+		"武器正常攻击入队", "武器攻击开始", "武器 beforeAttack 开始", "武器 beforeAttack 结束",
+		"武器命中判定", "武器伤害结算", "武器 afterHit 开始", "武器 afterHit 结束",
+		"全武器 afterAllyHit 开始", "全武器 afterLinkedWeaponHit 开始", "全武器 afterDealDamage 开始",
+		"玩家奥义检查", "武器 afterAttack 开始", "武器攻击结束",
+		"怪物正常攻击入队", "怪物攻击开始", "怪物命中判定",
+		"全武器 beforeReceiveDamage 开始", "怪物伤害结算", "全武器 afterTakeDamage 开始", "怪物攻击结束"
+	].forEach((phase) => assert.ok(phases.includes(phase), "缺少调试阶段：" + phase));
+	const randomLogs = logs.filter((entry) => entry.payload.phase === "battleRand获取");
+	assert.equal(randomLogs.length, 3,
+		"武器命中、武器伤害和怪物命中应各消耗一次随机数");
+	assert.deepEqual(randomLogs.map((entry) => entry.payload.source), [
+		"backpackBattle.gameRandom.next",
+		"backpackBattle.gameRandom.int",
+		"backpackBattle.gameRandom.next"
+	]);
+	assert.deepEqual(randomLogs.map((entry) => entry.payload.randomPurpose), [
+		"weaponHit",
+		"weaponDamage",
+		"enemyHit"
+	]);
+	assert.equal(randomLogs[0].payload.sequenceBefore, 123);
+	assert.equal(randomLogs[0].payload.sequenceAfter, randomLogs[1].payload.sequenceBefore);
+	assert.equal(randomLogs[1].payload.sequenceAfter, randomLogs[2].payload.sequenceBefore);
+	let expectedSequence = 123;
+	for (let i = 0; i < 3; i++) expectedSequence = nextSeed(expectedSequence);
+	assert.equal(flags.__randBattle__, expectedSequence, "调试日志不能额外推进 __randBattle__");
+	assert.equal(snapshot.rngCallCount, 3);
+	runtime.destroy();
+});
+
 test("战斗完成回调只执行一次并返回最终结果", () => {
 	const core = {
 		rand(num) { return num ? 0 : 0; },
@@ -2345,7 +2445,7 @@ test("战斗规则支持随机弱体效果 applyRandomDebuff（命中时敌方�
 	assert.match(rulesSource, /getAllDebuffIds/);
 	const coreSource = fs.readFileSync(path.join(root, "project/backpackBattleCore.js"), "utf8");
 	assert.match(coreSource, /applyRandomDebuff: function \(targetKey, weapon, effect, context, amount\)/);
-	assert.match(coreSource, /gameRandom\.pick\(pool\)/);
+	assert.match(coreSource, /gameRandom\.pick\(pool, \{[\s\S]*?randomPurpose: "applyRandomDebuff"/);
 	const kernelSource = fs.readFileSync(path.join(root, "project/backpackBattleEstimateKernel.js"), "utf8");
 	assert.match(kernelSource, /applyRandomDebuff: function/);
 	assert.match(kernelSource, /var selected = random\.pick\(pool\)/);
