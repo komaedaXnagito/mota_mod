@@ -214,22 +214,36 @@ var installBackpackCraft_9c4e7b2a_6f1d_4a8c_9e3b_5d7f2c1a8e64 = function (core, 
 		};
 
 		// ---- 合成执行 ----
-		const doCraft = function () {
-			const a = slots[0], b = slots[1];
-			if (!a || !b) {
-				if (core.drawTip) core.drawTip("请选择两把原料武器");
-				return;
-			}
+		const pushCraftRoute = function (firstInstanceId, secondInstanceId) {
+			if (core.isReplaying && core.isReplaying()) return false;
+			if (core.isPlaying && !core.isPlaying()) return false;
+			if (!core.status || !Array.isArray(core.status.route)) return false;
+			core.status.route.push("bp:-2:" + firstInstanceId + ":" + secondInstanceId);
+			return true;
+		};
+		const craftBackpackWeaponsByInstanceIds = function (firstInstanceId, secondInstanceId, options) {
+			options = options || {};
+			firstInstanceId = String(firstInstanceId == null ? "" : firstInstanceId);
+			secondInstanceId = String(secondInstanceId == null ? "" : secondInstanceId);
+			if (!firstInstanceId || !secondInstanceId || firstInstanceId === secondInstanceId) return false;
+
+			const entries = readEntries();
+			const a = entries.find(function (entry) { return entry.instanceId === firstInstanceId; });
+			const b = entries.find(function (entry) { return entry.instanceId === secondInstanceId; });
+			if (!a || !b) return false;
 			const recipe = findRecipe(a.weapon, b.weapon);
-			if (!recipe) {
-				if (core.drawTip) core.drawTip("这两把武器无法合成");
-				return;
-			}
+			const resultDefinition = recipe && getWeaponDef(recipe.result);
+			if (!resultDefinition) return false;
+
 			const backpack = getBackpackPlugin();
-			if (backpack && typeof backpack.removeBackpackWeapon === "function") {
-				backpack.removeBackpackWeapon(a.instanceId);
-				backpack.removeBackpackWeapon(b.instanceId);
-				backpack.addBackpackWeapon(getWeaponDef(recipe.result), { autoPlace: true });
+			if (backpack && typeof backpack.removeBackpackWeapon === "function"
+				&& typeof backpack.addBackpackWeapon === "function") {
+				if (!backpack.removeBackpackWeapon(a.instanceId)) return false;
+				if (!backpack.removeBackpackWeapon(b.instanceId)) return false;
+				if (backpack.addBackpackWeapon(resultDefinition, {
+					autoPlace: true,
+					recordRoute: false
+				}) == null) return false;
 			} else {
 				// 背包插件不可用时兜底：直接操作背包状态 flag。
 				const state = core.getFlag(FLAG_STATE) || { version: 5, placed: [], inventory: [], unlockedCells: [] };
@@ -243,16 +257,38 @@ var installBackpackCraft_9c4e7b2a_6f1d_4a8c_9e3b_5d7f2c1a8e64 = function (core, 
 				core.setFlag("__backpack_instance_id__", nextInstanceId);
 				state.inventory.push({
 					instanceId: String(nextInstanceId),
-					weapon: JSON.parse(JSON.stringify(getWeaponDef(recipe.result))),
+					weapon: JSON.parse(JSON.stringify(resultDefinition)),
 					rotation: 0
 				});
 				core.setFlag(FLAG_STATE, state);
 				if (backpack && typeof backpack.updateBackpack === "function") backpack.updateBackpack();
 			}
+
+			if (options.recordRoute !== false) pushCraftRoute(a.instanceId, b.instanceId);
 			slots = [null, null];
-			if (core.playSound) core.playSound("item.mp3");
-			render();
-			if (core.drawTip) core.drawTip("合成成功：" + (getWeaponDef(recipe.result).name || recipe.result));
+			if (!options.silent) {
+				if (core.playSound) core.playSound("item.mp3");
+				render();
+				if (core.drawTip) core.drawTip("合成成功：" + (resultDefinition.name || recipe.result));
+			}
+			return true;
+		};
+		const doCraft = function () {
+			const a = slots[0], b = slots[1];
+			if (!a || !b) {
+				if (core.drawTip) core.drawTip("请选择两把原料武器");
+				return false;
+			}
+			const recipe = findRecipe(a.weapon, b.weapon);
+			if (!recipe) {
+				if (core.drawTip) core.drawTip("这两把武器无法合成");
+				return false;
+			}
+			if (!craftBackpackWeaponsByInstanceIds(a.instanceId, b.instanceId)) {
+				if (core.drawTip) core.drawTip("合成失败：原料武器状态已变化");
+				return false;
+			}
+			return true;
 		};
 
 		// ---- UI ----
@@ -727,6 +763,7 @@ var installBackpackCraft_9c4e7b2a_6f1d_4a8c_9e3b_5d7f2c1a8e64 = function (core, 
 			const item = getRecipeCatalog().filter(function (candidate) { return candidate.id === catalogId; })[0];
 			return Boolean(item && item.craftable && item.recipe && fillRecipeSlots(item.recipe));
 		};
+		plugin.craftBackpackWeaponsByInstanceIds = craftBackpackWeaponsByInstanceIds;
 		plugin.getCraftState = function () {
 			return {
 				recipeCount: (Array.isArray(recipesData.recipes) ? recipesData.recipes : []).length,

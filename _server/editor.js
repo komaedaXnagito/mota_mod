@@ -864,7 +864,10 @@ editor.prototype.drawInitData = function (icons) {
 
     var nowx = 0, nowy = 0;
     for (var ii = 0; ii < imgNames.length; ii++) {
+
+        console.log(imgNames)
         var img = imgNames[ii];
+
         if (img == 'terrains') {
             (function(image,nowx){
                 if (image.complete) {

@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="在浏览器本地对比两份 JSONL 文件，查看逐行与字段级差异。">
+  <title>JSONL 差异工作台</title>
+  <link rel="stylesheet" href="jsonl-diff.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="返回页面顶部">
+        <span class="brand-mark" aria-hidden="true"><span>{</span><i>≠</i><span>}</span></span>
+        <span class="brand-copy">
+          <b>DIFF / LENS</b>
+          <small>LOCAL DATA TOOL</small>
+        </span>
+      </a>
+      <div class="privacy-note">
+        <span class="privacy-dot" aria-hidden="true"></span>
+        文件只在当前浏览器中处理，不会上传
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="page-title">
+        <div class="hero-kicker"><span>01</span> JSON Lines Comparator</div>
+        <div class="hero-grid">
+          <div>
+            <h1 id="page-title">让每一处数据变化<br><em>清晰可见。</em></h1>
+          </div>
+          <div class="hero-copy">
+            <p>导入两份 <code>.jsonl</code> / <code>.ndjson</code> 文件，按记录顺序或唯一字段匹配，定位新增、删除和深层字段变化。</p>
+            <div class="hero-actions">
+              <button class="text-button" id="loadSampleButton" type="button">载入演示数据 <span>↗</span></button>
+              <button class="text-button muted" id="clearButton" type="button">清空全部</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="workspace-section" aria-labelledby="input-heading">
+        <div class="section-heading">
+          <div>
+            <span class="section-number">02</span>
+            <h2 id="input-heading">准备数据</h2>
+          </div>
+          <p>可拖入文件，也可以直接粘贴文本。空行会被自动忽略。</p>
+        </div>
+
+        <div class="source-grid">
+          <article class="source-card source-card-a" data-side="left">
+            <div class="source-card-header">
+              <div>
+                <span class="source-label">BASELINE / A</span>
+                <h3>基准数据</h3>
+              </div>
+              <span class="source-token">A</span>
+            </div>
+            <label class="drop-zone" id="leftDropZone" for="leftFile">
+              <input id="leftFile" type="file" accept=".jsonl,.ndjson,.json,application/json,text/plain">
+              <span class="drop-icon" aria-hidden="true">↓</span>
+              <span class="drop-copy">
+                <b id="leftFileName">选择或拖入 JSONL</b>
+                <small>支持 .jsonl / .ndjson / 文本文件</small>
+              </span>
+              <span class="browse-pill">浏览</span>
+            </label>
+            <div class="editor-wrap">
+              <div class="editor-bar">
+                <span>RAW INPUT</span>
+                <span id="leftEditorMeta">0 条记录</span>
+              </div>
+              <textarea id="leftText" spellcheck="false" autocomplete="off" placeholder='每行一个 JSON 对象，例如：&#10;{"id": 1, "name": "sword"}' aria-label="基准 JSONL 文本"></textarea>
+            </div>
+            <div class="source-status" id="leftStatus">
+              <span class="status-ready"><i></i>等待数据</span>
+              <span>0 B</span>
+            </div>
+          </article>
+
+          <div class="swap-column">
+            <span class="connector-line"></span>
+            <button class="swap-button" id="swapButton" type="button" title="交换 A 与 B" aria-label="交换基准数据和对比数据">⇄</button>
+            <span class="connector-line"></span>
+          </div>
+
+          <article class="source-card source-card-b" data-side="right">
+            <div class="source-card-header">
+              <div>
+                <span class="source-label">CANDIDATE / B</span>
+                <h3>对比数据</h3>
+              </div>
+              <span class="source-token">B</span>
+            </div>
+            <label class="drop-zone" id="rightDropZone" for="rightFile">
+              <input id="rightFile" type="file" accept=".jsonl,.ndjson,.json,application/json,text/plain">
+              <span class="drop-icon" aria-hidden="true">↓</span>
+              <span class="drop-copy">
+                <b id="rightFileName">选择或拖入 JSONL</b>
+                <small>支持 .jsonl / .ndjson / 文本文件</small>
+              </span>
+              <span class="browse-pill">浏览</span>
+            </label>
+            <div class="editor-wrap">
+              <div class="editor-bar">
+                <span>RAW INPUT</span>
+                <span id="rightEditorMeta">0 条记录</span>
+              </div>
+              <textarea id="rightText" spellcheck="false" autocomplete="off" placeholder='每行一个 JSON 对象，例如：&#10;{"id": 1, "name": "sword+"}' aria-label="对比 JSONL 文本"></textarea>
+            </div>
+            <div class="source-status" id="rightStatus">
+              <span class="status-ready"><i></i>等待数据</span>
+              <span>0 B</span>
+            </div>
+          </article>
+        </div>
+
+        <div class="compare-controls">
+          <label class="control-field">
+            <span>匹配方式</span>
+            <select id="matchMode">
+              <option value="line">按记录顺序</option>
+              <option value="key">按唯一字段</option>
+            </select>
+          </label>
+          <label class="control-field key-field is-hidden" id="keyFieldWrap">
+            <span>字段路径</span>
+            <input id="keyPath" value="id" placeholder="例如 id 或 meta.uuid" autocomplete="off">
+          </label>
+          <label class="control-field ignore-field">
+            <span>忽略字段 <small>可选</small></span>
+            <input id="ignorePaths" placeholder="updatedAt, meta.traceId, items[*].debug" aria-describedby="modeHint" autocomplete="off">
+          </label>
+          <div class="control-note">
+            <span class="note-icon" aria-hidden="true">i</span>
+            <span id="modeHint">第 1 条与第 1 条对比，适合记录顺序稳定的数据。</span>
+          </div>
+          <button class="compare-button" id="compareButton" type="button">
+            <span>开始对比</span>
+            <b aria-hidden="true">→</b>
+          </button>
+        </div>
+      </section>
+
+      <section class="results-section" id="resultsSection" aria-labelledby="results-heading">
+        <div class="section-heading results-heading-row">
+          <div>
+            <span class="section-number">03</span>
+            <h2 id="results-heading">差异结果</h2>
+          </div>
+          <div class="results-actions">
+            <span id="comparisonTimestamp">尚未执行对比</span>
+            <button id="exportButton" type="button" disabled>导出差异 JSONL <span>↓</span></button>
+          </div>
+        </div>
+
+        <div class="summary-grid" id="summaryGrid" aria-label="对比结果摘要">
+          <article class="summary-card summary-total">
+            <span>匹配结果</span>
+            <strong id="summaryTotal">—</strong>
+            <small>PAIRED ROWS</small>
+          </article>
+          <article class="summary-card summary-same">
+            <span>完全一致</span>
+            <strong id="summarySame">—</strong>
+            <small>UNCHANGED</small>
+          </article>
+          <article class="summary-card summary-modified">
+            <span>内容变更</span>
+            <strong id="summaryModified">—</strong>
+            <small>MODIFIED</small>
+          </article>
+          <article class="summary-card summary-left">
+            <span>仅 A 存在</span>
+            <strong id="summaryLeft">—</strong>
+            <small>REMOVED</small>
+          </article>
+          <article class="summary-card summary-right">
+            <span>仅 B 存在</span>
+            <strong id="summaryRight">—</strong>
+            <small>ADDED</small>
+          </article>
+          <article class="summary-card summary-error">
+            <span>解析 / 匹配问题</span>
+            <strong id="summaryErrors">—</strong>
+            <small>NEEDS ATTENTION</small>
+          </article>
+        </div>
+
+        <div class="result-panel">
+          <div class="result-toolbar">
+            <div class="filter-tabs" id="filterTabs" role="group" aria-label="筛选对比结果">
+              <button class="is-active" data-filter="changed" type="button">全部差异 <span>0</span></button>
+              <button data-filter="modified" type="button">已修改 <span>0</span></button>
+              <button data-filter="left-only" type="button">仅 A <span>0</span></button>
+              <button data-filter="right-only" type="button">仅 B <span>0</span></button>
+              <button data-filter="error" type="button">有问题 <span>0</span></button>
+              <button data-filter="same" type="button">相同 <span>0</span></button>
+              <button data-filter="all" type="button">全部 <span>0</span></button>
+            </div>
+            <label class="search-box">
+              <span aria-hidden="true">⌕</span>
+              <input id="searchInput" type="search" placeholder="搜索键、行内容或字段路径" aria-label="搜索对比结果" autocomplete="off">
+            </label>
+          </div>
+
+          <div class="result-list" id="resultList">
+            <div class="empty-state" id="emptyState">
+              <span class="empty-glyph" aria-hidden="true">{…}</span>
+              <h3>等待第一次对比</h3>
+              <p>准备好两侧数据后点击“开始对比”，差异会在这里逐条展开。</p>
+            </div>
+          </div>
+
+          <div class="pagination is-hidden" id="pagination">
+            <span id="pageInfo">显示 0 / 0</span>
+            <div>
+              <button id="prevPage" type="button" aria-label="上一页">←</button>
+              <span id="pageNumber">1 / 1</span>
+              <button id="nextPage" type="button" aria-label="下一页">→</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>DIFF / LENS</span>
+      <p>静态单页工具 · 无网络依赖 · 数据保留在本地</p>
+      <button class="text-button muted" id="backToTop" type="button">回到顶部 ↑</button>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="jsonl-diff.js"></script>
+</body>
+</html>

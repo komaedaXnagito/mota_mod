@@ -823,10 +823,6 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 				"function": "function(){\nflags.randomList = [\n\t\"I384\",\n\t\"I386\",\n\t\"I387\",\n\t\"I388\",\n\t\"I390\",\n\t\"I391\",\n\t\"I393\",\n\t\"I394\",\n\t\"I395\",\n\t\"I396\",\n\t\"I398\",\n\t\"I399\",\n\t\"I400\",\n\t\"I401\",\n\t\"I402\",\n\t\"I405\",\n\t\"I406\",\n\t\"I407\",\n\t\"I410\",\n\t\"I411\",\n\t\"I412\",\n\t\"I413\",\n\t\"I414\",\n\t\"I415\",\n\t\"I417\",\n\t\"I419\",\n\t\"I420\",\n\t\"I422\",\n\t\"I423\",\n\t\"I424\",\n\t\"I425\",\n\t\"I426\",\n\t\"I427\",\n\t\"I428\",\n\t\"I500\",\n\t\"I501\",\n\t\"I502\",\n\t\"I503\",\n\t\"I504\",\n\t\"I505\",\n\t\"I506\",\n\t\"I507\",\n\t\"I510\",\n\t\"I511\",\n\t\"I512\",\n\t\"I515\",\n\t\"I517\",\n\t\"I518\",\n\t\"I519\",\n\t\"I520\",\n\t\"I521\",\n\t\"I525\",\n\t\"I526\",\n\t\"I527\",\n\t\"I528\",\n\t\"I529\",\n\t\"I530\",\n\t\"I531\",\n\t\"I532\",\n\t\"I533\",\n\t\"I534\",\n\t\"I535\",\n\t\"I536\",\n\n\t\"I538\",\n\t\"I541\",\n\t\"I542\",\n\t\"I543\",\n\t\"I545\",\n\n\t\"I549\",\n\t\"I550\",\n\t\"I552\",\n\t\"I553\",\n\t\"I555\",\n\t\"I557\",\n\t\"I561\",\n\t\"I562\",\n\t\"I564\",\n\t\"I565\",\n\t\"I569\",\n\t\"I571\",\n\t\"I573\",\n\t\"I575\",\n\t\"I576\",\n\t\"I577\",\n\t\"I578\",\n\t\"I579\",\n\t\"I581\",\n\t\"I582\",\n\t\"I583\",\n\t\"I585\",\n\t\"I586\",\n\t\"I587\",\n\t\"I589\",\n\t\"I590\",\n\t\"I591\",\n\t\"I592\",\n\t\"I595\",\n\t\"I596\",\n\t\"I597\"\n]\n}"
 			},
 			{
-				"type": "function",
-				"function": "function(){\n// 先改定义表\nvar enemyIds = Object.keys(core.material.enemys);\nenemyIds.forEach(function (id) {\n\tvar e = core.material.enemys[id];\n\tif (e && typeof e.def === \"number\" && e.def > 0) {\n\t\te.hp += 2 * e.def;\n\t}\n});\n// 再同步当前楼层已放置的怪物实例（若存在）\nif (core.status && core.status.monsters) {\n\tObject.keys(core.status.monsters).forEach(function (key) {\n\t\tvar m = core.status.monsters[key];\n\t\tif (m && m.materialId && core.material.enemys[m.materialId]) {\n\t\t\tvar e = core.material.enemys[m.materialId];\n\t\t\tif (typeof e.def === \"number\" && e.def > 0) {\n\t\t\t\tm.hp += 2 * e.def;\n\t\t\t}\n\t\t}\n\t});\n}\n}"
-			},
-			{
 				"type": "stopSound"
 			}
 		],

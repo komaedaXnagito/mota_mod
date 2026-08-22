@@ -242,6 +242,9 @@ body {
 #iconImages img {
     position: absolute;
 }
+#iconImages canvas{
+    position: absolute;
+}
 
 .gameCanvas {
     position: absolute;

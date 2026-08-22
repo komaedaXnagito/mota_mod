@@ -1589,7 +1589,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		}
 		syncInstanceIdCounter([entry]);
 		persistState();
-		if (state.placed.indexOf(entry) >= 0) {
+		if (options.recordRoute !== false && state.placed.indexOf(entry) >= 0) {
 			recordWeaponEnter(entry);
 			recordWeaponMove(entry);
 		}
@@ -1767,6 +1767,18 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 			if (matched) {
 				const cell = fromLogicalCell(Number(matched[1]), Number(matched[2]));
 				if (!unlockBackpackCell(cell.col, cell.row, { recordRoute: false, silent: true })) return false;
+				return finishBackpackReplayAction(action);
+			}
+
+			matched = action.match(/^bp:-2:([^:]+):([^:]+)$/);
+			if (matched) {
+				const firstInstanceId = matched[1];
+				const secondInstanceId = matched[2];
+				if (firstInstanceId === secondInstanceId) return false;
+				const craft = core.plugin && core.plugin.craftBackpackWeaponsByInstanceIds;
+				if (typeof craft !== "function") return false;
+				if (!craft(firstInstanceId, secondInstanceId, { recordRoute: false, silent: true })) return false;
+				readState();
 				return finishBackpackReplayAction(action);
 			}
 

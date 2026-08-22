@@ -96,6 +96,36 @@ test("MT1 怪物能力初始化使用战斗随机流", () => {
 	assert.doesNotMatch(initializer[0], /Math\.random/);
 });
 
+test("怪物生命加成在 MT1 首次到达时持久化", () => {
+	const dataSource = fs.readFileSync(path.join(root, "project/data.js"), "utf8");
+	const floorSource = fs.readFileSync(path.join(root, "project/floors/MT1.js"), "utf8");
+	assert.doesNotMatch(dataSource, /e\.hp \+= 2 \* e\.def/);
+
+	const floorContext = { main: { floors: {} } };
+	vm.createContext(floorContext);
+	vm.runInContext(floorSource, floorContext);
+	const initializer = floorContext.main.floors.MT1.firstArrive.find((action) =>
+		action.type === "function" && action.function.includes("hp + 2 * def"));
+	assert.ok(initializer, "怪物生命加成应位于 MT1 首次到达事件中");
+	assert.match(initializer.function, /canonicalId && canonicalId !== id/);
+	assert.match(initializer.function, /core\.setEnemy\(id, "hp", hp \+ 2 \* def, null, null, true\)/);
+
+	const calls = [];
+	const core = {
+		material: { enemys: {
+			base: { hp: 100, def: 10 },
+			alias: { hp: 100, def: 10, faceIds: { down: "base" } },
+			zeroDef: { hp: 50, def: 0 }
+		} },
+		setEnemy(...args) {
+			calls.push(args);
+			this.material.enemys[args[0]][args[1]] = args[2];
+		}
+	};
+	vm.runInNewContext(`(${initializer.function})()`, { core });
+	assert.deepEqual(calls, [["base", "hp", 120, null, null, true]]);
+});
+
 test("randShop 与 randBattle 使用独立且可存档的确定性随机流", () => {
 	const flags = { __seed__: 246813579, __rand__: 13579 };
 	const battleRandomLogs = [];
@@ -2346,7 +2376,7 @@ test("背包录像按 instanceId 增量记录进入、移出、移动、出售�
 	});
 	const routeUtils = Object.create(routeContext.utils.prototype);
 	routeContext.core.utils = routeUtils;
-	const bpRoutes = ["choices:0", "choices:5", "bp:1:i", "bp:1:o", "bp:1:s", "bp:1:m:3:-2:9", "bp:-1:-2:-1"];
+	const bpRoutes = ["choices:0", "choices:5", "bp:1:i", "bp:1:o", "bp:1:s", "bp:1:m:3:-2:9", "bp:-1:-2:-1", "bp:-2:1:2"];
 	const encodedRoute = routeUtils.encodeRoute(bpRoutes);
 	assert.deepEqual(Array.from(routeUtils.decodeRoute(encodedRoute)), bpRoutes);
 
@@ -2359,6 +2389,77 @@ test("背包录像按 instanceId 增量记录进入、移出、移动、出售�
 	assert.match(source, /registerReplayAction\("bp"/);
 	assert.match(source, /"bp:" \+ entry\.instanceId \+ ":s"/);
 	assert.match(source, /"bp:-1:" \+ logical\.x \+ ":" \+ logical\.y/);
+	assert.match(source, /\^bp:-2:\(\[\^:\]\+\):\(\[\^:\]\+\)\$/);
+});
+
+test("武器合成按两个 instanceId 录制并回放 bp:-2 动作", () => {
+	const heroFlags = {};
+	let replaying = false;
+	let replayCalls = 0;
+	const clone = (value) => value == null ? value : JSON.parse(JSON.stringify(value));
+	const plugin = {};
+	const core = {
+		material: { items: {} },
+		clone,
+		status: { hero: { flags: heroFlags, money: 0 }, route: [] },
+		plugin,
+		control: {
+			replayActions: [],
+			registerReplayAction(name, func) {
+				this.replayActions = this.replayActions.filter((entry) => entry.name !== name);
+				this.replayActions.push({ name, func });
+			}
+		},
+		replay() { replayCalls++; },
+		isPlaying() { return true; },
+		isReplaying() { return replaying; },
+		getFlag(key, defaultValue) { return heroFlags[key] == null ? defaultValue : heroFlags[key]; },
+		setFlag(key, value) { heroFlags[key] = clone(value); },
+		itemCount() { return 0; },
+		updateStatusBar() {}
+	};
+	const context = loadScripts([
+		"project/backpackWeaponSynergy.js",
+		"project/weapons.js",
+		"project/weaponRecipes.js",
+		"project/backpackUiCommon.js",
+		"project/backpackWeaponSystem.js",
+		"project/backpackSystem.js",
+		"project/backpackCraft.js"
+	], { core });
+	context.installBackpackWeaponSystem_41d4dd44_8f7d_4bbc_b890_80db42f1ad76(core, plugin);
+	context.installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658(core, plugin);
+	context.installBackpackCraft_9c4e7b2a_6f1d_4a8c_9e3b_5d7f2c1a8e64(core, plugin);
+
+	const definitions = context.weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44;
+	const recipes = context.weaponRecipes_7f2e9c4a_3b5d_4f8a_9c1e_6d4b8a2f9c31.recipes;
+	const recipe = recipes.find((entry) => definitions[entry.a] && definitions[entry.b] && definitions[entry.result]);
+	assert.ok(recipe, "测试数据中应至少存在一条完整合成配方");
+	const firstId = plugin.addBackpackWeapon(definitions[recipe.a], { autoPlace: false, recordRoute: false });
+	const secondId = plugin.addBackpackWeapon(definitions[recipe.b], { autoPlace: false, recordRoute: false });
+	const initialState = clone(heroFlags.__backpack_state__);
+	assert.deepEqual(core.status.route, []);
+
+	assert.equal(plugin.craftBackpackWeaponsByInstanceIds(firstId, secondId), true);
+	const action = "bp:-2:" + firstId + ":" + secondId;
+	assert.deepEqual(core.status.route, [action], "合成只记录一条 -2 动作，不再追加产物的 i/m 动作");
+	const expectedState = clone(heroFlags.__backpack_state__);
+	const expectedEntries = expectedState.placed.concat(expectedState.inventory);
+	assert.equal(expectedEntries.some((entry) => entry.instanceId === firstId || entry.instanceId === secondId), false);
+	assert.ok(expectedEntries.some((entry) => entry.weapon.id === definitions[recipe.result].id));
+
+	heroFlags.__backpack_state__ = clone(initialState);
+	heroFlags.__backpack_instance_id__ = Number(secondId);
+	core.status.route = [];
+	replaying = true;
+	const replayAction = core.control.replayActions.find((entry) => entry.name === "bp");
+	assert.ok(replayAction);
+	assert.equal(replayAction.func(action), true);
+	assert.deepEqual(heroFlags.__backpack_state__, expectedState, "回放应消耗同两个实例并生成相同实例 ID 的产物");
+	assert.deepEqual(core.status.route, [action]);
+	assert.equal(replayCalls, 1);
+	assert.equal(replayAction.func("bp:-2:" + firstId + ":" + firstId), false, "同一实例不能作为两份材料");
+	assert.equal(replayCalls, 1, "无效合成动作不能继续录像");
 });
 
 test("录像中战斗未经过事件流时，结束后手动继续 replay", () => {

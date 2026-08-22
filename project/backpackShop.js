@@ -895,6 +895,7 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 		 * 每次调用重新随机一批，不影响商店货架。
 		 */
 		const openRewardPicker = function () {
+			console.log('reward picker')
 			if (getPool().length === 0) {
 				if (core.drawTip) core.drawTip("随机池为空：flags.randomList 里的武器 ID 均不存在，请检查");
 				return;
