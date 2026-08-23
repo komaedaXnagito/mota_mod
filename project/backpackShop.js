@@ -276,13 +276,15 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 		};
 
 		// ---- UI ----
-		const rarityText = function (rarity) {
-			const rarityNum = Number(rarity);
-			const safe = isFinite(rarityNum) ? Math.max(0, Math.min(5, rarityNum)) : 0;
-			return new Array(safe + 1).join("★");
+		let cardRenderer = plugin.weaponCardRenderer || null;
+		const getCardRenderer = function () {
+			if (cardRenderer) return cardRenderer;
+			if (typeof installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c !== "function") {
+				throw new Error("武器卡片渲染组件未安装");
+			}
+			cardRenderer = installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c(core, plugin);
+			return cardRenderer;
 		};
-		// 武器图片与占格外缘之间保留 0.12 个格子的距离；横纵方向使用相同格子单位。
-		const PREVIEW_IMAGE_INSET = 0.12;
 		let particleHostSequence = 0;
 		let activeParticleScenes = [];
 		const SHOP_PARTICLE_PROFILES = {
@@ -291,226 +293,6 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			4: { count: 56, colors: ["#b87ef5", "#efd5ff", "#d9a8ff"], size: 4, speed: 1.55, opacity: 0.94 },
 			5: { count: 84, colors: ["#ffc138", "#fff7b7", "#ffd96a"], size: 5, speed: 1.9, opacity: 1 }
 		};
-		const formatDetailNumber = function (value, digits) {
-			if (value == null || !isFinite(Number(value))) return "—";
-			const factor = Math.pow(10, digits == null ? 2 : digits);
-			return String(Math.round(Number(value) * factor) / factor);
-		};
-		const damageText = function (def) {
-			if (def.minAttack == null && def.maxAttack == null && def.attack == null) return "—";
-			const minimum = def.minAttack == null ? (def.maxAttack == null ? def.attack : def.maxAttack) : def.minAttack;
-			const maximum = def.maxAttack == null ? (def.minAttack == null ? def.attack : def.minAttack) : def.maxAttack;
-			return formatDetailNumber(minimum) + "～" + formatDetailNumber(maximum);
-		};
-		const ultimateText = function (value) {
-			if (value == null || !isFinite(Number(value))) return "—";
-			const number = Number(value);
-			return (number > 0 ? "+" : "") + formatDetailNumber(number);
-		};
-		/** 把原 Tooltip 中的核心属性和特殊效果直接展示在商店卡片内。 */
-		const buildWeaponDetails = function (def) {
-			const details = document.createElement("section");
-			details.className = "backpack-shop-details";
-			const stats = document.createElement("dl");
-			stats.className = "backpack-shop-detail-stats";
-			[
-				["伤害", damageText(def)],
-				["命中", def.hitRate == null ? "—" : formatDetailNumber(Number(def.hitRate) * 100, 1) + "%"],
-				["攻击间隔", def.attackInterval == null ? "—" : formatDetailNumber(def.attackInterval) + " 秒"],
-				["奥义获取", ultimateText(def.ultimateGain)]
-			].forEach(function (stat) {
-				const item = document.createElement("div");
-				const label = document.createElement("dt");
-				label.textContent = stat[0];
-				const value = document.createElement("dd");
-				value.textContent = stat[1];
-				item.appendChild(label);
-				item.appendChild(value);
-				stats.appendChild(item);
-			});
-			details.appendChild(stats);
-			const effect = document.createElement("div");
-			effect.className = "backpack-shop-detail-effect";
-			const effectTitle = document.createElement("b");
-			effectTitle.textContent = "特殊效果";
-			const effectText = document.createElement("p");
-			// 与背包 Tooltip 共用渲染器，保证箭头、转义与换行语义一致。
-			effectText.innerHTML = backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61
-				.formatSpecialEffectHtml(def.synergyText);
-			effect.appendChild(effectTitle);
-			effect.appendChild(effectText);
-			details.appendChild(effect);
-			return details;
-		};
-		/** 把武器定义统一成武器系统使用的 cells 格式；仅在插件缺失时做最小兜底。 */
-		const normalizePreviewWeapon = function (def) {
-			const weaponSystem = plugin.weaponSystem;
-			if (weaponSystem && typeof weaponSystem.normalizeWeapon === "function") {
-				return weaponSystem.normalizeWeapon(def);
-			}
-			const cells = [];
-			const shape = Array.isArray(def.cells) ? null : (def.shape || def.size);
-			if (Array.isArray(def.cells)) {
-				def.cells.forEach(function (cell) {
-					if (Array.isArray(cell) && cell.length >= 2) cells.push([Number(cell[0]) || 0, Number(cell[1]) || 0]);
-				});
-			} else if (Array.isArray(shape)) {
-				shape.forEach(function (row, rowIndex) {
-					if (!Array.isArray(row)) return;
-					row.forEach(function (occupied, colIndex) {
-						if (occupied) cells.push([colIndex, rowIndex]);
-					});
-				});
-			}
-			return Object.assign({}, def, { cells: cells.length ? cells : [[0, 0]] });
-		};
-		/**
-		 * 计算商店预览棋盘。武器与联动格共用真实背包坐标，棋盘只在外围补一圈空格，
-		 * 因此既能直观看出占格，也不会因武器联动距离不同而裁掉范围。
-		 */
-		const getPreviewGeometry = function (def) {
-			const weapon = normalizePreviewWeapon(def);
-			const weaponSystem = plugin.weaponSystem;
-			const sourceCells = weaponSystem && typeof weaponSystem.getRotatedCells === "function"
-				? weaponSystem.getRotatedCells(weapon, 0)
-				: weapon.cells.slice();
-			const entry = { weapon: weapon, col: 0, row: 0, rotation: 0 };
-			const synergyCells = weaponSystem && typeof weaponSystem.getSynergyCells === "function"
-				? weaponSystem.getSynergyCells(entry)
-				: backpackWeaponSynergy_91f4c21e_7d37_4f12_9cc4_a9606ba62a83.getAffectedCells(weapon, sourceCells, 0);
-			const allCells = sourceCells.map(function (cell) { return { col: cell[0], row: cell[1] }; })
-				.concat(synergyCells);
-			let minCol = Math.min.apply(null, allCells.map(function (cell) { return cell.col; })) - 1;
-			let maxCol = Math.max.apply(null, allCells.map(function (cell) { return cell.col; })) + 1;
-			let minRow = Math.min.apply(null, allCells.map(function (cell) { return cell.row; })) - 1;
-			let maxRow = Math.max.apply(null, allCells.map(function (cell) { return cell.row; })) + 1;
-			const sourceMinCol = Math.min.apply(null, sourceCells.map(function (cell) { return cell[0]; }));
-			const sourceMaxCol = Math.max.apply(null, sourceCells.map(function (cell) { return cell[0]; }));
-			const sourceMinRow = Math.min.apply(null, sourceCells.map(function (cell) { return cell[1]; }));
-			const sourceMaxRow = Math.max.apply(null, sourceCells.map(function (cell) { return cell[1]; }));
-			return {
-				weapon: weapon,
-				sourceCells: sourceCells,
-				synergyCells: synergyCells,
-				minCol: minCol,
-				minRow: minRow,
-				cols: maxCol - minCol + 1,
-				rows: maxRow - minRow + 1,
-				sourceBounds: {
-					col: sourceMinCol,
-					row: sourceMinRow,
-					cols: sourceMaxCol - sourceMinCol + 1,
-					rows: sourceMaxRow - sourceMinRow + 1
-				}
-			};
-		};
-		const positionPreviewCell = function (element, col, row, geometry) {
-			element.style.left = ((col - geometry.minCol) / geometry.cols * 100) + "%";
-			element.style.top = ((row - geometry.minRow) / geometry.rows * 100) + "%";
-			element.style.width = (100 / geometry.cols) + "%";
-			element.style.height = (100 / geometry.rows) + "%";
-		};
-		/**
-		 * 把武器图片等比放进带格内边距的框中。imageCrop 的完整图片宽高和裁剪区域
-		 * 使用同一个 uniformScale 换算，禁止分别拉伸横纵轴。
-		 */
-		const layoutPreviewImage = function (imageFrame, image, geometry) {
-			const bounds = geometry.sourceBounds;
-			const inset = Math.min(PREVIEW_IMAGE_INSET, (bounds.cols - 0.1) / 2, (bounds.rows - 0.1) / 2);
-			const frameCol = bounds.col + inset;
-			const frameRow = bounds.row + inset;
-			const frameCols = bounds.cols - inset * 2;
-			const frameRows = bounds.rows - inset * 2;
-			imageFrame.dataset.insetCells = String(inset);
-			imageFrame.style.left = ((frameCol - geometry.minCol) / geometry.cols * 100) + "%";
-			imageFrame.style.top = ((frameRow - geometry.minRow) / geometry.rows * 100) + "%";
-			imageFrame.style.width = (frameCols / geometry.cols * 100) + "%";
-			imageFrame.style.height = (frameRows / geometry.rows * 100) + "%";
-
-			const crop = geometry.weapon.imageCrop;
-			if (!Array.isArray(crop) || crop.length < 6
-				|| !(crop[2] > 0) || !(crop[3] > 0) || !(crop[4] > 0) || !(crop[5] > 0)) return;
-			const cropX = Number(crop[0]) || 0;
-			const cropY = Number(crop[1]) || 0;
-			const cropWidth = Number(crop[2]);
-			const cropHeight = Number(crop[3]);
-			const naturalWidth = Number(crop[4]);
-			const naturalHeight = Number(crop[5]);
-			const uniformScale = Math.min(frameCols / cropWidth, frameRows / cropHeight);
-			const displayedCropWidth = cropWidth * uniformScale;
-			const displayedCropHeight = cropHeight * uniformScale;
-			image.style.width = (naturalWidth * uniformScale / frameCols * 100) + "%";
-			image.style.height = (naturalHeight * uniformScale / frameRows * 100) + "%";
-			image.style.left = ((frameCols - displayedCropWidth) / 2 / frameCols * 100
-				- cropX * uniformScale / frameCols * 100) + "%";
-			image.style.top = ((frameRows - displayedCropHeight) / 2 / frameRows * 100
-				- cropY * uniformScale / frameRows * 100) + "%";
-		};
-		/** 绘制与背包同语义的网格、武器真实占格和悬停联动层。 */
-		const buildWeaponPreview = function (def) {
-			const geometry = getPreviewGeometry(def);
-			const preview = document.createElement("div");
-			preview.className = "backpack-shop-preview" + (geometry.synergyCells.length ? " has-synergy" : "");
-			preview.dataset.occupiedCells = String(geometry.sourceCells.length);
-			preview.setAttribute("aria-label", "占 " + geometry.sourceCells.length + " 格"
-				+ (geometry.synergyCells.length ? "，悬停显示联动区域" : "，无格子联动"));
-			const stage = document.createElement("div");
-			stage.className = "backpack-shop-preview-stage";
-			stage.style.aspectRatio = geometry.cols + " / " + geometry.rows;
-			if (geometry.cols >= geometry.rows) stage.style.width = "100%";
-			else stage.style.height = "100%";
-			preview.appendChild(stage);
-
-			for (let row = 0; row < geometry.rows; row++) {
-				for (let col = 0; col < geometry.cols; col++) {
-					const gridCell = document.createElement("span");
-					gridCell.className = "backpack-shop-preview-grid-cell";
-					positionPreviewCell(gridCell, geometry.minCol + col, geometry.minRow + row, geometry);
-					stage.appendChild(gridCell);
-				}
-			}
-
-			const imageFrame = document.createElement("div");
-			imageFrame.className = "backpack-shop-preview-image-frame";
-			const image = document.createElement("img");
-			image.src = geometry.weapon.image || "";
-			image.alt = geometry.weapon.name || "";
-			image.draggable = false;
-			layoutPreviewImage(imageFrame, image, geometry);
-			imageFrame.appendChild(image);
-			stage.appendChild(imageFrame);
-
-			geometry.sourceCells.forEach(function (sourceCell) {
-				const cell = document.createElement("span");
-				cell.className = "backpack-shop-footprint-cell";
-				positionPreviewCell(cell, sourceCell[0], sourceCell[1], geometry);
-				stage.appendChild(cell);
-			});
-			geometry.synergyCells.forEach(function (affectedCell) {
-				const cell = document.createElement("span");
-				cell.className = "backpack-shop-synergy-cell";
-				positionPreviewCell(cell, affectedCell.col, affectedCell.row, geometry);
-				const arrowDirections = affectedCell.arrowDirections && affectedCell.arrowDirections.length
-					? affectedCell.arrowDirections
-					: (affectedCell.directions || ["up"]);
-				arrowDirections.forEach(function (direction) {
-					const arrows = document.createElement("i");
-					arrows.className = "backpack-synergy-arrows direction-" + direction;
-					cell.appendChild(arrows);
-				});
-				stage.appendChild(cell);
-			});
-
-			const meta = document.createElement("div");
-			meta.className = "backpack-shop-preview-meta";
-			const bounds = geometry.sourceBounds;
-			meta.innerHTML = "<b>占 " + geometry.sourceCells.length + " 格</b><span>"
-				+ bounds.cols + "×" + bounds.rows + "</span><em>"
-				+ (geometry.synergyCells.length ? "悬停看联动" : "无格子联动") + "</em>";
-			preview.appendChild(meta);
-			return preview;
-		};
-
 		/** particles.js 只负责稳定的逐帧绘制；这里把粒子的出生点和速度约束为卡牌边缘向外。 */
 		const makeShopParticleConfig = function (profile, rarity) {
 			return {
@@ -678,7 +460,7 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			window.particlesJS(host.id, makeShopParticleConfig(profile, rarity));
 			const instance = Array.isArray(window.pJSDom) ? window.pJSDom[window.pJSDom.length - 1] : null;
 			if (!instance || !instance.pJS) return;
-			const scene = { shell: shell, host: host, card: shell.querySelector(".backpack-shop-card"), profile: profile, instance: instance, state: instance.pJS };
+			const scene = { shell: shell, host: host, card: shell.querySelector(".weapon-card"), profile: profile, instance: instance, state: instance.pJS };
 			refreshShopParticleBounds(scene);
 			const originalUpdate = scene.state.fn.particlesUpdate;
 			scene.state.fn.particlesUpdate = function () {
@@ -726,34 +508,11 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			particleLayer.id = "backpack-shop-particles-" + (++particleHostSequence);
 			particleLayer.dataset.rarity = rarityValue;
 			shell.appendChild(particleLayer);
-			const card = document.createElement("div");
-			card.className = "backpack-shop-card";
-			card.tabIndex = 0;
-			card.dataset.rarity = rarityValue;
-			// 内联强制纵向 flex + 水平居中（防止样式表缓存导致图片靠左上角）。
-			card.style.display = "flex";
-			card.style.flexDirection = "column";
-			card.style.alignItems = "center";
-			card.style.textAlign = "center";
-			card.appendChild(buildWeaponPreview(def));
-			const name = document.createElement("div");
-			name.className = "backpack-shop-name";
-			backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61.renderWeaponName(name, def, { showHammer: false });
-			card.appendChild(name);
-			const rarity = document.createElement("div");
-			rarity.className = "backpack-shop-rarity";
-			rarity.textContent = rarityText(def.rarity);
-			backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61.appendCraftHammer(rarity, def);
-			card.appendChild(rarity);
-			const types = document.createElement("div");
-			types.className = "backpack-shop-types";
-			(Array.isArray(def.weaponTypes) ? def.weaponTypes : []).forEach(function (type) {
-				const tag = document.createElement("i");
-				tag.textContent = type;
-				types.appendChild(tag);
+			const card = getCardRenderer().createCard(def, {
+				lock: false,
+				showCraftHammer: true,
+				tagName: "div"
 			});
-			card.appendChild(types);
-			card.appendChild(buildWeaponDetails(def));
 			const buy = document.createElement("button");
 			buy.type = "button";
 			buy.className = "backpack-shop-buy";

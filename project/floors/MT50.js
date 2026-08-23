@@ -61,6 +61,10 @@ main.floors.MT50=
     "afterBattle": {
         "6,5": [
             {
+                "type": "function",
+                "function": "function(){\nif (core.plugin && core.plugin.weaponCompendium) core.plugin.weaponCompendium.completeRun();\n}"
+            },
+            {
                 "type": "if",
                 "condition": "((item:pickaxe>0 || item:earthquake>0) &&( item:downFly>0))",
                 "true": [

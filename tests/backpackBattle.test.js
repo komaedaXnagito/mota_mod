@@ -213,8 +213,10 @@ test("背包与战斗武器的 hover 按实际占格触发且背包内部格缝�
 	assert.match(cssSource, /\.backpack-image-frame img\s*\{[^}]*object-fit:\s*contain[^}]*object-position:\s*center/);
 });
 
-test("商店和背包共用特殊效果箭头渲染，并由商店静态展示详情", () => {
+test("商店、图鉴和背包共用武器卡片与特殊效果渲染", () => {
 	const shopSource = fs.readFileSync(path.join(root, "project/backpackShop.js"), "utf8");
+	const rendererSource = fs.readFileSync(path.join(root, "project/weaponCardRenderer.js"), "utf8");
+	const compendiumSource = fs.readFileSync(path.join(root, "project/weaponCompendium.js"), "utf8");
 	const commonSource = fs.readFileSync(path.join(root, "project/backpackUiCommon.js"), "utf8");
 	const cssSource = fs.readFileSync(path.join(root, "project/backpack.css"), "utf8");
 	const htmlSource = fs.readFileSync(path.join(root, "index.html"), "utf8");
@@ -226,18 +228,20 @@ test("商店和背包共用特殊效果箭头渲染，并由商店静态展示�
 	assert.match(formatted, /&lt;危险&gt;/);
 	assert.match(common.buildWeaponTooltip({ weapon: { synergyText: "配置在^的武器" } }), /bui-inline-synergy direction-up/);
 
-	assert.match(shopSource, /const buildWeaponPreview = function \(def\)/);
-	assert.match(shopSource, /const PREVIEW_IMAGE_INSET = 0\.12/);
-	assert.match(shopSource, /const layoutPreviewImage = function \(imageFrame, image, geometry\)/);
-	assert.match(shopSource, /const uniformScale = Math\.min\(frameCols \/ cropWidth, frameRows \/ cropHeight\)/);
-	assert.match(shopSource, /image\.style\.width = \(naturalWidth \* uniformScale \/ frameCols \* 100\)/);
-	assert.match(shopSource, /image\.style\.height = \(naturalHeight \* uniformScale \/ frameRows \* 100\)/);
-	assert.match(shopSource, /weaponSystem\.getRotatedCells\(weapon, 0\)/);
-	assert.match(shopSource, /weaponSystem\.getSynergyCells\(entry\)/);
-	assert.match(shopSource, /geometry\.sourceCells\.forEach[\s\S]*?backpack-shop-footprint-cell/);
-	assert.match(shopSource, /geometry\.synergyCells\.forEach[\s\S]*?backpack-shop-synergy-cell/);
-	assert.match(shopSource, /"占 " \+ geometry\.sourceCells\.length \+ " 格"/);
-	assert.match(shopSource, /const buildWeaponDetails = function \(def\)/);
+	assert.match(rendererSource, /var buildWeaponPreview = function \(definition, options\)/);
+	assert.match(rendererSource, /var PREVIEW_IMAGE_INSET = 0\.12/);
+	assert.match(rendererSource, /var layoutPreviewImage = function \(imageFrame, image, geometry\)/);
+	assert.match(rendererSource, /var uniformScale = Math\.min\(frameCols \/ cropWidth, frameRows \/ cropHeight\)/);
+	assert.match(rendererSource, /image\.style\.width = \(naturalWidth \* uniformScale \/ frameCols \* 100\)/);
+	assert.match(rendererSource, /image\.style\.height = \(naturalHeight \* uniformScale \/ frameRows \* 100\)/);
+	assert.match(rendererSource, /weaponSystem\.getRotatedCells\(weapon, 0\)/);
+	assert.match(rendererSource, /weaponSystem\.getSynergyCells\(entry\)/);
+	assert.match(rendererSource, /geometry\.sourceCells\.forEach[\s\S]*?weapon-card-footprint-cell/);
+	assert.match(rendererSource, /geometry\.synergyCells\.forEach[\s\S]*?weapon-card-synergy-cell/);
+	assert.match(rendererSource, /"占 " \+ geometry\.sourceCells\.length \+ " 格"/);
+	assert.match(rendererSource, /var buildWeaponDetails = function \(definition, options\)/);
+	assert.match(rendererSource, /locked \? \["\?\?\?", "\?\?\?", "\?\?\?", "\?\?\?"\]/);
+	assert.match(rendererSource, /if \(locked\) effectText\.textContent = "\?\?\?"/);
 	assert.match(commonSource, /const|var formatSpecialEffectHtml/);
 	assert.match(commonSource, /split\(\/\(\[\\\^∧＾\]\)\/g\)/);
 	assert.match(commonSource, /TOOLTIP_HIDE_DELAY = 0/);
@@ -246,14 +250,19 @@ test("商店和背包共用特殊效果箭头渲染，并由商店静态展示�
 	assert.match(commonSource, /if \(lastTooltipHtml !== html\) \{\s*tooltip\.innerHTML = html/);
 	assert.match(cssSource, /\.bui-tooltip\s*\{[^}]*contain:\s*layout paint[^}]*will-change:\s*opacity, transform[^}]*visibility 0s linear \.08s/);
 	assert.match(cssSource, /\.bui-tooltip\.show\s*\{[^}]*transition-delay:\s*0s/);
-	assert.match(shopSource, /formatSpecialEffectHtml\(def\.synergyText\)/);
-	assert.match(shopSource, /card\.appendChild\(buildWeaponDetails\(def\)\)/);
+	assert.match(rendererSource, /formatSpecialEffectHtml\(definition\.synergyText\)/);
+	assert.match(rendererSource, /card\.appendChild\(buildWeaponDetails\(definition, renderOptions\)\)/);
+	assert.match(shopSource, /getCardRenderer\(\)\.createCard\(def, \{/);
+	assert.match(compendiumSource, /cardRenderer\.createCard\(DEFINITIONS\[entry\.weaponId\] \|\| \{}, \{/);
+	assert.match(compendiumSource, /lock: !entry\.unlocked/);
+	assert.doesNotMatch(shopSource, /buildWeaponPreview|buildWeaponDetails|normalizePreviewWeapon/);
 	assert.doesNotMatch(shopSource, /bindTooltip\(card/);
-	assert.match(cssSource, /\.backpack-shop-footprint-cell\s*\{[^}]*z-index:\s*1[^}]*border:\s*1px solid rgba\(255, 230, 180, \.3\)/);
-	assert.match(cssSource, /\.backpack-shop-preview-image-frame\s*\{[^}]*z-index:\s*3/);
-	assert.match(cssSource, /\.backpack-shop-preview-image-frame img\s*\{[^}]*object-fit:\s*contain[^}]*object-position:\s*center/);
-	assert.match(cssSource, /\.backpack-shop-card\s*\{[^}]*height:\s*540px[^}]*min-height:\s*540px[^}]*max-height:\s*540px[^}]*overflow:\s*hidden/);
-	assert.match(cssSource, /\.backpack-shop-details\s*\{[^}]*flex:\s*1 1 auto[^}]*min-height:\s*0[^}]*overflow-y:\s*auto/);
+	assert.match(cssSource, /\.weapon-card-footprint-cell\s*\{[^}]*z-index:\s*1[^}]*border:\s*1px solid rgba\(255, 230, 180, \.3\)/);
+	assert.match(cssSource, /\.weapon-card-preview-image-frame\s*\{[^}]*z-index:\s*3/);
+	assert.match(cssSource, /\.weapon-card-preview-image-frame img\s*\{[^}]*object-fit:\s*contain[^}]*object-position:\s*center/);
+	assert.match(cssSource, /\.weapon-card\s*\{[^}]*height:\s*540px[^}]*min-height:\s*540px[^}]*max-height:\s*540px[^}]*overflow:\s*hidden/);
+	assert.match(cssSource, /\.weapon-card-details\s*\{[^}]*flex:\s*1 1 auto[^}]*min-height:\s*0[^}]*overflow-y:\s*auto/);
+	assert.match(cssSource, /\.weapon-card\.is-locked \.weapon-card-preview-image-frame img\s*\{[^}]*filter:\s*brightness\(0\)/);
 	assert.match(cssSource, /\.backpack-shop-buy\s*\{[^}]*flex:\s*0 0 auto/);
 	assert.match(htmlSource, /<script src='libs\/thirdparty\/particles\.min\.js\?v=2\.0\.0'><\/script>/);
 	assert.match(shopSource, /const SHOP_PARTICLE_PROFILES = \{[\s\S]*?2:\s*\{ count:\s*18[\s\S]*?3:\s*\{ count:\s*34[\s\S]*?4:\s*\{ count:\s*56[\s\S]*?5:\s*\{ count:\s*84/);
@@ -265,11 +274,11 @@ test("商店和背包共用特殊效果箭头渲染，并由商店静态展示�
 	assert.match(shopSource, /panel\.className = "backpack-shop-panel backpack-shop-reward-panel"/);
 	assert.match(cssSource, /\.backpack-shop-reward-panel\s*\{[^}]*height:\s*min\(670px, calc\(100vh - 12px\)\)[^}]*max-height:\s*calc\(100vh - 12px\)/);
 	assert.match(cssSource, /\.backpack-shop-particle-layer\s*\{[^}]*inset:\s*-52px[^}]*overflow:\s*hidden[^}]*pointer-events:\s*none/);
-	assert.match(cssSource, /\.backpack-shop-card\s*\{[^}]*z-index:\s*2[^}]*background:\s*linear-gradient/);
+	assert.match(cssSource, /\.weapon-card\s*\{[^}]*z-index:\s*2[^}]*background:\s*linear-gradient/);
 	assert.doesNotMatch(cssSource, /backpack-shop-rarity-(?:particles|glints)-rise/);
 	assert.match(cssSource, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.backpack-shop-particle-layer\s*\{\s*display:\s*none/);
-	assert.match(cssSource, /\.backpack-shop-synergy-cell\s*\{[^}]*opacity:\s*0/);
-	assert.match(cssSource, /\.backpack-shop-card:hover \.backpack-shop-synergy-cell[\s\S]*?opacity:\s*1/);
+	assert.match(cssSource, /\.weapon-card-synergy-cell\s*\{[^}]*opacity:\s*0/);
+	assert.match(cssSource, /\.weapon-card:hover \.weapon-card-synergy-cell[\s\S]*?opacity:\s*1/);
 	assert.match(cssSource, /\.bui-inline-synergy\s*\{[^}]*background-image:[^}]*fff0a6[^}]*background-repeat:\s*repeat-y[^}]*animation:\s*bui-inline-synergy-flow \.62s linear infinite/);
 	assert.match(cssSource, /@keyframes bui-inline-synergy-flow\s*\{\s*from\s*\{\s*background-position:\s*center 9px;\s*\}\s*to\s*\{\s*background-position:\s*center 0;\s*\}/);
 	assert.match(cssSource, /\.bui-weapon-tip p\s*\{[^}]*white-space:\s*pre-line[^}]*word-break:\s*break-word/);

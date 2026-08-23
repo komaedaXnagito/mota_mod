@@ -11229,6 +11229,9 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 =
     "武器系统": function () {
 	installBackpackWeaponSystem_41d4dd44_8f7d_4bbc_b890_80db42f1ad76(core, this);
 },
+    "武器卡片渲染器": function () {
+	installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c(core, this);
+},
     "背包": function () {
 	installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658(core, this);
 },
@@ -11240,5 +11243,8 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 =
 },
     "背包乱斗合成": function () {
 	installBackpackCraft_9c4e7b2a_6f1d_4a8c_9e3b_5d7f2c1a8e64(core, this);
+},
+    "武器图鉴": function () {
+	installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37(core, this);
 }
 }
