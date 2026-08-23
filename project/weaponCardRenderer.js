@@ -486,6 +486,9 @@ var installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c = function (c
 		closePreviewModal: closePreviewModal,
 		isMobileListLayout: isMobileListLayout
 	};
+	if (uiCommon && typeof uiCommon.setWeaponCardRenderer === "function") {
+		uiCommon.setWeaponCardRenderer(api);
+	}
 	plugin.weaponCardRenderer = api;
 	return api;
 };

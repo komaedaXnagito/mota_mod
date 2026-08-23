@@ -4,6 +4,7 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 
 	var tooltip = null;
 	var activeAnchor = null;
+	var pinnedAnchor = null;
 	var lastPointer = null;
 	var tooltipHideTimer = null;
 	var tooltipMoveFrame = null;
@@ -11,6 +12,9 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	var lastTooltipHtml = null;
 	var TOOLTIP_HIDE_DELAY = 0;
 	var recipePreviewRoot = null;
+	var recipeWeaponDetailRoot = null;
+	var recipeWeaponDetailReturnFocus = null;
+	var weaponCardRenderer = null;
 	var modalStack = [];
 	var modalKeyboardInstalled = false;
 
@@ -436,7 +440,79 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		return html.join("");
 	};
 
+	var setWeaponCardRenderer = function (renderer) {
+		weaponCardRenderer = renderer || null;
+	};
+
+	var isMobileRecipeLayout = function () {
+		if (weaponCardRenderer && typeof weaponCardRenderer.isMobileListLayout === "function") {
+			return weaponCardRenderer.isMobileListLayout();
+		}
+		if (typeof window === "undefined") return false;
+		if (typeof window.matchMedia === "function") return window.matchMedia("(max-width: 700px)").matches;
+		return Number(window.innerWidth) <= 700;
+	};
+
+	var closeRecipeWeaponDetail = function (restoreFocus) {
+		if (!recipeWeaponDetailRoot) return false;
+		var returnFocus = recipeWeaponDetailReturnFocus;
+		unregisterModal(recipeWeaponDetailRoot);
+		recipeWeaponDetailRoot.remove();
+		recipeWeaponDetailRoot = null;
+		recipeWeaponDetailReturnFocus = null;
+		if (restoreFocus !== false && returnFocus && returnFocus.isConnected
+			&& typeof returnFocus.focus === "function") returnFocus.focus();
+		return true;
+	};
+
+	/** 移动端点击配方武器名后，用统一卡片组件弹出并默认展开完整详情。 */
+	var openRecipeWeaponDetail = function (definition, trigger) {
+		if (!definition || !weaponCardRenderer || typeof document === "undefined") return false;
+		closeRecipeWeaponDetail(false);
+		var root = document.createElement("div");
+		root.className = "bui-recipe-weapon-detail-root";
+		var panel = document.createElement("section");
+		panel.className = "bui-recipe-weapon-detail-panel";
+		panel.setAttribute("role", "dialog");
+		panel.setAttribute("aria-modal", "true");
+		panel.setAttribute("aria-label", String(definition.name || "武器") + "的详细信息");
+		var close = document.createElement("button");
+		close.type = "button";
+		close.className = "bui-recipe-preview-close bui-recipe-weapon-detail-close";
+		close.textContent = "×";
+		close.setAttribute("aria-label", "关闭武器详情");
+		var card = weaponCardRenderer.createCard(definition, {
+			showCraftHammer: false,
+			mobileListMode: true,
+			className: "bui-recipe-weapon-detail-card"
+		});
+		card.classList.add("is-mobile-expanded");
+		var summary = card.querySelector(".weapon-card-summary");
+		if (summary) {
+			summary.setAttribute("aria-expanded", "true");
+			summary.setAttribute("aria-label", "收起武器属性与特殊效果");
+		}
+		panel.appendChild(close);
+		panel.appendChild(card);
+		root.appendChild(panel);
+		document.body.appendChild(root);
+		recipeWeaponDetailRoot = root;
+		recipeWeaponDetailReturnFocus = trigger || null;
+		close.addEventListener("click", function (event) {
+			event.stopPropagation();
+			closeRecipeWeaponDetail();
+		});
+		root.addEventListener("click", function (event) {
+			event.stopPropagation();
+			if (event.target === root) closeRecipeWeaponDetail();
+		});
+		registerModal(root, closeRecipeWeaponDetail, { name: "recipe-weapon-detail" });
+		close.focus();
+		return true;
+	};
+
 	var closeWeaponRecipePreview = function () {
+		closeRecipeWeaponDetail(false);
 		unregisterModal(recipePreviewRoot);
 		if (recipePreviewRoot && recipePreviewRoot.parentNode) recipePreviewRoot.parentNode.removeChild(recipePreviewRoot);
 		recipePreviewRoot = null;
@@ -476,19 +552,29 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		return container;
 	};
 
-	var appendRecipeWeaponName = function (container, key, currentKey) {
+	var appendRecipeWeaponName = function (container, key, currentKey, onActivate) {
 		var span = document.createElement("span");
 		span.className = "bui-recipe-preview-weapon" + (key === currentKey ? " is-current" : "");
+		span.dataset.weaponKey = key;
 		var definition = getWeaponDefinitions()[key];
 		renderWeaponName(span, definition || key, { label: getRecipeDisplayName(key) });
 		if (definition) {
-			span.classList.add("has-tooltip");
+			span.classList.add("has-details");
 			span.tabIndex = 0;
 			span.setAttribute("role", "button");
-			span.setAttribute("aria-label", "预览" + getRecipeDisplayName(key) + "的武器详情");
-			bindTooltip(span, function () {
-				return buildWeaponTooltip({ weapon: definition, base: definition, current: definition });
-			}, { openOnMobileClick: true });
+			span.setAttribute("aria-label", "查看" + getRecipeDisplayName(key) + "的武器详情");
+			var activate = function () { if (typeof onActivate === "function") onActivate(key, definition, span); };
+			span.addEventListener("click", function (event) {
+				event.preventDefault();
+				event.stopPropagation();
+				activate();
+			});
+			span.addEventListener("keydown", function (event) {
+				if (event.key !== "Enter" && event.key !== " ") return;
+				event.preventDefault();
+				event.stopPropagation();
+				activate();
+			});
 		}
 		container.appendChild(span);
 	};
@@ -497,7 +583,6 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		var key = getWeaponKey(weapon);
 		var recipes = getWeaponRecipes(key);
 		if (!key || !recipes.length || typeof document === "undefined") return false;
-		hideTooltip();
 		closeWeaponRecipePreview();
 		var root = document.createElement("div");
 		root.className = "bui-recipe-preview-root";
@@ -519,8 +604,26 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		header.appendChild(heading);
 		header.appendChild(close);
 		panel.appendChild(header);
+		var content = document.createElement("div");
+		content.className = "bui-recipe-preview-content";
+		var detailHost = document.createElement("aside");
+		detailHost.className = "bui-recipe-preview-detail";
+		detailHost.setAttribute("aria-live", "polite");
 		var list = document.createElement("div");
 		list.className = "bui-recipe-preview-list";
+		var showWeaponDetails = function (selectedKey, definition, trigger) {
+			if (!definition || !weaponCardRenderer) return false;
+			if (isMobileRecipeLayout()) return openRecipeWeaponDetail(definition, trigger);
+			detailHost.textContent = "";
+			detailHost.appendChild(weaponCardRenderer.createCard(definition, {
+				showCraftHammer: false,
+				className: "bui-recipe-preview-detail-card"
+			}));
+			Array.prototype.forEach.call(panel.querySelectorAll(".bui-recipe-preview-weapon"), function (name) {
+				name.classList.toggle("is-selected", name.dataset.weaponKey === selectedKey);
+			});
+			return true;
+		};
 		var seen = {};
 		recipes.forEach(function (recipe) {
 			var recipeKey = [recipe.a, recipe.b].sort().join("+") + "→" + recipe.result;
@@ -528,17 +631,19 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 			seen[recipeKey] = true;
 			var card = document.createElement("div");
 			card.className = "bui-recipe-preview-card";
-			appendRecipeWeaponName(card, recipe.a, key);
+			appendRecipeWeaponName(card, recipe.a, key, showWeaponDetails);
 			card.appendChild(document.createTextNode(" + "));
-			appendRecipeWeaponName(card, recipe.b, key);
+			appendRecipeWeaponName(card, recipe.b, key, showWeaponDetails);
 			var arrow = document.createElement("b");
 			arrow.className = "bui-recipe-preview-arrow";
 			arrow.textContent = "→";
 			card.appendChild(arrow);
-			appendRecipeWeaponName(card, recipe.result, key);
+			appendRecipeWeaponName(card, recipe.result, key, showWeaponDetails);
 			list.appendChild(card);
 		});
-		panel.appendChild(list);
+		content.appendChild(detailHost);
+		content.appendChild(list);
+		panel.appendChild(content);
 		root.appendChild(panel);
 		root.addEventListener("pointerdown", function (event) {
 			if (event.target === root) closeWeaponRecipePreview();
@@ -546,6 +651,7 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		document.body.appendChild(root);
 		recipePreviewRoot = root;
 		registerModal(root, closeWeaponRecipePreview, { name: "weapon-recipe-preview" });
+		if (!isMobileRecipeLayout()) showWeaponDetails(key, getWeaponDefinitions()[key], null);
 		close.focus();
 		return true;
 	};
@@ -560,8 +666,14 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 			if (tooltipHideTimer) clearTimeout(tooltipHideTimer);
 			tooltipHideTimer = null;
 		});
-		tooltip.addEventListener("pointerleave", function () { hideTooltip(); });
+		tooltip.addEventListener("pointerleave", function () {
+			if (!pinnedAnchor) hideTooltip();
+		});
+		tooltip.addEventListener("pointerdown", function (event) {
+			event.stopPropagation();
+		});
 		tooltip.addEventListener("click", function (event) {
+			event.stopPropagation();
 			var target = event.target;
 			while (target && target !== tooltip && !target.dataset.buiCraftKey) target = target.parentNode;
 			if (!target || !target.dataset.buiCraftKey) return;
@@ -640,6 +752,13 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		positionTooltip(event, anchor);
 	};
 
+	/** 点击武器后固定 Tooltip；再次固定其他武器时直接切换内容与锚点。 */
+	var pinTooltip = function (anchor, html, event) {
+		if (!anchor || !html) return;
+		pinnedAnchor = anchor;
+		showTooltip(anchor, html, event);
+	};
+
 	var hideTooltip = function (anchor) {
 		if (tooltipHideTimer) clearTimeout(tooltipHideTimer);
 		tooltipHideTimer = null;
@@ -648,9 +767,19 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		if (activeAnchor) activeAnchor.classList.remove("bui-hover");
 		if (tooltip) tooltip.classList.remove("show");
 		activeAnchor = null;
+		pinnedAnchor = null;
+	};
+
+	var unpinTooltip = function () {
+		hideTooltip();
+	};
+
+	var isTooltipPinned = function (anchor) {
+		return !!pinnedAnchor && (!anchor || pinnedAnchor === anchor);
 	};
 
 	var scheduleTooltipHide = function (anchor) {
+		if (pinnedAnchor) return;
 		if (tooltipHideTimer) clearTimeout(tooltipHideTimer);
 		tooltipHideTimer = setTimeout(function () { hideTooltip(anchor); }, TOOLTIP_HIDE_DELAY);
 	};
@@ -669,14 +798,17 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		};
 		var enter = function (event) {
 			if (event.pointerType === "touch") return;
+			if (pinnedAnchor) return;
 			var wasActive = activeAnchor === element;
 			showTooltip(element, provider(), event);
 			if (!wasActive && options.onEnter) options.onEnter(event);
 		};
 		var move = function (event) {
+			if (pinnedAnchor) return;
 			if (activeAnchor === element) queueTooltipPosition(event, element);
 		};
 		var leave = function (event) {
+			if (pinnedAnchor) return;
 			if (isSameHitArea(event.relatedTarget)) return;
 			if (tooltip && event.relatedTarget && tooltip.contains(event.relatedTarget)) return;
 			scheduleTooltipHide(element);
@@ -688,11 +820,13 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 			target.addEventListener("pointerleave", leave);
 		});
 		element.addEventListener("focus", function () {
+			if (pinnedAnchor && pinnedAnchor !== element) return;
 			var wasActive = activeAnchor === element;
 			showTooltip(element, provider());
 			if (!wasActive && options.onEnter) options.onEnter();
 		});
 		element.addEventListener("blur", function (event) {
+			if (pinnedAnchor) return;
 			if (tooltip && event.relatedTarget && tooltip.contains(event.relatedTarget)) return;
 			scheduleTooltipHide(element);
 			if (options.onLeave) options.onLeave(event);
@@ -733,6 +867,7 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		buildStatusTooltip: buildStatusTooltip,
 		renderWeaponName: renderWeaponName,
 		appendCraftHammer: appendCraftHammer,
+		setWeaponCardRenderer: setWeaponCardRenderer,
 		openWeaponRecipePreview: openWeaponRecipePreview,
 		closeWeaponRecipePreview: closeWeaponRecipePreview,
 		registerModal: registerModal,
@@ -743,6 +878,9 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		getModalDepth: getModalDepth,
 		bindTooltip: bindTooltip,
 		showTooltip: showTooltip,
+		pinTooltip: pinTooltip,
+		unpinTooltip: unpinTooltip,
+		isTooltipPinned: isTooltipPinned,
 		hideTooltip: hideTooltip
 	};
 })();

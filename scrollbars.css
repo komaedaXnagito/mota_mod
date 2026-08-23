@@ -1,0 +1,75 @@
+/* 全项目统一滚动条：Firefox 使用 scrollbar-color，Chromium/Safari 使用 WebKit 伪元素。 */
+:root {
+	--mota-scrollbar-size: 10px;
+	--mota-scrollbar-track: rgba(25, 20, 17, .34);
+	--mota-scrollbar-track-edge: rgba(255, 224, 167, .08);
+	--mota-scrollbar-thumb-start: #c99a59;
+	--mota-scrollbar-thumb-end: #79512e;
+	--mota-scrollbar-thumb-hover-start: #efc477;
+	--mota-scrollbar-thumb-hover-end: #a8753e;
+	--mota-scrollbar-thumb-active: #f5d28f;
+	scrollbar-width: thin;
+	scrollbar-color: var(--mota-scrollbar-thumb-start) var(--mota-scrollbar-track);
+}
+
+* {
+	scrollbar-width: thin;
+	scrollbar-color: var(--mota-scrollbar-thumb-start) var(--mota-scrollbar-track);
+}
+
+*::-webkit-scrollbar {
+	width: var(--mota-scrollbar-size) !important;
+	height: var(--mota-scrollbar-size) !important;
+}
+
+*::-webkit-scrollbar-track {
+	background:
+		linear-gradient(90deg, transparent, var(--mota-scrollbar-track-edge), transparent),
+		var(--mota-scrollbar-track) !important;
+	border-radius: 999px !important;
+	box-shadow: inset 0 0 3px rgba(0, 0, 0, .34) !important;
+}
+
+*::-webkit-scrollbar-thumb {
+	min-width: 28px;
+	min-height: 28px;
+	border: 2px solid transparent !important;
+	border-radius: 999px !important;
+	background:
+		linear-gradient(145deg, var(--mota-scrollbar-thumb-start), var(--mota-scrollbar-thumb-end))
+		padding-box !important;
+	box-shadow:
+		inset 0 0 0 1px rgba(255, 238, 203, .18),
+		0 1px 3px rgba(0, 0, 0, .34) !important;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+	background:
+		linear-gradient(145deg, var(--mota-scrollbar-thumb-hover-start), var(--mota-scrollbar-thumb-hover-end))
+		padding-box !important;
+}
+
+*::-webkit-scrollbar-thumb:active {
+	background: var(--mota-scrollbar-thumb-active) padding-box !important;
+}
+
+*::-webkit-scrollbar-corner {
+	background: var(--mota-scrollbar-track) !important;
+}
+
+*::-webkit-scrollbar-button {
+	display: none !important;
+	width: 0 !important;
+	height: 0 !important;
+}
+
+@media (max-width: 680px) {
+	:root { --mota-scrollbar-size: 8px; }
+}
+
+@media (forced-colors: active) {
+	:root,
+	* {
+		scrollbar-color: auto;
+	}
+}

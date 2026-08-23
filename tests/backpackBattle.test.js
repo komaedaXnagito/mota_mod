@@ -328,13 +328,23 @@ test("共享武器 Tooltip 保持纯属性布局，素材锤只读取实际可�
 	assert.equal(common.canCraftWithWeapon(definitions[resultOnlyKey]), false);
 	assert.doesNotMatch(common.buildWeaponTooltip({ weapon: definitions[resultOnlyKey] }), /data-bui-craft-key=/);
 	const commonSource = fs.readFileSync(path.join(root, "project/backpackUiCommon.js"), "utf8");
+	const rendererSource = fs.readFileSync(path.join(root, "project/weaponCardRenderer.js"), "utf8");
 	const cssSource = fs.readFileSync(path.join(root, "project/backpack.css"), "utf8");
 	assert.doesNotMatch(commonSource, /catalogOnly|catalog-only/);
-	assert.match(commonSource, /span\.classList\.add\("has-tooltip"\)[\s\S]*?bindTooltip\(span[\s\S]*?openOnMobileClick:\s*true/);
+	assert.match(commonSource, /span\.classList\.add\("has-details"\)[\s\S]*?onActivate[\s\S]*?span\.addEventListener\("click"/);
+	assert.doesNotMatch(commonSource, /appendRecipeWeaponName[\s\S]{0,1000}?bindTooltip\(span/);
+	assert.match(commonSource, /weaponCardRenderer\.createCard\(definition, \{\s*showCraftHammer: false,\s*className: "bui-recipe-preview-detail-card"/);
+	assert.match(commonSource, /weaponCardRenderer\.createCard\(definition, \{\s*showCraftHammer: false,\s*mobileListMode: true,\s*className: "bui-recipe-weapon-detail-card"/);
+	assert.match(commonSource, /card\.classList\.add\("is-mobile-expanded"\)[\s\S]*?summary\.setAttribute\("aria-expanded", "true"\)/);
+	assert.match(commonSource, /if \(!isMobileRecipeLayout\(\)\) showWeaponDetails\(key, getWeaponDefinitions\(\)\[key\], null\)/);
+	assert.match(rendererSource, /uiCommon\.setWeaponCardRenderer\(api\)/);
 	assert.match(commonSource, /if \(options\.openOnMobileClick\)[\s\S]*?window\.matchMedia\("\(hover: none\), \(pointer: coarse\)"\)[\s\S]*?showTooltip\(element, provider\(\)\)/);
 	assert.match(cssSource, /\.bui-craft-hammer\s*\{[^}]*border:\s*1px solid/);
-	assert.match(cssSource, /\.bui-recipe-preview-weapon\.has-tooltip \.bui-weapon-name-text/);
-	assert.match(cssSource, /@media \(max-width: 680px\)[\s\S]*?\.bui-recipe-preview-weapon\.has-tooltip\s*\{[^}]*touch-action:\s*manipulation/);
+	assert.match(cssSource, /\.bui-recipe-preview-content\s*\{[^}]*grid-template-columns:\s*minmax\(230px, 280px\) minmax\(0, 1fr\)/);
+	assert.match(cssSource, /\.bui-recipe-preview-detail-card\.weapon-card\s*\{[^}]*height:\s*100%[^}]*min-height:\s*0/);
+	assert.match(cssSource, /\.bui-recipe-weapon-detail-root\s*\{[^}]*z-index:\s*13010/);
+	assert.match(cssSource, /\.bui-recipe-preview-weapon\.has-details \.bui-weapon-name-text/);
+	assert.match(cssSource, /@media \(max-width: 680px\)[\s\S]*?\.bui-recipe-preview-weapon\.has-details\s*\{[^}]*touch-action:\s*manipulation/);
 });
 
 test("背包小分辨率为两侧面板预留空间并按真实工具栏高度重排", () => {
@@ -354,19 +364,22 @@ test("背包小分辨率为两侧面板预留空间并按真实工具栏高度�
 	assert.match(cssSource, /\.backpack-sell-zone\s*\{[^}]*transform:\s*none[^}]*display:\s*none/);
 });
 
-test("手机背包合并次级操作并用共享卡片展开待放置武器", () => {
+test("手机背包默认展开待放置列表并移除展开按钮", () => {
 	const backpackSource = fs.readFileSync(path.join(root, "project/backpackSystem.js"), "utf8");
 	const cssSource = fs.readFileSync(path.join(root, "project/backpack.css"), "utf8");
+	const mainSource = fs.readFileSync(path.join(root, "main.js"), "utf8");
+	const indexSource = fs.readFileSync(path.join(root, "index.html"), "utf8");
 
 	assert.match(backpackSource, /const createSecondaryActions = function \(\)/);
 	assert.match(backpackSource, /\["自动整理", autoArrange\][\s\S]*?\["合成", openCraftPanel\][\s\S]*?\["全部收回", collectAll\]/);
 	assert.match(backpackSource, /toolbarElement\.appendChild\(createSecondaryActions\(\)\)/);
-	assert.match(backpackSource, /root\.dataset\.inventoryExpanded = compact && inventoryExpanded \? "true" : "false"/);
-	assert.match(backpackSource, /const panelHeight = inventoryExpanded \? expandedPanelHeight : collapsedPanelHeight/);
+	assert.match(backpackSource, /root\.dataset\.inventoryExpanded = compact \? "true" : "false"/);
+	assert.match(backpackSource, /const panelHeight = expandedPanelHeight/);
 	assert.match(backpackSource, /bagY = toolbarHeight \+ panelBox\.height \+ 16 \* scale/);
 	assert.match(backpackSource, /getWeaponCardRenderer\(\)\.createCard\(entry\.weapon,[\s\S]*?className: "backpack-inventory-card"/);
 	assert.match(backpackSource, /className: "backpack-inventory-card",[\s\S]*?mobileListMode: true/);
-	assert.match(backpackSource, /onMobileDetailsToggle: function \(expanded\)[\s\S]*?inventoryExpanded = true;[\s\S]*?renderAll\(\)/);
+	assert.match(backpackSource, /onMobileDetailsToggle: function \(expanded\) \{\s*expandedInventoryDetailsId = expanded \? entry\.instanceId : null;/);
+	assert.doesNotMatch(backpackSource, /backpack-inventory-toggle|let inventoryExpanded|inventoryExpanded = !inventoryExpanded/);
 	assert.match(backpackSource, /const getFilteredInventoryEntries = function \(\)[\s\S]*?inventoryTypeFilter[\s\S]*?inventoryRarityFilter/);
 	assert.match(backpackSource, /getWeaponTypes\(entry\)\.indexOf\(inventoryTypeFilter\)/);
 	assert.doesNotMatch(backpackSource, /getWeaponTypes\(entry\.weapon\)/);
@@ -378,9 +391,16 @@ test("手机背包合并次级操作并用共享卡片展开待放置武器", ()
 	);
 	assert.ok(sharedInventoryBranch);
 	assert.match(sharedInventoryBranch[0], /if \(layout\.compact\) bindCompactInventoryDrag\(card, entry\)/);
-	assert.match(sharedInventoryBranch[0], /bindDesktopInventoryDrag\(card, entry\)/);
+	assert.match(sharedInventoryBranch[0], /bindDesktopInventoryDrag\(card, entry, detailsProvider\)/);
 	assert.match(backpackSource, /preview\.addEventListener\("pointerdown"[\s\S]*?preview\.setPointerCapture\(event\.pointerId\)/);
 	assert.match(backpackSource, /preview\.addEventListener\("pointermove"[\s\S]*?Math\.hypot[\s\S]*?< 8[\s\S]*?startPointerDrag\(gesture\.startEvent,[\s\S]*?collapseInventoryForDrag\(\)/);
+	assert.match(backpackSource, /const bindPlacedInteraction[\s\S]*?Math\.hypot[\s\S]*?< 8[\s\S]*?startPointerDrag\(gesture\.startEvent, gesture\.instanceId, "placed"/);
+	assert.match(backpackSource, /bindPlacedInteraction\(element, entry, detailsProvider\)/);
+	assert.doesNotMatch(backpackSource, /if \(layout\.compact\) bindCompactPlacedInteraction/);
+	assert.match(backpackSource, /const showPlacedDetails = function \(\)[\s\S]*?uiCommon\.pinTooltip\(element, detailsProvider\(\)\)[\s\S]*?renderSynergyHighlights\(entry\)/);
+	assert.match(backpackSource, /element\.addEventListener\("pointerup"[\s\S]*?showPlacedDetails\(\)/);
+	assert.match(backpackSource, /element\.addEventListener\("click"[\s\S]*?Date\.now\(\) < suppressPlacedClickUntil[\s\S]*?showPlacedDetails\(\)/);
+	assert.doesNotMatch(backpackSource, /pointerup"[\s\S]{0,500}suppressPlacedClickUntil = Date\.now\(\) \+ 600/);
 	const compactDragBinding = backpackSource.match(/const bindCompactInventoryDrag[\s\S]*?const bindDesktopInventoryDrag/);
 	assert.ok(compactDragBinding);
 	assert.doesNotMatch(compactDragBinding[0], /card\.addEventListener\("pointerdown"/);
@@ -388,12 +408,71 @@ test("手机背包合并次级操作并用共享卡片展开待放置武器", ()
 	assert.match(cssSource, /#backpack-system-root\[data-compact='true'\] \.backpack-secondary-actions-menu\s*\{[^}]*display:\s*none/);
 	assert.match(cssSource, /\.backpack-secondary-actions\.is-open \.backpack-secondary-actions-menu\s*\{[^}]*display:\s*flex/);
 	assert.match(cssSource, /\[data-inventory-expanded='true'\] \.backpack-inventory-list\s*\{[^}]*flex-direction:\s*column/);
+	assert.doesNotMatch(cssSource, /backpack-inventory-toggle/);
 	assert.match(cssSource, /\.backpack-inventory-card\.weapon-card-mobile-list\s*\{[^}]*flex:\s*0 0 100%[^}]*width:\s*100%/);
 	assert.match(cssSource, /data-compact='true'\] \.backpack-button\s*\{[^}]*height:\s*30px[^}]*align-items:\s*center[^}]*justify-content:\s*center/);
 	assert.match(cssSource, /data-compact='true'\] \.backpack-expansion-count,[\s\S]*?\.backpack-secondary-actions\s*\{[^}]*height:\s*30px/);
 	assert.match(cssSource, /\.backpack-inventory-filters\s*\{[^}]*display:\s*flex/);
 	assert.match(cssSource, /\.backpack-inventory-filter\s*\{[^}]*height:\s*24px/);
+	assert.match(cssSource, /data-compact='true'\] \.backpack-inventory-card\.weapon-card-mobile-list\s*\{[^}]*min-height:\s*50px[^}]*grid-template-columns:\s*40px/);
+	assert.match(cssSource, /data-compact='true'\] \.backpack-inventory-card\.weapon-card-mobile-list:not\(\.is-mobile-expanded\)\s*\{[^}]*height:\s*50px[^}]*max-height:\s*50px/);
+	assert.match(cssSource, /data-compact='true'\] \.backpack-inventory-card\.weapon-card-mobile-list\s*> \.weapon-card-mobile-preview\s*\{[^}]*width:\s*40px[^}]*height:\s*40px/);
 	assert.doesNotMatch(cssSource, /\.backpack-inventory-card \.weapon-card-types\s*\{[^}]*display:\s*none/);
+	assert.match(backpackSource, /const positionBackpackTooltip = function \(source\)[\s\S]*?const panel = layout\.panel[\s\S]*?root\.getBoundingClientRect\(\)[\s\S]*?backpack-panel-tooltip/);
+	assert.match(backpackSource, /const useRightSide = !layout\.compact && tooltipPlacementSource === "inventory"/);
+	assert.match(backpackSource, /const tooltipLeft = useRightSide\s*\? Math\.max\(8 \* layout\.scale, layout\.width - panel\.width - 8 \* layout\.scale\)\s*:\s*panel\.left/);
+	assert.match(backpackSource, /--backpack-tooltip-left", px\(rootRect\.left \+ tooltipLeft \* scaleX\)/);
+	assert.match(backpackSource, /onEnter: function \(\) \{\s*renderSynergyHighlights\(entry\);\s*positionBackpackTooltip\("placed"\)/);
+	assert.match(backpackSource, /uiCommon\.pinTooltip\(element, detailsProvider\(\)\);\s*root\.dataset\.tooltipPinned = "true";\s*positionBackpackTooltip\("placed"\)/);
+	assert.match(backpackSource, /uiCommon\.bindTooltip\(card, detailsProvider, \{\s*onEnter: function \(\) \{ positionBackpackTooltip\("inventory"\); \}/);
+	assert.match(backpackSource, /uiCommon\.pinTooltip\(card, detailsProvider\(\)\);\s*root\.dataset\.tooltipPinned = "true";\s*positionBackpackTooltip\("inventory"\)/);
+	assert.match(backpackSource, /uiCommon\.hideTooltip\(\);\s*clearBackpackTooltipPlacement\(\)/);
+	assert.match(cssSource, /\.bui-tooltip\.backpack-panel-tooltip\s*\{[^}]*left:\s*var\(--backpack-tooltip-left\)\s*!important[^}]*top:\s*var\(--backpack-tooltip-top\)\s*!important[^}]*width:\s*var\(--backpack-tooltip-width\)\s*!important[^}]*max-height:\s*var\(--backpack-tooltip-height\)\s*!important/);
+	assert.match(backpackSource, /const setDragSelectionLocked = function \(locked\)[\s\S]*?backpack-drag-selection-locked/);
+	assert.match(backpackSource, /dragState = \{[\s\S]*?setDragSelectionLocked\(true\);\s*createDragElement\(\)/);
+	assert.match(backpackSource, /const cancelDrag = function \(\) \{\s*dragState = null;\s*setDragSelectionLocked\(false\)/);
+	assert.match(cssSource, /#backpack-system-root,\s*#backpack-system-root \*\s*\{[^}]*-webkit-user-select:\s*none[^}]*user-select:\s*none/);
+	assert.match(cssSource, /body\.backpack-drag-selection-locked,\s*body\.backpack-drag-selection-locked \*\s*\{[^}]*user-select:\s*none\s*!important/);
+	const commonSource = fs.readFileSync(path.join(root, "project/backpackUiCommon.js"), "utf8");
+	assert.match(commonSource, /var pinnedAnchor = null/);
+	assert.match(commonSource, /var pinTooltip = function \(anchor, html, event\)[\s\S]*?pinnedAnchor = anchor;\s*showTooltip\(anchor, html, event\)/);
+	assert.match(commonSource, /var enter = function \(event\)[\s\S]*?if \(pinnedAnchor\) return/);
+	assert.match(commonSource, /tooltip\.addEventListener\("pointerdown"[\s\S]*?event\.stopPropagation\(\)/);
+	assert.doesNotMatch(commonSource, /openWeaponRecipePreview = function[\s\S]{0,400}?hideTooltip\(\)/);
+	assert.match(backpackSource, /uiCommon\.pinTooltip\(element, detailsProvider\(\)\)/);
+	assert.match(backpackSource, /uiCommon\.pinTooltip\(element, detailsProvider\(\)\);\s*root\.dataset\.tooltipPinned = "true"/);
+	assert.match(backpackSource, /if \(!placed && uiCommon\.isTooltipPinned\(\)\)[\s\S]*?uiCommon\.unpinTooltip\(\)[\s\S]*?clearSynergyHighlights\(\)/);
+	assert.match(cssSource, /\.bui-recipe-preview-root\s*\{[^}]*z-index:\s*10140/);
+	assert.match(cssSource, /#backpack-system-root:not\(\[data-tooltip-pinned='true'\]\) \.backpack-placed:hover/);
+	assert.match(mainSource, /this\.version = '2\.10\.88'/);
+	assert.match(indexSource, /project\/backpack\.css\?v=21088/);
+});
+
+test("所有项目页面入口加载统一美化滚动条", () => {
+	const scrollbarSource = fs.readFileSync(path.join(root, "scrollbars.css"), "utf8");
+	assert.match(scrollbarSource, /scrollbar-width:\s*thin/);
+	assert.match(scrollbarSource, /scrollbar-color:/);
+	assert.match(scrollbarSource, /\*::-webkit-scrollbar\s*\{/);
+	assert.match(scrollbarSource, /\*::-webkit-scrollbar-track\s*\{/);
+	assert.match(scrollbarSource, /\*::-webkit-scrollbar-thumb\s*\{/);
+	assert.match(scrollbarSource, /\*::-webkit-scrollbar-thumb:hover\s*\{/);
+	assert.match(scrollbarSource, /\*::-webkit-scrollbar-thumb:active\s*\{/);
+	assert.match(scrollbarSource, /\*::-webkit-scrollbar-corner\s*\{/);
+
+	[
+		["index.html", /scrollbars\.css\?v=21086/],
+		["editor.html", /scrollbars\.css\?v=21084/],
+		["editor-mobile.html", /scrollbars\.css\?v=21084/],
+		["h5save-editor.html", /scrollbars\.css\?v=21084/],
+		["jsonl-diff.html", /scrollbars\.css\?v=21084/],
+		["icon.html", /scrollbars\.css\?v=21084/],
+		["_server/fsTest_cs.html", /\.\.\/scrollbars\.css\?v=21084/],
+		["_docs/index.html", /\.\.\/scrollbars\.css\?v=21084/],
+		["_codelab/index.html", /\.\.\/scrollbars\.css\?v=21084/]
+	].forEach(function (entry) {
+		const html = fs.readFileSync(path.join(root, entry[0]), "utf8");
+		assert.match(html, entry[1], entry[0] + " 应加载统一滚动条样式");
+	});
 });
 
 test("桌面与手机拖拽都用待放置旋转售卖三区替换库存", () => {
@@ -402,11 +481,12 @@ test("桌面与手机拖拽都用待放置旋转售卖三区替换库存", () =>
 
 	assert.match(backpackSource, /root\.dataset\.dragging = dragState \? "true" : "false"/);
 	assert.match(backpackSource, /width: Math\.max\(80 \* scale, width - 16 \* scale\)/);
-	assert.match(backpackSource, /createDragZone\("pending", "待放置", "拖到这里\\n取消操作"\)/);
+	assert.match(backpackSource, /createDragZone\("pending", "待放置", "拖到这里\\n收回武器"\)/);
 	assert.match(backpackSource, /createDragZone\("rotate", "旋转区", "拖入一次\\n旋转 90°"\)/);
 	assert.match(backpackSource, /createDragZone\("sell", "售卖区", "每把 \+" \+ CONFIG\.sellPrice \+ " 金币"\)/);
 	assert.match(backpackSource, /if \(action === "rotate" && previous !== "rotate"\) rotateDrag\(\)/);
-	assert.match(backpackSource, /if \(dropAction === "pending" \|\| dropAction === "rotate"\) \{\s*cancelDrag\(\)/);
+	assert.match(backpackSource, /if \(dropAction === "rotate"\) \{\s*cancelDrag\(\)/);
+	assert.match(backpackSource, /if \(entry && \(dropAction === "pending" \|\| isPointInInventory\(point\)\)\) \{/);
 	assert.match(backpackSource, /return getDragAction\(clientX, clientY\) === "sell"/);
 	assert.match(backpackSource, /rotateDragButton\.classList\.add\("backpack-rotate-drag-button"\)/);
 	assert.match(cssSource, /data-compact='true'\] \.backpack-rotate-drag-button\s*\{[^}]*display:\s*none/);
@@ -416,7 +496,7 @@ test("桌面与手机拖拽都用待放置旋转售卖三区替换库存", () =>
 	assert.match(cssSource, /data-compact='true'\] \.backpack-drag-actions\s*\{[^}]*grid-template-columns:\s*repeat\(3/);
 	assert.match(cssSource, /\.backpack-drag-zone\s*\{[^}]*border:\s*2px dashed #c29458/);
 	assert.match(cssSource, /:not\(\[data-compact='true'\]\) \.backpack-inventory-card\.weapon-card-mobile-list\s*\{[^}]*display:\s*grid[^}]*cursor:\s*grab/);
-	assert.match(backpackSource, /const bindDesktopInventoryDrag = function \(card, entry\)[\s\S]*?card\.addEventListener\("pointerdown"[\s\S]*?startPointerDrag\(event, entry\.instanceId, "inventory", card\)/);
+	assert.match(backpackSource, /const bindDesktopInventoryDrag = function \(card, entry, detailsProvider\)[\s\S]*?card\.addEventListener\("pointermove"[\s\S]*?Math\.hypot[\s\S]*?< 8[\s\S]*?startPointerDrag\(gesture\.startEvent, gesture\.instanceId, "inventory", gesture\.preview\)/);
 	assert.match(cssSource, /\.backpack-inventory-list::\-webkit-scrollbar\s*\{[^}]*width:\s*9px/);
 	assert.match(cssSource, /\.backpack-inventory-list::\-webkit-scrollbar-thumb\s*\{[^}]*border-radius:\s*999px[^}]*linear-gradient/);
 	assert.match(cssSource, /\.backpack-inventory-list::\-webkit-scrollbar-button\s*\{[^}]*display:\s*none/);

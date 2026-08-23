@@ -50,12 +50,14 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	let toolbarElement = null; // 顶部工具栏；布局计算读取其换行后的真实高度。
 	let secondaryActions = null; // 手机端“更多操作”二级菜单。
 	let secondaryActionsToggle = null;
-	let inventoryExpanded = false; // 手机端待放置区是否展开。
 	let expandedInventoryDetailsId = null; // 正在展开属性详情的待放置武器。
 	let inventoryTypeFilter = "all"; // 待放置列表的武器类型筛选。
 	let inventoryRarityFilter = "all"; // 待放置列表的武器星级筛选。
 	let inventoryDragGesture = null; // 手机端库存武器图标的待判定拖拽手势。
 	let suppressInventoryClickUntil = 0; // 拖拽生效后吞掉紧随其后的 click。
+	let placedDragGesture = null; // 手机端已摆放武器的待判定轻点/拖拽手势。
+	let suppressPlacedClickUntil = 0; // 拖拽生效后吞掉紧随其后的 click。
+	let tooltipPlacementSource = null; // 当前详情来自待放置区还是已放置区，用于桌面端分侧定位。
 	let gameGroup = null; // 魔塔引擎提供的游戏容器 DOM 节点。
 	let layout = null; // 最近一次计算出的自适应尺寸和坐标结果。
 
@@ -528,6 +530,52 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		return Math.round(value) + "px";
 	};
 
+	/** 拖拽越出背包区域时也暂时禁止整页文本选择，结束后立即恢复。 */
+	const setDragSelectionLocked = function (locked) {
+		if (typeof document === "undefined" || !document.body) return;
+		document.body.classList.toggle("backpack-drag-selection-locked", !!locked);
+	};
+
+	/** 清除背包专用 Tooltip 定位，避免关闭背包后影响商店、图鉴等界面。 */
+	const clearBackpackTooltipPlacement = function () {
+		if (typeof document === "undefined") return;
+		tooltipPlacementSource = null;
+		const tooltip = document.querySelector(".bui-tooltip.backpack-panel-tooltip");
+		if (!tooltip) return;
+		tooltip.classList.remove("backpack-panel-tooltip");
+		[
+			"--backpack-tooltip-left",
+			"--backpack-tooltip-top",
+			"--backpack-tooltip-width",
+			"--backpack-tooltip-height"
+		].forEach(function (name) { tooltip.style.removeProperty(name); });
+	};
+
+	/**
+	 * 固定武器详情：紧凑布局统一沿用顶部待放置区；桌面端待放置武器放右侧，
+	 * 已放置武器放左侧，便于继续操作对应来源区域。
+	 * Tooltip 挂在 body 下，因此需要把背包内部坐标换算成视口坐标。
+	 */
+	const positionBackpackTooltip = function (source) {
+		if (!root || !layout || typeof document === "undefined") return;
+		const tooltip = document.querySelector(".bui-tooltip.show");
+		if (!tooltip) return;
+		if (source === "inventory" || source === "placed") tooltipPlacementSource = source;
+		const panel = layout.panel;
+		const rootRect = root.getBoundingClientRect();
+		const scaleX = layout.width ? rootRect.width / layout.width : 1;
+		const scaleY = layout.height ? rootRect.height / layout.height : 1;
+		const useRightSide = !layout.compact && tooltipPlacementSource === "inventory";
+		const tooltipLeft = useRightSide
+			? Math.max(8 * layout.scale, layout.width - panel.width - 8 * layout.scale)
+			: panel.left;
+		tooltip.classList.add("backpack-panel-tooltip");
+		tooltip.style.setProperty("--backpack-tooltip-left", px(rootRect.left + tooltipLeft * scaleX));
+		tooltip.style.setProperty("--backpack-tooltip-top", px(rootRect.top + panel.top * scaleY));
+		tooltip.style.setProperty("--backpack-tooltip-width", px(panel.width * scaleX));
+		tooltip.style.setProperty("--backpack-tooltip-height", px(panel.height * scaleY));
+	};
+
 	/**
 	 * 根据当前窗口宽高计算桌面/紧凑布局、库存面板位置、格子尺寸和网格原点。
 	 * 计算结果写入 layout，后续所有绘制和命中检测共用同一坐标系。
@@ -542,7 +590,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		const narrow = rect.width < 900;
 		root.dataset.compact = compact ? "true" : "false";
 		root.dataset.narrow = narrow ? "true" : "false";
-		root.dataset.inventoryExpanded = compact && inventoryExpanded ? "true" : "false";
+		root.dataset.inventoryExpanded = compact ? "true" : "false";
 		root.dataset.dragging = dragState ? "true" : "false";
 		const toolbarHeight = Math.max(42 * scale,
 			(toolbarElement ? toolbarElement.offsetHeight : 42 * scale) + 4 * scale);
@@ -565,7 +613,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 				height * 0.36,
 				Math.max(collapsedPanelHeight, height - toolbarHeight - 145 * scale)
 			));
-			const panelHeight = inventoryExpanded ? expandedPanelHeight : collapsedPanelHeight;
+			const panelHeight = expandedPanelHeight;
 			const availableHeight = Math.max(80 * scale, height - toolbarHeight - panelHeight - 22 * scale);
 			availWidth = width - 18 * scale;
 			availHeight = availableHeight;
@@ -904,6 +952,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	/** 重建已摆放武器图层，并显示计算后的伤害区间、命中、间隔、奥义和联动提示。 */
 	const renderPlaced = function () {
 		if (!placedLayer || !layout) return;
+		clearPlacedDragGesture();
 		clearSynergyHighlights();
 		placedLayer.innerHTML = "";
 		const calculated = calculateBackpackAttributes();
@@ -916,22 +965,22 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 			const attributes = calculated.byInstanceId[entry.instanceId];
 			element.style.left = px(layout.bagX + entry.col * layout.step);
 			element.style.top = px(layout.bagY + entry.row * layout.step);
-			uiCommon.bindTooltip(element, function () {
+			const detailsProvider = function () {
 				return uiCommon.buildWeaponTooltip({
 					weapon: entry.weapon,
 					base: entry.weapon,
 					current: attributes || entry.weapon
 				});
-			}, {
+			};
+			uiCommon.bindTooltip(element, detailsProvider, {
 				hitTargets: element.querySelectorAll(".backpack-cell-hit"),
-				onEnter: function () { renderSynergyHighlights(entry); },
+				onEnter: function () {
+					renderSynergyHighlights(entry);
+					positionBackpackTooltip("placed");
+				},
 				onLeave: clearSynergyHighlights
 			});
-			element.addEventListener("pointerdown", function (event) {
-				clearSynergyHighlights();
-				startPointerDrag(event, entry.instanceId, "placed", element);
-				collapseInventoryForDrag();
-			});
+			bindPlacedInteraction(element, entry, detailsProvider);
 			element.addEventListener("contextmenu", function (event) {
 				event.preventDefault();
 				rotatePlaced(entry.instanceId);
@@ -940,15 +989,91 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		});
 	};
 
+	const clearPlacedDragGesture = function () {
+		placedDragGesture = null;
+	};
+
+	/**
+	 * 手机和桌面统一：轻点固定详情与联动范围，移动超过阈值才开始拖拽。
+	 * 固定后其他武器的 Hover 不再切换；再次点击武器才切换，点击空白处取消。
+	 */
+	const bindPlacedInteraction = function (element, entry, detailsProvider) {
+		const showPlacedDetails = function () {
+			if (!root || dragState) return;
+			if (element.focus) {
+				try { element.focus({ preventScroll: true }); } catch (_) { element.focus(); }
+			}
+			uiCommon.pinTooltip(element, detailsProvider());
+			root.dataset.tooltipPinned = "true";
+			positionBackpackTooltip("placed");
+			renderSynergyHighlights(entry);
+		};
+		element.addEventListener("pointerdown", function (event) {
+			if (event.pointerType === "mouse" && event.button !== 0) return;
+			clearPlacedDragGesture();
+			clearSynergyHighlights();
+			event.stopPropagation();
+			placedDragGesture = {
+				instanceId: entry.instanceId,
+				element: element,
+				pointerId: event.pointerId,
+				startX: event.clientX,
+				startY: event.clientY,
+				startEvent: {
+					pointerType: event.pointerType,
+					button: 0,
+					clientX: event.clientX,
+					clientY: event.clientY,
+					preventDefault: function () {},
+					stopPropagation: function () {}
+				}
+			};
+			const captureTarget = event.target && event.target.setPointerCapture ? event.target : element;
+			if (captureTarget.setPointerCapture) {
+				try { captureTarget.setPointerCapture(event.pointerId); } catch (_) {}
+			}
+		});
+		element.addEventListener("pointermove", function (event) {
+			const gesture = placedDragGesture;
+			if (!gesture || gesture.pointerId !== event.pointerId) return;
+			if (Math.hypot(event.clientX - gesture.startX, event.clientY - gesture.startY) < 8) return;
+			event.preventDefault();
+			event.stopPropagation();
+			clearPlacedDragGesture();
+			suppressPlacedClickUntil = Date.now() + 600;
+			startPointerDrag(gesture.startEvent, gesture.instanceId, "placed", gesture.element);
+			if (dragState) dragState.point = pointToLocal(event.clientX, event.clientY);
+			collapseInventoryForDrag();
+		});
+		element.addEventListener("pointerup", function (event) {
+			const gesture = placedDragGesture;
+			if (!gesture || gesture.pointerId !== event.pointerId) return;
+			clearPlacedDragGesture();
+			event.preventDefault();
+			event.stopPropagation();
+			showPlacedDetails();
+		});
+		element.addEventListener("pointercancel", clearPlacedDragGesture);
+		element.addEventListener("click", function (event) {
+			event.preventDefault();
+			if (Date.now() < suppressPlacedClickUntil) {
+				event.stopImmediatePropagation();
+				return;
+			}
+			event.stopPropagation();
+			// 真机或旧 WebView 可能不稳定派发 pointerup；标准 click 作为轻触兜底。
+			showPlacedDetails();
+		}, true);
+	};
+
 	const clearInventoryDragGesture = function () {
 		inventoryDragGesture = null;
 	};
 
-	/** 开始拖拽后把库存区域切换成三块拖拽操作区；手机端同时收起详情列表。 */
+	/** 开始拖拽后把库存区域切换成三块拖拽操作区；手机端同时收起卡片详情。 */
 	const collapseInventoryForDrag = function () {
 		if (!layout) return;
 		if (layout.compact) {
-			inventoryExpanded = false;
 			expandedInventoryDetailsId = null;
 		}
 		renderAll();
@@ -1010,14 +1135,60 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		}, true);
 	};
 
-	/** 桌面端整张横向武器卡片都可开始拖拽，卡片内独立按钮仍保留点击行为。 */
-	const bindDesktopInventoryDrag = function (card, entry) {
+	/**
+	 * 桌面端整张横向武器卡片可拖拽；移动超过阈值才真正起拖，普通单击固定右侧详情。
+	 * 卡片内独立按钮继续执行自身行为，不触发拖拽或详情切换。
+	 */
+	const bindDesktopInventoryDrag = function (card, entry, detailsProvider) {
 		card.title = "拖动武器到背包";
 		card.addEventListener("pointerdown", function (event) {
 			if (event.pointerType === "mouse" && event.button !== 0) return;
 			if (event.target && event.target.closest && event.target.closest("button")) return;
-			startPointerDrag(event, entry.instanceId, "inventory", card);
+			clearInventoryDragGesture();
+			event.stopPropagation();
+			inventoryDragGesture = {
+				instanceId: entry.instanceId,
+				preview: card,
+				pointerId: event.pointerId,
+				startX: event.clientX,
+				startY: event.clientY,
+				startEvent: {
+					pointerType: event.pointerType,
+					button: 0,
+					clientX: event.clientX,
+					clientY: event.clientY,
+					preventDefault: function () {},
+					stopPropagation: function () {}
+				}
+			};
+			if (card.setPointerCapture) {
+				try { card.setPointerCapture(event.pointerId); } catch (_) {}
+			}
+		});
+		card.addEventListener("pointermove", function (event) {
+			const gesture = inventoryDragGesture;
+			if (!gesture || gesture.pointerId !== event.pointerId) return;
+			if (Math.hypot(event.clientX - gesture.startX, event.clientY - gesture.startY) < 8) return;
+			event.preventDefault();
+			event.stopPropagation();
+			clearInventoryDragGesture();
+			suppressInventoryClickUntil = Date.now() + 600;
+			startPointerDrag(gesture.startEvent, gesture.instanceId, "inventory", gesture.preview);
+			if (dragState) dragState.point = pointToLocal(event.clientX, event.clientY);
 			collapseInventoryForDrag();
+		});
+		card.addEventListener("pointerup", clearInventoryDragGesture);
+		card.addEventListener("pointercancel", clearInventoryDragGesture);
+		card.addEventListener("click", function (event) {
+			if (Date.now() < suppressInventoryClickUntil) {
+				event.preventDefault();
+				event.stopImmediatePropagation();
+				return;
+			}
+			if (event.target && event.target.closest && event.target.closest("button")) return;
+			uiCommon.pinTooltip(card, detailsProvider());
+			root.dataset.tooltipPinned = "true";
+			positionBackpackTooltip("inventory");
 		});
 	};
 
@@ -1051,7 +1222,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		return select;
 	};
 
-	/** 创建待放置列表标题、类型/星级筛选，以及手机端展开按钮。 */
+	/** 创建待放置列表标题和类型/星级筛选；手机端列表固定保持展开。 */
 	const buildInventoryHeader = function (filteredCount) {
 		const header = document.createElement("div");
 		header.className = "backpack-inventory-header";
@@ -1090,26 +1261,8 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 			"backpack-inventory-filter-rarity", "按武器星级筛选", rarityOptions, inventoryRarityFilter,
 			function (value) { inventoryRarityFilter = value; }
 		));
-		const toggle = document.createElement("button");
-		toggle.type = "button";
-		toggle.className = "backpack-inventory-toggle";
-		toggle.innerHTML = "<svg viewBox='0 0 16 16' focusable='false' aria-hidden='true'>"
-			+ "<path d='M3.5 6l4.5 4 4.5-4' fill='none' stroke='currentColor' stroke-width='2'"
-			+ " stroke-linecap='round' stroke-linejoin='round'/></svg>";
-		toggle.setAttribute("aria-expanded", inventoryExpanded ? "true" : "false");
-		toggle.setAttribute("aria-label", inventoryExpanded ? "收起待放置武器" : "展开待放置武器");
-		toggle.addEventListener("pointerdown", function (event) { event.stopPropagation(); });
-		toggle.addEventListener("click", function (event) {
-			event.preventDefault();
-			event.stopPropagation();
-			clearInventoryDragGesture();
-			inventoryExpanded = !inventoryExpanded;
-			if (!inventoryExpanded) expandedInventoryDetailsId = null;
-			renderAll();
-		});
 		header.appendChild(label);
 		header.appendChild(filters);
-		header.appendChild(toggle);
 		return header;
 	};
 
@@ -1139,6 +1292,13 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 
 		filteredEntries.forEach(function (entry) {
 			if (getWeaponCardRenderer()) {
+				const detailsProvider = function () {
+					return uiCommon.buildWeaponTooltip({
+						weapon: entry.weapon,
+						base: entry.weapon,
+						current: entry.weapon
+					});
+				};
 				const card = getWeaponCardRenderer().createCard(entry.weapon, {
 					className: "backpack-inventory-card",
 					includeSynergy: false,
@@ -1147,10 +1307,6 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 					mobileListMode: true,
 					onMobileDetailsToggle: function (expanded) {
 						expandedInventoryDetailsId = expanded ? entry.instanceId : null;
-						if (expanded && !inventoryExpanded) {
-							inventoryExpanded = true;
-							renderAll();
-						}
 					},
 					tagName: "div"
 				});
@@ -1166,14 +1322,10 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 				}
 				if (layout.compact) bindCompactInventoryDrag(card, entry);
 				else {
-					uiCommon.bindTooltip(card, function () {
-						return uiCommon.buildWeaponTooltip({
-							weapon: entry.weapon,
-							base: entry.weapon,
-							current: entry.weapon
-						});
+					uiCommon.bindTooltip(card, detailsProvider, {
+						onEnter: function () { positionBackpackTooltip("inventory"); }
 					});
-					bindDesktopInventoryDrag(card, entry);
+					bindDesktopInventoryDrag(card, entry, detailsProvider);
 				}
 				list.appendChild(card);
 				return;
@@ -1268,6 +1420,9 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		renderInventory();
 		renderSellZone();
 		renderDragActions();
+		if (document.querySelector(".bui-tooltip.backpack-panel-tooltip.show")) {
+			positionBackpackTooltip();
+		}
 		if (dragState) updateDragElement();
 	};
 
@@ -1330,6 +1485,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	const startPointerDrag = function (event, instanceId, source, sourceElement) {
 		if (event.pointerType === "mouse" && event.button !== 0) return;
 		uiCommon.hideTooltip();
+		if (root) root.dataset.tooltipPinned = "false";
 		event.preventDefault();
 		event.stopPropagation();
 		const rect = sourceElement.getBoundingClientRect();
@@ -1346,6 +1502,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 			offsetY: 0,
 			element: null
 		};
+		setDragSelectionLocked(true);
 		createDragElement();
 		drawBag();
 	};
@@ -1409,8 +1566,8 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		const dropAction = getDragAction(event.clientX, event.clientY);
 		let changed = false;
 
-		// “待放置”和“旋转区”不是落点：松手时取消本次移动并恢复原位。
-		if (dropAction === "pending" || dropAction === "rotate") {
+		// 旋转区只负责旋转预览，不作为落点；松手时恢复原位。
+		if (dropAction === "rotate") {
 			cancelDrag();
 			return;
 		}
@@ -1420,6 +1577,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 			const soldName = (entry.weapon && entry.weapon.name) || "武器";
 			const instanceId = entry.instanceId;
 			dragState = null;
+			setDragSelectionLocked(false);
 			if (dragLayer) dragLayer.innerHTML = "";
 			if (sellZone) sellZone.classList.remove("backpack-sell-zone-active");
 			clearDragAction();
@@ -1432,7 +1590,8 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		}
 
 		let replayOperation = null;
-		if (entry && isPointInInventory(point)) {
+		// 第一个“待放置”框是明确的收回落点：已摆放武器在此松手后进入待放置列表。
+		if (entry && (dropAction === "pending" || isPointInInventory(point))) {
 			if (dragState.source === "placed") {
 				removeEntryFromLists(entry.instanceId);
 				delete entry.col;
@@ -1462,6 +1621,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		}
 
 		dragState = null;
+		setDragSelectionLocked(false);
 		if (dragLayer) dragLayer.innerHTML = "";
 		clearDragAction();
 		if (changed) {
@@ -1478,6 +1638,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	/** 取消当前拖拽并清除视觉副本，不修改实例位置。 */
 	const cancelDrag = function () {
 		dragState = null;
+		setDragSelectionLocked(false);
 		if (dragLayer) dragLayer.innerHTML = "";
 		if (sellZone) sellZone.classList.remove("backpack-sell-zone-active");
 		clearDragAction();
@@ -1717,7 +1878,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		dragActions = document.createElement("div");
 		dragActions.className = "backpack-drag-actions";
 		dragActions.setAttribute("aria-hidden", "true");
-		pendingDropZone = createDragZone("pending", "待放置", "拖到这里\n取消操作");
+		pendingDropZone = createDragZone("pending", "待放置", "拖到这里\n收回武器");
 		rotateDropZone = createDragZone("rotate", "旋转区", "拖入一次\n旋转 90°");
 		sellDropZone = createDragZone("sell", "售卖区", "每把 +" + CONFIG.sellPrice + " 金币");
 		dragActions.appendChild(pendingDropZone);
@@ -1730,12 +1891,13 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	const buildInterface = function () {
 		gameGroup = document.getElementById("gameGroup");
 		if (!gameGroup) return false;
-		inventoryExpanded = false;
 		expandedInventoryDetailsId = null;
 		inventoryTypeFilter = "all";
 		inventoryRarityFilter = "all";
 		clearInventoryDragGesture();
 		suppressInventoryClickUntil = 0;
+		clearPlacedDragGesture();
+		suppressPlacedClickUntil = 0;
 
 		root = document.createElement("div");
 		root.id = "backpack-system-root";
@@ -1796,6 +1958,13 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		root.appendChild(toolbarElement);
 		root.addEventListener("pointerdown", function (event) {
 			if (secondaryActions && !secondaryActions.contains(event.target)) closeSecondaryActions();
+			const placed = event.target && event.target.closest
+				? event.target.closest(".backpack-placed") : null;
+			if (!placed && uiCommon.isTooltipPinned()) {
+				uiCommon.unpinTooltip();
+				root.dataset.tooltipPinned = "false";
+				clearSynergyHighlights();
+			}
 		});
 		renderBattleSpeedControl();
 
@@ -1837,6 +2006,8 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 
 	/** 浏览器取消指针序列时恢复安全的非拖拽状态。 */
 	const onPointerCancel = function () {
+		clearInventoryDragGesture();
+		clearPlacedDragGesture();
 		if (dragState) cancelDrag();
 	};
 
@@ -1898,7 +2069,9 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	const closeBackpack = function (options) {
 		options = options || {};
 		uiCommon.hideTooltip();
+		clearBackpackTooltipPlacement();
 		clearInventoryDragGesture();
+		clearPlacedDragGesture();
 		closeSecondaryActions();
 		cancelDrag();
 		window.removeEventListener("resize", renderAll);
@@ -1918,10 +2091,10 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		toolbarElement = null;
 		secondaryActions = null;
 		secondaryActionsToggle = null;
-		inventoryExpanded = false;
 		expandedInventoryDetailsId = null;
 		inventoryTypeFilter = "all";
 		inventoryRarityFilter = "all";
+		suppressPlacedClickUntil = 0;
 		bagCanvas = null;
 		bagContext = null;
 		inventoryPanel = null;
