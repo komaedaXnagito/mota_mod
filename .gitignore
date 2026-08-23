@@ -2,6 +2,7 @@
 /.agents/
 /.codex/
 /.workbuddy/
+/.codex-tmp
 
 # Runtime saves and temporary files
 /_saves/*

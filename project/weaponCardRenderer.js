@@ -351,6 +351,9 @@ var installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c = function (c
 			summary.setAttribute("aria-expanded", expanded ? "true" : "false");
 			summary.setAttribute("aria-label", expanded
 				? "收起武器属性与特殊效果" : "展开武器属性与特殊效果");
+			if (typeof renderOptions.onMobileDetailsToggle === "function") {
+				renderOptions.onMobileDetailsToggle(expanded, card);
+			}
 		};
 		var openPreview = function () {
 			openPreviewModal(definition, { lock: renderOptions.lock, trigger: mobilePreview });

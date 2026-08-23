@@ -43,7 +43,19 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	let placedLayer = null; // 显示已摆放武器 DOM 元素的图层。
 	let dragLayer = null; // 显示当前拖拽物视觉副本的最高层图层。
 	let sellZone = null; // 背包右侧的售卖区：拖武器到这里自动出售（固定售价）。
+	let dragActions = null; // 拖拽时替换待放置面板的待放置、旋转和售卖三区。
+	let pendingDropZone = null;
+	let rotateDropZone = null;
+	let sellDropZone = null;
 	let toolbarElement = null; // 顶部工具栏；布局计算读取其换行后的真实高度。
+	let secondaryActions = null; // 手机端“更多操作”二级菜单。
+	let secondaryActionsToggle = null;
+	let inventoryExpanded = false; // 手机端待放置区是否展开。
+	let expandedInventoryDetailsId = null; // 正在展开属性详情的待放置武器。
+	let inventoryTypeFilter = "all"; // 待放置列表的武器类型筛选。
+	let inventoryRarityFilter = "all"; // 待放置列表的武器星级筛选。
+	let inventoryDragGesture = null; // 手机端库存武器图标的待判定拖拽手势。
+	let suppressInventoryClickUntil = 0; // 拖拽生效后吞掉紧随其后的 click。
 	let gameGroup = null; // 魔塔引擎提供的游戏容器 DOM 节点。
 	let layout = null; // 最近一次计算出的自适应尺寸和坐标结果。
 
@@ -163,6 +175,13 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		const weaponSystemApi = core.plugin && core.plugin.weaponSystem;
 		if (!weaponSystemApi) throw new Error("武器系统插件尚未初始化");
 		return weaponSystemApi;
+	};
+
+	/** 获取商店、图鉴和手机待放置区共用的武器卡片渲染器。 */
+	const getWeaponCardRenderer = function () {
+		return plugin.weaponCardRenderer
+			|| (core.plugin && core.plugin.weaponCardRenderer)
+			|| null;
 	};
 
 	/** 从独立武器系统读取指定地图道具对应的完整中央定义。 */
@@ -523,10 +542,11 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		const narrow = rect.width < 900;
 		root.dataset.compact = compact ? "true" : "false";
 		root.dataset.narrow = narrow ? "true" : "false";
+		root.dataset.inventoryExpanded = compact && inventoryExpanded ? "true" : "false";
+		root.dataset.dragging = dragState ? "true" : "false";
 		const toolbarHeight = Math.max(42 * scale,
 			(toolbarElement ? toolbarElement.offsetHeight : 42 * scale) + 4 * scale);
-		const sideGap = 10 * scale;
-		const inventoryWidth = (narrow ? 130 : 148) * scale;
+		const inventoryWidth = (narrow ? 290 : 340) * scale;
 		const sellWidth = (compact ? 104 : (narrow ? 106 : 122)) * scale;
 		const contentTop = toolbarHeight + 4 * scale;
 		const contentHeight = Math.max(80 * scale, height - contentTop - 8 * scale);
@@ -539,7 +559,13 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		let availHeight; // 网格可用纵向空间。
 
 		if (compact) {
-			const panelHeight = 96 * scale;
+			const collapsedPanelHeight = 144 * scale;
+			const expandedPanelHeight = Math.max(collapsedPanelHeight, Math.min(
+				250 * scale,
+				height * 0.36,
+				Math.max(collapsedPanelHeight, height - toolbarHeight - 145 * scale)
+			));
+			const panelHeight = inventoryExpanded ? expandedPanelHeight : collapsedPanelHeight;
 			const availableHeight = Math.max(80 * scale, height - toolbarHeight - panelHeight - 22 * scale);
 			availWidth = width - 18 * scale;
 			availHeight = availableHeight;
@@ -551,18 +577,17 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 			panelBox = {
 				left: 8 * scale,
 				top: toolbarHeight,
-				width: Math.max(80 * scale, width - sellWidth - 3 * sideGap - 8 * scale),
+				width: Math.max(80 * scale, width - 16 * scale),
 				height: panelHeight - 6 * scale
 			};
 			sellBox = {
 				left: width - sellWidth - 8 * scale,
 				top: toolbarHeight,
 				width: sellWidth,
-				height: panelHeight - 6 * scale
+				height: collapsedPanelHeight - 6 * scale
 			};
 		} else {
-			const sellReserve = sellWidth + 2 * sideGap;
-			availWidth = width - inventoryWidth - sellReserve - 24 * scale;
+			availWidth = width - inventoryWidth - 24 * scale;
 			availHeight = height - toolbarHeight - 20 * scale;
 			cellSize = Math.min(
 				CONFIG.maxCellSize * scale,
@@ -575,14 +600,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 				width: inventoryWidth - 14 * scale,
 				height: height - toolbarHeight - 8 * scale
 			};
-			const desiredSellHeight = (narrow ? 188 : 220) * scale;
-			const sellHeight = Math.min(desiredSellHeight, contentHeight);
-			sellBox = {
-				left: width - sellWidth - 10 * scale,
-				top: contentTop + Math.max(0, (contentHeight - sellHeight) / 2),
-				width: sellWidth,
-				height: sellHeight
-			};
+			sellBox = null;
 		}
 
 		cellSize = Math.max(8, Math.floor(cellSize));
@@ -600,10 +618,9 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		const totalHeight = grid.maxRows * cellSize + (grid.maxRows - 1) * gap;
 		if (compact) {
 			bagX = (width - totalWidth) / 2;
-			bagY = toolbarHeight + 96 * scale + 10 * scale;
+			bagY = toolbarHeight + panelBox.height + 16 * scale;
 		} else {
-			const sellReserve = sellWidth + 2 * sideGap;
-			bagX = inventoryWidth + (width - inventoryWidth - sellReserve - totalWidth) / 2;
+			bagX = inventoryWidth + (width - inventoryWidth - totalWidth) / 2;
 			bagY = toolbarHeight + (height - toolbarHeight - totalHeight) / 2;
 		}
 
@@ -913,6 +930,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 			element.addEventListener("pointerdown", function (event) {
 				clearSynergyHighlights();
 				startPointerDrag(event, entry.instanceId, "placed", element);
+				collapseInventoryForDrag();
 			});
 			element.addEventListener("contextmenu", function (event) {
 				event.preventDefault();
@@ -922,7 +940,180 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		});
 	};
 
-	/** 重建待摆放库存卡片；桌面纵向排列，窄屏横向排列。 */
+	const clearInventoryDragGesture = function () {
+		inventoryDragGesture = null;
+	};
+
+	/** 开始拖拽后把库存区域切换成三块拖拽操作区；手机端同时收起详情列表。 */
+	const collapseInventoryForDrag = function () {
+		if (!layout) return;
+		if (layout.compact) {
+			inventoryExpanded = false;
+			expandedInventoryDetailsId = null;
+		}
+		renderAll();
+		createDragElement();
+		drawBag();
+	};
+
+	/**
+	 * 手机端只允许从武器图标开始拖拽。图标禁用原生滚动手势，移动超过阈值即拖拽；
+	 * 卡片其余区域不绑定拖拽，继续承担横向/纵向列表滚动和详情点击。
+	 */
+	const bindCompactInventoryDrag = function (card, entry) {
+		const preview = card.querySelector(".weapon-card-mobile-preview")
+			|| card.querySelector(".weapon-card-preview") || card;
+		preview.title = "拖动武器到背包";
+		preview.setAttribute("aria-label", (entry.weapon.name || "武器") + "，点击查看，拖动到背包");
+		preview.addEventListener("pointerdown", function (event) {
+			if (event.pointerType === "mouse" && event.button !== 0) return;
+			clearInventoryDragGesture();
+			event.stopPropagation();
+			inventoryDragGesture = {
+				instanceId: entry.instanceId,
+				preview: preview,
+				pointerId: event.pointerId,
+				startX: event.clientX,
+				startY: event.clientY,
+				startEvent: {
+					pointerType: event.pointerType,
+					button: 0,
+					clientX: event.clientX,
+					clientY: event.clientY,
+					preventDefault: function () {},
+					stopPropagation: function () {}
+				}
+			};
+			if (preview.setPointerCapture) {
+				try { preview.setPointerCapture(event.pointerId); } catch (_) {}
+			}
+		});
+		preview.addEventListener("pointermove", function (event) {
+			const gesture = inventoryDragGesture;
+			if (!gesture || gesture.pointerId !== event.pointerId) return;
+			if (Math.hypot(event.clientX - gesture.startX, event.clientY - gesture.startY) < 8) return;
+			event.preventDefault();
+			event.stopPropagation();
+			clearInventoryDragGesture();
+			suppressInventoryClickUntil = Date.now() + 600;
+			startPointerDrag(gesture.startEvent, gesture.instanceId, "inventory", gesture.preview);
+			if (dragState) dragState.point = pointToLocal(event.clientX, event.clientY);
+			collapseInventoryForDrag();
+		});
+		preview.addEventListener("pointerup", clearInventoryDragGesture);
+		preview.addEventListener("pointercancel", clearInventoryDragGesture);
+		preview.addEventListener("contextmenu", function (event) { event.preventDefault(); });
+		card.addEventListener("click", function (event) {
+			if (Date.now() >= suppressInventoryClickUntil) return;
+			event.preventDefault();
+			event.stopImmediatePropagation();
+		}, true);
+	};
+
+	/** 桌面端整张横向武器卡片都可开始拖拽，卡片内独立按钮仍保留点击行为。 */
+	const bindDesktopInventoryDrag = function (card, entry) {
+		card.title = "拖动武器到背包";
+		card.addEventListener("pointerdown", function (event) {
+			if (event.pointerType === "mouse" && event.button !== 0) return;
+			if (event.target && event.target.closest && event.target.closest("button")) return;
+			startPointerDrag(event, entry.instanceId, "inventory", card);
+			collapseInventoryForDrag();
+		});
+	};
+
+	/** 返回经过类型和星级筛选后的待放置实例，不修改原库存顺序。 */
+	const getFilteredInventoryEntries = function () {
+		return state.inventory.filter(function (entry) {
+			if (inventoryTypeFilter !== "all"
+				&& getWeaponTypes(entry).indexOf(inventoryTypeFilter) < 0) return false;
+			const rarity = entry.weapon.rarity == null ? "0" : String(entry.weapon.rarity);
+			return inventoryRarityFilter === "all" || rarity === inventoryRarityFilter;
+		});
+	};
+
+	const createInventoryFilter = function (className, ariaLabel, options, value, onChange) {
+		const select = document.createElement("select");
+		select.className = "backpack-inventory-filter " + className;
+		select.setAttribute("aria-label", ariaLabel);
+		options.forEach(function (item) {
+			const option = document.createElement("option");
+			option.value = item.value;
+			option.textContent = item.text;
+			select.appendChild(option);
+		});
+		select.value = value;
+		select.addEventListener("pointerdown", function (event) { event.stopPropagation(); });
+		select.addEventListener("change", function (event) {
+			event.stopPropagation();
+			onChange(select.value);
+			renderInventory();
+		});
+		return select;
+	};
+
+	/** 创建待放置列表标题、类型/星级筛选，以及手机端展开按钮。 */
+	const buildInventoryHeader = function (filteredCount) {
+		const header = document.createElement("div");
+		header.className = "backpack-inventory-header";
+		const label = document.createElement("span");
+		label.className = "backpack-inventory-count";
+		label.textContent = filteredCount === state.inventory.length
+			? "待放置 " + state.inventory.length
+			: "待放置 " + filteredCount + "/" + state.inventory.length;
+		const filters = document.createElement("div");
+		filters.className = "backpack-inventory-filters";
+		const typeNames = [];
+		state.inventory.forEach(function (entry) {
+			getWeaponTypes(entry).forEach(function (typeName) {
+				if (typeNames.indexOf(typeName) < 0) typeNames.push(typeName);
+			});
+		});
+		if (inventoryTypeFilter !== "all" && typeNames.indexOf(inventoryTypeFilter) < 0) {
+			typeNames.push(inventoryTypeFilter);
+		}
+		typeNames.sort(function (a, b) { return String(a).localeCompare(String(b), "zh-CN"); });
+		const typeOptions = [{ value: "all", text: "全部类型" }].concat(typeNames.map(function (typeName) {
+			return { value: typeName, text: typeName };
+		}));
+		filters.appendChild(createInventoryFilter(
+			"backpack-inventory-filter-type", "按武器类型筛选", typeOptions, inventoryTypeFilter,
+			function (value) { inventoryTypeFilter = value; }
+		));
+		const rarityOptions = [{ value: "all", text: "全部星级" }];
+		for (let rarity = 1; rarity <= 5; rarity++) {
+			rarityOptions.push({ value: String(rarity), text: rarity + "星" });
+		}
+		if (state.inventory.some(function (entry) { return entry.weapon.rarity == null; })) {
+			rarityOptions.push({ value: "0", text: "未定星级" });
+		}
+		filters.appendChild(createInventoryFilter(
+			"backpack-inventory-filter-rarity", "按武器星级筛选", rarityOptions, inventoryRarityFilter,
+			function (value) { inventoryRarityFilter = value; }
+		));
+		const toggle = document.createElement("button");
+		toggle.type = "button";
+		toggle.className = "backpack-inventory-toggle";
+		toggle.innerHTML = "<svg viewBox='0 0 16 16' focusable='false' aria-hidden='true'>"
+			+ "<path d='M3.5 6l4.5 4 4.5-4' fill='none' stroke='currentColor' stroke-width='2'"
+			+ " stroke-linecap='round' stroke-linejoin='round'/></svg>";
+		toggle.setAttribute("aria-expanded", inventoryExpanded ? "true" : "false");
+		toggle.setAttribute("aria-label", inventoryExpanded ? "收起待放置武器" : "展开待放置武器");
+		toggle.addEventListener("pointerdown", function (event) { event.stopPropagation(); });
+		toggle.addEventListener("click", function (event) {
+			event.preventDefault();
+			event.stopPropagation();
+			clearInventoryDragGesture();
+			inventoryExpanded = !inventoryExpanded;
+			if (!inventoryExpanded) expandedInventoryDetailsId = null;
+			renderAll();
+		});
+		header.appendChild(label);
+		header.appendChild(filters);
+		header.appendChild(toggle);
+		return header;
+	};
+
+	/** 重建待摆放库存卡片；两端共用横向卡片，手机拖图标、桌面拖整张卡片。 */
 	const renderInventory = function () {
 		if (!inventoryPanel || !layout) return;
 		inventoryPanel.innerHTML = "";
@@ -930,17 +1121,64 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		inventoryPanel.style.top = px(layout.panel.top);
 		inventoryPanel.style.width = px(layout.panel.width);
 		inventoryPanel.style.height = px(layout.panel.height);
-		inventoryPanel.style.flexDirection = layout.compact ? "row" : "column";
+		const filteredEntries = getFilteredInventoryEntries();
+		inventoryPanel.appendChild(buildInventoryHeader(filteredEntries.length));
+		const list = document.createElement("div");
+		list.className = "backpack-inventory-list";
+		inventoryPanel.appendChild(list);
 
-		if (!state.inventory.length) {
+		if (!filteredEntries.length) {
 			const empty = document.createElement("div");
 			empty.className = "backpack-empty";
-			empty.textContent = state.placed.length ? "没有待摆放物品" : "背包中还没有物品";
-			inventoryPanel.appendChild(empty);
+			empty.textContent = state.inventory.length
+				? "没有符合筛选条件的武器"
+				: (state.placed.length ? "没有待摆放物品" : "背包中还没有物品");
+			list.appendChild(empty);
 			return;
 		}
 
-		state.inventory.forEach(function (entry) {
+		filteredEntries.forEach(function (entry) {
+			if (getWeaponCardRenderer()) {
+				const card = getWeaponCardRenderer().createCard(entry.weapon, {
+					className: "backpack-inventory-card",
+					includeSynergy: false,
+					paddingCells: 0,
+					showCraftHammer: true,
+					mobileListMode: true,
+					onMobileDetailsToggle: function (expanded) {
+						expandedInventoryDetailsId = expanded ? entry.instanceId : null;
+						if (expanded && !inventoryExpanded) {
+							inventoryExpanded = true;
+							renderAll();
+						}
+					},
+					tagName: "div"
+				});
+				card.dataset.instanceId = entry.instanceId;
+				card.dataset.rotation = String(entry.rotation || 0);
+				if (expandedInventoryDetailsId === entry.instanceId) {
+					card.classList.add("is-mobile-expanded");
+					const summary = card.querySelector(".weapon-card-summary");
+					if (summary) {
+						summary.setAttribute("aria-expanded", "true");
+						summary.setAttribute("aria-label", "收起武器属性与特殊效果");
+					}
+				}
+				if (layout.compact) bindCompactInventoryDrag(card, entry);
+				else {
+					uiCommon.bindTooltip(card, function () {
+						return uiCommon.buildWeaponTooltip({
+							weapon: entry.weapon,
+							base: entry.weapon,
+							current: entry.weapon
+						});
+					});
+					bindDesktopInventoryDrag(card, entry);
+				}
+				list.appendChild(card);
+				return;
+			}
+
 			const card = document.createElement("div");
 			card.className = "backpack-card";
 			card.tabIndex = 0;
@@ -963,6 +1201,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 			preview.classList.add("backpack-preview");
 			preview.addEventListener("pointerdown", function (event) {
 				startPointerDrag(event, entry.instanceId, "inventory", preview);
+				collapseInventoryForDrag();
 			});
 
 			const name = document.createElement("div");
@@ -991,7 +1230,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 			card.appendChild(name);
 			card.appendChild(rarity);
 			card.appendChild(rotate);
-			inventoryPanel.appendChild(card);
+			list.appendChild(card);
 		});
 	};
 
@@ -1007,6 +1246,16 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		sellZone.style.minHeight = "0";
 	};
 
+	/** 三块拖拽操作区复用待放置面板的位置，由 CSS 决定桌面纵排或手机横排。 */
+	const renderDragActions = function () {
+		if (!dragActions || !layout || !layout.panel) return;
+		const panel = layout.panel;
+		dragActions.style.left = px(panel.left);
+		dragActions.style.top = px(panel.top);
+		dragActions.style.width = px(panel.width);
+		dragActions.style.height = px(panel.height);
+	};
+
 	/** 统一执行尺寸计算、画布绘制、扩展槽、已摆放区和库存区渲染。 */
 	const renderAll = function () {
 		if (!root) return;
@@ -1018,6 +1267,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		renderPlaced();
 		renderInventory();
 		renderSellZone();
+		renderDragActions();
 		if (dragState) updateDragElement();
 	};
 
@@ -1088,6 +1338,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 			instanceId: instanceId,
 			source: source,
 			rotation: findEntry(instanceId).rotation,
+			dropAction: null,
 			point: point,
 			gripX: rect.width ? (event.clientX - rect.left) / rect.width : 0.5,
 			gripY: rect.height ? (event.clientY - rect.top) / rect.height : 0.5,
@@ -1107,6 +1358,45 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		drawBag();
 	};
 
+	/** 返回当前指针所在的待放置、旋转或售卖操作区。 */
+	const getDragAction = function (clientX, clientY) {
+		if (!dragState || !layout || !dragActions) return null;
+		const zones = [
+			["pending", pendingDropZone],
+			["rotate", rotateDropZone],
+			["sell", sellDropZone]
+		];
+		for (let index = 0; index < zones.length; index++) {
+			const zone = zones[index][1];
+			if (!zone) continue;
+			const rect = zone.getBoundingClientRect();
+			if (clientX >= rect.left && clientX <= rect.right
+				&& clientY >= rect.top && clientY <= rect.bottom) return zones[index][0];
+		}
+		return null;
+	};
+
+	/** 更新三块操作区高亮；旋转只在从区外进入旋转区的瞬间执行一次。 */
+	const updateDragAction = function (action) {
+		if (!dragState) return;
+		const previous = dragState.dropAction;
+		dragState.dropAction = action;
+		[
+			["pending", pendingDropZone],
+			["rotate", rotateDropZone],
+			["sell", sellDropZone]
+		].forEach(function (item) {
+			if (item[1]) item[1].classList.toggle("is-active", item[0] === action);
+		});
+		if (action === "rotate" && previous !== "rotate") rotateDrag();
+	};
+
+	const clearDragAction = function () {
+		[pendingDropZone, rotateDropZone, sellDropZone].forEach(function (zone) {
+			if (zone) zone.classList.remove("is-active");
+		});
+	};
+
 	/**
 	 * 结束拖拽：放到库存、放到合法网格或退回原位；只有状态改变时才写存档。
 	 */
@@ -1116,7 +1406,14 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		dragState.point = point;
 		const entry = findEntry(dragState.instanceId);
 		const target = getDragTarget();
+		const dropAction = getDragAction(event.clientX, event.clientY);
 		let changed = false;
+
+		// “待放置”和“旋转区”不是落点：松手时取消本次移动并恢复原位。
+		if (dropAction === "pending" || dropAction === "rotate") {
+			cancelDrag();
+			return;
+		}
 
 		// 拖到售卖区：自动出售（删除武器 + 固定售价金币），不执行后续放置逻辑。
 		if (entry && isInSellZone(event.clientX, event.clientY)) {
@@ -1125,6 +1422,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 			dragState = null;
 			if (dragLayer) dragLayer.innerHTML = "";
 			if (sellZone) sellZone.classList.remove("backpack-sell-zone-active");
+			clearDragAction();
 			if (!removeBackpackWeapon(instanceId)) return; // 内部完成删除、持久化与界面刷新
 			core.status.hero.money = Math.floor(Number(core.status.hero.money) || 0) + CONFIG.sellPrice;
 			recordWeaponSale(entry);
@@ -1165,6 +1463,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 
 		dragState = null;
 		if (dragLayer) dragLayer.innerHTML = "";
+		clearDragAction();
 		if (changed) {
 			persistState();
 			if (replayOperation === "out") recordWeaponOut(entry);
@@ -1181,7 +1480,9 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		dragState = null;
 		if (dragLayer) dragLayer.innerHTML = "";
 		if (sellZone) sellZone.classList.remove("backpack-sell-zone-active");
-		drawBag();
+		clearDragAction();
+		if (root) renderAll();
+		else drawBag();
 	};
 
 	/** 在原位置旋转已摆放武器；旋转后越界或重叠时拒绝操作。 */
@@ -1284,6 +1585,65 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		return button;
 	};
 
+	const closeSecondaryActions = function () {
+		if (secondaryActions) secondaryActions.classList.remove("is-open");
+		if (secondaryActionsToggle) secondaryActionsToggle.setAttribute("aria-expanded", "false");
+	};
+
+	const openCraftPanel = function () {
+		const craft = core.plugin;
+		if (craft && typeof craft.openCraftPanel === "function") {
+			try {
+				craft.openCraftPanel();
+			} catch (err) {
+				if (core.drawTip) core.drawTip("合成面板打开失败：" + (err && err.message ? err.message : "未知错误"));
+				console.error("合成面板打开失败", err);
+			}
+		} else if (core.drawTip) {
+			core.drawTip("合成系统未安装，请刷新页面（版本 2.10.15）");
+		}
+	};
+
+	/** 桌面端展开为原来的三个按钮，手机端收进“操作”二级菜单。 */
+	const createSecondaryActions = function () {
+		secondaryActions = document.createElement("div");
+		secondaryActions.className = "backpack-secondary-actions";
+		secondaryActionsToggle = document.createElement("button");
+		secondaryActionsToggle.type = "button";
+		secondaryActionsToggle.className = "backpack-button backpack-secondary-actions-toggle";
+		secondaryActionsToggle.innerHTML = "<span>操作</span><svg viewBox='0 0 16 16' focusable='false' aria-hidden='true'>"
+			+ "<path d='M3.5 6l4.5 4 4.5-4' fill='none' stroke='currentColor' stroke-width='2'"
+			+ " stroke-linecap='round' stroke-linejoin='round'/></svg>";
+		secondaryActionsToggle.setAttribute("aria-haspopup", "menu");
+		secondaryActionsToggle.setAttribute("aria-expanded", "false");
+		secondaryActionsToggle.addEventListener("pointerdown", function (event) { event.stopPropagation(); });
+		secondaryActionsToggle.addEventListener("click", function (event) {
+			event.preventDefault();
+			event.stopPropagation();
+			const open = secondaryActions.classList.toggle("is-open");
+			secondaryActionsToggle.setAttribute("aria-expanded", open ? "true" : "false");
+		});
+		const menu = document.createElement("div");
+		menu.className = "backpack-secondary-actions-menu";
+		menu.setAttribute("role", "menu");
+		[
+			["自动整理", autoArrange],
+			["合成", openCraftPanel],
+			["全部收回", collectAll]
+		].forEach(function (action) {
+			const button = createButton(action[0], function () {
+				closeSecondaryActions();
+				action[1]();
+			});
+			button.classList.add("backpack-secondary-action");
+			button.setAttribute("role", "menuitem");
+			menu.appendChild(button);
+		});
+		secondaryActions.appendChild(secondaryActionsToggle);
+		secondaryActions.appendChild(menu);
+		return secondaryActions;
+	};
+
 	const BATTLE_SPEED_OPTIONS = [
 		{ value: "0.25", label: "0.25×" },
 		{ value: "0.5", label: "0.5×" },
@@ -1337,10 +1697,45 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		return control;
 	};
 
+	const createDragZone = function (kind, titleText, hintText) {
+		const zone = document.createElement("div");
+		zone.className = "backpack-drag-zone backpack-drag-zone-" + kind;
+		zone.dataset.action = kind;
+		const title = document.createElement("div");
+		title.className = "backpack-drag-title";
+		title.textContent = titleText;
+		const hint = document.createElement("div");
+		hint.className = "backpack-drag-hint";
+		hint.textContent = hintText;
+		zone.appendChild(title);
+		zone.appendChild(hint);
+		return zone;
+	};
+
+	/** 创建拖拽时显示的待放置、旋转和售卖操作区。 */
+	const createDragActions = function () {
+		dragActions = document.createElement("div");
+		dragActions.className = "backpack-drag-actions";
+		dragActions.setAttribute("aria-hidden", "true");
+		pendingDropZone = createDragZone("pending", "待放置", "拖到这里\n取消操作");
+		rotateDropZone = createDragZone("rotate", "旋转区", "拖入一次\n旋转 90°");
+		sellDropZone = createDragZone("sell", "售卖区", "每把 +" + CONFIG.sellPrice + " 金币");
+		dragActions.appendChild(pendingDropZone);
+		dragActions.appendChild(rotateDropZone);
+		dragActions.appendChild(sellDropZone);
+		return dragActions;
+	};
+
 	/** 创建背包所需 DOM 图层、工具栏和全局事件监听。 */
 	const buildInterface = function () {
 		gameGroup = document.getElementById("gameGroup");
 		if (!gameGroup) return false;
+		inventoryExpanded = false;
+		expandedInventoryDetailsId = null;
+		inventoryTypeFilter = "all";
+		inventoryRarityFilter = "all";
+		clearInventoryDragGesture();
+		suppressInventoryClickUntil = 0;
 
 		root = document.createElement("div");
 		root.id = "backpack-system-root";
@@ -1364,6 +1759,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		inventoryPanel = document.createElement("div");
 		inventoryPanel.className = "backpack-inventory";
 		root.appendChild(inventoryPanel);
+		root.appendChild(createDragActions());
 
 		dragLayer = document.createElement("div");
 		dragLayer.className = "backpack-drag-layer";
@@ -1392,25 +1788,15 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		expansionCountLabel.className = "backpack-expansion-count";
 		toolbarElement.appendChild(expansionCountLabel);
 		toolbarElement.appendChild(createBattleSpeedControl());
-		toolbarElement.appendChild(createButton("旋转拖拽物（R）", rotateDrag));
-		toolbarElement.appendChild(createButton("自动整理", autoArrange));
-		toolbarElement.appendChild(createButton("合成", function () {
-			// 合成插件方法挂在 core.plugin 顶层（core.plugin.openCraftPanel）。
-			const craft = core.plugin;
-			if (craft && typeof craft.openCraftPanel === "function") {
-				try {
-					craft.openCraftPanel();
-				} catch (err) {
-					if (core.drawTip) core.drawTip("合成面板打开失败：" + (err && err.message ? err.message : "未知错误"));
-					console.error("合成面板打开失败", err);
-				}
-			} else if (core.drawTip) {
-				core.drawTip("合成系统未安装，请刷新页面（版本 2.10.15）");
-			}
-		}));
-		toolbarElement.appendChild(createButton("全部收回", collectAll));
+		const rotateDragButton = createButton("旋转拖拽物（R）", rotateDrag);
+		rotateDragButton.classList.add("backpack-rotate-drag-button");
+		toolbarElement.appendChild(rotateDragButton);
+		toolbarElement.appendChild(createSecondaryActions());
 		toolbarElement.appendChild(createButton("关闭", function () { closeBackpack(); }));
 		root.appendChild(toolbarElement);
+		root.addEventListener("pointerdown", function (event) {
+			if (secondaryActions && !secondaryActions.contains(event.target)) closeSecondaryActions();
+		});
 		renderBattleSpeedControl();
 
 		gameGroup.appendChild(root);
@@ -1427,10 +1813,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 
 	/** 判断页面坐标（clientX/clientY）是否落在售卖区内。 */
 	const isInSellZone = function (clientX, clientY) {
-		if (!sellZone) return false;
-		const rect = sellZone.getBoundingClientRect();
-		return clientX >= rect.left && clientX <= rect.right
-			&& clientY >= rect.top && clientY <= rect.bottom;
+		return getDragAction(clientX, clientY) === "sell";
 	};
 
 	/** 全局指针移动处理：更新拖拽物位置、目标格颜色和售卖区高亮。 */
@@ -1440,7 +1823,8 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		dragState.point = pointToLocal(event.clientX, event.clientY);
 		updateDragElement();
 		drawBag();
-		if (sellZone) sellZone.classList.toggle("backpack-sell-zone-active", isInSellZone(event.clientX, event.clientY));
+		const dropAction = getDragAction(event.clientX, event.clientY);
+		updateDragAction(dropAction);
 	};
 
 	/** 全局指针释放处理：提交当前拖拽结果。 */
@@ -1514,6 +1898,8 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	const closeBackpack = function (options) {
 		options = options || {};
 		uiCommon.hideTooltip();
+		clearInventoryDragGesture();
+		closeSecondaryActions();
 		cancelDrag();
 		window.removeEventListener("resize", renderAll);
 		document.removeEventListener("pointermove", onPointerMove, true);
@@ -1525,7 +1911,17 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		if (root) root.remove();
 		root = null;
 		sellZone = null;
+		dragActions = null;
+		pendingDropZone = null;
+		rotateDropZone = null;
+		sellDropZone = null;
 		toolbarElement = null;
+		secondaryActions = null;
+		secondaryActionsToggle = null;
+		inventoryExpanded = false;
+		expandedInventoryDetailsId = null;
+		inventoryTypeFilter = "all";
+		inventoryRarityFilter = "all";
 		bagCanvas = null;
 		bagContext = null;
 		inventoryPanel = null;

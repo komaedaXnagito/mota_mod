@@ -5975,6 +5975,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 	"I538": {
 		"id": "巴哈姆特之盾",
 		"name": "巴哈姆特之盾",
+		"weaponTypes":["盾"],
 		"shape": [
 			[
 				1,
@@ -6304,6 +6305,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 	"I542": {
 		"id": "拉卡姆铳",
 		"name": "贝尼迪",
+		"weaponTypes":["铳"],
 		"shape": [
 			[
 				1
@@ -6391,6 +6393,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			312
 		],
 		"sourceName": "宿命铁拳",
+		"weaponTypes":["拳"],
 		"rarity": 2,
 		"minAttack": 1,
 		"maxAttack": 2,

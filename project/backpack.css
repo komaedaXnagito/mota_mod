@@ -522,17 +522,186 @@
 	background: #8a5a34;
 }
 
+.backpack-secondary-actions,
+.backpack-secondary-actions-menu {
+	display: contents;
+}
+
+.backpack-secondary-actions-toggle {
+	display: none;
+}
+
+.backpack-secondary-actions-toggle svg,
+.backpack-inventory-toggle svg {
+	display: block;
+	width: 16px;
+	height: 16px;
+}
+
 .backpack-inventory {
 	position: absolute;
 	z-index: 3;
 	display: flex;
+	flex-direction: column;
 	gap: 7px;
 	padding: 5px;
 	box-sizing: border-box;
-	overflow: auto;
+	overflow: hidden;
 	border: 1px solid #80684f;
 	border-radius: 7px;
 	background: rgba(45, 31, 23, .94);
+}
+
+.backpack-inventory-header {
+	flex: 0 0 28px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 4px;
+	padding: 0 5px;
+	box-sizing: border-box;
+	color: #d9c39f;
+	font: 12px/1 sans-serif;
+}
+
+.backpack-inventory-count {
+	flex: 0 0 auto;
+	white-space: nowrap;
+}
+
+.backpack-inventory-filters {
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	margin-left: auto;
+}
+
+.backpack-inventory-filter {
+	height: 24px;
+	min-width: 0;
+	box-sizing: border-box;
+	padding: 0 18px 0 5px;
+	border: 1px solid #80684f;
+	border-radius: 5px;
+	outline: none;
+	background: #2a1d17;
+	color: #ead6b2;
+	font: 10px/1 sans-serif;
+	cursor: pointer;
+}
+
+.backpack-inventory-filter:hover,
+.backpack-inventory-filter:focus {
+	border-color: #c29458;
+	background: #3a281d;
+}
+
+.backpack-inventory-filter-type {
+	width: 92px;
+}
+
+.backpack-inventory-filter-rarity {
+	width: 86px;
+}
+
+.backpack-inventory-toggle {
+	display: none;
+}
+
+.backpack-inventory-list {
+	min-width: 0;
+	min-height: 0;
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+	gap: 7px;
+	overflow: auto;
+	scrollbar-width: thin;
+	scrollbar-color: #9b7143 rgba(24, 17, 13, .56);
+}
+
+.backpack-inventory-list::-webkit-scrollbar {
+	width: 9px;
+	height: 9px;
+}
+
+.backpack-inventory-list::-webkit-scrollbar-track {
+	border: 1px solid rgba(128, 104, 79, .28);
+	border-radius: 999px;
+	background: rgba(24, 17, 13, .56);
+	box-shadow: inset 0 0 4px rgba(0, 0, 0, .45);
+}
+
+.backpack-inventory-list::-webkit-scrollbar-thumb {
+	min-height: 36px;
+	border: 2px solid transparent;
+	border-radius: 999px;
+	background: linear-gradient(#b88b50, #765032) padding-box;
+	box-shadow: inset 0 0 0 1px rgba(255, 222, 154, .16);
+}
+
+.backpack-inventory-list::-webkit-scrollbar-thumb:hover {
+	background: linear-gradient(#d0a461, #94643b) padding-box;
+}
+
+.backpack-inventory-list::-webkit-scrollbar-button {
+	display: none;
+	width: 0;
+	height: 0;
+}
+
+.backpack-inventory-list::-webkit-scrollbar-corner {
+	background: transparent;
+}
+
+#backpack-system-root:not([data-compact='true']) .backpack-inventory-list {
+	padding-right: 4px;
+}
+
+.backpack-drag-actions {
+	position: absolute;
+	z-index: 4;
+	display: none;
+	grid-template-rows: repeat(3, minmax(0, 1fr));
+	gap: 6px;
+	box-sizing: border-box;
+	pointer-events: none;
+}
+
+.backpack-drag-zone {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	box-sizing: border-box;
+	padding: 5px;
+	border: 2px dashed #c29458;
+	border-radius: 8px;
+	background: rgba(60, 44, 30, .62);
+	color: #e9c98f;
+	text-align: center;
+	transition: background .15s, border-color .15s, transform .15s;
+}
+
+.backpack-drag-zone.is-active {
+	border-color: #7fd88f;
+	background: rgba(70, 120, 70, .62);
+	color: #d8f5c8;
+	transform: scale(1.025);
+}
+
+.backpack-drag-title {
+	color: inherit;
+	font: bold 12px sans-serif;
+}
+
+.backpack-drag-hint {
+	color: inherit;
+	font: 9px/1.35 sans-serif;
+	white-space: pre-line;
 }
 
 .backpack-card {
@@ -625,7 +794,8 @@
 
 #backpack-system-root[data-compact='true'] .backpack-toolbar {
 	flex-wrap: wrap;
-	align-content: flex-start;
+	align-items: center;
+	align-content: center;
 }
 
 #backpack-system-root[data-compact='true'] .backpack-toolbar-title {
@@ -637,12 +807,305 @@
 }
 
 #backpack-system-root[data-compact='true'] .backpack-button {
+	height: 30px;
+	min-height: 30px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
 	padding: 4px 6px;
 	font-size: 11px;
+	line-height: 1;
+}
+
+#backpack-system-root[data-compact='true'] .backpack-expansion-count,
+#backpack-system-root[data-compact='true'] .backpack-battle-speed-control,
+#backpack-system-root[data-compact='true'] .backpack-battle-speed-select,
+#backpack-system-root[data-compact='true'] .backpack-secondary-actions {
+	height: 30px;
+	min-height: 30px;
+	box-sizing: border-box;
+}
+
+#backpack-system-root[data-compact='true'] .backpack-expansion-count {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	line-height: 1;
+}
+
+#backpack-system-root[data-compact='true'] .backpack-battle-speed-control {
+	align-items: center;
+}
+
+#backpack-system-root[data-compact='true'] .backpack-battle-speed-select {
+	padding-top: 0;
+	padding-bottom: 0;
+}
+
+#backpack-system-root[data-compact='true'] .backpack-rotate-drag-button {
+	display: none;
+}
+
+#backpack-system-root[data-compact='true'] .backpack-secondary-actions {
+	position: relative;
+	z-index: 12;
+	display: inline-flex;
+	align-items: center;
+}
+
+#backpack-system-root[data-compact='true'] .backpack-secondary-actions-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+}
+
+#backpack-system-root[data-compact='true'] .backpack-secondary-actions-toggle svg {
+	transition: transform .16s ease;
+}
+
+#backpack-system-root[data-compact='true'] .backpack-secondary-actions.is-open .backpack-secondary-actions-toggle svg {
+	transform: rotate(180deg);
+}
+
+#backpack-system-root[data-compact='true'] .backpack-secondary-actions-menu {
+	position: absolute;
+	top: calc(100% + 5px);
+	right: 0;
+	z-index: 30;
+	min-width: 108px;
+	display: none;
+	flex-direction: column;
+	gap: 4px;
+	padding: 5px;
+	box-sizing: border-box;
+	border: 1px solid #a27b4e;
+	border-radius: 7px;
+	background: rgba(39, 28, 21, .98);
+	box-shadow: 0 10px 24px rgba(0, 0, 0, .55);
+}
+
+#backpack-system-root[data-compact='true'] .backpack-secondary-actions.is-open .backpack-secondary-actions-menu {
+	display: flex;
+}
+
+#backpack-system-root[data-compact='true'] .backpack-secondary-action {
+	width: 100%;
+	text-align: left;
 }
 
 #backpack-system-root[data-compact='true'] .backpack-inventory {
+	flex-direction: column;
+	gap: 4px;
+	padding: 4px;
+}
+
+#backpack-system-root[data-dragging='true'] .backpack-inventory {
+	display: none;
+}
+
+#backpack-system-root[data-dragging='true'] .backpack-drag-actions {
+	display: grid;
+}
+
+#backpack-system-root[data-compact='true'] .backpack-drag-actions {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	grid-template-rows: minmax(0, 1fr);
+}
+
+#backpack-system-root[data-compact='true'] .backpack-inventory-header {
+	flex: 0 0 30px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 2px 0 4px;
+	color: #d9c39f;
+	font: 10px/1 sans-serif;
+}
+
+#backpack-system-root[data-compact='true'] .backpack-inventory-toggle {
+	width: 24px;
+	height: 22px;
+	display: grid;
+	place-items: center;
+	padding: 0;
+	border: 1px solid #9a774b;
+	border-radius: 5px;
+	background: #5d4028;
+	color: #ffe1a2;
+	cursor: pointer;
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
+}
+
+#backpack-system-root[data-compact='true'] .backpack-inventory-toggle svg {
+	transition: transform .16s ease;
+}
+
+#backpack-system-root[data-compact='true'][data-inventory-expanded='true'] .backpack-inventory-toggle svg {
+	transform: rotate(180deg);
+}
+
+#backpack-system-root[data-compact='true'] .backpack-inventory-list {
 	flex-direction: row;
+	align-items: stretch;
+	gap: 6px;
+	overflow-x: auto;
+	overflow-y: hidden;
+	touch-action: pan-x;
+	scrollbar-width: none;
+}
+
+#backpack-system-root[data-compact='true']:not([data-inventory-expanded='true']) .backpack-inventory-list::-webkit-scrollbar {
+	display: none;
+}
+
+#backpack-system-root[data-compact='true'][data-inventory-expanded='true'] .backpack-inventory-list {
+	display: flex;
+	flex-direction: column;
+	align-content: start;
+	align-items: stretch;
+	overflow-x: hidden;
+	overflow-y: auto;
+	touch-action: pan-y;
+	scrollbar-width: thin;
+	scrollbar-color: #9b7143 rgba(24, 17, 13, .56);
+}
+
+#backpack-system-root[data-compact='true'] .backpack-inventory-card.weapon-card-mobile-list {
+	flex: 0 0 100%;
+	width: 100%;
+	min-width: 100%;
+	cursor: default;
+	touch-action: pan-x;
+}
+
+#backpack-system-root[data-compact='true'] .backpack-inventory-card.weapon-card-mobile-list
+	> .weapon-card-mobile-preview {
+	cursor: grab;
+	touch-action: none;
+}
+
+#backpack-system-root[data-compact='true'] .backpack-inventory-card.weapon-card-mobile-list
+	> .weapon-card-mobile-preview:active {
+	cursor: grabbing;
+}
+
+#backpack-system-root[data-compact='true'][data-inventory-expanded='true'] .backpack-inventory-card.weapon-card-mobile-list {
+	flex: 0 0 auto;
+	width: 100%;
+	min-width: 0;
+	touch-action: pan-y;
+}
+
+/* 桌面背包左栏也使用共享横向武器卡片；整张卡片作为拖拽热区。 */
+#backpack-system-root:not([data-compact='true']) .backpack-inventory-card.weapon-card-mobile-list {
+	flex: 0 0 82px;
+	width: 100%;
+	height: 82px;
+	min-height: 82px;
+	max-height: 82px;
+	display: grid;
+	grid-template-columns: 68px minmax(0, 1fr);
+	grid-template-rows: minmax(0, 1fr);
+	align-items: center;
+	column-gap: 8px;
+	padding: 6px;
+	overflow: hidden;
+	text-align: left;
+	cursor: grab;
+	touch-action: none;
+}
+
+#backpack-system-root:not([data-compact='true']) .backpack-inventory-card.weapon-card-mobile-list:active {
+	cursor: grabbing;
+}
+
+#backpack-system-root:not([data-compact='true']) .backpack-inventory-card.weapon-card-mobile-list
+	> .weapon-card-preview:not(.weapon-card-mobile-preview) {
+	display: none;
+}
+
+#backpack-system-root:not([data-compact='true']) .backpack-inventory-card.weapon-card-mobile-list
+	> .weapon-card-mobile-preview {
+	grid-column: 1;
+	grid-row: 1;
+	width: 68px;
+	height: 68px;
+	max-width: none;
+	display: flex;
+	margin: 0;
+	padding: 5px;
+	box-sizing: border-box;
+	cursor: inherit;
+	touch-action: none;
+}
+
+#backpack-system-root:not([data-compact='true']) .backpack-inventory-card.weapon-card-mobile-list
+	> .weapon-card-mobile-preview .weapon-card-preview-grid-cell,
+#backpack-system-root:not([data-compact='true']) .backpack-inventory-card.weapon-card-mobile-list
+	> .weapon-card-mobile-preview .weapon-card-footprint-cell,
+#backpack-system-root:not([data-compact='true']) .backpack-inventory-card.weapon-card-mobile-list
+	> .weapon-card-mobile-preview .weapon-card-synergy-cell,
+#backpack-system-root:not([data-compact='true']) .backpack-inventory-card.weapon-card-mobile-list
+	> .weapon-card-mobile-preview .weapon-card-preview-meta {
+	display: none;
+}
+
+#backpack-system-root:not([data-compact='true']) .backpack-inventory-card.weapon-card-mobile-list
+	> .weapon-card-summary {
+	grid-column: 2;
+	grid-row: 1;
+	min-width: 0;
+	min-height: 68px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 6px;
+	cursor: inherit;
+	touch-action: none;
+}
+
+#backpack-system-root:not([data-compact='true']) .backpack-inventory-card.weapon-card-mobile-list .weapon-card-name {
+	flex: 1 1 auto;
+	min-width: 0;
+	margin: 0;
+	justify-content: flex-start;
+	text-align: left;
+	font-size: 13px;
+}
+
+#backpack-system-root:not([data-compact='true']) .backpack-inventory-card.weapon-card-mobile-list .weapon-card-meta {
+	flex: 0 0 auto;
+	width: auto;
+	min-width: 0;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 4px;
+	margin: 0;
+}
+
+#backpack-system-root:not([data-compact='true']) .backpack-inventory-card.weapon-card-mobile-list .weapon-card-types {
+	flex-wrap: nowrap;
+}
+
+#backpack-system-root:not([data-compact='true']) .backpack-inventory-card.weapon-card-mobile-list .weapon-card-types i {
+	padding: 1px 5px;
+	font-size: 10px;
+	white-space: nowrap;
+}
+
+#backpack-system-root:not([data-compact='true']) .backpack-inventory-card.weapon-card-mobile-list .weapon-card-rarity {
+	font-size: 11px;
+	letter-spacing: 0;
+	white-space: nowrap;
+}
+
+#backpack-system-root:not([data-compact='true']) .backpack-inventory-card.weapon-card-mobile-list .weapon-card-mobile-toggle,
+#backpack-system-root:not([data-compact='true']) .backpack-inventory-card.weapon-card-mobile-list > .weapon-card-details {
+	display: none;
 }
 
 .backpack-expansion-layer {
@@ -2567,7 +3030,7 @@
 	}
 
 	.weapon-card-mobile-list .weapon-card-meta {
-		flex: 0 1 auto;
+		flex: 0 0 auto;
 		width: auto;
 		min-width: 0;
 		flex-direction: row;
@@ -2670,7 +3133,7 @@
 	width: 122px;
 	min-height: 220px;
 	box-sizing: border-box;
-	display: flex;
+	display: none;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
@@ -2718,6 +3181,7 @@
 }
 
 #backpack-system-root[data-compact='true'] .backpack-sell-zone {
+	display: none;
 	gap: 3px;
 	border-radius: 8px;
 }
