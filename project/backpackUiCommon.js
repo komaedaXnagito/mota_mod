@@ -483,9 +483,12 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		renderWeaponName(span, definition || key, { label: getRecipeDisplayName(key) });
 		if (definition) {
 			span.classList.add("has-tooltip");
+			span.tabIndex = 0;
+			span.setAttribute("role", "button");
+			span.setAttribute("aria-label", "预览" + getRecipeDisplayName(key) + "的武器详情");
 			bindTooltip(span, function () {
 				return buildWeaponTooltip({ weapon: definition, base: definition, current: definition });
-			});
+			}, { openOnMobileClick: true });
 		}
 		container.appendChild(span);
 	};
@@ -694,6 +697,17 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 			scheduleTooltipHide(element);
 			if (options.onLeave) options.onLeave(event);
 		});
+		if (options.openOnMobileClick) {
+			element.addEventListener("click", function (event) {
+				if (typeof window === "undefined") return;
+				var coarsePointer = typeof window.matchMedia === "function"
+					&& window.matchMedia("(hover: none), (pointer: coarse)").matches;
+				if (window.innerWidth > 680 && !coarsePointer) return;
+				if (event.preventDefault) event.preventDefault();
+				if (event.stopPropagation) event.stopPropagation();
+				showTooltip(element, provider());
+			});
+		}
 	};
 
 	var buildStatusTooltip = function (definition, stacks, description, remainingTicks) {

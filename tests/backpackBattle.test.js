@@ -251,8 +251,15 @@ test("商店、图鉴和背包共用武器卡片与特殊效果渲染", () => {
 	assert.match(cssSource, /\.bui-tooltip\s*\{[^}]*contain:\s*layout paint[^}]*will-change:\s*opacity, transform[^}]*visibility 0s linear \.08s/);
 	assert.match(cssSource, /\.bui-tooltip\.show\s*\{[^}]*transition-delay:\s*0s/);
 	assert.match(rendererSource, /formatSpecialEffectHtml\(definition\.synergyText\)/);
-	assert.match(rendererSource, /card\.appendChild\(buildWeaponDetails\(definition, renderOptions\)\)/);
+	assert.match(rendererSource, /var details = buildWeaponDetails\(definition, renderOptions\);[\s\S]*?card\.appendChild\(details\)/);
+	assert.match(rendererSource, /var buildActionButton = function \(actionOptions\)/);
+	assert.match(rendererSource, /var bindMobileListInteractions = function/);
 	assert.match(shopSource, /getCardRenderer\(\)\.createCard\(def, \{/);
+	assert.match(shopSource, /mobileListMode:\s*true/);
+	assert.match(shopSource, /actionButton:\s*\{[\s\S]*?label: onPick \? "获取" : null[\s\S]*?price:\s*price/);
+	assert.match(rendererSource, /button\.textContent = price > 0 \? price \+ " 金币" : "免费"/);
+	assert.match(cssSource, /@media \(min-width: 701px\)[\s\S]*?\.backpack-shop-card-shell \.weapon-card-summary>\.backpack-shop-buy\s*\{[^}]*position:\s*absolute[^}]*bottom:\s*10px[^}]*max-width:\s*180px/);
+	assert.doesNotMatch(shopSource, /"购买 " \+ buyCost\(\)/);
 	assert.match(compendiumSource, /cardRenderer\.createCard\(DEFINITIONS\[entry\.weaponId\] \|\| \{}, \{/);
 	assert.match(compendiumSource, /lock: !entry\.unlocked/);
 	assert.doesNotMatch(shopSource, /buildWeaponPreview|buildWeaponDetails|normalizePreviewWeapon/);
@@ -262,8 +269,9 @@ test("商店、图鉴和背包共用武器卡片与特殊效果渲染", () => {
 	assert.match(cssSource, /\.weapon-card-preview-image-frame img\s*\{[^}]*object-fit:\s*contain[^}]*object-position:\s*center/);
 	assert.match(cssSource, /\.weapon-card\s*\{[^}]*height:\s*540px[^}]*min-height:\s*540px[^}]*max-height:\s*540px[^}]*overflow:\s*hidden/);
 	assert.match(cssSource, /\.weapon-card-details\s*\{[^}]*flex:\s*1 1 auto[^}]*min-height:\s*0[^}]*overflow-y:\s*auto/);
-	assert.match(cssSource, /\.weapon-card\.is-locked \.weapon-card-preview-image-frame img\s*\{[^}]*filter:\s*brightness\(0\)/);
-	assert.match(cssSource, /\.backpack-shop-buy\s*\{[^}]*flex:\s*0 0 auto/);
+	assert.match(cssSource, /\.weapon-card\.is-locked \.weapon-card-preview-image-frame img,[\s\S]*?\.weapon-card-preview\.is-locked \.weapon-card-preview-image-frame img\s*\{[^}]*filter:\s*brightness\(0\)/);
+	assert.match(cssSource, /\.weapon-card-action\s*\{[^}]*flex:\s*0 0 auto[^}]*min-width:\s*42px/);
+	assert.match(cssSource, /@media \(max-width: 700px\)[\s\S]*?\.backpack-shop-grid\s*\{\s*grid-template-columns:\s*minmax\(0, 1fr\)[\s\S]*?\.weapon-card-mobile-list/);
 	assert.match(htmlSource, /<script src='libs\/thirdparty\/particles\.min\.js\?v=2\.0\.0'><\/script>/);
 	assert.match(shopSource, /const SHOP_PARTICLE_PROFILES = \{[\s\S]*?2:\s*\{ count:\s*18[\s\S]*?3:\s*\{ count:\s*34[\s\S]*?4:\s*\{ count:\s*56[\s\S]*?5:\s*\{ count:\s*84/);
 	assert.match(shopSource, /window\.particlesJS\(host\.id, makeShopParticleConfig\(profile, rarity\)\)/);
@@ -322,9 +330,11 @@ test("共享武器 Tooltip 保持纯属性布局，素材锤只读取实际可�
 	const commonSource = fs.readFileSync(path.join(root, "project/backpackUiCommon.js"), "utf8");
 	const cssSource = fs.readFileSync(path.join(root, "project/backpack.css"), "utf8");
 	assert.doesNotMatch(commonSource, /catalogOnly|catalog-only/);
-	assert.match(commonSource, /span\.classList\.add\("has-tooltip"\)[\s\S]*?bindTooltip\(span/);
+	assert.match(commonSource, /span\.classList\.add\("has-tooltip"\)[\s\S]*?bindTooltip\(span[\s\S]*?openOnMobileClick:\s*true/);
+	assert.match(commonSource, /if \(options\.openOnMobileClick\)[\s\S]*?window\.matchMedia\("\(hover: none\), \(pointer: coarse\)"\)[\s\S]*?showTooltip\(element, provider\(\)\)/);
 	assert.match(cssSource, /\.bui-craft-hammer\s*\{[^}]*border:\s*1px solid/);
 	assert.match(cssSource, /\.bui-recipe-preview-weapon\.has-tooltip \.bui-weapon-name-text/);
+	assert.match(cssSource, /@media \(max-width: 680px\)[\s\S]*?\.bui-recipe-preview-weapon\.has-tooltip\s*\{[^}]*touch-action:\s*manipulation/);
 });
 
 test("背包小分辨率为两侧面板预留空间并按真实工具栏高度重排", () => {

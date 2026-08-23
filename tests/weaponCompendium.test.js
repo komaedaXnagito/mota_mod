@@ -97,9 +97,17 @@ test("共享武器卡片 lock 属性输出黑色轮廓样式和全量问号数�
 			this.className = "";
 			this.textContent = "";
 			this.innerHTML = "";
+			this.classList = {
+				add: (...names) => {
+					const tokens = this.className.split(/\s+/).filter(Boolean);
+					names.forEach(name => { if (!tokens.includes(name)) tokens.push(name); });
+					this.className = tokens.join(" ");
+				}
+			};
 		}
 		appendChild(child) { this.children.push(child); return child; }
 		setAttribute(name, value) { this.attributes[name] = String(value); }
+		addEventListener() {}
 	}
 	harness.context.document.createElement = tagName => new FakeElement(tagName);
 	const definition = harness.context.weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44.I372;
@@ -112,17 +120,68 @@ test("共享武器卡片 lock 属性输出黑色轮廓样式和全量问号数�
 	const nodes = flatten(card);
 	const visibleText = nodes.map(node => node.textContent).filter(Boolean);
 	const image = nodes.find(node => node.tagName === "IMG");
+	const lockedPreview = nodes.find(node => /(^|\s)weapon-card-preview(\s|$)/.test(node.className));
 	const meta = nodes.find(node => node.className === "weapon-card-meta");
+	const summary = nodes.find(node => node.className === "weapon-card-summary");
+	const mobileToggle = nodes.find(node => node.className === "weapon-card-mobile-toggle");
 	assert.match(card.className, /weapon-card is-locked/);
 	assert.equal(card.dataset.locked, "true");
 	assert.equal(card.attributes.lock, "");
 	assert.equal(image.alt, "未解锁武器");
+	assert.match(lockedPreview.className, /(^|\s)is-locked(\s|$)/);
 	assert.deepEqual(Array.from(meta.children, node => node.className), ["weapon-card-types", "weapon-card-rarity"]);
+	assert.deepEqual(Array.from(summary.children, node => node.className), [
+		"weapon-card-name", "weapon-card-meta", "weapon-card-mobile-toggle"
+	]);
+	assert.match(mobileToggle.innerHTML, /<svg[^>]*viewBox='0 0 16 16'/);
+	assert.equal(mobileToggle.textContent, "");
 	assert.ok(visibleText.filter(text => text === "???").length >= 7);
 	assert.equal(nodes.some(node => node.className === "weapon-card-synergy-cell"), false);
 	const cssSource = fs.readFileSync(path.join(root, "project/backpack.css"), "utf8");
-	assert.match(cssSource, /\.weapon-card\.is-locked \.weapon-card-preview-image-frame img\s*\{[^}]*filter:\s*brightness\(0\)/);
-	assert.match(cssSource, /\.weapon-card-meta\s*\{[^}]*display:\s*flex[^}]*justify-content:\s*space-between/);
+	assert.match(cssSource, /\.weapon-card\.is-locked \.weapon-card-preview-image-frame img,[\s\S]*?\.weapon-card-preview\.is-locked \.weapon-card-preview-image-frame img\s*\{[^}]*filter:\s*brightness\(0\)/);
+	assert.match(cssSource, /\.weapon-card-meta\s*\{[^}]*display:\s*flex/);
+	assert.match(cssSource, /\.weapon-card-preview\.is-synergy-visible \.weapon-card-synergy-cell\s*\{\s*opacity:\s*1/);
+	const compactCard = renderer.createCard(definition, {
+		lock: false,
+		showCraftHammer: false,
+		mobileListMode: true,
+		actionButton: {
+			price: 60,
+			className: "backpack-shop-buy",
+			onClick() {}
+		}
+	});
+	const compactNodes = flatten(compactCard);
+	const compactMeta = compactNodes.find(node => node.className === "weapon-card-meta");
+	const actionButton = compactNodes.find(node => /weapon-card-action/.test(node.className));
+	assert.match(compactCard.className, /weapon-card-mobile-list/);
+	assert.equal(compactNodes.filter(node => /weapon-card-preview/.test(node.className)).length >= 2, true);
+	assert.equal(compactNodes.some(node => /weapon-card-mobile-preview/.test(node.className)), true);
+	assert.deepEqual(Array.from(compactMeta.children, node => node.className), [
+		"weapon-card-types", "weapon-card-rarity"
+	]);
+	const compactSummary = compactNodes.find(node => node.className === "weapon-card-summary");
+	assert.deepEqual(Array.from(compactSummary.children, node => node.className), [
+		"weapon-card-name bui-weapon-name", "weapon-card-meta", "weapon-card-action backpack-shop-buy", "weapon-card-mobile-toggle"
+	]);
+	assert.equal(actionButton.textContent, "60 金币");
+	assert.equal(actionButton.dataset.price, "60");
+	const freeCard = renderer.createCard(definition, {
+		showCraftHammer: false,
+		actionButton: { price: 0, className: "backpack-shop-buy" }
+	});
+	const freeActionButton = flatten(freeCard).find(node => /weapon-card-action/.test(node.className));
+	assert.equal(freeActionButton.textContent, "免费");
+	assert.equal(freeActionButton.dataset.price, "0");
+	const fullGeometry = renderer.getPreviewGeometry(definition, { lock: false });
+	const compactGeometry = renderer.getPreviewGeometry(definition, {
+		lock: false,
+		includeSynergy: false,
+		paddingCells: 0
+	});
+	assert.ok(fullGeometry.synergyCells.length > 0);
+	assert.equal(compactGeometry.synergyCells.length, 0);
+	assert.ok(compactGeometry.cols < fullGeometry.cols || compactGeometry.rows < fullGeometry.rows);
 });
 
 test("旧 Codex 命名产生的局外与单局数据会迁移到 Compendium", () => {
@@ -217,6 +276,41 @@ test("名称搜索只检索已解锁名称，类型筛选可作用于完整图�
 	assert.ok(bladeEntries.some(entry => entry.weaponId === "I372"));
 });
 
+test("图鉴可按解锁与通关状态筛选，未通关包含锁定和已解锁未通关武器", () => {
+	const harness = makeHarness();
+	const definitions = harness.context.weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44;
+	harness.api.unlockWeapons(["I372", "I384"]);
+	harness.flags.__backpack_state__ = {
+		placed: [{ instanceId: "cleared", weapon: JSON.parse(JSON.stringify(definitions.I372)) }],
+		inventory: []
+	};
+	harness.api.completeRun();
+
+	const all = harness.api.getEntries();
+	const unlocked = harness.api.getEntries({ collectionStatus: "unlocked" });
+	const locked = harness.api.getEntries({ collectionStatus: "locked" });
+	const cleared = harness.api.getEntries({ collectionStatus: "cleared" });
+	const uncleared = harness.api.getEntries({ collectionStatus: "uncleared" });
+	assert.deepEqual(Array.from(unlocked, entry => entry.weaponId).sort(), ["I372", "I384"]);
+	assert.equal(locked.length, all.length - 2);
+	assert.ok(locked.every(entry => entry.unlocked === false));
+	assert.deepEqual(Array.from(cleared, entry => entry.weaponId), ["I372"]);
+	assert.equal(uncleared.length, all.length - 1);
+	assert.ok(uncleared.some(entry => entry.weaponId === "I384"));
+	assert.ok(uncleared.some(entry => entry.unlocked === false));
+	assert.equal(harness.api.getEntries({ collectionStatus: "invalid" }).length, all.length);
+
+	const filteredGroups = harness.api.getGroupedEntries({
+		groupMode: "type",
+		collectionStatus: "cleared"
+	});
+	assert.ok(filteredGroups.length > 0);
+	assert.ok(filteredGroups.every(group => group.entries.every(entry => entry.cleared)));
+	const bladeGroup = filteredGroups.find(group => group.title === "刀");
+	assert.ok(bladeGroup);
+	assert.ok(bladeGroup.totalCount > bladeGroup.entries.length);
+});
+
 test("图鉴支持按类型或稀有度分组、组内排序和独立收集进度", () => {
 	const harness = makeHarness();
 	const definitions = harness.context.weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44;
@@ -265,18 +359,30 @@ test("主加载表、插件安装器与 50 层战后事件均已接入图鉴", (
 	const pluginSource = fs.readFileSync(path.join(root, "project/plugins.js"), "utf8");
 	const floorSource = fs.readFileSync(path.join(root, "project/floors/MT50.js"), "utf8");
 	const compendiumSource = fs.readFileSync(path.join(root, "project/weaponCompendium.js"), "utf8");
+	const rendererSource = fs.readFileSync(path.join(root, "project/weaponCardRenderer.js"), "utf8");
+	const cssSource = fs.readFileSync(path.join(root, "project/backpack.css"), "utf8");
 	assert.match(mainSource, /['"]weaponCompendium['"]/);
 	assert.match(pluginSource, /installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37/);
 	assert.match(floorSource, /weaponCompendium\.completeRun\(\)/);
-	assert.match(compendiumSource, /weapon-compendium-group-grid\{min-width:0;display:grid;grid-template-columns:repeat\(auto-fill,minmax\(min\(150px,100%\),1fr\)\)/);
-	assert.match(compendiumSource, /weapon-compendium-grid\{[^}]*overflow-x:hidden;overflow-y:auto/);
-	assert.match(compendiumSource, /@media\(max-width:700px\)[\s\S]*?weapon-compendium-group-header\{flex-wrap:wrap\}[\s\S]*?weapon-compendium-group-progress\{white-space:normal\}/);
+	assert.doesNotMatch(compendiumSource, /createElement\(["']style["']\)|style\.textContent|weapon-compendium-style/);
+	assert.match(cssSource, /\.weapon-compendium-group-grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(auto-fill,\s*minmax\(min\(200px,\s*100%\),\s*1fr\)\)/);
+	assert.match(cssSource, /\.weapon-compendium-grid\s*\{[^}]*overflow-x:\s*hidden;[^}]*overflow-y:\s*auto/);
+	assert.match(cssSource, /@media \(max-width: 700px\)[\s\S]*?\.weapon-compendium-group-header\s*\{\s*flex-wrap:\s*wrap;\s*\}[\s\S]*?\.weapon-compendium-group-progress\s*\{\s*white-space:\s*normal;\s*\}/);
+	assert.match(cssSource, /@media \(max-width: 700px\)[\s\S]*?\.weapon-compendium-group-grid\s*\{\s*grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+	assert.match(compendiumSource, /mobileListMode:\s*true/);
+	assert.match(rendererSource, /var bindMobileListInteractions = function/);
+	assert.match(rendererSource, /openPreviewModal\(definition, \{ lock: renderOptions\.lock, trigger: mobilePreview \}\)/);
+	assert.match(rendererSource, /summary\.addEventListener\("click"[\s\S]*?toggleDetails\(\)/);
+	assert.match(rendererSource, /appendCraftHammer\(meta, definition\)/);
+	assert.match(rendererSource, /summary\.appendChild\(meta\);[\s\S]*?summary\.appendChild\(actionButton\)/);
 	assert.match(compendiumSource, /\["type", "按类型分组"\]/);
 	assert.match(compendiumSource, /\["rarity", "按稀有度分组"\]/);
+	assert.match(compendiumSource, /\["unlocked", "只看已解锁"\][\s\S]*?\["locked", "只看未解锁"\][\s\S]*?\["cleared", "只看已通关"\][\s\S]*?\["uncleared", "只看未通关"\]/);
+	assert.match(compendiumSource, /collectionStatus:\s*collectionStatus\.value/);
 	assert.match(compendiumSource, /groupProgress\.innerHTML = "已收集 <b>" \+ group\.unlockedCount \+ "<\/b> \/ " \+ group\.totalCount[\s\S]*?"　已通关 <b>" \+ group\.clearedCount \+ "<\/b> \/ " \+ group\.totalCount/);
 	assert.match(compendiumSource, /summary\.textContent = "已收集 " \+ profile\.unlockedWeaponIds\.length/);
 	assert.match(compendiumSource, /"　已通关 " \+ profile\.clearedWeaponIds\.length \+ " \/ " \+ definitionKeys\.length/);
 	assert.match(compendiumSource, /has-cleared-run/);
-	const cssSource = fs.readFileSync(path.join(root, "project/backpack.css"), "utf8");
 	assert.match(cssSource, /\.weapon-card\.has-cleared-run,[\s\S]*?box-shadow:[\s\S]*?rgba\(55, 211, 181, \.56\)/);
+	assert.match(cssSource, /@media \(max-width: 700px\)[\s\S]*?\.weapon-card-mobile-list[\s\S]*?\.weapon-card-mobile-list\.is-mobile-expanded\s*>\s*\.weapon-card-details\s*\{[^}]*display:\s*block/);
 });

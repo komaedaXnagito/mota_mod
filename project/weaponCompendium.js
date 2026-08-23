@@ -426,6 +426,8 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 		filters = filters || {};
 		var search = String(filters.search || "").trim().toLocaleLowerCase("zh-CN");
 		var weaponType = String(filters.weaponType || "");
+		var collectionStatus = String(filters.collectionStatus || "");
+		if (["unlocked", "locked", "cleared", "uncleared"].indexOf(collectionStatus) < 0) collectionStatus = "";
 		var profile = readProfile();
 		var unlocked = getUnlockedLookup(profile);
 		var cleared = {};
@@ -437,7 +439,13 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 				? String(definition.name || "").toLocaleLowerCase("zh-CN").indexOf(search) >= 0
 				: search === "???");
 			var types = Array.isArray(definition.weaponTypes) ? definition.weaponTypes : [];
-			return nameMatches && (!weaponType || types.indexOf(weaponType) >= 0);
+			var isCleared = !!cleared[key];
+			var statusMatches = !collectionStatus
+				|| (collectionStatus === "unlocked" && isUnlocked)
+				|| (collectionStatus === "locked" && !isUnlocked)
+				|| (collectionStatus === "cleared" && isCleared)
+				|| (collectionStatus === "uncleared" && !isCleared);
+			return nameMatches && statusMatches && (!weaponType || types.indexOf(weaponType) >= 0);
 		}).map(function (key) {
 			var definition = DEFINITIONS[key] || {};
 			var isUnlocked = !!unlocked[key];
@@ -552,13 +560,17 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 		});
 	};
 
-	/** 分组进度不受名称搜索影响，但会尊重当前类型筛选。 */
+	/** 分组进度不受名称搜索和收集状态筛选影响，但会尊重当前类型筛选。 */
 	var getGroupedEntries = function (options) {
 		options = options || {};
 		var groupMode = normalizeGroupMode(options.groupMode);
 		var sortMode = normalizeSortMode(options.sortMode);
 		var weaponType = String(options.weaponType || "");
-		var visibleEntries = getEntries({ search: options.search, weaponType: weaponType });
+		var visibleEntries = getEntries({
+			search: options.search,
+			weaponType: weaponType,
+			collectionStatus: options.collectionStatus
+		});
 		var progressEntries = getEntries({ weaponType: weaponType });
 		var progressLookup = {};
 		buildEntryGroups(progressEntries, groupMode, "default", { weaponType: weaponType }).forEach(function (group) {
@@ -573,38 +585,12 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 		});
 	};
 
-	var ensureStyles = function () {
-		if (document.getElementById("weapon-compendium-style")) return;
-		var style = document.createElement("style");
-		style.id = "weapon-compendium-style";
-		style.textContent = [
-			"#weapon-compendium-root{position:absolute;inset:0;z-index:12000;display:flex;align-items:center;justify-content:center;background:rgba(10,8,7,.9);font-family:Arial,'Microsoft YaHei',sans-serif;color:#f3e9d2;user-select:text}",
-			".weapon-compendium-panel{width:min(1120px,96%);height:min(760px,94%);display:flex;flex-direction:column;overflow:hidden;background:linear-gradient(145deg,#2d2119,#17110e);border:2px solid #b9955d;border-radius:12px;box-shadow:0 18px 60px #000}",
-			".weapon-compendium-header{display:flex;gap:12px;align-items:center;padding:13px 16px;border-bottom:1px solid #72583b;background:#3a291d}",
-			".weapon-compendium-title{font-size:24px;font-weight:700;color:#f3ca7a;white-space:nowrap}.weapon-compendium-summary{font-size:13px;color:#cbb99d;white-space:nowrap}",
-			".weapon-compendium-search{flex:1;min-width:120px;padding:8px 10px;color:#f7edd9;background:#18120f;border:1px solid #806743;border-radius:6px;outline:none;user-select:text}",
-			".weapon-compendium-filter{max-width:160px;padding:8px;color:#f7edd9;background:#18120f;border:1px solid #806743;border-radius:6px}",
-			".weapon-compendium-close{width:38px;height:34px;color:#f3e9d2;background:#6d352d;border:1px solid #b66e5e;border-radius:6px;cursor:pointer;font-size:20px}",
-			".weapon-compendium-toolbar{display:flex;align-items:center;gap:12px;padding:8px 14px;border-bottom:1px solid #59432f;background:#281d17}",
-			".weapon-compendium-control{display:flex;align-items:center;gap:6px;color:#bfae94;font-size:12px;white-space:nowrap}.weapon-compendium-control select{min-width:140px;padding:6px 8px;color:#f7edd9;background:#18120f;border:1px solid #806743;border-radius:6px}",
-			".weapon-compendium-rewards{display:flex;gap:8px;padding:8px 14px;overflow-x:auto;border-bottom:1px solid #59432f;background:#211813}",
-			".weapon-compendium-reward{flex:0 0 auto;padding:5px 9px;border:1px solid #66513a;border-radius:12px;color:#9f927e;font-size:12px}.weapon-compendium-reward.claimed{color:#bce79b;border-color:#598249}",
-			".weapon-compendium-grid{flex:1;min-width:0;min-height:0;overflow-x:hidden;overflow-y:auto;padding:0 14px 14px}",
-			".weapon-compendium-group{min-width:0;margin-top:14px}.weapon-compendium-group-header{position:sticky;top:0;z-index:8;display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 10px;padding:9px 12px;border-left:4px solid #d6a85f;border-bottom:1px solid #6c5235;background:linear-gradient(90deg,rgba(66,46,32,.98),rgba(35,26,21,.96));box-shadow:0 4px 8px rgba(0,0,0,.22)}",
-			".weapon-compendium-group-title{margin:0;color:#f2ca7d;font-size:17px}.weapon-compendium-group-progress{color:#c9b99e;font-size:12px;white-space:nowrap}.weapon-compendium-group-progress b{color:#f3d69d;font-size:14px}",
-			".weapon-compendium-group-grid{min-width:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(150px,100%),1fr));gap:10px;align-items:start}",
-			".weapon-compendium-entry{width:100%}",
-			".weapon-compendium-empty{text-align:center;padding:70px 20px;color:#9f927e;font-size:16px}",
-			"@media(max-width:700px){.weapon-compendium-header{flex-wrap:wrap}.weapon-compendium-title{font-size:20px}.weapon-compendium-summary{order:3;width:100%}.weapon-compendium-toolbar{flex-wrap:wrap}.weapon-compendium-control{flex:1}.weapon-compendium-control select{flex:1;min-width:110px}.weapon-compendium-grid{padding:0 9px 9px}.weapon-compendium-group-header{flex-wrap:wrap}.weapon-compendium-group-progress{white-space:normal}.weapon-compendium-group-grid{gap:8px}}"
-		].join("");
-		document.head.appendChild(style);
-	};
-
 	var createCard = function (entry) {
 		if (!cardRenderer) throw new Error("武器卡片渲染组件未安装");
 		var card = cardRenderer.createCard(DEFINITIONS[entry.weaponId] || {}, {
 			lock: !entry.unlocked,
 			showCraftHammer: false,
+			mobileListMode: true,
 			className: "weapon-compendium-entry" + (entry.cleared ? " has-cleared-run" : "")
 		});
 		card.dataset.weaponId = entry.weaponId;
@@ -623,6 +609,7 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 
 	var closeCompendium = function () {
 		if (!root) return false;
+		if (cardRenderer) cardRenderer.closePreviewModal(false);
 		document.removeEventListener("keydown", modalKeyDown, true);
 		document.removeEventListener("keyup", modalKeyUp, true);
 		root.remove();
@@ -640,7 +627,6 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 
 	var openCompendium = function () {
 		if (root) return true;
-		ensureStyles();
 		var gameGroup = document.getElementById("gameGroup") || document.body;
 		openedWhilePlaying = !!(core.isPlaying && core.isPlaying());
 		if (openedWhilePlaying) {
@@ -730,6 +716,13 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 			["rarityDesc", "稀有度降序"],
 			["rarityAsc", "稀有度升序"]
 		]);
+		var collectionStatus = createControl("收集状态", "按解锁或通关状态筛选", [
+			["", "全部武器"],
+			["unlocked", "只看已解锁"],
+			["locked", "只看未解锁"],
+			["cleared", "只看已通关"],
+			["uncleared", "只看未通关"]
+		]);
 		panel.appendChild(toolbar);
 
 		var rewardBar = document.createElement("div");
@@ -744,10 +737,12 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 		gameGroup.appendChild(root);
 
 		var render = function () {
+			if (cardRenderer) cardRenderer.closePreviewModal(false);
 			var profile = readProfile();
 			var groups = getGroupedEntries({
 				search: search.value,
 				weaponType: filter.value,
+				collectionStatus: collectionStatus.value,
 				groupMode: groupMode.value,
 				sortMode: sortMode.value
 			});
@@ -796,6 +791,7 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 		filter.addEventListener("change", render);
 		groupMode.addEventListener("change", render);
 		sortMode.addEventListener("change", render);
+		collectionStatus.addEventListener("change", render);
 		close.addEventListener("click", closeCompendium);
 		root.addEventListener("pointerdown", function (event) { event.stopPropagation(); });
 		root.addEventListener("click", function (event) {
@@ -812,7 +808,7 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 			event.stopImmediatePropagation();
 			if (event.key === "Escape" || event.keyCode === 27) {
 				event.preventDefault();
-				closeCompendium();
+				if (!cardRenderer || !cardRenderer.closePreviewModal()) closeCompendium();
 			}
 		};
 		document.addEventListener("keydown", modalKeyDown, true);

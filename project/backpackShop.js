@@ -5,7 +5,7 @@
  * - 每次刷新出现 5 把武器（从 flags.randomList 随机池抽取，默认池为全部武器定义）。
  * - 尚未使用任何一次初始免费购买时，刷新免费；之后刷新初始 10 金币，每次付费刷新涨价 1 金币。
  * - 购买武器初始 60 金币，每次购买后所有武器涨价 60 金币。
- * - 卡片显示图片 / 名称 / 稀有度 / 武器类型 / 价格；悬停显示详细属性（伤害/命中/间隔/奥义/特殊效果）。
+ * - 商店与盲盒共用武器卡片组件；手机端使用图鉴式列表，并可展开完整详情。
  * - 稀有度按 core.status.thisMap.ratio（1~5）加权：ratio 越高高稀有度概率越大；
  *   五级稀有度在 ratio=5 时概率为 15%（权重表见 RARITY_WEIGHTS）。
  *
@@ -500,6 +500,7 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 		const buildCard = function (item, onPick, choiceIndex) {
 			const def = weaponDefs[item.id];
 			const rarityValue = String(def.rarity == null ? 1 : def.rarity);
+			const price = onPick ? null : buyCost();
 			const shell = document.createElement("div");
 			shell.className = "backpack-shop-card-shell";
 			shell.dataset.rarity = rarityValue;
@@ -511,19 +512,21 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			const card = getCardRenderer().createCard(def, {
 				lock: false,
 				showCraftHammer: true,
-				tagName: "div"
+				tagName: "div",
+				mobileListMode: true,
+				actionButton: {
+					label: onPick ? "获取" : null,
+					className: "backpack-shop-buy",
+					price: price,
+					title: onPick ? "获取这把武器" : (price > 0 ? price + " 金币" : "免费"),
+					ariaLabel: onPick ? "获取" + String(def.name || "这把武器")
+						: (price > 0 ? "以 " + price + " 金币购买" : "免费获取") + String(def.name || "这把武器"),
+					onClick: function () {
+						if (onPick) onPick(item, choiceIndex);
+						else applyShopChoice(choiceIndex);
+					}
+				}
 			});
-			const buy = document.createElement("button");
-			buy.type = "button";
-			buy.className = "backpack-shop-buy";
-			buy.textContent = onPick ? "获得" : (buyCost() > 0 ? "购买 " + buyCost() : "购买（免费）");
-			buy.style.marginTop = "auto"; // flex 列布局：把购买按钮推到卡片底部
-			buy.addEventListener("click", function (event) {
-				event.stopPropagation();
-				if (onPick) onPick(item, choiceIndex);
-				else applyShopChoice(choiceIndex);
-			});
-			card.appendChild(buy);
 			shell.appendChild(card);
 			return shell;
 		};
@@ -654,7 +657,6 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 		 * 每次调用重新随机一批，不影响商店货架。
 		 */
 		const openRewardPicker = function () {
-			console.log('reward picker')
 			if (getPool().length === 0) {
 				if (core.drawTip) core.drawTip("随机池为空：flags.randomList 里的武器 ID 均不存在，请检查");
 				return;
