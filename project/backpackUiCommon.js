@@ -18,6 +18,16 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	var modalStack = [];
 	var modalKeyboardInstalled = false;
 
+	/**
+	 * 弹层会在捕获阶段拦截方向键的 keyup；若玩家在弹层打开前正按着方向键，
+	 * 引擎便收不到松键通知。接管或归还弹层焦点时主动终止移动，避免关闭后继续行走。
+	 */
+	var clearHeldMovementKeys = function () {
+		if (typeof core === "undefined" || !core || !core.status) return;
+		core.status.holdingKeys = [];
+		core.status.heroStop = true;
+	};
+
 	var isEscapeKey = function (event) {
 		return event && (event.key === "Escape" || event.key === "Esc" || event.keyCode === 27);
 	};
@@ -83,6 +93,7 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	/** 把弹层压入栈；同一根节点重复注册时会移动到栈顶。 */
 	var registerModal = function (root, close, options) {
 		if (!root || typeof close !== "function") return false;
+		clearHeldMovementKeys();
 		unregisterModal(root, { restoreFocus: false });
 		options = options || {};
 		var entry = {
@@ -119,6 +130,7 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 			removeModalEntry(removed);
 		}
 		uninstallModalKeyboard();
+		if (removed) clearHeldMovementKeys();
 		if (removed && wasTop && options.restoreFocus !== false) {
 			var focusTarget = removed.previousFocus;
 			if (!focusTarget || focusTarget.isConnected === false) {

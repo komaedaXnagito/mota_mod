@@ -448,8 +448,8 @@ test("手机背包默认展开待放置列表并移除展开按钮", () => {
 	assert.match(backpackSource, /if \(!placed && uiCommon\.isTooltipPinned\(\)\)[\s\S]*?uiCommon\.unpinTooltip\(\)[\s\S]*?clearSynergyHighlights\(\)/);
 	assert.match(cssSource, /\.bui-recipe-preview-root\s*\{[^}]*z-index:\s*10140/);
 	assert.match(cssSource, /#backpack-system-root:not\(\[data-tooltip-pinned='true'\]\) \.backpack-placed:hover/);
-	assert.match(mainSource, /this\.version = '2\.10\.95'/);
-	assert.match(indexSource, /project\/backpack\.css\?v=21095/);
+	assert.match(mainSource, /this\.version = '2\.10\.96'/);
+	assert.match(indexSource, /project\/backpack\.css\?v=21096/);
 });
 
 test("所有项目页面入口加载统一美化滚动条", () => {
@@ -640,8 +640,9 @@ test("商店 choices 录像回放刷新、购买和赠予，并在 bp 动作前�
 	assert.match(shopSource, /registerReplayAction\("backpackShopChoice"/);
 });
 
-test("统一弹层栈隔离游戏快捷键，并按后进先出顺序响应 ESC", () => {
+test("统一弹层栈隔离游戏快捷键、清除方向键状态，并按后进先出顺序响应 ESC", () => {
 	const documentListeners = { keydown: [], keyup: [] };
+	const modalCore = { status: { holdingKeys: [37], heroStop: false } };
 	const fakeDocument = {
 		activeElement: null,
 		addEventListener(type, listener) { documentListeners[type].push(listener); },
@@ -664,7 +665,7 @@ test("统一弹层栈隔离游戏快捷键，并按后进先出顺序响应 ESC"
 			focus() { fakeDocument.activeElement = this; }
 		};
 	};
-	const context = loadScripts(["project/backpackUiCommon.js"], { document: fakeDocument });
+	const context = loadScripts(["project/backpackUiCommon.js"], { document: fakeDocument, core: modalCore });
 	const common = context.backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61;
 	const first = makeModal("first-modal");
 	const second = makeModal("second-modal");
@@ -674,11 +675,17 @@ test("统一弹层栈隔离游戏快捷键，并按后进先出顺序响应 ESC"
 		common.unregisterModal(first);
 		first.isConnected = false;
 	});
+	assert.equal(modalCore.status.holdingKeys.length, 0, "弹层打开时应终止已经按住的方向键");
+	assert.equal(modalCore.status.heroStop, true);
+	modalCore.status.holdingKeys = [38];
+	modalCore.status.heroStop = false;
 	common.registerModal(second, () => {
 		closed.push("second");
 		common.unregisterModal(second);
 		second.isConnected = false;
 	});
+	assert.equal(modalCore.status.holdingKeys.length, 0, "叠加弹层时也应重新清理方向键状态");
+	assert.equal(modalCore.status.heroStop, true);
 	assert.equal(common.getModalDepth(), 2);
 	assert.equal(common.isTopModal(second), true);
 
@@ -720,13 +727,21 @@ test("统一弹层栈隔离游戏快捷键，并按后进先出顺序响应 ESC"
 	// ESC 在 keydown 只消费事件，在 keyup 才关闭，避免同一次 keyup 落入系统菜单。
 	dispatchKey("keydown", "Escape", insideSecond);
 	assert.deepEqual(closed, []);
+	modalCore.status.holdingKeys = [40];
+	modalCore.status.heroStop = false;
 	dispatchKey("keyup", "Escape", insideSecond);
 	assert.deepEqual(closed, ["second"]);
+	assert.equal(modalCore.status.holdingKeys.length, 0, "弹层关闭时应清理期间遗留的方向键状态");
+	assert.equal(modalCore.status.heroStop, true);
 	assert.equal(common.isTopModal(first), true);
 	assert.equal(fakeDocument.activeElement, first);
+	modalCore.status.holdingKeys = [37];
+	modalCore.status.heroStop = false;
 	dispatchKey("keydown", "Escape", first);
 	dispatchKey("keyup", "Escape", first);
 	assert.deepEqual(closed, ["second", "first"]);
+	assert.equal(modalCore.status.holdingKeys.length, 0);
+	assert.equal(modalCore.status.heroStop, true);
 	assert.equal(common.hasOpenModal(), false);
 	assert.equal(documentListeners.keydown.length, 0);
 	assert.equal(documentListeners.keyup.length, 0);
