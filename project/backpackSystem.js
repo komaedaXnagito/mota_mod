@@ -7,10 +7,10 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	const CONFIG = {
 		// 修改这里即可调整背包初始尺寸和扩展上限。
 		// 初始区域会在最大网格内居中；最大行列可分别独立修改。
-		initialCols: 8, // 新游戏默认解锁的列数。
-		initialRows: 8, // 新游戏默认解锁的行数。
-		maxCols: 12, // 背包允许向左右各扩展两圈（初始 8 列，最大 12 列）。
-		maxRows: 12, // 背包允许向上下各扩展两圈（初始 8 行，最大 12 行）。
+		initialCols: 7, // 新游戏默认解锁的列数。
+		initialRows: 6, // 新游戏默认解锁的行数。
+		maxCols: 11, // 背包允许向左右各扩展两圈（初始 8 列，最大 12 列）。
+		maxRows: 10, // 背包允许向上下各扩展两圈（初始 8 行，最大 12 行）。
 		maxCellSize: 40, // 单个格子的最大屏幕像素尺寸。
 		expansionItemId: "I429", // 解锁一个格子时消耗的地图道具 ID。
 		stateFlag: "__backpack_state__", // 保存完整背包状态的勇士 flag 名称。

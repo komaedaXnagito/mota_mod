@@ -835,7 +835,7 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 	},
 	"I414": {
 		"cls": "items",
-		"name": "七星剣・煌",
+		"name": "七星剑・煌",
 		"text": "null",
 		"backpackWeaponId": "I414",
 		"itemEffectTip": "，已放入背包"
@@ -1065,7 +1065,7 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 	},
 	"I517": {
 		"cls": "items",
-		"name": "格里姆尼尔(解放1)",
+		"name": "格里姆尼尔",
 		"text": "null",
 		"backpackWeaponId": "I517",
 		"itemEffectTip": "，已放入背包"
@@ -1270,7 +1270,7 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 		"cls": "items",
 		"name": "超值之剑",
 		"text": "null",
-		"backpackWeaponId": "I427",
+		"backpackWeaponId": "I547",
 		"itemEffectTip": "，已放入背包"
 	},
 	"I548": {
@@ -1282,7 +1282,7 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 	},
 	"I549": {
 		"cls": "items",
-		"name": "欧罗巴(未解放)",
+		"name": "欧罗巴",
 		"text": "null",
 		"backpackWeaponId": "I549",
 		"itemEffectTip": "，已放入背包"
@@ -1310,7 +1310,7 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 	},
 	"I553": {
 		"cls": "items",
-		"name": "湿婆（解放1）",
+		"name": "湿婆",
 		"text": "null",
 		"backpackWeaponId": "I553",
 		"itemEffectTip": "，已放入背包"
@@ -1429,7 +1429,7 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 	},
 	"I571": {
 		"cls": "items",
-		"name": "神域守护·布洛蒂亚(解放1)",
+		"name": "神域守护·布洛蒂亚",
 		"text": "null",
 		"backpackWeaponId": "I571",
 		"itemEffectTip": "，已放入背包"
@@ -1655,22 +1655,99 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 	},
 	"I431": {
 		"cls": "items",
-		"name": "新物品",
-		"canUseItemEffect": "true"
+		"name": "欧罗巴（突破I）",
+		"canUseItemEffect": "true",
+		"backpackWeaponId": "I602"
 	},
 	"I432": {
 		"cls": "items",
-		"name": "新物品",
-		"canUseItemEffect": "true"
+		"name": "欧罗巴（突破II）",
+		"canUseItemEffect": "true",
+		"backpackWeaponId": "I603"
 	},
 	"I433": {
 		"cls": "items",
-		"name": "新物品",
-		"canUseItemEffect": "true"
+		"name": "欧罗巴（突破III）",
+		"canUseItemEffect": "true",
+		"backpackWeaponId": "I604"
 	},
 	"I434": {
 		"cls": "items",
-		"name": "新物品",
-		"canUseItemEffect": "true"
+		"name": "欧罗巴（终突）",
+		"canUseItemEffect": "true",
+		"backpackWeaponId": "I605"
+	},
+	"I435": {
+		"cls": "items",
+		"name": "格里姆尼尔(突破I)",
+		"canUseItemEffect": "true",
+		"backpackWeaponId": "I606"
+	},
+	"I436": {
+		"cls": "items",
+		"name": "格里姆尼尔(突破II)",
+		"canUseItemEffect": "true",
+		"backpackWeaponId": "I607"
+	},
+	"I437": {
+		"cls": "items",
+		"name": "格里姆尼尔(突破III)",
+		"canUseItemEffect": "true",
+		"backpackWeaponId": "I608"
+	},
+	"I438": {
+		"cls": "items",
+		"name": "格里姆尼尔(终突)",
+		"canUseItemEffect": "true",
+		"backpackWeaponId": "I609"
+	},
+	"I439": {
+		"cls": "items",
+		"name": "湿婆（突破I）",
+		"canUseItemEffect": "true",
+		"backpackWeaponId": "I610"
+	},
+	"I440": {
+		"cls": "items",
+		"name": "湿婆（突破II）",
+		"canUseItemEffect": "true",
+		"useItemEvent": null,
+		"backpackWeaponId": "I611"
+	},
+	"I441": {
+		"cls": "items",
+		"name": "湿婆（突破III）",
+		"canUseItemEffect": "true",
+		"backpackWeaponId": "I612"
+	},
+	"I442": {
+		"cls": "items",
+		"name": "湿婆（终突）",
+		"canUseItemEffect": "true",
+		"backpackWeaponId": "I613"
+	},
+	"I443": {
+		"cls": "items",
+		"name": "神域守护·布洛蒂亚（突破I）",
+		"canUseItemEffect": "true",
+		"backpackWeaponId": "I614"
+	},
+	"I444": {
+		"cls": "items",
+		"name": "神域守护·布洛蒂亚（突破II）",
+		"canUseItemEffect": "true",
+		"backpackWeaponId": "I615"
+	},
+	"I445": {
+		"cls": "items",
+		"name": "神域守护·布洛蒂亚（突破III）",
+		"canUseItemEffect": null,
+		"backpackWeaponId": "I616"
+	},
+	"I446": {
+		"cls": "items",
+		"name": "神域守护·布洛蒂亚（终突）",
+		"canUseItemEffect": null,
+		"backpackWeaponId": "I617"
 	}
 }

@@ -154,6 +154,16 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		if (targetKey === "player" && definition.kind === "buff" && applied > 0) {
 			accumulateBuffGains(state, applied);
 		}
+		// buffReached：玩家获得强化后，触发 trigger 为 "buffReached" 的规则（如"拥有10层以上强化时触发"，
+		// 条件 buffStacks 由规则自带）；buffReachedActive 防止 applyStatus 递归（一次 buff 变化至多一轮）。
+		if (targetKey === "player" && applied > 0 && !state.buffReachedActive) {
+			state.buffReachedActive = true;
+			try {
+				runAllWeaponRules(state, "buffReached", { sourceSide: "player" }, state._lastHandlers || {});
+			} finally {
+				state.buffReachedActive = false;
+			}
+		}
 		return { applied: applied, reflected: reflected };
 	};
 
@@ -601,7 +611,10 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 	var areNearby = function (leftWeapon, rightWeapon, options) {
 		options = options || {};
 		var distance = Math.max(1, Math.floor(toNumber(options.distance, 1)));
-		var directions = rotateCombatDirections(options.directions, leftWeapon.rotation);
+		// rotate: false 表示固定世界方向（不随武器旋转），如"无论是否旋转，上方一格内触发"。
+		var directions = options.rotate === false
+			? (Array.isArray(options.directions) ? options.directions.slice() : CLOCKWISE_DIRECTIONS.slice())
+			: rotateCombatDirections(options.directions, leftWeapon.rotation);
 		if (!directions.length) directions = CLOCKWISE_DIRECTIONS.slice();
 		var leftCells = leftWeapon.cells || [];
 		var rightCells = rightWeapon.cells || [];
@@ -796,6 +809,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 
 	/** 执行一条规则的效果列表；可被 runCombatRules 调用，也可被 triggerWeaponEffects 用于立即发动其他武器的效果。 */
 	var runRuleEffects = function (state, weapon, rule, context, handlers) {
+		// 记录当前规则执行的 handlers，供 applyStatus 触发 buffReached 规则时使用（实战与预计内核一致）。
+		if (handlers) state._lastHandlers = handlers;
 		(rule.effects || []).forEach(function (effect) {
 			var targetKey = resolveSideKey(effect.target || "opponent", context.sourceSide);
 			var amount = resolveEffectAmount(state, weapon, effect, context);
@@ -1055,13 +1070,21 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 					handlers.triggerWeaponAttack(linkedWeapon, effect, weapon);
 				});
 			}
-			else if (effect.type === "triggerWeaponEffects" && !context.suppressLinkage) {
+			else if (effect.type === "triggerWeaponEffects") {
 				// 立即发动附近匹配武器的全部效果：忽略目标武器的 trigger/conditions/once 限制，
-				// 不重置其 CD（本效果只执行效果不发起攻击）；suppressLinkage 防止链式递归。
+				// 不重置其 CD（本效果只执行效果不发起攻击）。
+				// 链式递归：被触发的武器若也有 triggerWeaponEffects，会继续触发其附近匹配武器
+				//（如竖放 5 个饮料，最下面触发时上面的依次全部触发）。
+				// 防循环：context.chainVisited 记录本次链式触发过的武器（含源头），重复目标跳过；
+				// 链式触发不消耗目标的 once（runRuleEffects 直接执行，仅主动触发走 once 检查）。
+				var chainVisited = context.chainVisited || (context.chainVisited = {});
+				chainVisited[weapon.instanceId] = true;
 				findNearbyWeapons(state, weapon, effect).forEach(function (targetWeapon) {
+					if (chainVisited[targetWeapon.instanceId]) return;
+					chainVisited[targetWeapon.instanceId] = true;
 					(targetWeapon.combatRules || []).forEach(function (targetRule) {
 						runRuleEffects(state, targetWeapon, targetRule,
-							Object.assign({}, context, { suppressLinkage: true, trigger: null }), handlers);
+							Object.assign({}, context, { trigger: null }), handlers);
 					});
 				});
 			}
@@ -1308,6 +1331,16 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 			else if (effect.type === "addExtraAttack") {
 				// 使 directions/distance/filter 匹配的附近武器"发动次数+1"（每次攻击造成多次伤害、触发多次联动，奥义获取只判定一次）。
 				if (handlers.addExtraAttack) handlers.addExtraAttack(weapon, effect, context);
+			}
+			else if (effect.type === "allExtraAttack") {
+				// 给所有武器"攻击次数 +value"（如"所有武器奥义发动时的攻击次数+1"）；extraAttackCount 永久保留，可随奥义发动叠加。
+				var allExtraValue = Math.max(0, Math.floor(toNumber(effect.value, 1)));
+				if (allExtraValue) {
+					state.weapons.forEach(function (w) {
+						w.extraAttackCount = Math.max(0, Math.floor(Number(w.extraAttackCount) || 0)) + allExtraValue;
+					});
+					appendLog(state, "所有武器攻击次数+" + allExtraValue, "status");
+				}
 			}
 			else if (effect.type === "nearbyDamageBonus") {
 				// 附近武器数量驱动的伤害加成：注册武器 directions/distance/filter 范围内每有一个匹配武器，其攻击伤害 +value。

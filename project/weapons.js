@@ -539,7 +539,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"type": "triggerWeaponEffects",
 						"directions": [
 							"up"
-						],
+						],"rotate": false,
 						"distance": 1,
 						"filter": {
 							"weaponTypes": [
@@ -1754,7 +1754,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"精灵"
 		],
-		"synergyText": "攻击时：敌方拥有10层以上火伤时，驱散敌方1个强化效果\n攻击命中时：敌方火伤 +2\n自身拥有5层以上刻印时，造成的伤害无视盾牌效果",
+		"synergyText": "攻击时：敌方拥有10层以上火伤时，驱散敌方1个强化效果\n攻击命中时：敌方火伤+2\n自身拥有5层以上刻印时，造成的伤害无视盾牌效果",
 		"combatRules": [
 			{
 				"id": "burn10Dispel",
@@ -2279,7 +2279,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 	},
 	"I414": {
 		"id": "sevenStarSword",
-		"name": "七星剣・煌",
+		"name": "七星剑・煌",
 		"shape": [
 			[
 				1
@@ -2300,7 +2300,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			312,
 			312
 		],
-		"sourceName": "七星剣・煌",
+		"sourceName": "七星剑・煌",
 		"rarity": 4,
 		"minAttack": 4,
 		"maxAttack": 7,
@@ -3329,7 +3329,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"剑"
 		],
-		"synergyText": "∧内每有1个食物，本武器使用间隔-0.1\n攻击命中时：∧内每有1个食物，自身随机获得1个强化效果，并净化1个弱体效果",
+		"synergyText": "∧内每有1个食物，本武器使用间隔-0.1\n攻击命中时：每有1个∧内的食物，自身随机获得1个强化，净化1个弱体",
 		"synergyRules": [
 			{
 				"id": "foodIntervalReduce",
@@ -3368,11 +3368,12 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		],
 		"combatRules": [
 			{
+				"id": "hitFoodBuffsAndCleanse",
 				"trigger": "afterHit",
+				"conditions": [],
 				"effects": [
 					{
 						"type": "nearbyRandomBuff",
-						"id": "foodBuff",
 						"target": "self",
 						"directions": [
 							"up",
@@ -3386,11 +3387,11 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 								"食物"
 							]
 						},
-						"every": 1
+						"every": 1,
+						"stacks": 1
 					},
 					{
 						"type": "nearbyCleanseDebuff",
-						"id": "foodCleanse",
 						"target": "self",
 						"directions": [
 							"up",
@@ -4526,8 +4527,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		]
 	},
 	"I517": {
-		"id": "格里姆尼尔(解放1)",
-		"name": "格里姆尼尔(解放1)",
+		"id": "格里姆尼尔",
+		"name": "格里姆尼尔",
 		"shape": [
 			[
 				1
@@ -4545,7 +4546,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			312,
 			312
 		],
-		"sourceName": "格里姆尼尔(解放1)",
+		"sourceName": "格里姆尼尔",
 		"rarity": 5,
 		"attackInterval": 8,
 		"synergyText": "战斗开始时：自身格挡+20\n攻击时：自身反射+3",
@@ -4578,6 +4579,9 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 					}
 				]
 			}
+		],
+		"weaponTypes": [
+			"召唤石"
 		]
 	},
 	"I518": {
@@ -5433,7 +5437,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"combatRules": [
 			{
 				"id": "buff10TriggerOnce",
-				"trigger": "afterAttack",
+				"trigger": "buffReached",
 				"once": true,
 				"conditions": [
 					{
@@ -5457,7 +5461,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"type": "triggerWeaponEffects",
 						"directions": [
 							"up"
-						],
+						],"rotate": false,
 						"distance": 1,
 						"filter": {
 							"weaponTypes": [
@@ -5741,7 +5745,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"type": "triggerWeaponEffects",
 						"directions": [
 							"up"
-						],
+						],"rotate": false,
 						"distance": 1,
 						"filter": {
 							"weaponTypes": [
@@ -5798,7 +5802,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"type": "triggerWeaponEffects",
 						"directions": [
 							"up"
-						],
+						],"rotate": false,
 						"distance": 1,
 						"filter": {
 							"weaponTypes": [
@@ -5847,7 +5851,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"type": "applyStatus",
 						"target": "self",
 						"status": "block",
-						"stacks": 60
+						"stacks": 30
 					},
 					{
 						"type": "heal",
@@ -5858,7 +5862,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"type": "triggerWeaponEffects",
 						"directions": [
 							"up"
-						],
+						],"rotate": false,
 						"distance": 1,
 						"filter": {
 							"weaponTypes": [
@@ -5869,7 +5873,10 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "被攻击时：自身格挡+60、HP+20，并立即发动∧内的饮料效果（每场战斗仅触发1次）"
+		"synergyText": "被攻击时：自身格挡+30、HP+20，并立即发动∧内的饮料效果（每场战斗仅触发1次）",
+		"weaponTypes": [
+			"饮料"
+		]
 	},
 	"I537": {
 		"id": "痛苦与苦难",
@@ -5975,7 +5982,6 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 	"I538": {
 		"id": "巴哈姆特之盾",
 		"name": "巴哈姆特之盾",
-		"weaponTypes":["盾"],
 		"shape": [
 			[
 				1,
@@ -6049,7 +6055,10 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			}
 		],
 		"synergyText": "被攻击时：20%概率使受到的伤害-7\n∧内的武器使用间隔-0.1",
-		"rarity": 4
+		"rarity": 4,
+		"weaponTypes": [
+			"盾"
+		]
 	},
 	"I539": {
 		"id": "乐师之证",
@@ -6305,7 +6314,6 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 	"I542": {
 		"id": "拉卡姆铳",
 		"name": "贝尼迪",
-		"weaponTypes":["铳"],
 		"shape": [
 			[
 				1
@@ -6373,7 +6381,10 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"maxAttack": 25,
 		"hitRate": 0.75,
 		"attackInterval": 36,
-		"ultimateGain": 5
+		"ultimateGain": 5,
+		"weaponTypes": [
+			"铳"
+		]
 	},
 	"I543": {
 		"id": "宿命铁拳",
@@ -6393,7 +6404,6 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			312
 		],
 		"sourceName": "宿命铁拳",
-		"weaponTypes":["拳"],
 		"rarity": 2,
 		"minAttack": 1,
 		"maxAttack": 2,
@@ -6443,7 +6453,10 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "战斗开始时：自身HP-20\n∧内的武器伤害+1"
+		"synergyText": "战斗开始时：自身HP-20\n∧内的武器伤害+1",
+		"weaponTypes": [
+			"拳"
+		]
 	},
 	"I544": {
 		"id": "恶戏妖",
@@ -6570,6 +6583,76 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		],
 		"synergyText": "∧内的武器攻击命中时：50%概率使敌方随机获得1个弱体效果"
 	},
+	"I547": {
+		"id": "超值之剑",
+		"name": "超值之剑",
+		"shape": [
+			[
+				1
+			],
+			[
+				1
+			],
+			[
+				1
+			]
+		],
+		"rarity": 2,
+		"image": "project/images/weishuzhaxia.png",
+		"imageCrop": [
+			3,
+			23,
+			69,
+			182,
+			312,
+			312
+		],
+		"sourceName": "超值之剑",
+		"minAttack": 2,
+		"maxAttack": 4,
+		"hitRate": 0.8,
+		"attackInterval": 2.4,
+		"ultimateGain": 5,
+		"weaponTypes": [
+			"剑"
+		],
+		"synergyText": "∧内每有1个食物，本武器使用间隔-0.1",
+		"synergyRules": [
+			{
+				"id": "foodIntervalReduce",
+				"trigger": "layout",
+				"conditions": [
+					{
+						"id": "nearbyFoods",
+						"kind": "nearby",
+						"relation": "orthogonal",
+						"directions": [
+							"up",
+							"down",
+							"left",
+							"right"
+						],
+						"distance": 1,
+						"filter": {
+							"weaponTypes": [
+								"食物"
+							]
+						}
+					}
+				],
+				"effects": [
+					{
+						"target": "self",
+						"stat": "attackInterval",
+						"operation": "add",
+						"value": -0.1,
+						"perMatch": true,
+						"conditionId": "nearbyFoods"
+					}
+				]
+			}
+		]
+	},
 	"I548": {
 		"id": "斯拉德战斧",
 		"name": "斯拉德战斧",
@@ -6645,8 +6728,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		]
 	},
 	"I549": {
-		"id": "欧罗巴(未解放)",
-		"name": "欧罗巴(未解放)",
+		"id": "欧罗巴",
+		"name": "欧罗巴",
 		"shape": [
 			[
 				1,
@@ -6666,8 +6749,11 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			312,
 			312
 		],
-		"sourceName": "欧罗巴(未解放)",
-		"rarity": 5
+		"sourceName": "欧罗巴",
+		"rarity": 5,
+		"weaponTypes": [
+			"召唤石"
+		]
 	},
 	"I550": {
 		"id": "圣诞瓦姆杜斯",
@@ -6943,8 +7029,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"synergyText": "∧内的武器攻击命中时：50%概率使敌方随机获得1个弱体效果\n敌方每有1个弱体效果，本武器伤害+1"
 	},
 	"I553": {
-		"id": "湿婆（解放1）",
-		"name": "湿婆（解放1）",
+		"id": "湿婆",
+		"name": "湿婆",
 		"shape": [
 			[
 				1
@@ -6979,7 +7065,10 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "所有武器伤害+1"
+		"synergyText": "所有武器伤害+1",
+		"weaponTypes": [
+			"召唤石"
+		]
 	},
 	"I554": {
 		"id": "红色星球",
@@ -7826,15 +7915,13 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		]
 	},
 	"I566": {
-		"id": "琴师之证",
-		"name": "琴师之证",
+		"id": "瑞普·凡·温克尔",
+		"name": "瑞普·凡·温克尔",
 		"shape": [
 			[
-				1,
 				1
 			],
 			[
-				1,
 				1
 			]
 		],
@@ -7847,7 +7934,86 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			312,
 			312
 		],
-		"sourceName": "琴师之证"
+		"sourceName": "瑞普·凡·温克尔",
+		"weaponTypes": [
+			"乐器"
+		],
+		"rarity": 3,
+		"minAttack": 3,
+		"maxAttack": 5,
+		"hitRate": 0.95,
+		"attackInterval": 2.2,
+		"ultimateGain": 5,
+		"synergyText": "攻击时：∧内的动物立刻进行攻击；\n∧内每有1个动物，本武器使用间隔-0.15，∧内的动物使用间隔-0.15",
+		"combatRules": [
+			{
+				"id": "attackTriggerAnimalsAttack",
+				"trigger": "beforeAttack",
+				"conditions": [],
+				"effects": [
+					{
+						"type": "triggerLinkedWeaponAttack",
+						"linkedWeapon": {
+							"directions": [
+								"up",
+								"down",
+								"left",
+								"right"
+							],
+							"distance": 1,
+							"filter": {
+								"weaponTypes": [
+									"动物"
+								]
+							}
+						}
+					}
+				]
+			}
+		],
+		"synergyRules": [
+			{
+				"id": "animalIntervalBonus",
+				"trigger": "layout",
+				"conditions": [
+					{
+						"id": "nearbyAnimals",
+						"kind": "nearby",
+						"relation": "orthogonal",
+						"directions": [
+							"up",
+							"down",
+							"left",
+							"right"
+						],
+						"distance": 1,
+						"filter": {
+							"weaponTypes": [
+								"动物"
+							]
+						}
+					}
+				],
+				"effects": [
+					{
+						"target": "self",
+						"stat": "attackInterval",
+						"operation": "add",
+						"value": -0.15,
+						"perMatch": true,
+						"conditionId": "nearbyAnimals"
+					},
+					{
+						"target": "matches",
+						"conditionId": "nearbyAnimals",
+						"stat": "attackInterval",
+						"operation": "add",
+						"value": -0.15,
+						"perMatch": true
+					}
+				]
+			}
+		]
 	},
 	"I567": {
 		"id": "疯狂扫帚",
@@ -8112,8 +8278,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"synergyText": "奥义发动后：∧内的武器在10秒内伤害+1"
 	},
 	"I571": {
-		"id": "神域守护·布洛蒂亚(解放1)",
-		"name": "神域守护·布洛蒂亚(解放1)",
+		"id": "神域守护·布洛蒂亚",
+		"name": "神域守护·布洛蒂亚",
 		"shape": [
 			[
 				1
@@ -8131,10 +8297,10 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			312,
 			312
 		],
-		"sourceName": "神域守护·布洛蒂亚(解放1)",
+		"sourceName": "神域守护·布洛蒂亚",
 		"rarity": 5,
 		"weaponTypes": [
-			"道具"
+			"召唤石"
 		],
 		"attackInterval": 8,
 		"combatRules": [
@@ -8492,7 +8658,10 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击时：自身随机获得6个强化效果"
+		"synergyText": "攻击时：自身随机获得6个强化效果",
+		"weaponTypes": [
+			"道具"
+		]
 	},
 	"I577": {
 		"id": "绽花瓶",
@@ -8547,7 +8716,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"type": "triggerWeaponEffects",
 						"directions": [
 							"up"
-						],
+						],"rotate": false,
 						"distance": 1,
 						"filter": {
 							"weaponTypes": [
@@ -9298,7 +9467,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"type": "triggerWeaponEffects",
 						"directions": [
 							"up"
-						],
+						],"rotate": false,
 						"distance": 1,
 						"filter": {
 							"weaponTypes": [
@@ -10442,6 +10611,663 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"value": -0.1,
 						"perMatch": true,
 						"conditionId": "nearbyFoodAnimals"
+					}
+				]
+			}
+		]
+	},
+	"I602": {
+		"rarity": 5,
+		"id": "欧罗巴（突破I）",
+		"name": "欧罗巴（突破I）",
+		"shape": [
+			[
+				1
+			],
+			[
+				1
+			]
+		],
+		"sourceName": "欧罗巴（突破I）",
+		"image": "project/images/ouluoba.png",
+		"imageCrop": [
+			7,
+			15,
+			68,
+			125,
+			312,
+			312
+		],
+		"weaponTypes": [
+			"召唤石"
+		]
+	},
+	"I603": {
+		"id": "欧罗巴（突破II）",
+		"name": "欧罗巴（突破II）",
+		"shape": [
+			[
+				1
+			],
+			[
+				1
+			]
+		],
+		"rarity": 5,
+		"image": "project/images/ouluoba.png",
+		"imageCrop": [
+			7,
+			15,
+			68,
+			125,
+			312,
+			312
+		],
+		"sourceName": "欧罗巴（突破II）",
+		"weaponTypes": [
+			"召唤石"
+		]
+	},
+	"I604": {
+		"id": "欧罗巴（突破III）",
+		"name": "欧罗巴（突破III）",
+		"sourceName": "欧罗巴（突破III）",
+		"rarity": 5,
+		"image": "project/images/ouluoba.png",
+		"shape": [
+			[
+				1
+			],
+			[
+				1
+			]
+		],
+		"imageCrop": [
+			7,
+			15,
+			68,
+			125,
+			312,
+			312
+		],
+		"weaponTypes": [
+			"召唤石"
+		]
+	},
+	"I605": {
+		"id": "欧罗巴（终突）",
+		"name": "欧罗巴（终突）",
+		"sourceName": "欧罗巴（终突）",
+		"shape": [
+			[
+				1
+			],
+			[
+				1
+			]
+		],
+		"image": "project/images/ouluoba.png",
+		"imageCrop": [
+			7,
+			15,
+			68,
+			125,
+			312,
+			312
+		],
+		"rarity": 5,
+		"weaponTypes": [
+			"召唤石"
+		]
+	},
+	"I606": {
+		"id": "格里姆尼尔(突破I)",
+		"name": "格里姆尼尔(突破I)",
+		"sourceName": "格里姆尼尔(突破I)",
+		"rarity": 5,
+		"image": "project/images/junshen.png",
+		"imageCrop": [
+			7,
+			15,
+			68,
+			125,
+			312,
+			312
+		],
+		"shape": [
+			[
+				1
+			],
+			[
+				1
+			]
+		],
+		"synergyText": "战斗开始时：自身格挡+25\n攻击时：自身反射+4",
+		"minAttack": 4,
+		"maxAttack": 4,
+		"hitRate": 1,
+		"ultimateGain": 6,
+		"weaponTypes": [
+			"召唤石"
+		],
+		"attackInterval": 8,
+		"combatRules": [
+			{
+				"id": "battleStartBlock20",
+				"trigger": "battleStart",
+				"effects": [
+					{
+						"type": "applyStatus",
+						"target": "self",
+						"status": "block",
+						"stacks": 25
+					}
+				]
+			},
+			{
+				"id": "hitReflection3",
+				"trigger": "afterHit",
+				"effects": [
+					{
+						"type": "applyStatus",
+						"target": "self",
+						"status": "reflection",
+						"stacks": 4
+					}
+				]
+			}
+		]
+	},
+	"I607": {
+		"image": "project/images/junshen.png",
+		"imageCrop": [
+			7,
+			15,
+			68,
+			125,
+			312,
+			312
+		],
+		"sourceName": "格里姆尼尔(突破II)",
+		"rarity": 5,
+		"name": "格里姆尼尔(突破II)",
+		"id": "格里姆尼尔(突破II)",
+		"shape": [
+			[
+				1
+			],
+			[
+				1
+			]
+		],
+		"minAttack": 5,
+		"maxAttack": 5,
+		"hitRate": 1,
+		"attackInterval": 8,
+		"ultimateGain": 7,
+		"weaponTypes": [
+			"召唤石"
+		],
+		"synergyText": "战斗开始时：自身格挡+30\n攻击时：自身反射+5",
+		"combatRules": [
+			{
+				"id": "battleStartBlock20",
+				"trigger": "battleStart",
+				"effects": [
+					{
+						"type": "applyStatus",
+						"target": "self",
+						"status": "block",
+						"stacks": 30
+					}
+				]
+			},
+			{
+				"id": "hitReflection3",
+				"trigger": "afterHit",
+				"effects": [
+					{
+						"type": "applyStatus",
+						"target": "self",
+						"status": "reflection",
+						"stacks": 5
+					}
+				]
+			}
+		]
+	},
+	"I608": {
+		"image": "project/images/junshen.png",
+		"imageCrop": [
+			7,
+			15,
+			68,
+			125,
+			312,
+			312
+		],
+		"id": "格里姆尼尔(突破III)",
+		"name": "格里姆尼尔(突破III)",
+		"sourceName": "格里姆尼尔(突破III)",
+		"rarity": 5,
+		"shape": [
+			[
+				1
+			],
+			[
+				1
+			]
+		],
+		"minAttack": 6,
+		"maxAttack": 6,
+		"hitRate": 1,
+		"attackInterval": 8,
+		"ultimateGain": 8,
+		"weaponTypes": [
+			"召唤石"
+		],
+		"synergyText": "战斗开始时：自身格挡+35\n攻击时：自身反射+6",
+		"combatRules": [
+			{
+				"id": "battleStartBlock20",
+				"trigger": "battleStart",
+				"effects": [
+					{
+						"type": "applyStatus",
+						"target": "self",
+						"status": "block",
+						"stacks": 35
+					}
+				]
+			},
+			{
+				"id": "hitReflection3",
+				"trigger": "afterHit",
+				"effects": [
+					{
+						"type": "applyStatus",
+						"target": "self",
+						"status": "reflection",
+						"stacks": 6
+					}
+				]
+			}
+		]
+	},
+	"I609": {
+		"image": "project/images/junshen.png",
+		"imageCrop": [
+			7,
+			15,
+			68,
+			125,
+			312,
+			312
+		],
+		"shape": [
+			[
+				1
+			],
+			[
+				1
+			]
+		],
+		"name": "格里姆尼尔(终突)",
+		"rarity": 5,
+		"sourceName": "格里姆尼尔(终突)",
+		"id": "格里姆尼尔(终突)",
+		"minAttack": 7,
+		"maxAttack": 7,
+		"hitRate": 1,
+		"attackInterval": 8,
+		"ultimateGain": 9,
+		"weaponTypes": [
+			"召唤石"
+		],
+		"synergyText": "战斗开始时：自身格挡+40\n攻击时：自身反射+7\n所有武器奥义发动时的攻击次数+1",
+		"combatRules": [
+			{
+				"trigger": "battleStart",
+				"effects": [
+					{
+						"type": "applyStatus",
+						"target": "self",
+						"status": "block",
+						"stacks": 40
+					}
+				]
+			},
+			{
+				"trigger": "beforeAttack",
+				"effects": [
+					{
+						"type": "applyStatus",
+						"target": "self",
+						"status": "reflection",
+						"stacks": 7
+					}
+				]
+			},
+			{
+				"trigger": "afterUltimate",
+				"effects": [
+					{
+						"type": "allExtraAttack",
+						"value": 1
+					}
+				]
+			}
+		]
+	},
+	"I610": {
+		"image": "project/images/shipo.png",
+		"imageCrop": [
+			7,
+			15,
+			68,
+			125,
+			312,
+			312
+		],
+		"shape": [
+			[
+				1
+			],
+			[
+				1
+			]
+		],
+		"id": "湿婆（突破I）",
+		"name": "湿婆（突破I）",
+		"sourceName": "湿婆（突破II）",
+		"synergyText": "所有武器伤害+2",
+		"synergyRules": [
+			{
+				"id": "allWeaponsAttackPlus1",
+				"trigger": "layout",
+				"conditions": [],
+				"effects": [
+					{
+						"target": "all",
+						"stat": "attack",
+						"operation": "add",
+						"value": 2
+					}
+				]
+			}
+		],
+		"rarity": 5
+	},
+	"I612": {
+		"image": "project/images/shipo.png",
+		"imageCrop": [
+			7,
+			15,
+			68,
+			125,
+			312,
+			312
+		],
+		"shape": [
+			[
+				1
+			],
+			[
+				1
+			]
+		],
+		"sourceName": "湿婆（突破III）",
+		"name": "湿婆（突破III）",
+		"id": "湿婆（突破III）",
+		"synergyText": "所有武器伤害+4",
+		"synergyRules": [
+			{
+				"id": "allWeaponsAttackPlus1",
+				"trigger": "layout",
+				"conditions": [],
+				"effects": [
+					{
+						"target": "all",
+						"stat": "attack",
+						"operation": "add",
+						"value": 4
+					}
+				]
+			}
+		],
+		"rarity": 5
+	},
+	"I611": {
+		"image": "project/images/shipo.png",
+		"imageCrop": [
+			7,
+			15,
+			68,
+			125,
+			312,
+			312
+		],
+		"shape": [
+			[
+				1
+			],
+			[
+				1
+			]
+		],
+		"name": "湿婆（突破II）",
+		"id": "湿婆（突破II）",
+		"sourceName": "湿婆（突破II）",
+		"synergyText": "所有武器伤害+3",
+		"synergyRules": [
+			{
+				"id": "allWeaponsAttackPlus1",
+				"trigger": "layout",
+				"conditions": [],
+				"effects": [
+					{
+						"target": "all",
+						"stat": "attack",
+						"operation": "add",
+						"value": 3
+					}
+				]
+			}
+		],
+		"rarity": 5
+	},
+	"I613": {
+		"image": "project/images/shipo.png",
+		"imageCrop": [
+			7,
+			15,
+			68,
+			125,
+			312,
+			312
+		],
+		"shape": [
+			[
+				1
+			],
+			[
+				1
+			]
+		],
+		"rarity": 5,
+		"id": "湿婆（终突）",
+		"name": "湿婆（终突）",
+		"sourceName": "湿婆（终突）",
+		"synergyText": "所有武器伤害+15",
+		"synergyRules": [
+			{
+				"id": "allWeaponsAttackPlus1",
+				"trigger": "layout",
+				"conditions": [],
+				"effects": [
+					{
+						"target": "all",
+						"stat": "attack",
+						"operation": "add",
+						"value": 15
+					}
+				]
+			}
+		]
+	},
+	"I614": {
+		"name": "神域守护·布洛蒂亚（突破I）",
+		"sourceName": "神域守护·布洛蒂亚（突破I）",
+		"rarity": 5,
+		"combatRules": [
+			{
+				"id": "battleStartInvincible",
+				"trigger": "battleStart",
+				"effects": [
+					{
+						"type": "setInvincible",
+						"durationTicks": 130
+					}
+				]
+			},
+			{
+				"id": "attackInvincible",
+				"trigger": "beforeAttack",
+				"effects": [
+					{
+						"type": "setInvincible",
+						"durationTicks": 130
+					}
+				]
+			}
+		],
+		"synergyText": "战斗开始时：1.3秒内免疫伤害\n攻击时：1.3秒内免疫伤害\n",
+		"attackInterval": 8,
+		"id": "神域守护·布洛蒂亚（突破I）",
+		"weaponTypes": [
+			"召唤石"
+		]
+	},
+	"I615": {
+		"sourceName": "神域守护·布洛蒂亚（突破II）",
+		"rarity": 5,
+		"id": "神域守护·布洛蒂亚（突破II）",
+		"name": "神域守护·布洛蒂亚（突破II）",
+		"attackInterval": 8,
+		"weaponTypes": [
+			"召唤石"
+		],
+		"synergyText": "战斗开始时：1.6秒内免疫伤害\n攻击时：1.6秒内免疫伤害",
+		"combatRules": [
+			{
+				"id": "battleStartInvincible",
+				"trigger": "battleStart",
+				"effects": [
+					{
+						"type": "setInvincible",
+						"durationTicks": 160
+					}
+				]
+			},
+			{
+				"id": "attackInvincible",
+				"trigger": "beforeAttack",
+				"effects": [
+					{
+						"type": "setInvincible",
+						"durationTicks": 160
+					}
+				]
+			}
+		]
+	},
+	"I616": {
+		"sourceName": "神域守护·布洛蒂亚（突破III）",
+		"id": "神域守护·布洛蒂亚（突破III）",
+		"name": "神域守护·布洛蒂亚（突破III）",
+		"attackInterval": 8,
+		"rarity": 5,
+		"weaponTypes": [
+			"召唤石"
+		],
+		"synergyText": "战斗开始时：1.9秒内免疫伤害\n攻击时：1.9秒内免疫伤害",
+		"combatRules": [
+			{
+				"id": "battleStartInvincible",
+				"trigger": "battleStart",
+				"effects": [
+					{
+						"type": "setInvincible",
+						"durationTicks": 190
+					}
+				]
+			},
+			{
+				"id": "attackInvincible",
+				"trigger": "beforeAttack",
+				"effects": [
+					{
+						"type": "setInvincible",
+						"durationTicks": 190
+					}
+				]
+			}
+		]
+	},
+	"I617": {
+		"id": "神域守护·布洛蒂亚（终突）",
+		"name": "神域守护·布洛蒂亚（终突）",
+		"sourceName": "神域守护·布洛蒂亚（终突）",
+		"rarity": 5,
+		"attackInterval": 8,
+		"weaponTypes": [
+			"召唤石"
+		],
+		"synergyText": "战斗开始时：2.2秒内免疫伤害\n攻击时：2.2秒内免疫伤害，格挡+40，驱散敌方5个强化效果",
+		"combatRules": [
+			{
+				"id": "battleStartInvincible",
+				"trigger": "battleStart",
+				"effects": [
+					{
+						"type": "setInvincible",
+						"durationTicks": 220
+					}
+				]
+			},
+			{
+				"id": "attackInvincibleBlockDispel",
+				"trigger": "beforeAttack",
+				"effects": [
+					{
+						"type": "setInvincible",
+						"durationTicks": 220
+					},
+					{
+						"type": "applyStatus",
+						"target": "self",
+						"status": "block",
+						"stacks": 40
+					},
+					{
+						"type": "dispelBuff",
+						"target": "opponent"
+					},
+					{
+						"type": "dispelBuff",
+						"target": "opponent"
+					},
+					{
+						"type": "dispelBuff",
+						"target": "opponent"
+					},
+					{
+						"type": "dispelBuff",
+						"target": "opponent"
+					},
+					{
+						"type": "dispelBuff",
+						"target": "opponent"
 					}
 				]
 			}

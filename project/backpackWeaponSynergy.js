@@ -44,10 +44,12 @@ var backpackWeaponSynergy_91f4c21e_7d37_4f12_9cc4_a9606ba62a83 = (function () {
 		});
 	};
 
-	/** 返回带旋转后 directions 的条件副本，不修改 weapons.js 中的原始定义。 */
+	/** 返回带旋转后 directions 的条件副本，不修改 weapons.js 中的原始定义。
+	 *  condition.rotate === false 时保持固定世界方向（不随武器旋转）。 */
 	var rotateSpatialCondition = function (condition, rotation) {
 		condition = condition || {};
 		var rotated = Object.assign({}, condition);
+		if (condition.rotate === false) return rotated;
 		rotated.directions = rotateDirections(condition.directions, rotation);
 		return rotated;
 	};

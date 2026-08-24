@@ -21,11 +21,11 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 		// 稀有度权重表：行 = ratio（1~5），列 = 稀有度（1~5），每行总和 100。
 		// 五级稀有度在 ratio=5 时为 15/100 = 15%；ratio 越低高稀有权重越小（ratio=1 时仅 0.8%）。
 		const RARITY_WEIGHTS = [
-			[70, 20, 8, 1.2, 0],
-			[55, 22, 15, 5, 3],
-			[40, 22, 22, 10, 6],
-			[28, 20, 28, 15, 9],
-			[18, 17, 30, 20, 15]
+			[70, 20, 8, 2, 0],
+			[55, 25, 17, 3, 0],
+			[40, 30, 25, 5, 0],
+			[30, 25, 37, 8, 0],
+			[15, 20, 54, 10, 1]
 		];
 		const SLOT_COUNT = 5;            // 每次刷新出现的武器数量。
 		const REFRESH_COST_BASE = 10;    // 刷新初始价格。
@@ -68,7 +68,7 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 		const canRefreshForFree = function () { return getBuyCount() === 0; };
 		const refreshCost = function () {
 			if (canRefreshForFree()) return 0;
-			return REFRESH_COST_BASE + getRefreshCount() * REFRESH_COST_STEP;
+			return REFRESH_COST_BASE*core.status.thisMap.ratio + getRefreshCount() * REFRESH_COST_STEP*core.status.thisMap.ratio;
 		};
 		// 前 3 次购买免费且不涨价（buyCount 0/1/2 → 0）；第 4 次起恢复正常：60 + 超出次数×60。
 		const buyCost = function () {
@@ -700,13 +700,23 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			footer.className = "backpack-shop-footer";
 			const hint = document.createElement("div");
 			hint.className = "backpack-shop-ratio";
-			hint.textContent = "选择一把武器免费获得（不影响商店价格）";
+			// 与商店一致：显示当前楼层 ratio 下的稀有度概率（★ 70% ★★ 20% ...）。
+			const updateRatioHint = function () {
+				const weights = RARITY_WEIGHTS[getRatio() - 1];
+				let total = 0;
+				weights.forEach(function (w) { total += w; });
+				const parts = weights.map(function (w, index) {
+					const pct = Math.round(w / total * 1000) / 10;
+					const stars = new Array(index + 2).join("★");
+					return stars + " " + pct + "%";
+				});
+				hint.textContent = getRatio() + "级商店 概率为：" + parts.join("，");
+			};
+			updateRatioHint();
 			footer.appendChild(hint);
 			panel.appendChild(footer);
 			root.appendChild(panel);
-			root.addEventListener("pointerdown", function (event) {
-				if (event.target === root) closeShop();
-			});
+			// 拾取道具界面：点击界面外不关闭（避免误触导致免费拾取的道具消失）；只能通过选择武器或 × 关闭。
 			document.body.appendChild(root);
 			if (uiCommon) uiCommon.registerModal(root, closeShop, { name: "backpack-reward-picker" });
 			close.focus();
