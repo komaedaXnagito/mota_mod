@@ -31,7 +31,7 @@
 	transition-delay: 0s;
 }
 
-/* 背包武器详情固定展示：手机在顶部；桌面端根据待放置/已放置来源分别固定在右侧/左侧。 */
+/* 背包武器详情固定展示：手机在顶部；桌面待放置详情贴左侧面板右边并与卡片顶边对齐。 */
 .bui-tooltip.backpack-panel-tooltip {
 	left: var(--backpack-tooltip-left) !important;
 	top: var(--backpack-tooltip-top) !important;
@@ -765,7 +765,7 @@ body.backpack-drag-selection-locked * {
 	position: absolute;
 	z-index: 4;
 	display: none;
-	grid-template-rows: repeat(3, minmax(0, 1fr));
+	grid-template-rows: minmax(0, 3fr) repeat(2, minmax(0, 1fr));
 	gap: 6px;
 	box-sizing: border-box;
 	pointer-events: none;
@@ -793,6 +793,20 @@ body.backpack-drag-selection-locked * {
 	background: rgba(70, 120, 70, .62);
 	color: #d8f5c8;
 	transform: scale(1.025);
+}
+
+.backpack-drag-zone-sell {
+	border-color: #d85b51;
+	background: linear-gradient(145deg, rgba(112, 35, 31, .82), rgba(68, 24, 23, .78));
+	color: #ffd0c9;
+	box-shadow: inset 0 0 0 1px rgba(255, 143, 128, .18), 0 0 10px rgba(190, 45, 38, .18);
+}
+
+.backpack-drag-zone-sell.is-active {
+	border-color: #ff8b7d;
+	background: linear-gradient(145deg, rgba(157, 48, 40, .92), rgba(103, 29, 27, .9));
+	color: #fff1ed;
+	box-shadow: inset 0 0 0 1px rgba(255, 190, 178, .28), 0 0 16px rgba(255, 72, 61, .42);
 }
 
 .backpack-drag-title {
@@ -1011,7 +1025,7 @@ body.backpack-drag-selection-locked * {
 }
 
 #backpack-system-root[data-compact='true'] .backpack-drag-actions {
-	grid-template-columns: repeat(3, minmax(0, 1fr));
+	grid-template-columns: minmax(0, 3fr) repeat(2, minmax(0, 1fr));
 	grid-template-rows: minmax(0, 1fr);
 }
 

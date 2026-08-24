@@ -418,14 +418,18 @@ test("手机背包默认展开待放置列表并移除展开按钮", () => {
 	assert.match(cssSource, /data-compact='true'\] \.backpack-inventory-card\.weapon-card-mobile-list:not\(\.is-mobile-expanded\)\s*\{[^}]*height:\s*50px[^}]*max-height:\s*50px/);
 	assert.match(cssSource, /data-compact='true'\] \.backpack-inventory-card\.weapon-card-mobile-list\s*> \.weapon-card-mobile-preview\s*\{[^}]*width:\s*40px[^}]*height:\s*40px/);
 	assert.doesNotMatch(cssSource, /\.backpack-inventory-card \.weapon-card-types\s*\{[^}]*display:\s*none/);
-	assert.match(backpackSource, /const positionBackpackTooltip = function \(source\)[\s\S]*?const panel = layout\.panel[\s\S]*?root\.getBoundingClientRect\(\)[\s\S]*?backpack-panel-tooltip/);
-	assert.match(backpackSource, /const useRightSide = !layout\.compact && tooltipPlacementSource === "inventory"/);
-	assert.match(backpackSource, /const tooltipLeft = useRightSide\s*\? Math\.max\(8 \* layout\.scale, layout\.width - panel\.width - 8 \* layout\.scale\)\s*:\s*panel\.left/);
-	assert.match(backpackSource, /--backpack-tooltip-left", px\(rootRect\.left \+ tooltipLeft \* scaleX\)/);
+	assert.match(backpackSource, /const positionBackpackTooltip = function \(source, anchor\)[\s\S]*?const panel = layout\.panel[\s\S]*?root\.getBoundingClientRect\(\)[\s\S]*?backpack-panel-tooltip/);
+	assert.match(backpackSource, /let tooltipLeft = rootRect\.left \+ panel\.left \* scaleX/);
+	assert.match(backpackSource, /tooltipPlacementSource === "inventory"[\s\S]*?inventoryPanel\.getBoundingClientRect\(\)[\s\S]*?inventoryRect\.right \+ 6[\s\S]*?tooltipPlacementAnchor\.getBoundingClientRect\(\)\.top/);
+	assert.match(backpackSource, /const boundaryLeft = rootRect\.left \+ edgeMargin[\s\S]*?const boundaryBottom = rootRect\.bottom - edgeMargin/);
+	assert.match(backpackSource, /tooltipLeft = Math\.max\(boundaryLeft, Math\.min\(tooltipLeft, boundaryRight - tooltipWidth\)\)/);
+	assert.match(backpackSource, /tooltipTop = Math\.max\(boundaryTop,[\s\S]*?boundaryBottom - Math\.min\(tooltipRect\.height, tooltipMaxHeight\)/);
+	assert.doesNotMatch(backpackSource, /const viewport(?:Width|Height) =/);
+	assert.match(backpackSource, /onEnter: function \(\) \{ positionBackpackTooltip\("inventory", card\); \}/);
 	assert.match(backpackSource, /onEnter: function \(\) \{\s*renderSynergyHighlights\(entry\);\s*positionBackpackTooltip\("placed"\)/);
 	assert.match(backpackSource, /uiCommon\.pinTooltip\(element, detailsProvider\(\)\);\s*root\.dataset\.tooltipPinned = "true";\s*positionBackpackTooltip\("placed"\)/);
-	assert.match(backpackSource, /uiCommon\.bindTooltip\(card, detailsProvider, \{\s*onEnter: function \(\) \{ positionBackpackTooltip\("inventory"\); \}/);
-	assert.match(backpackSource, /uiCommon\.pinTooltip\(card, detailsProvider\(\)\);\s*root\.dataset\.tooltipPinned = "true";\s*positionBackpackTooltip\("inventory"\)/);
+	assert.match(backpackSource, /uiCommon\.bindTooltip\(card, detailsProvider, \{\s*onEnter: function \(\) \{ positionBackpackTooltip\("inventory", card\); \}/);
+	assert.match(backpackSource, /uiCommon\.pinTooltip\(card, detailsProvider\(\)\);\s*root\.dataset\.tooltipPinned = "true";\s*positionBackpackTooltip\("inventory", card\)/);
 	assert.match(backpackSource, /uiCommon\.hideTooltip\(\);\s*clearBackpackTooltipPlacement\(\)/);
 	assert.match(cssSource, /\.bui-tooltip\.backpack-panel-tooltip\s*\{[^}]*left:\s*var\(--backpack-tooltip-left\)\s*!important[^}]*top:\s*var\(--backpack-tooltip-top\)\s*!important[^}]*width:\s*var\(--backpack-tooltip-width\)\s*!important[^}]*max-height:\s*var\(--backpack-tooltip-height\)\s*!important/);
 	assert.match(backpackSource, /const setDragSelectionLocked = function \(locked\)[\s\S]*?backpack-drag-selection-locked/);
@@ -444,8 +448,8 @@ test("手机背包默认展开待放置列表并移除展开按钮", () => {
 	assert.match(backpackSource, /if \(!placed && uiCommon\.isTooltipPinned\(\)\)[\s\S]*?uiCommon\.unpinTooltip\(\)[\s\S]*?clearSynergyHighlights\(\)/);
 	assert.match(cssSource, /\.bui-recipe-preview-root\s*\{[^}]*z-index:\s*10140/);
 	assert.match(cssSource, /#backpack-system-root:not\(\[data-tooltip-pinned='true'\]\) \.backpack-placed:hover/);
-	assert.match(mainSource, /this\.version = '2\.10\.88'/);
-	assert.match(indexSource, /project\/backpack\.css\?v=21088/);
+	assert.match(mainSource, /this\.version = '2\.10\.95'/);
+	assert.match(indexSource, /project\/backpack\.css\?v=21095/);
 });
 
 test("所有项目页面入口加载统一美化滚动条", () => {
@@ -492,11 +496,15 @@ test("桌面与手机拖拽都用待放置旋转售卖三区替换库存", () =>
 	assert.match(cssSource, /data-compact='true'\] \.backpack-rotate-drag-button\s*\{[^}]*display:\s*none/);
 	assert.match(cssSource, /data-dragging='true'\] \.backpack-inventory\s*\{[^}]*display:\s*none/);
 	assert.match(cssSource, /data-dragging='true'\] \.backpack-drag-actions\s*\{[^}]*display:\s*grid/);
-	assert.match(cssSource, /\.backpack-drag-actions\s*\{[^}]*grid-template-rows:\s*repeat\(3/);
-	assert.match(cssSource, /data-compact='true'\] \.backpack-drag-actions\s*\{[^}]*grid-template-columns:\s*repeat\(3/);
+	assert.match(cssSource, /\.backpack-drag-actions\s*\{[^}]*grid-template-rows:\s*minmax\(0, 3fr\) repeat\(2, minmax\(0, 1fr\)\)/);
+	assert.match(cssSource, /data-compact='true'\] \.backpack-drag-actions\s*\{[^}]*grid-template-columns:\s*minmax\(0, 3fr\) repeat\(2, minmax\(0, 1fr\)\)/);
 	assert.match(cssSource, /\.backpack-drag-zone\s*\{[^}]*border:\s*2px dashed #c29458/);
+	assert.match(cssSource, /\.backpack-drag-zone-sell\s*\{[^}]*border-color:\s*#d85b51[^}]*background:\s*linear-gradient[^}]*color:\s*#ffd0c9/);
+	assert.match(cssSource, /\.backpack-drag-zone-sell\.is-active\s*\{[^}]*border-color:\s*#ff8b7d[^}]*color:\s*#fff1ed/);
 	assert.match(cssSource, /:not\(\[data-compact='true'\]\) \.backpack-inventory-card\.weapon-card-mobile-list\s*\{[^}]*display:\s*grid[^}]*cursor:\s*grab/);
 	assert.match(backpackSource, /const bindDesktopInventoryDrag = function \(card, entry, detailsProvider\)[\s\S]*?card\.addEventListener\("pointermove"[\s\S]*?Math\.hypot[\s\S]*?< 8[\s\S]*?startPointerDrag\(gesture\.startEvent, gesture\.instanceId, "inventory", gesture\.preview\)/);
+	assert.match(backpackSource, /const focusBackpackForDrag = function \(\)[\s\S]*?root\.focus\(\{ preventScroll: true \}\)[\s\S]*?root\.focus\(\)/);
+	assert.match(backpackSource, /const collapseInventoryForDrag = function \(\)[\s\S]*?renderAll\(\);\s*createDragElement\(\);\s*drawBag\(\);\s*focusBackpackForDrag\(\)/);
 	assert.match(cssSource, /\.backpack-inventory-list::\-webkit-scrollbar\s*\{[^}]*width:\s*9px/);
 	assert.match(cssSource, /\.backpack-inventory-list::\-webkit-scrollbar-thumb\s*\{[^}]*border-radius:\s*999px[^}]*linear-gradient/);
 	assert.match(cssSource, /\.backpack-inventory-list::\-webkit-scrollbar-button\s*\{[^}]*display:\s*none/);
@@ -726,6 +734,13 @@ test("统一弹层栈隔离游戏快捷键，并按后进先出顺序响应 ESC"
 	// 所有弹层关闭后，游戏快捷键恢复。
 	dispatchKey("keyup", "C", {});
 	assert.equal(engineShortcutCount, 1);
+});
+
+test("战斗接管与归还控制权时清除方向键按住状态", () => {
+	const source = fs.readFileSync(path.join(root, "project/backpackBattle.js"), "utf8");
+	assert.match(source, /var clearHeldMovementKeys = function \(\) \{\s*if \(!core\.status\) return;\s*core\.status\.holdingKeys = \[\];\s*core\.status\.heroStop = true;/);
+	assert.match(source, /var wasLocked = !!core\.status\.lockControl;\s*clearHeldMovementKeys\(\);\s*core\.lockControl\(\)/);
+	assert.match(source, /battleUi\.close\(\);\s*restoreEventState\(context\.savedEvent\);\s*clearHeldMovementKeys\(\);\s*if \(!context\.wasLocked\) core\.unlockControl\(\)/);
 });
 
 test("背包、商店、合成、配方预览和战斗都接入统一弹层栈", () => {

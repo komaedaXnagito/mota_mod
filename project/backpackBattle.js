@@ -681,6 +681,16 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 		});
 	};
 
+	/**
+	 * 战斗弹层会隔离 body 的 keyup；进入战斗前若正按着方向键，引擎的循环按键状态
+	 * 将收不到释放事件。接管和归还控制权时都清空，令已排队的 pressKey 循环立即停止。
+	 */
+	var clearHeldMovementKeys = function () {
+		if (!core.status) return;
+		core.status.holdingKeys = [];
+		core.status.heroStop = true;
+	};
+
 	var settleFinishedBattle = function (result) {
 		var context = activeBattleContext;
 		if (!context || context.settled || !result) return false;
@@ -688,6 +698,7 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 		activeBattleContext = null;
 		battleUi.close();
 		restoreEventState(context.savedEvent);
+		clearHeldMovementKeys();
 		if (!context.wasLocked) core.unlockControl();
 		if (result.outcome === "victory") {
 			pendingSettlement = clone(result);
@@ -734,6 +745,7 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 			interval: event.interval
 		};
 		var wasLocked = !!core.status.lockControl;
+		clearHeldMovementKeys();
 		core.lockControl();
 		core.status.event.id = EVENT_ID;
 		core.status.event.data = { enemyId: id, x: x, y: y };

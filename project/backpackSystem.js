@@ -57,7 +57,8 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	let suppressInventoryClickUntil = 0; // 拖拽生效后吞掉紧随其后的 click。
 	let placedDragGesture = null; // 手机端已摆放武器的待判定轻点/拖拽手势。
 	let suppressPlacedClickUntil = 0; // 拖拽生效后吞掉紧随其后的 click。
-	let tooltipPlacementSource = null; // 当前详情来自待放置区还是已放置区，用于桌面端分侧定位。
+	let tooltipPlacementSource = null; // 当前详情来自待放置区还是已放置区，用于桌面端定位。
+	let tooltipPlacementAnchor = null; // 待放置 Tooltip 当前对齐的武器卡片。
 	let gameGroup = null; // 魔塔引擎提供的游戏容器 DOM 节点。
 	let layout = null; // 最近一次计算出的自适应尺寸和坐标结果。
 
@@ -536,10 +537,20 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		document.body.classList.toggle("backpack-drag-selection-locked", !!locked);
 	};
 
+	/**
+	 * 拖拽开始时界面会重建武器节点；把焦点收回背包根节点，确保 R 键不会被
+	 * 通用弹层的“焦点在弹层外”保护逻辑提前拦截。
+	 */
+	const focusBackpackForDrag = function () {
+		if (!root || typeof root.focus !== "function") return;
+		try { root.focus({ preventScroll: true }); } catch (_) { root.focus(); }
+	};
+
 	/** 清除背包专用 Tooltip 定位，避免关闭背包后影响商店、图鉴等界面。 */
 	const clearBackpackTooltipPlacement = function () {
 		if (typeof document === "undefined") return;
 		tooltipPlacementSource = null;
+		tooltipPlacementAnchor = null;
 		const tooltip = document.querySelector(".bui-tooltip.backpack-panel-tooltip");
 		if (!tooltip) return;
 		tooltip.classList.remove("backpack-panel-tooltip");
@@ -552,28 +563,50 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	};
 
 	/**
-	 * 固定武器详情：紧凑布局统一沿用顶部待放置区；桌面端待放置武器放右侧，
-	 * 已放置武器放左侧，便于继续操作对应来源区域。
+	 * 固定武器详情：紧凑布局统一沿用顶部待放置区；桌面端待放置详情贴在左侧面板右边。
+	 * 待放置武器详情与对应卡片顶部对齐，并在接近背包根节点边缘时自动收回。
 	 * Tooltip 挂在 body 下，因此需要把背包内部坐标换算成视口坐标。
 	 */
-	const positionBackpackTooltip = function (source) {
+	const positionBackpackTooltip = function (source, anchor) {
 		if (!root || !layout || typeof document === "undefined") return;
 		const tooltip = document.querySelector(".bui-tooltip.show");
 		if (!tooltip) return;
-		if (source === "inventory" || source === "placed") tooltipPlacementSource = source;
+		if (source === "inventory" || source === "placed") {
+			tooltipPlacementSource = source;
+			tooltipPlacementAnchor = source === "inventory" ? (anchor || tooltipPlacementAnchor) : null;
+		}
 		const panel = layout.panel;
 		const rootRect = root.getBoundingClientRect();
 		const scaleX = layout.width ? rootRect.width / layout.width : 1;
 		const scaleY = layout.height ? rootRect.height / layout.height : 1;
-		const useRightSide = !layout.compact && tooltipPlacementSource === "inventory";
-		const tooltipLeft = useRightSide
-			? Math.max(8 * layout.scale, layout.width - panel.width - 8 * layout.scale)
-			: panel.left;
+		const edgeMargin = 8;
+		const boundaryLeft = rootRect.left + edgeMargin;
+		const boundaryTop = rootRect.top + edgeMargin;
+		const boundaryRight = rootRect.right - edgeMargin;
+		const boundaryBottom = rootRect.bottom - edgeMargin;
+		const tooltipWidth = Math.min(panel.width * scaleX, Math.max(0, boundaryRight - boundaryLeft));
+		const tooltipMaxHeight = Math.min(panel.height * scaleY, Math.max(0, boundaryBottom - boundaryTop));
+		let tooltipLeft = rootRect.left + panel.left * scaleX;
+		let tooltipTop = rootRect.top + panel.top * scaleY;
+		if (!layout.compact && tooltipPlacementSource === "inventory"
+			&& tooltipPlacementAnchor && tooltipPlacementAnchor.isConnected !== false
+			&& typeof tooltipPlacementAnchor.getBoundingClientRect === "function") {
+			const inventoryRect = inventoryPanel && typeof inventoryPanel.getBoundingClientRect === "function"
+				? inventoryPanel.getBoundingClientRect() : null;
+			tooltipLeft = inventoryRect ? inventoryRect.right + 6
+				: rootRect.left + (panel.left + panel.width) * scaleX + 6;
+			tooltipTop = tooltipPlacementAnchor.getBoundingClientRect().top;
+		}
+		tooltipLeft = Math.max(boundaryLeft, Math.min(tooltipLeft, boundaryRight - tooltipWidth));
 		tooltip.classList.add("backpack-panel-tooltip");
-		tooltip.style.setProperty("--backpack-tooltip-left", px(rootRect.left + tooltipLeft * scaleX));
-		tooltip.style.setProperty("--backpack-tooltip-top", px(rootRect.top + panel.top * scaleY));
-		tooltip.style.setProperty("--backpack-tooltip-width", px(panel.width * scaleX));
-		tooltip.style.setProperty("--backpack-tooltip-height", px(panel.height * scaleY));
+		tooltip.style.setProperty("--backpack-tooltip-left", px(tooltipLeft));
+		tooltip.style.setProperty("--backpack-tooltip-top", px(tooltipTop));
+		tooltip.style.setProperty("--backpack-tooltip-width", px(tooltipWidth));
+		tooltip.style.setProperty("--backpack-tooltip-height", px(tooltipMaxHeight));
+		const tooltipRect = tooltip.getBoundingClientRect();
+		tooltipTop = Math.max(boundaryTop,
+			Math.min(tooltipTop, boundaryBottom - Math.min(tooltipRect.height, tooltipMaxHeight)));
+		tooltip.style.setProperty("--backpack-tooltip-top", px(tooltipTop));
 	};
 
 	/**
@@ -1079,6 +1112,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		renderAll();
 		createDragElement();
 		drawBag();
+		focusBackpackForDrag();
 	};
 
 	/**
@@ -1188,7 +1222,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 			if (event.target && event.target.closest && event.target.closest("button")) return;
 			uiCommon.pinTooltip(card, detailsProvider());
 			root.dataset.tooltipPinned = "true";
-			positionBackpackTooltip("inventory");
+			positionBackpackTooltip("inventory", card);
 		});
 	};
 
@@ -1323,7 +1357,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 				if (layout.compact) bindCompactInventoryDrag(card, entry);
 				else {
 					uiCommon.bindTooltip(card, detailsProvider, {
-						onEnter: function () { positionBackpackTooltip("inventory"); }
+						onEnter: function () { positionBackpackTooltip("inventory", card); }
 					});
 					bindDesktopInventoryDrag(card, entry, detailsProvider);
 				}
