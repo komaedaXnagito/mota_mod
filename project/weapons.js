@@ -418,6 +418,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 					{
 						"type": "statusDamageBonus",
 						"id": "markBonus",
+						"scope": "all",
 						"status": "mark",
 						"every": 10,
 						"value": 5,
@@ -1863,6 +1864,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 					{
 						"type": "statusExtraAttack",
 						"id": "iceExtraAttack",
+						"scope": "self",
+						"mode": "stacks",
 						"target": "enemy",
 						"status": "ice",
 						"every": 10,
@@ -3897,6 +3900,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 					{
 						"type": "statusDamageBonus",
 						"id": "blackCharmDmg",
+						"scope": "self",
+						"mode": "presence",
 						"target": "self",
 						"status": "blackCharm",
 						"every": 1,
@@ -3905,6 +3910,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 					{
 						"type": "statusExtraAttack",
 						"id": "blackCharmExtra",
+						"scope": "self",
+						"mode": "presence",
 						"target": "self",
 						"status": "blackCharm",
 						"every": 1,
@@ -4074,20 +4081,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"synergyText": "战斗开始时：∧内每有1个武器，自身HP-50\n自身HP低于最大HP的50%时：本武器攻击次数+2、伤害+20",
 		"combatRules": [
 			{
-				"id": "registerLowHpExtra",
-				"trigger": "battleStart",
-				"effects": [
-					{
-						"type": "statusExtraAttack",
-						"id": "lowHpExtra",
-						"status": "lowHpMark",
-						"every": 1,
-						"value": 2
-					}
-				]
-			},
-			{
-				"id": "lowHpStateAndDamage",
+				"id": "lowHpAttackAndDamage",
 				"trigger": "beforeAttack",
 				"conditions": [
 					{
@@ -4099,41 +4093,14 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				],
 				"effects": [
 					{
-						"type": "removeStatus",
-						"target": "self",
-						"status": "lowHpMark",
-						"stacks": 100
-					},
-					{
-						"type": "applyStatus",
-						"target": "self",
-						"status": "lowHpMark",
-						"stacks": 1
+						"type": "modifyCurrentAttackCount",
+						"operation": "add",
+						"value": 2
 					},
 					{
 						"type": "modifyAttackDamage",
 						"operation": "add",
 						"value": 20
-					}
-				]
-			},
-			{
-				"id": "removeLowHpState",
-				"trigger": "beforeAttack",
-				"conditions": [
-					{
-						"kind": "hpPercent",
-						"target": "self",
-						"operator": "gt",
-						"value": 0.5
-					}
-				],
-				"effects": [
-					{
-						"type": "removeStatus",
-						"target": "self",
-						"status": "lowHpMark",
-						"stacks": 100
 					}
 				]
 			},
@@ -4964,7 +4931,10 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				"trigger": "battleStart",
 				"effects": [
 					{
-						"type": "nearbyIntervalBonus",
+						"type": "modifyWeaponStat",
+						"weaponTarget": "nearbyOnly",
+						"stat": "attackInterval",
+						"operation": "add",
 						"directions": [
 							"up",
 							"down",
@@ -4978,7 +4948,6 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 								"剑"
 							]
 						},
-						"every": 1,
 						"value": -0.1
 					}
 				]
@@ -4988,7 +4957,10 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				"trigger": "battleStart",
 				"effects": [
 					{
-						"type": "nearbyExtraAttack",
+						"type": "modifyWeaponStat",
+						"weaponTarget": "nearbyOnly",
+						"stat": "extraAttackCount",
+						"operation": "add",
 						"directions": [
 							"up",
 							"down",
@@ -5002,7 +4974,6 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 								"剑"
 							]
 						},
-						"every": 1,
 						"value": 1
 					}
 				]
@@ -6121,7 +6092,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			},
 			{
 				"id": "guitarUltimateExtraAttack",
-				"trigger": "beforeAttack",
+				"trigger": "beforeAllyAttack",
 				"conditions": [
 					{
 						"kind": "attackOrigin",
@@ -6152,19 +6123,9 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				],
 				"effects": [
 					{
-						"type": "addExtraAttack",
-						"directions": [
-							"up",
-							"down",
-							"left",
-							"right"
-						],
-						"distance": 1,
-						"filter": {
-							"weaponTypes": [
-								"吉他"
-							]
-						}
+						"type": "modifyCurrentAttackCount",
+						"operation": "add",
+						"value": 1
 					}
 				]
 			}
@@ -6847,29 +6808,16 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"精灵"
 		],
-		"synergyText": "战斗开始时，自身刻印+1\n本武器攻击次数为6\n自身刻印达到5层时：本武器伤害+5，且造成的伤害无视敌方格挡\n攻击时：自身HP-5",
+		"synergyText": "本武器攻击次数+5\n自身刻印达到5层时：本武器伤害+5，且造成的伤害无视敌方格挡\n攻击时：自身HP-5",
 		"combatRules": [
 			{
-				"id": "battleStartMark",
+				"id": "fixedExtraAttack",
 				"trigger": "battleStart",
 				"effects": [
 					{
-						"type": "applyStatus",
-						"target": "self",
-						"status": "mark",
-						"stacks": 1
-					}
-				]
-			},
-			{
-				"id": "markExtraAttack",
-				"trigger": "battleStart",
-				"effects": [
-					{
-						"type": "statusExtraAttack",
-						"id": "extraAttack",
-						"status": "mark",
-						"every": 1,
+						"type": "modifyWeaponStat",
+						"stat": "extraAttackCount",
+						"operation": "add",
 						"value": 5
 					}
 				]
@@ -10071,6 +10019,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 					{
 						"type": "statusExtraAttack",
 						"id": "excitationExtra",
+						"scope": "self",
+						"mode": "stacks",
 						"target": "self",
 						"status": "excitation",
 						"every": 10,

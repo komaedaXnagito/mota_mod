@@ -20,7 +20,7 @@ function loadCraft() {
 function makeHarness(entries) {
 	const context = loadCraft();
 	const flags = {
-		__backpack_state__: { version: 5, placed: [], inventory: entries || [], unlockedCells: [] }
+		__backpack_state__: { version: 6, placed: [], inventory: entries || [], unlockedCells: [] }
 	};
 	const core = {
 		getFlag(name) { return flags[name]; },
@@ -32,10 +32,9 @@ function makeHarness(entries) {
 }
 
 function makeEntry(context, key, instanceId) {
-	const definitions = context.weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44;
 	return {
 		instanceId,
-		weapon: JSON.parse(JSON.stringify(definitions[key])),
+		definitionId: key,
 		rotation: 0
 	};
 }

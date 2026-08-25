@@ -194,6 +194,51 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			if (core.updateStatusBar) core.updateStatusBar();
 			return true;
 		};
+		/** 商店兜底写档时也只从旧对象提取身份字段，并压缩成 v6 基础实例。 */
+		const resolveStoredDefinitionId = function (entry) {
+			if (!entry || typeof entry !== "object") return weaponDefs[entry] ? String(entry) : null;
+			const legacy = entry.weapon && typeof entry.weapon === "object" ? entry.weapon : entry;
+			const directCandidates = [
+				entry.definitionId, legacy.definitionId, entry.itemId,
+				entry.sourceItemId, legacy.sourceItemId
+			];
+			for (let index = 0; index < directCandidates.length; index++) {
+				const candidate = directCandidates[index];
+				if (candidate && weaponDefs[candidate]) return String(candidate);
+				const item = candidate && core.material && core.material.items && core.material.items[candidate];
+				if (item && item.backpackWeaponId && weaponDefs[item.backpackWeaponId]) {
+					return String(item.backpackWeaponId);
+				}
+			}
+			const identityFields = ["id", "name", "sourceName"];
+			for (let fieldIndex = 0; fieldIndex < identityFields.length; fieldIndex++) {
+				const field = identityFields[fieldIndex];
+				if (legacy[field] == null) continue;
+				const matches = Object.keys(weaponDefs).filter(function (definitionId) {
+					return weaponDefs[definitionId] && String(weaponDefs[definitionId][field]) === String(legacy[field]);
+				});
+				if (matches.length === 1) return matches[0];
+			}
+			return null;
+		};
+		const compactStoredEntry = function (entry, placed) {
+			const definitionId = resolveStoredDefinitionId(entry);
+			if (!definitionId) return null;
+			const result = {
+				instanceId: String(entry.instanceId),
+				definitionId: definitionId,
+				rotation: Math.round((Number(entry.rotation) || 0) / 90) * 90
+			};
+			const legacy = entry.weapon && typeof entry.weapon === "object" ? entry.weapon : null;
+			const itemId = entry.itemId || entry.sourceItemId || (legacy && legacy.sourceItemId);
+			if (itemId) result.itemId = String(itemId);
+			if (entry.uniqueKey) result.uniqueKey = String(entry.uniqueKey);
+			if (placed) {
+				result.col = Math.floor(Number(entry.col));
+				result.row = Math.floor(Number(entry.row));
+			}
+			return result;
+		};
 		const doRefresh = function (options) {
 			options = options || {};
 			const cost = refreshCost();
@@ -207,19 +252,31 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			return true;
 		};
 		/** 获得一把武器进背包（不扣钱、不涨价；用于购买与免费赠予共用）。返回是否成功。 */
-		const grantWeapon = function (def) {
+		const grantWeapon = function (definitionId) {
+			const def = weaponDefs[definitionId];
+			if (!def) return false;
 			// 优先走背包系统插件 API；插件缺失/未挂载时兜底直接写入背包状态 flag
 			// （__backpack_state__，未放置武器进 inventory，刷新界面后即可在库存看到）。
 			const backpack = core.plugin;
 			if (backpack && typeof backpack.addBackpackWeapon === "function") {
-				return backpack.addBackpackWeapon(def, { autoPlace: true }) != null;
+				return backpack.addBackpackWeapon(def, {
+					definitionId: definitionId,
+					autoPlace: true
+				}) != null;
 			}
-			const state = core.getFlag("__backpack_state__") || { version: 5, placed: [], inventory: [], unlockedCells: [] };
+			const state = core.getFlag("__backpack_state__") || { version: 6, placed: [], inventory: [], unlockedCells: [] };
 			const nextInstanceId = Math.floor(Number(core.getFlag("__backpack_instance_id__", 0)) || 0) + 1;
 			core.setFlag("__backpack_instance_id__", nextInstanceId);
+			state.version = 6;
+			state.placed = (state.placed || []).map(function (entry) {
+				return compactStoredEntry(entry, true);
+			}).filter(function (entry) { return !!entry; });
+			state.inventory = (state.inventory || []).map(function (entry) {
+				return compactStoredEntry(entry, false);
+			}).filter(function (entry) { return !!entry; });
 			state.inventory.push({
 				instanceId: String(nextInstanceId),
-				weapon: JSON.parse(JSON.stringify(def)),
+				definitionId: String(definitionId),
 				rotation: 0
 			});
 			core.setFlag("__backpack_state__", state);
@@ -235,7 +292,7 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			const recorded = options.recordChoice !== false && choiceIndex != null
 				? pushShopChoice(choiceIndex)
 				: false;
-			if (!grantWeapon(def)) {
+			if (!grantWeapon(item.id)) {
 				rollbackShopChoice(choiceIndex, recorded);
 				if (core.drawTip) core.drawTip("背包系统未安装，无法获得武器");
 				core.status.hero.money = toInt(core.status.hero.money) + cost;
@@ -265,7 +322,7 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			const def = item && weaponDefs[item.id];
 			if (!def) return false;
 			const recorded = options.recordChoice !== false ? pushShopChoice(choiceIndex) : false;
-			if (!grantWeapon(def)) {
+			if (!grantWeapon(item.id)) {
 				rollbackShopChoice(choiceIndex, recorded);
 				if (!options.silent && core.drawTip) core.drawTip("背包系统未安装，无法获得武器");
 				return false;

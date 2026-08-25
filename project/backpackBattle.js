@@ -61,7 +61,7 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 	var activeBattleContext = null;
 	var lastLayoutSignature = null;
 	var EVENT_ID = "backpackBattle";
-	var BATTLE_RULE_VERSION = 5;
+	var BATTLE_RULE_VERSION = 6;
 	var WEAPON_CONFIG_VERSION = 1;
 
 	var clone = function (value) {
@@ -75,7 +75,11 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 		return (backpackState.placed || []).map(function (entry) {
 			var attributes = clone(calculated.byInstanceId[entry.instanceId] || {});
 			attributes.hitRate = attributes.hitRate == null ? 1 : Number(attributes.hitRate);
-			attributes.attackInterval = attributes.attackInterval == null ? 0 : Number(attributes.attackInterval);
+			// 是否能主动攻击由武器原始间隔决定：原始 0 永久锁定，原始正数最低 1 Tick。
+			var hasBaseAttackInterval = Number(attributes.baseAttackInterval) > 0;
+			attributes.attackInterval = hasBaseAttackInterval
+				? Math.max(0.01, Number(attributes.attackInterval) || 0)
+				: 0;
 			attributes.attackIntervalTicks = attributes.attackInterval > 0
 				? Math.max(1, Math.round(attributes.attackInterval * 100))
 				: 0;
@@ -241,23 +245,41 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 		}
 		if (effect.type === "gainUltimate") return "获得" + amount + "点奥义";
 		if (effect.type === "statusDamageBonus") {
-			var typeText = Array.isArray(effect.weaponTypes) && effect.weaponTypes.length
-				? effect.weaponTypes.join("/") + "类武器" : "所有武器";
-			return "自身每拥有" + (effect.every || 10) + "层" + getStatusName(effect.status || "mark")
+			var typeText = effect.scope === "all"
+				? (Array.isArray(effect.weaponTypes) && effect.weaponTypes.length
+					? effect.weaponTypes.join("/") + "类武器" : "所有武器")
+				: (effect.scope === "nearby" ? "范围内武器" : "本武器");
+			var damageStatusText = effect.mode === "presence"
+				? "自身拥有" + getStatusName(effect.status || "mark") + "时"
+				: "自身每拥有" + (effect.every || 10) + "层" + getStatusName(effect.status || "mark");
+			return damageStatusText
 				+ "，" + typeText + "攻击伤害+" + (effect.value || 0);
 		}
 		if (effect.type === "statusIntervalBonus") {
-			var intervalTypeText = Array.isArray(effect.weaponTypes) && effect.weaponTypes.length
-				? effect.weaponTypes.join("/") + "类武器" : "所有武器";
+			var intervalTypeText = effect.scope === "all"
+				? (Array.isArray(effect.weaponTypes) && effect.weaponTypes.length
+					? effect.weaponTypes.join("/") + "类武器" : "所有武器")
+				: "本武器";
 			var who = effect.target === "enemy" || effect.target === "opponent" ? "敌方" : "自身";
-			return who + "每有" + (effect.every || 10) + "层" + getStatusName(effect.status || "ice")
+			var intervalStatusText = effect.mode === "presence"
+				? who + "拥有" + getStatusName(effect.status || "ice") + "时"
+				: who + "每有" + (effect.every || 10) + "层" + getStatusName(effect.status || "ice");
+			return intervalStatusText
 				+ "，" + intervalTypeText + "攻击间隔" + (Number(effect.value) < 0 ? "" : "+") + (effect.value || 0) + "回合";
 		}
 		if (effect.type === "statusExtraAttack") {
 			var extraWho = effect.target === "enemy" || effect.target === "opponent" ? "敌方" : "自身";
-			return extraWho + "每有" + (effect.every || 10) + "层" + getStatusName(effect.status || "ice")
-				+ "，本武器攻击次数+" + (effect.value || 1) + "（多次伤害/联动，奥义只判一次）";
+			var extraTargetText = effect.scope === "all"
+				? (Array.isArray(effect.weaponTypes) && effect.weaponTypes.length
+					? effect.weaponTypes.join("/") + "类武器" : "所有武器")
+				: "本武器";
+			var extraStatusText = effect.mode === "presence"
+				? extraWho + "拥有" + getStatusName(effect.status || "ice") + "时"
+				: extraWho + "每有" + (effect.every || 10) + "层" + getStatusName(effect.status || "ice");
+			return extraStatusText + "，" + extraTargetText + "攻击次数+" + (effect.value || 1)
+				+ "（多次伤害/联动，奥义只判一次）";
 		}
+		if (effect.type === "modifyCurrentAttackCount") return "本次攻击次数+" + (effect.value || 0);
 		if (effect.type === "statusHitRateBonus") {
 			var hitWho = effect.target === "enemy" || effect.target === "opponent" ? "敌方" : "自身";
 			return hitWho + "拥有" + getStatusName(effect.status || "wolfSkin") + "时，本武器命中率+"

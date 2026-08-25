@@ -20,10 +20,70 @@ var installBackpackWeaponSystem_41d4dd44_8f7d_4bbc_b890_80db42f1ad76 = function 
 	const WEAPON_DEFINITIONS = weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44;
 	const WEAPON_SYNERGY_RANGE = backpackWeaponSynergy_91f4c21e_7d37_4f12_9cc4_a9606ba62a83;
 
-	/** 按地图道具 ID 读取中央表中的完整武器定义。 */
-	const getWeaponDefinition = function (itemId) {
-		const sourceDefinition = WEAPON_DEFINITIONS[itemId];
-		return sourceDefinition ? cloneWeaponData(sourceDefinition) : null;
+	/** 按中央定义 ID 读取完整武器定义，并把稳定 ID 带到运行时副本上。 */
+	const getWeaponDefinition = function (definitionId) {
+		definitionId = definitionId == null ? "" : String(definitionId);
+		const sourceDefinition = WEAPON_DEFINITIONS[definitionId];
+		if (!sourceDefinition) return null;
+		const definition = cloneWeaponData(sourceDefinition);
+		definition.definitionId = definitionId;
+		return definition;
+	};
+
+	/** 地图道具 ID 允许通过 backpackWeaponId 指向另一条中央武器定义。 */
+	const resolveDirectDefinitionId = function (candidateId) {
+		if (candidateId == null || candidateId === "") return null;
+		candidateId = String(candidateId);
+		if (WEAPON_DEFINITIONS[candidateId]) return candidateId;
+		const item = core.material && core.material.items && core.material.items[candidateId];
+		const mappedId = item && item.backpackWeaponId;
+		return mappedId && WEAPON_DEFINITIONS[mappedId] ? String(mappedId) : null;
+	};
+
+	/** 旧存档缺少 definitionId 时，只用 id/name/sourceName 等身份字段反查唯一中央定义。 */
+	const findUniqueDefinitionIdByIdentity = function (propertyName, identityValue) {
+		if (identityValue == null || identityValue === "") return null;
+		identityValue = String(identityValue);
+		let matchedId = null;
+		const definitionIds = Object.keys(WEAPON_DEFINITIONS);
+		for (let index = 0; index < definitionIds.length; index++) {
+			const definitionId = definitionIds[index];
+			const definition = WEAPON_DEFINITIONS[definitionId];
+			if (!definition || String(definition[propertyName]) !== identityValue) continue;
+			if (matchedId) return null;
+			matchedId = definitionId;
+		}
+		return matchedId;
+	};
+
+	/**
+	 * 将新存档 ID、地图物品 ID或旧版完整武器对象解析成中央定义 ID。
+	 * 这里只读取身份字段，绝不比较或采用旧对象中的伤害、间隔、联动和战斗规则。
+	 */
+	const resolveWeaponDefinitionId = function (weaponOrId) {
+		if (weaponOrId == null) return null;
+		if (typeof weaponOrId === "string" || typeof weaponOrId === "number") {
+			return resolveDirectDefinitionId(weaponOrId);
+		}
+		if (typeof weaponOrId !== "object") return null;
+		const directCandidates = [
+			weaponOrId.definitionId,
+			weaponOrId.weaponDefinitionId,
+			weaponOrId.backpackWeaponId,
+			weaponOrId.itemId,
+			weaponOrId.sourceItemId
+		];
+		for (let index = 0; index < directCandidates.length; index++) {
+			const resolvedId = resolveDirectDefinitionId(directCandidates[index]);
+			if (resolvedId) return resolvedId;
+		}
+		if (weaponOrId.weapon && typeof weaponOrId.weapon === "object") {
+			const nestedId = resolveWeaponDefinitionId(weaponOrId.weapon);
+			if (nestedId) return nestedId;
+		}
+		return findUniqueDefinitionIdByIdentity("id", weaponOrId.id)
+			|| findUniqueDefinitionIdByIdentity("name", weaponOrId.name)
+			|| findUniqueDefinitionIdByIdentity("sourceName", weaponOrId.sourceName);
 	};
 
 	/**
@@ -106,7 +166,7 @@ var installBackpackWeaponSystem_41d4dd44_8f7d_4bbc_b890_80db42f1ad76 = function 
 		[
 			"rarity", "minAttack", "maxAttack", "hitRate", "attackInterval", "ultimateGain",
 			"defense", "attackSpeed", "critRate",
-			"description", "sourceItemId", "sourceName", "uniqueKey", "imageCrop",
+			"description", "definitionId", "sourceItemId", "sourceName", "uniqueKey", "imageCrop",
 			"weaponTypes", "synergyText", "synergyRules", "combatRules"
 		].forEach(function (optionalPropertyName) {
 			if (Object.prototype.hasOwnProperty.call(sourceWeapon, optionalPropertyName)) {
@@ -450,6 +510,9 @@ var installBackpackWeaponSystem_41d4dd44_8f7d_4bbc_b890_80db42f1ad76 = function 
 					recipientEntries.forEach(function (recipientEntry) {
 						const recipientAttributes = attributesByInstanceId[recipientEntry.instanceId];
 						if (!recipientAttributes || !effect.stat || stackCount <= 0) return;
+						// 原始间隔为 0（含未配置）的物品不是主动攻击武器；布局加减间隔不能将其激活。
+						if ((effect.stat === "attackInterval" || effect.stat === "attackIntervalTicks")
+							&& !(Number(recipientAttributes.baseAttackInterval) > 0)) return;
 						applyCalculatedWeaponEffect(
 							recipientAttributes,
 							effect.stat,
@@ -472,7 +535,12 @@ var installBackpackWeaponSystem_41d4dd44_8f7d_4bbc_b890_80db42f1ad76 = function 
 		});
 
 		const calculatedEntries = safePlacedEntries.map(function (weaponEntry) {
-			return attributesByInstanceId[weaponEntry.instanceId];
+			const attributes = attributesByInstanceId[weaponEntry.instanceId];
+			// 主动武器的布局间隔最低为 0.01 回合（1 Tick）；原始 0 间隔永久锁定为 0。
+			attributes.attackInterval = Number(attributes.baseAttackInterval) > 0
+				? Math.max(0.01, Number(attributes.attackInterval) || 0)
+				: 0;
+			return attributes;
 		});
 		return {
 			context: cloneWeaponData(calculationContext),
@@ -492,6 +560,7 @@ var installBackpackWeaponSystem_41d4dd44_8f7d_4bbc_b890_80db42f1ad76 = function 
 		// 读取完整中央定义表或指定武器的安全副本。
 		getDefinitions: function () { return cloneWeaponData(WEAPON_DEFINITIONS); },
 		getDefinition: getWeaponDefinition,
+		resolveDefinitionId: resolveWeaponDefinitionId,
 		// 将中央定义重新挂载到 core.material.items。
 		applyDefinitions: applyWeaponDefinitions,
 		// 旧 API 保留为只读兼容别名，避免已有事件脚本失效。

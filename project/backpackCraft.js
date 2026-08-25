@@ -19,18 +19,67 @@ var installBackpackCraft_9c4e7b2a_6f1d_4a8c_9e3b_5d7f2c1a8e64 = function (core, 
 		const FLAG_STATE = "__backpack_state__"; // 背包状态 flag（与背包系统一致）。
 		let root = null;   // 合成面板根节点。
 		let slots = [null, null]; // 两个原料槽：[{ instanceId, weapon }]。
-		const EMPTY_ENTRY = { version: 5, placed: [], inventory: [], unlockedCells: [] };
+		const EMPTY_ENTRY = { version: 6, placed: [], inventory: [], unlockedCells: [] };
 
 		// ---- 背包访问 ----
 		// 背包插件的方法直接挂在 core.plugin 顶层（如 core.plugin.addBackpackWeapon / removeBackpackWeapon）。
 		const getBackpackPlugin = function () {
 			return core.plugin;
 		};
-		const readEntries = function () {
-			const state = core.getFlag(FLAG_STATE) || EMPTY_ENTRY;
-			return (state.placed || []).concat(state.inventory || []);
-		};
 		const getWeaponDef = function (id) { return weaponDefs[id] || null; };
+		/** 旧存档迁移只使用身份字段，绝不采用其中缓存的武器属性或战斗规则。 */
+		const resolveDefinitionId = function (entry) {
+			const weaponSystem = core.plugin && core.plugin.weaponSystem;
+			if (weaponSystem && typeof weaponSystem.resolveDefinitionId === "function") {
+				const resolved = weaponSystem.resolveDefinitionId(entry);
+				if (resolved) return resolved;
+			}
+			if (!entry || typeof entry !== "object") return getWeaponDef(entry) ? String(entry) : null;
+			const legacy = entry.weapon && typeof entry.weapon === "object" ? entry.weapon : entry;
+			const direct = entry.definitionId || legacy.definitionId || entry.itemId
+				|| entry.sourceItemId || legacy.sourceItemId;
+			if (direct && getWeaponDef(direct)) return String(direct);
+			const identityFields = ["id", "name", "sourceName"];
+			for (let fieldIndex = 0; fieldIndex < identityFields.length; fieldIndex++) {
+				const field = identityFields[fieldIndex];
+				if (legacy[field] == null) continue;
+				const matches = Object.keys(weaponDefs).filter(function (definitionId) {
+					return weaponDefs[definitionId] && String(weaponDefs[definitionId][field]) === String(legacy[field]);
+				});
+				if (matches.length === 1) return matches[0];
+			}
+			return null;
+		};
+		const hydrateStoredEntry = function (entry) {
+			const definitionId = resolveDefinitionId(entry);
+			const definition = definitionId && getWeaponDef(definitionId);
+			if (!entry || !definition) return null;
+			return Object.assign({}, entry, {
+				definitionId: definitionId,
+				weapon: JSON.parse(JSON.stringify(definition))
+			});
+		};
+		const readEntries = function () {
+			const backpack = getBackpackPlugin();
+			const state = backpack && typeof backpack.getBackpackState === "function"
+				? backpack.getBackpackState()
+				: (core.getFlag(FLAG_STATE) || EMPTY_ENTRY);
+			return (state.placed || []).concat(state.inventory || [])
+				.map(hydrateStoredEntry)
+				.filter(function (entry) { return !!entry; });
+		};
+		const serializeEntry = function (entry) {
+			const definitionId = resolveDefinitionId(entry);
+			if (!definitionId) return null;
+			const result = {
+				instanceId: String(entry.instanceId),
+				definitionId: definitionId,
+				rotation: Math.round((Number(entry.rotation) || 0) / 90) * 90
+			};
+			if (entry.itemId) result.itemId = String(entry.itemId);
+			if (entry.uniqueKey) result.uniqueKey = String(entry.uniqueKey);
+			return result;
+		};
 		const getRecipeDisplayName = function (id) {
 			const definition = getWeaponDef(id);
 			const displayNames = recipesData.displayNames || {};
@@ -241,23 +290,28 @@ var installBackpackCraft_9c4e7b2a_6f1d_4a8c_9e3b_5d7f2c1a8e64 = function (core, 
 				if (!backpack.removeBackpackWeapon(a.instanceId)) return false;
 				if (!backpack.removeBackpackWeapon(b.instanceId)) return false;
 				if (backpack.addBackpackWeapon(resultDefinition, {
+					definitionId: recipe.result,
 					autoPlace: true,
 					recordRoute: false
 				}) == null) return false;
 			} else {
 				// 背包插件不可用时兜底：直接操作背包状态 flag。
-				const state = core.getFlag(FLAG_STATE) || { version: 5, placed: [], inventory: [], unlockedCells: [] };
+				const state = core.getFlag(FLAG_STATE) || EMPTY_ENTRY;
 				const keep = [];
-				(state.placed || []).concat(state.inventory || []).forEach(function (entry) {
-					if (entry.instanceId !== a.instanceId && entry.instanceId !== b.instanceId) keep.push(entry);
+				readEntries().forEach(function (entry) {
+					if (entry.instanceId !== a.instanceId && entry.instanceId !== b.instanceId) {
+						const serialized = serializeEntry(entry);
+						if (serialized) keep.push(serialized);
+					}
 				});
+				state.version = 6;
 				state.placed = [];
 				state.inventory = keep;
 				const nextInstanceId = Math.floor(Number(core.getFlag("__backpack_instance_id__", 0)) || 0) + 1;
 				core.setFlag("__backpack_instance_id__", nextInstanceId);
 				state.inventory.push({
 					instanceId: String(nextInstanceId),
-					weapon: JSON.parse(JSON.stringify(resultDefinition)),
+					definitionId: recipe.result,
 					rotation: 0
 				});
 				core.setFlag(FLAG_STATE, state);

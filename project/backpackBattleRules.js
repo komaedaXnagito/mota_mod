@@ -393,8 +393,13 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		return fixed(total);
 	};
 
-	/** 状态驱动的全局武器伤害加成：每次攻击时按目标阵营当前状态层数实时计算，天然可逆、不累积。
-	 * 支持 nearby 模式：bonus 记录注册武器与范围，仅作用于注册武器附近（directions/distance）匹配的武器。 */
+	var getStatusBonusTimes = function (stacks, bonus) {
+		return bonus && bonus.mode === "presence"
+			? (stacks > 0 ? 1 : 0)
+			: Math.floor(stacks / Math.max(1, toNumber(bonus && bonus.every, 1)));
+	};
+
+	/** 状态驱动的武器伤害加成：默认只作用于注册该效果的武器；scope=all/nearby 时作用于全部/附近目标。 */
 	var getStatusWeaponDamageBonus = function (state, weapon) {
 		var bonuses = Array.isArray(state.weaponDamageBonuses) ? state.weaponDamageBonuses : [];
 		var weaponTypes = (weapon && (weapon.attributes && weapon.attributes.weaponTypes)) || (weapon && weapon.weaponTypes) || [];
@@ -412,8 +417,10 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 				if (weapon.instanceId === sourceWeapon.instanceId) {
 					if (!bonus.includeSelf) return;
 				} else if (!areNearby(sourceWeapon, weapon, bonus)) return;
-			} else if (bonus.weaponTypes && !bonus.weaponTypes.some(function (type) { return weaponTypes.indexOf(type) >= 0; })) {
-				return;
+			} else {
+				// 未带 scope 的对象是旧战斗快照/测试数据，继续按原先的全局规则兼容读取。
+				if (bonus.scope === "self" && weapon.instanceId !== bonus.sourceWeaponId) return;
+				if (bonus.weaponTypes && !bonus.weaponTypes.some(function (type) { return weaponTypes.indexOf(type) >= 0; })) return;
 			}
 			var side = bonus.target === "enemy" ? state.enemy : state.player;
 			// status 为 "allDebuffs" 时按目标阵营全部弱体状态（debuff）的层数合计计算（如"敌方每有5个debuff，本武器伤害+1"）。
@@ -422,7 +429,7 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 					return sum + Math.max(0, toNumber(debuff.stacks, 0));
 				}, 0)
 				: getStatusStacks(side, bonus.status);
-			total += Math.floor(stacks / bonus.every) * bonus.value;
+			total += getStatusBonusTimes(stacks, bonus) * bonus.value;
 		});
 		return fixed(total);
 	};
@@ -433,10 +440,11 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		var weaponTypes = (weapon && (weapon.attributes && weapon.attributes.weaponTypes)) || (weapon && weapon.weaponTypes) || [];
 		var totalTicks = 0;
 		bonuses.forEach(function (bonus) {
+			if (bonus.scope === "self" && weapon.instanceId !== bonus.sourceWeaponId) return;
 			if (bonus.weaponTypes && !bonus.weaponTypes.some(function (type) { return weaponTypes.indexOf(type) >= 0; })) return;
 			var side = bonus.target === "enemy" ? state.enemy : state.player;
 			var stacks = getStatusStacks(side, bonus.status);
-			totalTicks += Math.floor(stacks / bonus.every) * bonus.value * 100;
+			totalTicks += getStatusBonusTimes(stacks, bonus) * bonus.value * 100;
 		});
 		return fixed(totalTicks);
 	};
@@ -452,16 +460,17 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		return fixed(total);
 	};
 
-	/** 状态驱动的额外攻击次数：目标阵营每有 every 层状态，本武器攻击次数 +value（如"敌方每有10层冰结，自身攻击次数+1"）。天然可逆、不累积。 */
+	/** 状态驱动的额外攻击次数：默认只作用于注册该效果的武器；scope=all 时才作用于全部匹配武器。 */
 	var getStatusExtraAttackCount = function (state, weapon) {
 		var bonuses = Array.isArray(state.weaponExtraAttacks) ? state.weaponExtraAttacks : [];
 		var weaponTypes = (weapon && (weapon.attributes && weapon.attributes.weaponTypes)) || (weapon && weapon.weaponTypes) || [];
 		var total = 0;
 		bonuses.forEach(function (bonus) {
+			if (bonus.scope === "self" && weapon.instanceId !== bonus.sourceWeaponId) return;
 			if (bonus.weaponTypes && !bonus.weaponTypes.some(function (type) { return weaponTypes.indexOf(type) >= 0; })) return;
 			var side = bonus.target === "enemy" ? state.enemy : state.player;
 			var stacks = getStatusStacks(side, bonus.status);
-			total += Math.floor(stacks / bonus.every) * bonus.value;
+			total += getStatusBonusTimes(stacks, bonus) * bonus.value;
 		});
 		return Math.max(0, Math.floor(total));
 	};
@@ -511,20 +520,22 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 	};
 
 	var getWeaponIntervalTicks = function (state, weapon) {
-		var interval = getWeaponStat(weapon, "attackIntervalTicks", state.tick);
-		if (interval <= 0) {
-			var rounds = getWeaponStat(weapon, "attackInterval", state.tick);
-			interval = Math.round(rounds * 100);
-		} else {
-			// attackIntervalTicks 存在时，把 attackInterval（回合单位）的修正换算为 ticks 叠加，
-			// 支持"攻击间隔-0.1 回合"这类以回合为单位的写法。
-			var baseRounds = weapon.attributes && weapon.attributes.attackInterval;
-			if (baseRounds != null) {
-				var modifiedRounds = getWeaponStat(weapon, "attackInterval", state.tick);
-				interval += Math.round((modifiedRounds - toNumber(baseRounds, 0)) * 100);
-			}
-		}
-		if (interval <= 0) return 0;
+		var attributes = weapon.attributes || {};
+		// 新战斗快照用 baseAttackInterval 记录武器原始值；兼容旧快照和测试输入时，
+		// 再从未修正的 attackIntervalTicks / attackInterval 推断是否为主动攻击武器。
+		var hasExplicitBase = Object.prototype.hasOwnProperty.call(attributes, "baseAttackInterval");
+		var hasBaseAttackInterval = hasExplicitBase
+			? toNumber(attributes.baseAttackInterval, 0) > 0
+			: toNumber(attributes.attackIntervalTicks, 0) > 0 || toNumber(attributes.attackInterval, 0) > 0;
+		if (!hasBaseAttackInterval) return 0;
+
+		var baseTicks = toNumber(attributes.attackIntervalTicks, 0);
+		var baseRounds = toNumber(attributes.attackInterval, 0);
+		var interval = baseTicks > 0 ? baseTicks : Math.round(baseRounds * 100);
+		// Tick 修正直接叠加；attackInterval（回合单位）的修正换算为 ticks 叠加。
+		// 两者都按各自相对快照的差值计算，减穿 0 后统一压到 1 Tick。
+		interval += getWeaponStat(weapon, "attackIntervalTicks", state.tick) - baseTicks;
+		interval += Math.round((getWeaponStat(weapon, "attackInterval", state.tick) - baseRounds) * 100);
 		interval += getStatusStacks(state.player, "ice");
 		interval -= getStatusStacks(state.player, "excitation");
 		interval += getStatusIntervalBonusTicks(state, weapon);
@@ -1131,6 +1142,15 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 				context.minimumDamage = Math.max(0, context.minimumDamage);
 				context.maximumDamage = Math.max(context.minimumDamage, context.maximumDamage);
 			}
+			else if (effect.type === "modifyCurrentAttackCount") {
+				// 只修改本次正在结算的攻击段数，不写入武器持久属性。
+				var currentAttackCount = Math.max(0, Math.floor(toNumber(context.extraAttackCountBonus, 0)));
+				var attackCountValue = Math.floor(toNumber(effect.value, 0));
+				if (effect.operation === "set") currentAttackCount = attackCountValue;
+				else if (effect.operation === "multiply") currentAttackCount *= attackCountValue;
+				else currentAttackCount += attackCountValue;
+				context.extraAttackCountBonus = Math.max(0, Math.floor(currentAttackCount));
+			}
 			else if (effect.type === "modifyWeaponStat") {
 				var recipients;
 				if (effect.weaponTarget === "all") {
@@ -1139,6 +1159,9 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 				} else if (effect.weaponTarget === "nearby") {
 					// 本武器 + 附近匹配武器（directions/distance/filter 从 effect 读取，严格正交）。
 					recipients = [weapon].concat(findNearbyWeapons(state, weapon, effect));
+				} else if (effect.weaponTarget === "nearbyOnly") {
+					// 仅附近匹配武器，不包含规则来源武器。
+					recipients = findNearbyWeapons(state, weapon, effect);
 				} else {
 					recipients = [weapon];
 				}
@@ -1152,67 +1175,86 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 				});
 			}
 			else if (effect.type === "statusDamageBonus") {
-				// 状态驱动的全局武器伤害加成：按 effect.id 幂等注册，攻击时按当前状态层数实时计算，不会累积。
+				// 状态驱动的武器伤害加成：默认 self；scope 可显式设为 all 或 nearby。
 				// target 为 "enemy"/"opponent" 时读取敌方状态（如"敌方每有2层火伤，本武器伤害+1"），否则读取勇士状态。
 				// scope 为 "nearby" 时，加成只作用于注册武器附近（directions/distance）匹配的武器（如"敌方每有5层火伤，上下格内武器伤害+1"）。
 				var bonuses = state.weaponDamageBonuses || (state.weaponDamageBonuses = []);
 				var bonusId = String(effect.id || "default");
+				var damageBonusScope = effect.scope === "nearby" ? "nearby"
+					: (effect.scope === "all" ? "all" : "self");
+				var damageBonusSourceId = damageBonusScope === "all" ? null : weapon.instanceId;
 				for (var bonusIndex = 0; bonusIndex < bonuses.length; bonusIndex++) {
-					if (bonuses[bonusIndex].id === bonusId) {
+					if (bonuses[bonusIndex].id === bonusId
+						&& (bonuses[bonusIndex].sourceWeaponId || null) === damageBonusSourceId) {
 						bonuses.splice(bonusIndex, 1);
 						break;
 					}
 				}
-				var nearbyBonus = effect.scope === "nearby";
+				var nearbyBonus = damageBonusScope === "nearby";
 				bonuses.push({
 					id: bonusId,
+					scope: damageBonusScope,
 					status: String(effect.status || "mark"),
 					every: Math.max(1, Math.floor(toNumber(effect.every, 10))),
 					value: toNumber(effect.value, 0),
+					mode: effect.mode === "presence" ? "presence" : "stacks",
 					target: effect.target === "enemy" || effect.target === "opponent" ? "enemy" : "player",
 					weaponTypes: Array.isArray(effect.weaponTypes) ? effect.weaponTypes.slice() : null,
 					nearby: nearbyBonus || null,
-					sourceWeaponId: nearbyBonus ? weapon.instanceId : null,
+					sourceWeaponId: damageBonusSourceId,
 					includeSelf: nearbyBonus ? effect.includeSelf === true : null,
 					directions: nearbyBonus ? (Array.isArray(effect.directions) ? effect.directions.slice() : null) : null,
 					distance: nearbyBonus ? Math.max(1, Math.floor(toNumber(effect.distance, 1))) : null
 				});
 			}
-			else if (effect.type === "statusIntervalBonus") {				// 状态驱动的攻击间隔修正：按 effect.id 幂等注册，每次攻击间隔计算时按目标阵营当前状态层数实时计算（回合单位）。
+			else if (effect.type === "statusIntervalBonus") {
+				// 状态驱动的攻击间隔修正：默认 self，scope=all 时才影响全部匹配武器。
 				// target 为 "enemy"/"opponent" 时读取敌方状态（如"敌方每有10层冰结，自身间隔-1.9"），否则读取勇士状态。
 				var intervalBonuses = state.weaponIntervalBonuses || (state.weaponIntervalBonuses = []);
 				var intervalBonusId = String(effect.id || "default");
+				var intervalBonusScope = effect.scope === "all" ? "all" : "self";
+				var intervalBonusSourceId = intervalBonusScope === "all" ? null : weapon.instanceId;
 				for (var intervalBonusIndex = 0; intervalBonusIndex < intervalBonuses.length; intervalBonusIndex++) {
-					if (intervalBonuses[intervalBonusIndex].id === intervalBonusId) {
+					if (intervalBonuses[intervalBonusIndex].id === intervalBonusId
+						&& (intervalBonuses[intervalBonusIndex].sourceWeaponId || null) === intervalBonusSourceId) {
 						intervalBonuses.splice(intervalBonusIndex, 1);
 						break;
 					}
 				}
 				intervalBonuses.push({
 					id: intervalBonusId,
+					scope: intervalBonusScope,
+					sourceWeaponId: intervalBonusSourceId,
 					status: String(effect.status || "ice"),
 					every: Math.max(1, Math.floor(toNumber(effect.every, 10))),
 					value: toNumber(effect.value, 0),
+					mode: effect.mode === "presence" ? "presence" : "stacks",
 					target: effect.target === "enemy" || effect.target === "opponent" ? "enemy" : "player",
 					weaponTypes: Array.isArray(effect.weaponTypes) ? effect.weaponTypes.slice() : null
 				});
 			}
 			else if (effect.type === "statusExtraAttack") {
-				// 状态驱动的额外攻击次数：按 effect.id 幂等注册，攻击时按目标阵营当前状态层数实时计算。
+				// 状态驱动的额外攻击次数：默认 self，scope=all 时才影响全部匹配武器。
 				// target 为 "enemy"/"opponent" 时读取敌方状态（如"敌方每有10层冰结，自身攻击次数+1"），否则读取勇士状态。
 				var extraAttacks = state.weaponExtraAttacks || (state.weaponExtraAttacks = []);
 				var extraAttackId = String(effect.id || "default");
+				var extraAttackScope = effect.scope === "all" ? "all" : "self";
+				var extraAttackSourceId = extraAttackScope === "all" ? null : weapon.instanceId;
 				for (var extraAttackIndex = 0; extraAttackIndex < extraAttacks.length; extraAttackIndex++) {
-					if (extraAttacks[extraAttackIndex].id === extraAttackId) {
+					if (extraAttacks[extraAttackIndex].id === extraAttackId
+						&& (extraAttacks[extraAttackIndex].sourceWeaponId || null) === extraAttackSourceId) {
 						extraAttacks.splice(extraAttackIndex, 1);
 						break;
 					}
 				}
 				extraAttacks.push({
 					id: extraAttackId,
+					scope: extraAttackScope,
+					sourceWeaponId: extraAttackSourceId,
 					status: String(effect.status || "ice"),
 					every: Math.max(1, Math.floor(toNumber(effect.every, 10))),
 					value: Math.max(0, Math.floor(toNumber(effect.value, 1))),
+					mode: effect.mode === "presence" ? "presence" : "stacks",
 					target: effect.target === "enemy" || effect.target === "opponent" ? "enemy" : "player",
 					weaponTypes: Array.isArray(effect.weaponTypes) ? effect.weaponTypes.slice() : null
 				});

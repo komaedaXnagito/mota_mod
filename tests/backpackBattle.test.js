@@ -635,7 +635,7 @@ test("商店 choices 录像回放刷新、购买和赠予，并在 bp 动作前�
 
 	const shopSource = fs.readFileSync(path.join(root, "project/backpackShop.js"), "utf8");
 	assert.match(shopSource, /if \(options\.recordChoice !== false\) pushShopChoice\(0\);[\s\S]*?refreshOffer\(\)/);
-	assert.match(shopSource, /pushShopChoice\(choiceIndex\)[\s\S]*?if \(!grantWeapon\(def\)\)/);
+	assert.match(shopSource, /pushShopChoice\(choiceIndex\)[\s\S]*?if \(!grantWeapon\(item\.id\)\)/);
 	assert.match(shopSource, /buildCard\(item, null, index \+ 1\)/);
 	assert.match(shopSource, /registerReplayAction\("backpackShopChoice"/);
 });
@@ -1455,6 +1455,77 @@ test("0.25 攻击间隔在 100 Tick 实际攻击四次", () => {
 	runtime.destroy();
 });
 
+test("原始正间隔最低1 Tick，原始0间隔不受任何间隔增减影响", () => {
+	const context = loadPure();
+	const rules = context.backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87;
+	const active = makeWeapon({
+		instanceId: "active",
+		attributes: Object.assign({}, makeWeapon().attributes, {
+			baseAttackInterval: 1,
+			attackInterval: 1,
+			attackIntervalTicks: 100
+		}),
+		runtimeModifiers: [
+			{ stat: "attackInterval", operation: "add", value: -2 },
+			{ stat: "attackIntervalTicks", operation: "add", value: -50 }
+		]
+	});
+	const passive = makeWeapon({
+		instanceId: "passive",
+		attributes: Object.assign({}, makeWeapon().attributes, {
+			baseAttackInterval: 0,
+			attackInterval: 0,
+			attackIntervalTicks: 0
+		}),
+		runtimeModifiers: [
+			{ stat: "attackInterval", operation: "add", value: 2 },
+			{ stat: "attackIntervalTicks", operation: "add", value: 100 }
+		]
+	});
+	const state = rules.createBattleState(makeInput({ weapons: [active, passive] }));
+	assert.equal(rules.getWeaponIntervalTicks(state, state.weapons[0]), 1,
+		"原始正间隔被减穿后仍保留1 Tick");
+	assert.equal(rules.getWeaponIntervalTicks(state, state.weapons[1]), 0,
+		"原始0间隔即使得到正向间隔修正也保持0");
+});
+
+test("布局联动同样锁定原始0间隔并给主动武器保留1 Tick", () => {
+	const core = {
+		material: { items: {} },
+		clone(value) { return value == null ? value : JSON.parse(JSON.stringify(value)); }
+	};
+	const context = loadScripts([
+		"project/backpackWeaponSynergy.js",
+		"project/weapons.js",
+		"project/backpackWeaponSystem.js"
+	], { core });
+	const plugin = {};
+	context.installBackpackWeaponSystem_41d4dd44_8f7d_4bbc_b890_80db42f1ad76(core, plugin);
+	const entry = (instanceId, attackInterval, intervalChange, col) => ({
+		instanceId, col, row: 0, rotation: 0,
+		weapon: {
+			id: instanceId,
+			name: instanceId,
+			cells: [[0, 0]],
+			minAttack: 1,
+			maxAttack: 1,
+			attackInterval,
+			synergyRules: [{
+				trigger: "layout",
+				effects: [{ target: "self", stat: "attackInterval", value: intervalChange }]
+			}]
+		}
+	});
+	const result = plugin.weaponSystem.calculateAttributes([
+		entry("active", 1, -2, 0),
+		entry("passive", 0, 2, 1)
+	]);
+	assert.equal(result.byInstanceId.active.attackInterval, 0.01);
+	assert.equal(result.byInstanceId.passive.attackInterval, 0);
+	assert.equal(result.byInstanceId.passive.bonuses.length, 0,
+		"原始0间隔不应记录无效的间隔加成");
+});
+
 test("背包可预设 0.25、0.5、1、2、3、10 与立即结算并在后续战斗沿用", () => {
 	let savedSpeed = 4;
 	const core = {
@@ -1844,6 +1915,138 @@ test("奥义立即攻击全部武器且不改变原 CD、不从额外攻击获�
 	assert.equal(snapshot.weapons[1].cooldownTicks, 0);
 	assert.equal(snapshot.player.ultimate, 0);
 	runtime.destroy();
+});
+
+test("玩家和怪物奥义结算后清空全部溢出值且只触发一次", () => {
+	const core = {
+		rand(num) { return num ? 0 : 0; },
+		registerAnimationFrame() {},
+		unregisterAnimationFrame() {}
+	};
+	const context = loadScripts([
+		"project/backpackBattleStatuses.js",
+		"project/backpackBattleRules.js",
+		"project/backpackBattleCore.js"
+	], { core });
+	const createRuntime = () => context.createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc(core);
+
+	const playerRuntime = createRuntime();
+	playerRuntime.start(makeInput({
+		enemy: Object.assign({}, makeInput().enemy, { hp: 10000, maxHp: 10000, atk: 0 }),
+		weapons: [makeWeapon({
+			attributes: Object.assign({}, makeWeapon().attributes, { ultimateGain: 250 }),
+			combatRules: [{
+				trigger: "afterUltimate",
+				effects: [{ type: "gainUltimate", value: 80 }]
+			}]
+		})]
+	}));
+	const playerSnapshot = playerRuntime.stepTicks(100);
+	assert.equal(playerSnapshot.weapons[0].runtimeCounters.attacks, 2,
+		"250 奥义只能触发一次额外攻击");
+	assert.equal(playerSnapshot.player.ultimate, 0,
+		"溢出值和 afterUltimate 新增值都应清零");
+	playerRuntime.destroy();
+
+	const enemyRuntime = createRuntime();
+	enemyRuntime.start(makeInput({
+		player: Object.assign({}, makeInput().player, { hp: 1000, maxHp: 1000 }),
+		enemy: Object.assign({}, makeInput().enemy, {
+			hp: 10000,
+			maxHp: 10000,
+			atk: 10,
+			ultimateGain: 250,
+			attackIntervalTicks: 100
+		}),
+		weapons: [makeWeapon({
+			combatRules: [{
+				trigger: "afterEnemyUltimate",
+				effects: [{ type: "modifyUltimate", target: "enemy", operation: "add", value: 80 }]
+			}]
+		})]
+	}));
+	const enemySnapshot = enemyRuntime.stepTicks(100);
+	assert.equal(enemySnapshot.player.hp, 970, "怪物只执行一次普通攻击和一次两段奥义");
+	assert.equal(enemySnapshot.enemy.ultimate, 0,
+		"怪物溢出值和 afterEnemyUltimate 新增值都应清零");
+	enemyRuntime.destroy();
+});
+
+test("预计内核按奥义结算后清零规则计算，不再处理溢出连发", () => {
+	const context = loadPure();
+	const kernel = context.backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71;
+	const result = kernel.simulate(makeInput({
+		enemy: Object.assign({}, makeInput().enemy, { hp: 25, maxHp: 25, atk: 0 }),
+		weapons: [makeWeapon({
+			attributes: Object.assign({}, makeWeapon().attributes, { ultimateGain: 250 })
+		})]
+	}));
+	assert.equal(result.rounds, 2,
+		"首回合普通攻击和单次奥义共造成20伤害，第二回合才击败25HP敌人");
+});
+
+test("暗黑被提·拟像固定攻击次数+5，5层刻印增伤无视格挡，攻击后自身HP-5", () => {
+	const core = {
+		rand(num) { return num ? 0 : 0; },
+		registerAnimationFrame() {},
+		unregisterAnimationFrame() {}
+	};
+	const context = loadScripts([
+		"project/weapons.js",
+		"project/backpackBattleStatuses.js",
+		"project/backpackBattleRules.js",
+		"project/backpackBattleCore.js"
+	], { core });
+	const definitions = context.weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44;
+	const definition = definitions.I551;
+	assert.equal(definition.synergyText,
+		"本武器攻击次数+5\n自身刻印达到5层时：本武器伤害+5，且造成的伤害无视敌方格挡\n攻击时：自身HP-5");
+	assert.ok(!definition.combatRules.some((rule) => rule.id === "battleStartMark"),
+		"武器不再在战斗开始时自动获得刻印");
+
+	const makeDarkReplica = () => makeWeapon({
+		name: definition.name,
+		attributes: Object.assign({}, makeWeapon().attributes, {
+			minAttack: 10,
+			maxAttack: 10,
+			ultimateGain: 0,
+			weaponTypes: definition.weaponTypes.slice()
+		}),
+		combatRules: definition.combatRules
+	});
+	const run = (markStacks) => {
+		const runtime = context.createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc(core);
+		runtime.start(makeInput({
+			player: Object.assign({}, makeInput().player, {
+				buffs: markStacks ? [{ id: "mark", stacks: markStacks, acquiredTick: 0 }] : []
+			}),
+			enemy: Object.assign({}, makeInput().enemy, {
+				hp: 1000,
+				maxHp: 1000,
+				atk: 0,
+				buffs: [{ id: "block", stacks: 100, acquiredTick: 0 }]
+			}),
+			weapons: [makeDarkReplica()]
+		}));
+		const snapshot = runtime.stepTicks(100);
+		runtime.destroy();
+		return snapshot;
+	};
+
+	const withoutMark = run(0);
+	assert.equal(withoutMark.weapons[0].runtimeCounters.hits, 6, "基础1次 + 固定额外5次");
+	assert.equal(withoutMark.enemy.hp, 1000, "无刻印时伤害仍会被格挡");
+	assert.equal(withoutMark.enemy.buffs.find((buff) => buff.id === "block").stacks, 76,
+		"每次10伤害按每层格挡抵消3点计算，共消耗6×4层");
+	assert.equal(withoutMark.player.hp, 995, "一次攻击周期只扣5HP");
+	assert.equal(withoutMark.player.buffs.some((buff) => buff.id === "mark"), false);
+
+	const withFiveMarks = run(5);
+	assert.equal(withFiveMarks.weapons[0].runtimeCounters.hits, 6);
+	assert.equal(withFiveMarks.enemy.hp, 910, "6次伤害各由10提升到15");
+	assert.equal(withFiveMarks.enemy.buffs.find((buff) => buff.id === "block").stacks, 100,
+		"5层刻印时伤害无视且不消耗敌方格挡");
+	assert.equal(withFiveMarks.player.hp, 995);
 });
 
 test("奥义来源攻击可获得仅对本次税前伤害生效的加成", () => {
@@ -2470,6 +2673,58 @@ test("战斗触发规则与联动规则使用一致的严格位置判断", () =>
 	assert.ok(keys.indexOf("3,3") < 0, "斜对角格不应进入联动范围");
 });
 
+test("v5 完整武器存档只按身份迁移，并从中央 definitionId 重建最新详情", () => {
+	const heroFlags = {};
+	const core = {
+		material: { items: {} },
+		clone(value) { return value == null ? value : JSON.parse(JSON.stringify(value)); },
+		status: { hero: { flags: heroFlags } },
+		plugin: {},
+		getFlag(key, defaultValue) { return heroFlags[key] == null ? defaultValue : heroFlags[key]; },
+		setFlag(key, value) { heroFlags[key] = core.clone(value); },
+		itemCount() { return 0; }
+	};
+	const context = loadScripts([
+		"project/backpackWeaponSynergy.js",
+		"project/weapons.js",
+		"project/backpackUiCommon.js",
+		"project/backpackWeaponSystem.js",
+		"project/backpackSystem.js"
+	], { core });
+	const definitions = context.weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44;
+	const staleWeapon = JSON.parse(JSON.stringify(definitions.I551));
+	staleWeapon.minAttack = 99999;
+	staleWeapon.combatRules = [{ id: "staleRule", trigger: "battleStart", effects: [] }];
+	heroFlags.__backpack_state__ = {
+		version: 5,
+		placed: [{ instanceId: "93", weapon: staleWeapon, col: 2, row: 2, rotation: 0 }],
+		inventory: [],
+		unlockedCells: [[2, 2]]
+	};
+	const plugin = {};
+	context.installBackpackWeaponSystem_41d4dd44_8f7d_4bbc_b890_80db42f1ad76(core, plugin);
+	core.plugin.weaponSystem = plugin.weaponSystem;
+	context.installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658(core, plugin);
+
+	const state = plugin.getBackpackState();
+	assert.equal(state.placed[0].definitionId, "I551");
+	assert.equal(state.placed[0].weapon.minAttack, definitions.I551.minAttack);
+	assert.equal(
+		JSON.stringify(state.placed[0].weapon.combatRules),
+		JSON.stringify(definitions.I551.combatRules)
+	);
+	assert.equal(state.placed[0].weapon.combatRules.some((rule) => rule.id === "staleRule"), false);
+	assert.deepEqual(heroFlags.__backpack_state__.placed[0], {
+		instanceId: "93",
+		definitionId: "I551",
+		rotation: 0,
+		col: 2,
+		row: 2
+	});
+	assert.equal(heroFlags.__backpack_state__.version, 6);
+	assert.equal(Object.hasOwn(heroFlags.__backpack_state__.placed[0], "weapon"), false);
+});
+
 test("背包录像按 instanceId 增量记录进入、移出、移动、出售和扩容", () => {
 	const heroFlags = {};
 	let replaying = false;
@@ -2518,8 +2773,9 @@ test("背包录像按 instanceId 增量记录进入、移出、移动、出售�
 	assert.ok(replayAction);
 
 	// 添加两把武器并自动摆放。
-	const swordA = { id: "sa", name: "铁剑", cells: [[0, 0]], minAttack: 5, maxAttack: 10, sourceItemId: "I100", weaponTypes: ["剑"] };
-	const swordB = { id: "sb", name: "木盾", cells: [[0, 0], [1, 0]], minAttack: 0, maxAttack: 0, sourceItemId: "I101", weaponTypes: ["盾"] };
+	const definitions = context.weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44;
+	const swordA = definitions.I406;
+	const swordB = definitions.I500;
 	const a = plugin.addBackpackWeapon(swordA, { autoPlace: true });
 	const b = plugin.addBackpackWeapon(swordB, { autoPlace: true });
 	assert.equal(a, "1", "首个背包实例 ID 应从 1 开始");
@@ -2529,6 +2785,9 @@ test("背包录像按 instanceId 增量记录进入、移出、移动、出售�
 		"bp:1:i", "bp:1:m:0:0:0",
 		"bp:2:i", "bp:2:m:0:1:0"
 	]);
+	assert.equal(heroFlags.__backpack_state__.version, 6);
+	assert.deepEqual(heroFlags.__backpack_state__.placed.map((entry) => entry.definitionId), ["I406", "I500"]);
+	assert.equal(heroFlags.__backpack_state__.placed.some((entry) => Object.hasOwn(entry, "weapon")), false);
 
 	// 内部坐标 (1,2) 是初始区域左侧一格，录像逻辑坐标应为 (-1,0)。
 	assert.equal(plugin.unlockBackpackCell(1, 2), true);
@@ -2645,7 +2904,7 @@ test("武器合成按两个 instanceId 录制并回放 bp:-2 动作", () => {
 	const expectedState = clone(heroFlags.__backpack_state__);
 	const expectedEntries = expectedState.placed.concat(expectedState.inventory);
 	assert.equal(expectedEntries.some((entry) => entry.instanceId === firstId || entry.instanceId === secondId), false);
-	assert.ok(expectedEntries.some((entry) => entry.weapon.id === definitions[recipe.result].id));
+	assert.ok(expectedEntries.some((entry) => entry.definitionId === recipe.result));
 
 	heroFlags.__backpack_state__ = clone(initialState);
 	heroFlags.__backpack_instance_id__ = Number(secondId);
@@ -3538,11 +3797,11 @@ test("敌方每5层火伤上下格内武器伤害+1（statusDamageBonus scope ne
 		combatRules: combatRules || []
 	});
 
-	// 注册：全局"每1层火伤自身+1" + nearby"每5层火伤上下格内+1"。
+	// 注册：显式全局"每1层火伤+1" + nearby"每5层火伤上下格内+1"。
 	const rulesDef = [{
 		trigger: "battleStart",
 		effects: [
-			{ type: "statusDamageBonus", id: "selfBurn", target: "enemy", status: "burn", every: 1, value: 1 },
+			{ type: "statusDamageBonus", id: "allBurn", scope: "all", target: "enemy", status: "burn", every: 1, value: 1 },
 			{ type: "statusDamageBonus", id: "nearbyBurn", scope: "nearby", target: "enemy", status: "burn", every: 5, value: 1, directions: ["up", "down"], distance: 1 }
 		]
 	}];
@@ -4596,10 +4855,10 @@ test("全局奥义+20 / 上下左右一格刀剑间隔-0.1攻击+1", () => {
 	const comboRules = [
 		{ trigger: "battleStart", effects: [{ type: "globalUltimateGainBonus", value: 20 }] },
 		{ trigger: "battleStart", effects: [
-			{ type: "nearbyIntervalBonus", id: "bladeInterval", value: -0.1,
+			{ type: "modifyWeaponStat", weaponTarget: "nearbyOnly", stat: "attackInterval", operation: "add", value: -0.1,
 				directions: ["up", "down", "left", "right"], distance: 1,
 				filter: { weaponTypes: ["刀", "剑"] } },
-			{ type: "nearbyExtraAttack", id: "bladeExtra", every: 1, value: 1,
+			{ type: "modifyWeaponStat", weaponTarget: "nearbyOnly", stat: "extraAttackCount", operation: "add", value: 1,
 				directions: ["up", "down", "left", "right"], distance: 1,
 				filter: { weaponTypes: ["刀", "剑"] } }
 		] }
@@ -4616,7 +4875,7 @@ test("全局奥义+20 / 上下左右一格刀剑间隔-0.1攻击+1", () => {
 	rules1.runCombatRules(state1, wX, "battleStart", { sourceSide: "player" }, {});
 	assert.equal(rules1.getUltimateGain(state1.player, 5, state1), 25, "所有武器奥义获得 5+20=25");
 
-	// 场景2：上下左右一格 2 把刀剑 → 间隔 100-0.1×2×100=80、额外攻击 +2。
+	// 场景2：上下左右一格的每把刀剑各自获得间隔-0.1、攻击次数+1，来源道具不受影响。
 	const state2 = rules1.createBattleState(makeInput({
 		enemy: Object.assign({}, makeInput().enemy, { hp: 1000000, maxHp: 1000000 }),
 		weapons: [
@@ -4626,9 +4885,15 @@ test("全局奥义+20 / 上下左右一格刀剑间隔-0.1攻击+1", () => {
 		]
 	}));
 	const wX2 = state2.weapons.find((w) => w.instanceId === "X");
+	const blade1 = state2.weapons.find((w) => w.instanceId === "B1");
+	const blade2 = state2.weapons.find((w) => w.instanceId === "B2");
 	rules1.runCombatRules(state2, wX2, "battleStart", { sourceSide: "player" }, {});
-	assert.equal(rules1.getWeaponIntervalTicks(state2, wX2), 80, "2把刀剑 → 间隔 80");
-	assert.equal(rules1.getNearbyExtraAttackCount(state2, wX2), 2, "2把刀剑 → 额外攻击 +2");
+	assert.equal(rules1.getWeaponIntervalTicks(state2, wX2), 100, "来源道具的间隔不变");
+	assert.equal(rules1.getWeaponStat(wX2, "extraAttackCount", 0), 0, "来源道具不增加攻击次数");
+	assert.equal(rules1.getWeaponIntervalTicks(state2, blade1), 90, "附近刀的间隔 100→90");
+	assert.equal(rules1.getWeaponIntervalTicks(state2, blade2), 90, "附近剑的间隔 100→90");
+	assert.equal(rules1.getWeaponStat(blade1, "extraAttackCount", 0), 1, "附近刀攻击次数+1");
+	assert.equal(rules1.getWeaponStat(blade2, "extraAttackCount", 0), 1, "附近剑攻击次数+1");
 
 	// 静态断言。
 	const rulesSource = fs.readFileSync(path.join(root, "project/backpackBattleRules.js"), "utf8");
@@ -5107,4 +5372,169 @@ test("敌方每有5个debuff，本武器伤害+1（statusDamageBonus allDebuffs�
 	// 静态断言。
 	const rulesSource = fs.readFileSync(path.join(root, "project/backpackBattleRules.js"), "utf8");
 	assert.match(rulesSource, /status === "allDebuffs"/);
+});
+
+test("状态型本武器次数按来源实例隔离，存在型效果不按状态层数放大", () => {
+	const context = loadScripts([
+		"project/weapons.js",
+		"project/backpackBattleStatuses.js",
+		"project/backpackBattleRules.js"
+	]);
+	const definitions = context.weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44;
+	const rules = context.backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87;
+	const fromDefinition = (instanceId, definitionId, col) => {
+		const definition = definitions[definitionId];
+		return makeWeapon({
+			instanceId,
+			name: definition.name,
+			col,
+			cells: [[col, 0]],
+			attributes: {
+				minAttack: definition.minAttack || 0,
+				maxAttack: definition.maxAttack || 0,
+				hitRate: definition.hitRate == null ? 1 : definition.hitRate,
+				attackInterval: definition.attackInterval || 0,
+				attackIntervalTicks: Math.round((definition.attackInterval || 0) * 100),
+				ultimateGain: definition.ultimateGain || 0,
+				weaponTypes: definition.weaponTypes || []
+			},
+			combatRules: definition.combatRules || []
+		});
+	};
+	const state = rules.createBattleState(makeInput({
+		player: Object.assign({}, makeInput().player, {
+			buffs: [
+				{ id: "blackCharm", stacks: 5, acquiredTick: 0 },
+				{ id: "excitation", stacks: 20, acquiredTick: 0 }
+			]
+		}),
+		enemy: Object.assign({}, makeInput().enemy, {
+			debuffs: [{ id: "ice", stacks: 20, acquiredTick: 0 }]
+		}),
+		weapons: [
+			fromDefinition("europa1", "I409", 0),
+			fromDefinition("europa2", "I409", 2),
+			fromDefinition("gawain", "I508", 4),
+			fromDefinition("helmholtz", "I594", 6),
+			makeWeapon({ instanceId: "other", col: 8, cells: [[8, 0]], combatRules: [] })
+		]
+	}));
+	rules.runAllWeaponRules(state, "battleStart", { sourceSide: "player" }, {});
+	const find = (id) => state.weapons.find((weapon) => weapon.instanceId === id);
+	assert.equal(state.weaponExtraAttacks.length, 4, "相同 definition 的两个实例应各自保留注册项");
+	assert.equal(rules.getStatusExtraAttackCount(state, find("europa1")), 2);
+	assert.equal(rules.getStatusExtraAttackCount(state, find("europa2")), 2);
+	assert.equal(rules.getStatusExtraAttackCount(state, find("gawain")), 1,
+		"黑之魅力5层仍然只让高万泰因次数+1");
+	assert.equal(rules.getStatusExtraAttackCount(state, find("helmholtz")), 2);
+	assert.equal(rules.getStatusExtraAttackCount(state, find("other")), 0,
+		"无关武器不能获得任何“本武器”次数加成");
+	assert.equal(rules.getStatusWeaponDamageBonus(state, find("gawain")), 3,
+		"黑之魅力5层仍然只让高万泰因伤害+3");
+	assert.equal(rules.getStatusWeaponDamageBonus(state, find("other")), 0);
+});
+
+test("吉斯拉半血次数、双剑士附近目标和乐师吉他奥义均按描述作用", () => {
+	const context = loadScripts([
+		"project/weapons.js",
+		"project/backpackBattleStatuses.js",
+		"project/backpackBattleRules.js"
+	]);
+	const definitions = context.weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44;
+	const rules = context.backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87;
+
+	const gysla = makeWeapon({ instanceId: "gysla", combatRules: definitions.I511.combatRules });
+	const lowState = rules.createBattleState(makeInput({
+		player: Object.assign({}, makeInput().player, { hp: 40, maxHp: 100 }),
+		weapons: [gysla]
+	}));
+	const lowContext = { sourceSide: "player", minimumDamage: 10, maximumDamage: 10, extraAttackCountBonus: 0 };
+	rules.runCombatRules(lowState, lowState.weapons[0], "beforeAttack", lowContext, {});
+	assert.equal(lowContext.extraAttackCountBonus, 2, "吉斯拉半血时仅本次攻击+2段");
+	assert.equal(lowContext.minimumDamage, 30, "吉斯拉半血时伤害+20");
+	lowState.player.hp = 60;
+	const highContext = { sourceSide: "player", minimumDamage: 10, maximumDamage: 10, extraAttackCountBonus: 0 };
+	rules.runCombatRules(lowState, lowState.weapons[0], "beforeAttack", highContext, {});
+	assert.equal(highContext.extraAttackCountBonus, 0);
+	assert.equal(highContext.minimumDamage, 10);
+
+	const certificate = makeWeapon({ instanceId: "certificate", col: 0, cells: [[0, 0]], combatRules: definitions.I522.combatRules });
+	const blade = makeWeapon({ instanceId: "blade", col: 1, cells: [[1, 0]], attributes: Object.assign({}, makeWeapon().attributes, { weaponTypes: ["剑"] }) });
+	const axe = makeWeapon({ instanceId: "axe", col: -1, cells: [[-1, 0]], attributes: Object.assign({}, makeWeapon().attributes, { weaponTypes: ["斧"] }) });
+	const bladeState = rules.createBattleState(makeInput({ weapons: [certificate, blade, axe] }));
+	const certRuntime = bladeState.weapons.find((weapon) => weapon.instanceId === "certificate");
+	const bladeRuntime = bladeState.weapons.find((weapon) => weapon.instanceId === "blade");
+	const axeRuntime = bladeState.weapons.find((weapon) => weapon.instanceId === "axe");
+	rules.runCombatRules(bladeState, certRuntime, "battleStart", { sourceSide: "player" }, {});
+	assert.equal(rules.getWeaponStat(certRuntime, "extraAttackCount", 0), 0, "证明自身不获得次数");
+	assert.equal(rules.getWeaponStat(bladeRuntime, "extraAttackCount", 0), 1, "附近剑次数+1");
+	assert.equal(rules.getWeaponIntervalTicks(bladeState, bladeRuntime), 90, "附近剑间隔-0.1");
+	assert.equal(rules.getWeaponStat(axeRuntime, "extraAttackCount", 0), 0, "不匹配的斧不受影响");
+
+	const musician = makeWeapon({ instanceId: "musician", col: 0, cells: [[0, 0]], combatRules: definitions.I539.combatRules });
+	const guitar = makeWeapon({ instanceId: "guitar", col: 1, cells: [[1, 0]], attributes: Object.assign({}, makeWeapon().attributes, { weaponTypes: ["吉他"] }) });
+	const musicState = rules.createBattleState(makeInput({
+		player: Object.assign({}, makeInput().player, { buffs: [{ id: "excitation", stacks: 15, acquiredTick: 0 }] }),
+		weapons: [musician, guitar]
+	}));
+	const ultimateContext = {
+		sourceSide: "player", hitWeapon: musicState.weapons[1], attackOrigin: "ultimate", extraAttackCountBonus: 0
+	};
+	rules.runAllWeaponRules(musicState, "beforeAllyAttack", ultimateContext, {});
+	assert.equal(ultimateContext.extraAttackCountBonus, 1, "附近吉他奥义的本次攻击次数+1");
+	const normalContext = {
+		sourceSide: "player", hitWeapon: musicState.weapons[1], attackOrigin: "normal", extraAttackCountBonus: 0
+	};
+	rules.runAllWeaponRules(musicState, "beforeAllyAttack", normalContext, {});
+	assert.equal(normalContext.extraAttackCountBonus, 0, "普通攻击不增加次数");
+	assert.equal(rules.getWeaponStat(musicState.weapons[1], "extraAttackCount", 0), 0,
+		"乐师之证不能永久修改吉他的次数属性");
+});
+
+test("乐师之证的吉他奥义额外段数在实际战斗和预计内核一致", () => {
+	const core = {
+		rand(num) { return num ? 0 : 0; },
+		getLocalStorage() {}, setLocalStorage() {}, registerAnimationFrame() {}, unregisterAnimationFrame() {}
+	};
+	const context = loadScripts([
+		"project/weapons.js",
+		"project/backpackBattleStatuses.js",
+		"project/backpackBattleRules.js",
+		"project/backpackBattleEstimateKernel.js",
+		"project/backpackBattleCore.js"
+	], { core });
+	const definitions = context.weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44;
+	const runtimeFactory = context.createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc;
+	const kernel = context.backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71;
+	const input = makeInput({
+		player: Object.assign({}, makeInput().player, {
+			ultimate: 95,
+			buffs: [{ id: "excitation", stacks: 15, acquiredTick: 0 }]
+		}),
+		enemy: Object.assign({}, makeInput().enemy, {
+			hp: 30, maxHp: 30, atk: 0, attackIntervalTicks: 100000
+		}),
+		weapons: [
+			makeWeapon({
+				instanceId: "musician", col: 0, cells: [[0, 0]],
+				attributes: { minAttack: 0, maxAttack: 0, hitRate: 1, baseAttackInterval: 0, attackInterval: 0, attackIntervalTicks: 0, ultimateGain: 0, weaponTypes: ["道具"] },
+				combatRules: definitions.I539.combatRules
+			}),
+			makeWeapon({
+				instanceId: "guitar", col: 1, cells: [[1, 0]],
+				attributes: { minAttack: 10, maxAttack: 10, hitRate: 1, baseAttackInterval: 1, attackInterval: 1, attackIntervalTicks: 100, ultimateGain: 5, weaponTypes: ["吉他"] },
+				combatRules: []
+			})
+		]
+	});
+	const runtime = runtimeFactory(core);
+	runtime.start(input);
+	const snapshot = runtime.stepTicks(100);
+	runtime.destroy();
+	const guitar = snapshot.weapons.find((weapon) => weapon.instanceId === "guitar");
+	assert.equal(guitar.runtimeCounters.hits, 3, "普通1段 + 奥义2段");
+	assert.equal(snapshot.enemy.hp, 0);
+	const estimate = kernel.simulate(input, { seed: 1 });
+	assert.equal(estimate.roundsExceeded, false);
+	assert.equal(estimate.rounds, 0.85, "15层激奏将间隔降至85 Tick，并以3段击败30HP敌人");
 });

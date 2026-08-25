@@ -136,6 +136,13 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 			return runtimeIdToKey[direct] || null;
 		}
 		if (typeof weaponOrId !== "object") return null;
+		if (weaponOrId.definitionId && DEFINITIONS[weaponOrId.definitionId]) {
+			return String(weaponOrId.definitionId);
+		}
+		if (weaponOrId.weapon && typeof weaponOrId.weapon === "object") {
+			var nestedKey = resolveWeaponKey(weaponOrId.weapon);
+			if (nestedKey) return nestedKey;
+		}
 		if (weaponOrId.compendiumId && DEFINITIONS[weaponOrId.compendiumId]) return weaponOrId.compendiumId;
 		if (weaponOrId.codexId && DEFINITIONS[weaponOrId.codexId]) return weaponOrId.codexId;
 		if (weaponOrId.sourceItemId) {
@@ -185,7 +192,7 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 		(Array.isArray(state.placed) ? state.placed : [])
 			.concat(Array.isArray(state.inventory) ? state.inventory : [])
 			.forEach(function (entry) {
-				var key = resolveWeaponKey(entry && entry.weapon);
+				var key = resolveWeaponKey(entry);
 				if (!key) return;
 				recordObtained(key);
 				keys.push(key);
@@ -842,12 +849,14 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 		if (typeof originalRemove === "function" && !originalRemove.__weaponCompendiumWrapped) {
 			var wrappedRemove = function (instanceId) {
 				// 删除前从公开存档状态补记一次；出售和合成消耗因此也覆盖旧存档的未记录实例。
-				var state = core.getFlag ? (core.getFlag("__backpack_state__", {}) || {}) : {};
+				var state = typeof plugin.getBackpackState === "function"
+					? plugin.getBackpackState()
+					: (core.getFlag ? (core.getFlag("__backpack_state__", {}) || {}) : {});
 				(Array.isArray(state.placed) ? state.placed : [])
 					.concat(Array.isArray(state.inventory) ? state.inventory : [])
 					.some(function (entry) {
 						if (!entry || String(entry.instanceId) !== String(instanceId)) return false;
-						recordAndUnlock(entry.weapon);
+						recordAndUnlock(entry);
 						return true;
 					});
 				return originalRemove.apply(this, arguments);
