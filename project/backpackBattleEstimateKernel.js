@@ -227,8 +227,10 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71 = (functio
 			weapon.attackSequence = (weapon.attackSequence || 0) + 1;
 			var attackContext = {
 				sourceSide: "player",
+				hitWeapon: weapon,
 				attackOrigin: options.origin,
 				suppressLinkage: options.suppressLinkage,
+				extraAttackCountBonus: 0,
 				minimumDamage: Math.max(0, rules.getWeaponStat(weapon, "minAttack", state.tick)
 					+ rules.getStatusWeaponDamageBonus(state, weapon)
 					+ rules.getSameNameDamageBonus(state, weapon)
@@ -239,6 +241,7 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71 = (functio
 					+ rules.getNearbyDamageBonus(state, weapon))
 			};
 			attackContext.maximumDamage = Math.max(attackContext.minimumDamage, attackContext.maximumDamage);
+			rules.runAllWeaponRules(state, "beforeAllyAttack", attackContext, handlers);
 			rules.runCombatRules(state, weapon, "beforeAttack", attackContext, handlers);
 			var minimumDamage = attackContext.minimumDamage;
 			var maximumDamage = attackContext.maximumDamage;
@@ -249,6 +252,8 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71 = (functio
 			var damageResult = null;
 			if (isHit) {
 				var extraAttackCount = Math.max(0, Math.floor(Number(weapon.extraAttackCount) || 0))
+					+ Math.max(0, Math.floor(rules.getWeaponStat(weapon, "extraAttackCount", state.tick)))
+					+ Math.max(0, Math.floor(Number(attackContext.extraAttackCountBonus) || 0))
 					+ rules.getStatusExtraAttackCount(state, weapon)
 					+ rules.getNearbyExtraAttackCount(state, weapon)
 					+ rules.getNearbyThresholdExtraAttackCount(state, weapon);
@@ -295,8 +300,7 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71 = (functio
 		var resolveUltimate = function () {
 			if (ultimateResolving || state.ultimateDisabled) return;
 			ultimateResolving = true;
-			var guard = 0;
-			while (state.player.ultimate >= 100 && state.enemy.hp > 0 && guard++ < 1000) {
+			if (state.player.ultimate >= 100 && state.enemy.hp > 0) {
 				state.player.ultimate = rules.fixed(state.player.ultimate - 100);
 				state.weapons.forEach(function (weapon) {
 					if (state.enemy.hp > 0 && rules.getWeaponIntervalTicks(state, weapon) > 0
@@ -309,6 +313,7 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71 = (functio
 					}
 				});
 				rules.runAllWeaponRules(state, "afterUltimate", { sourceSide: "player" }, handlers);
+				state.player.ultimate = 0;
 			}
 			ultimateResolving = false;
 		};
@@ -320,12 +325,12 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71 = (functio
 		var resolveEnemyUltimate = function () {
 			if (enemyUltimateResolving || state.ultimateDisabled) return;
 			enemyUltimateResolving = true;
-			var guard = 0;
-			while (state.enemy.ultimate >= 100 && state.enemy.hp > 0 && guard++ < 1000) {
+			if (state.enemy.ultimate >= 100 && state.enemy.hp > 0) {
 				state.enemy.ultimate = rules.fixed(state.enemy.ultimate - 100);
 				attackEnemy({ origin: "ultimate", gainUltimate: false });
 				attackEnemy({ origin: "ultimate", gainUltimate: false });
 				rules.runAllWeaponRules(state, "afterEnemyUltimate", { sourceSide: "enemy" }, handlers);
+				state.enemy.ultimate = 0;
 			}
 			enemyUltimateResolving = false;
 		};
@@ -452,7 +457,8 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71 = (functio
 		}
 
 		return {
-			damage: rules.fixed(Math.max(0, initialPlayerHp - state.player.hp)),
+			// 显伤与实际结算保持一致；战后生命增加时显示为负伤害。
+			damage: rules.fixed(initialPlayerHp - state.player.hp),
 			rounds: rules.fixed(state.tick / 100),
 			ticks: state.tick,
 			rngCallCount: state.rngCallCount,

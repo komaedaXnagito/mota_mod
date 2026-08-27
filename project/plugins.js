@@ -3622,7 +3622,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 =
 				["downFly", "knife", "snow"],
 				["bigKey", "earthquake", "coin"],
 			];
-			this.once = ['book', 'fly', 'snow'] //单次点击即可使用的道具列表
+			this.once = ['book', 'fly', 'snow', "I385"] //单次点击即可使用的道具列表
 		}
 		//初始化内容（工具栏/录像操作执行函数）
 		init() {
@@ -3713,29 +3713,60 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 =
 			if (!updatedFloorTitle && core.status.floorId) {
 				updatedFloorTitle = core.status.maps[core.status.floorId].title;
 			}
-			const statusList = ["hp", "atk", "def", "money"]; //属性列表，图标在函数复写core.statusBar.icons中声明，数字为project\materials\icons.png中的图标序号（可使用便捷ps追加，第一个序号为0）
+			const statusList = ["hp", "money", "flag:kaiju", "flag:zhuanzhi", ]; //属性列表，图标在函数复写core.statusBar.icons中声明，数字为project\materials\icons.png中的图标序号（可使用便捷ps追加，第一个序号为0）
 			const drawStatusList = (baseX, baseY) => {
 				let curh = baseY;
 				core.setTextAlign("outerUI", "right");
 				statusList.forEach((item) => {
 					// 绘制图标
-					core.drawIcon("outerUI", item, baseX - 95 * 3, curh - 18 * 3, 22 * 3, 22 * 3);
 
-					// 四舍五入
-					core.status.hero[item] = Math.round(core.status.hero[item]);
-					// 大数据格式化
-					core.fillBoldText(
-						"outerUI",
-						core.getRealStatus(item),
-						baseX,
-						curh,
-						TEXT_COLOR, "#000", 8
-					);
-					curh += 24 * 3;
-					if (curh > 130 * 3 && core.domStyle.isVertical) {
-						curh = 24 * 3;
-						baseX += 105 * 3;
+
+					if (item.startsWith("flag:")) {
+						console.log(baseX, curh)
+						let offset = 60
+						if (core.domStyle.isVertical) {
+							offset = 90
+						}
+						if (item == "flag:kaiju") {
+
+							core.fillBoldText("outerUI", "职业", baseX - 95 * 3 + offset, curh - 4, TEXT_COLOR, "#000", 8)
+						} else {
+							core.fillBoldText("outerUI", "转职", baseX - 95 * 3 + offset, curh - 4, TEXT_COLOR, "#000", 8)
+						}
+
+
+						const value = core.getFlag(item.substr(5), "")
+						core.fillBoldText(
+							"outerUI",
+							value,
+							baseX,
+							curh,
+							TEXT_COLOR, "#000", 8
+						);
+						curh += 24 * 3;
+						if (curh > 130 * 3 && core.domStyle.isVertical) {
+							curh = 24 * 3;
+							baseX += 105 * 3;
+						}
+					} else {
+						core.drawIcon("outerUI", item, baseX - 95 * 3, curh - 18 * 3, 22 * 3, 22 * 3);
+						// 四舍五入
+						core.status.hero[item] = Math.round(core.status.hero[item]);
+						// 大数据格式化
+						core.fillBoldText(
+							"outerUI",
+							core.getRealStatus(item),
+							baseX,
+							curh,
+							TEXT_COLOR, "#000", 8
+						);
+						curh += 24 * 3;
+						if (curh > 130 * 3 && core.domStyle.isVertical) {
+							curh = 24 * 3;
+							baseX += 105 * 3;
+						}
 					}
+
 				});
 				core.setTextAlign("outerUI", "center");
 			};
@@ -3965,12 +3996,12 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 =
 			};
 			if (core.domStyle.isVertical) {
 				core.clearMap("outerUI", EQUIP_BLOCK_LEFT_VERTICAL, EQUIP_BLOCK_TOP_VERTICAL, 105 * 3, 95 * 3);
-				drawEquip(EQUIP_BLOCK_LEFT_VERTICAL, EQUIP_BLOCK_TOP_VERTICAL + 9 * 3, core.getFlag("nowWeapon"), "#FFCFAE", "无武器");
-				drawEquip(EQUIP_BLOCK_LEFT_VERTICAL, EQUIP_BLOCK_TOP_VERTICAL + 72 * 3, core.getFlag("nowShield"), "#D1CEFF", "无防具");
+				// 				drawEquip(EQUIP_BLOCK_LEFT_VERTICAL, EQUIP_BLOCK_TOP_VERTICAL + 9 * 3, core.getFlag("nowWeapon"), "#FFCFAE", "无武器");
+				// 				drawEquip(EQUIP_BLOCK_LEFT_VERTICAL, EQUIP_BLOCK_TOP_VERTICAL + 72 * 3, core.getFlag("nowShield"), "#D1CEFF", "无防具");
 			} else {
 				core.clearMap("outerUI", EQUIP_BLOCK_LEFT, EQUIP_BLOCK_TOP, 105 * 3, 95 * 3);
-				drawEquip(EQUIP_BLOCK_LEFT, EQUIP_BLOCK_TOP + 10 * 3, core.getFlag("nowWeapon"), "#FFCFAE", "无武器");
-				drawEquip(EQUIP_BLOCK_LEFT, EQUIP_BLOCK_TOP + 54 * 3, core.getFlag("nowShield"), "#D1CEFF", "无防具");
+				// 				drawEquip(EQUIP_BLOCK_LEFT, EQUIP_BLOCK_TOP + 10 * 3, core.getFlag("nowWeapon"), "#FFCFAE", "无武器");
+				// 				drawEquip(EQUIP_BLOCK_LEFT, EQUIP_BLOCK_TOP + 54 * 3, core.getFlag("nowShield"), "#D1CEFF", "无防具");
 			}
 		}
 
@@ -11223,7 +11254,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 =
 			core.clearMap('animate');
 	}
 },
-	"独立随机数": function () {
+    "独立随机数": function () {
 	installGameRandomStreams_5f63c10e_25de_47de_99aa_4d0e300d7a3f(core);
 },
     "武器系统": function () {
@@ -11246,5 +11277,8 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 =
 },
     "武器图鉴": function () {
 	installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37(core, this);
+	},
+    "职业选择": function () {
+	installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0(core, this);
 }
 }

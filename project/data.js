@@ -66,6 +66,9 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			"blueDagger.png",
 			"brave.png",
 			"bronzeShield.png",
+			"career-qin.png",
+			"career-staff.png",
+			"career-sword.png",
 			"comboDagger.png",
 			"crab.png",
 			"darkDragonSpear.png",
@@ -771,38 +774,23 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 				"animateTime": 50
 			},
 			{
-				"type": "choices",
-				"text": "\t[流浪者,man]选择初始职业",
-				"choices": [
+				"type": "if",
+				"condition": "core.isReplaying()",
+				"true": [
 					{
-						"text": "剑",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:kaiju",
-								"value": "'剑'"
-							}
-						]
+						"type": "input2",
+						"text": "读取职业选择"
 					},
 					{
-						"text": "琴",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:kaiju",
-								"value": "'琴'"
-							}
-						]
-					},
+						"type": "function",
+						"function": "function(){\nflags.kaiju = core.decodeBase64(core.getFlag(\"input\"))\n}"
+					}
+				],
+				"false": [
 					{
-						"text": "杖",
-						"action": [
-							{
-								"type": "setValue",
-								"name": "flag:kaiju",
-								"value": "'杖'"
-							}
-						]
+						"type": "function",
+						"async": true,
+						"function": "function(){\ncore.plugin.careerSelect.open()\n}"
 					}
 				]
 			},
@@ -1290,8 +1278,6 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 		"statusBarItems": [
 			"enableFloor",
 			"enableHP",
-			"enableAtk",
-			"enableDef",
 			"enableMoney",
 			"enableKeys"
 		],
@@ -1316,6 +1302,6 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 		"blurFg": false,
 		"autoScale": null,
 		"hideLeftStatusBar": null,
-		"60FPS": false
+		"60FPS": true
 	}
 }

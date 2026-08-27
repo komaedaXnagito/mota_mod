@@ -121,6 +121,7 @@ function main() {
 		'backpackShop',
 		'backpackCraft',
 		'weaponCompendium',
+		'careerSelect',
         'functions',
         'events',
         'plugins'

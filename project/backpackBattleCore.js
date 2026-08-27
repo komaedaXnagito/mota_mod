@@ -336,8 +336,7 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 	var resolveUltimate = function () {
 		if (!state || ultimateResolving || state.ultimateDisabled) return;
 		ultimateResolving = true;
-		var guard = 0;
-		while (state.player.ultimate >= 100 && state.enemy.hp > 0 && state.player.hp > 0 && guard++ < 1000) {
+		if (state.player.ultimate >= 100 && state.enemy.hp > 0 && state.player.hp > 0) {
 			logBattlePhase("玩家奥义开始", { ultimateBefore: state.player.ultimate });
 			state.player.ultimate = rules.fixed(state.player.ultimate - 100);
 			rules.appendLog(state, "奥义发动：所有武器立即攻击", "ultimate");
@@ -356,6 +355,8 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 			logBattlePhase("全武器 afterUltimate 开始", { ultimateAfterCost: state.player.ultimate });
 			rules.runAllWeaponRules(state, "afterUltimate", { sourceSide: "player" }, getHandlers());
 			logBattlePhase("全武器 afterUltimate 结束", { ultimateAfterEffects: state.player.ultimate });
+			// 一次奥义结算完成后丢弃全部溢出值及结算期间新增的奥义，禁止连续触发。
+			state.player.ultimate = 0;
 			logBattlePhase("玩家奥义结束", { ultimateAfter: state.player.ultimate });
 		}
 		ultimateResolving = false;
@@ -384,8 +385,10 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 		weapon.attackSequence = (weapon.attackSequence || 0) + 1;
 		var attackContext = {
 			sourceSide: "player",
+			hitWeapon: weapon,
 			attackOrigin: options.origin,
 			suppressLinkage: options.suppressLinkage,
+			extraAttackCountBonus: 0,
 			minimumDamage: Math.max(0, rules.getWeaponStat(weapon, "minAttack", state.tick)
 				+ rules.getStatusWeaponDamageBonus(state, weapon)
 				+ rules.getSameNameDamageBonus(state, weapon)
@@ -396,6 +399,11 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 				+ rules.getNearbyDamageBonus(state, weapon))
 		};
 		attackContext.maximumDamage = Math.max(attackContext.minimumDamage, attackContext.maximumDamage);
+		logBattlePhase("全武器 beforeAllyAttack 开始", getWeaponPhaseDetails(weapon, options));
+		rules.runAllWeaponRules(state, "beforeAllyAttack", attackContext, getHandlers());
+		logBattlePhase("全武器 beforeAllyAttack 结束", getWeaponPhaseDetails(weapon, options, {
+			extraAttackCountBonus: attackContext.extraAttackCountBonus
+		}));
 		logBattlePhase("武器 beforeAttack 开始", getWeaponPhaseDetails(weapon, options, {
 			minimumDamage: attackContext.minimumDamage,
 			maximumDamage: attackContext.maximumDamage
@@ -425,9 +433,11 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 		weapon.runtimeCounters.attacks = (weapon.runtimeCounters.attacks || 0) + 1;
 
 		if (isHit) {
-			// 发动次数：1 + 标记的额外发动次数（addExtraAttack）+ 状态驱动（statusExtraAttack）+ 附近武器数量驱动（nearbyExtraAttack）。
+			// 发动次数：1 + 固定属性修正 + 标记的额外发动次数（addExtraAttack）+ 状态/附近武器驱动的额外次数。
 			// 每次发动造成一次伤害并触发战斗联动，奥义获取只判定一次（位于循环外）。
 			var extraAttackCount = Math.max(0, Math.floor(Number(weapon.extraAttackCount) || 0))
+				+ Math.max(0, Math.floor(rules.getWeaponStat(weapon, "extraAttackCount", state.tick)))
+				+ Math.max(0, Math.floor(Number(attackContext.extraAttackCountBonus) || 0))
 				+ rules.getStatusExtraAttackCount(state, weapon)
 				+ rules.getNearbyExtraAttackCount(state, weapon)
 				+ rules.getNearbyThresholdExtraAttackCount(state, weapon);
@@ -514,8 +524,7 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 	var resolveEnemyUltimate = function () {
 		if (!state || enemyUltimateResolving || state.ultimateDisabled) return;
 		enemyUltimateResolving = true;
-		var guard = 0;
-		while (state.enemy.ultimate >= 100 && state.enemy.hp > 0 && state.player.hp > 0 && guard++ < 1000) {
+		if (state.enemy.ultimate >= 100 && state.enemy.hp > 0 && state.player.hp > 0) {
 			logBattlePhase("怪物奥义开始", { ultimateBefore: state.enemy.ultimate });
 			state.enemy.ultimate = rules.fixed(state.enemy.ultimate - 100);
 			rules.appendLog(state, state.enemy.name + "奥义发动：立即攻击 2 次", "ultimate");
@@ -526,6 +535,8 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 			logBattlePhase("全武器 afterEnemyUltimate 开始", { ultimateAfterCost: state.enemy.ultimate });
 			rules.runAllWeaponRules(state, "afterEnemyUltimate", { sourceSide: "enemy" }, getHandlers());
 			logBattlePhase("全武器 afterEnemyUltimate 结束", { ultimateAfterEffects: state.enemy.ultimate });
+			// 怪物奥义同样在本次结算结束后清空，不保留任何溢出值。
+			state.enemy.ultimate = 0;
 			logBattlePhase("怪物奥义结束", { ultimateAfter: state.enemy.ultimate });
 		}
 		enemyUltimateResolving = false;
@@ -637,7 +648,8 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 			rounds: rules.fixed(state.tick / 100),
 			playerHp: rules.fixed(Math.max(0, state.player.hp)),
 			enemyHp: rules.fixed(Math.max(0, state.enemy.hp)),
-			netDamage: rules.fixed(Math.max(0, initialHp - state.player.hp)),
+			// 净伤害允许为负：战后生命高于战前时，负值表示本场战斗净回复的生命。
+			netDamage: rules.fixed(initialHp - state.player.hp),
 			grossDamage: rules.fixed(state.player.damageTaken || 0),
 			goldMultiplier: rules.fixed(Math.max(0, state.goldMultiplier || 1)),
 			goldBonus: rules.fixed(Math.max(0, state.goldBonus || 0)),

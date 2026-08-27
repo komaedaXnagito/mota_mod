@@ -12,21 +12,21 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 		catch (error) { return { serializationError: error.message || String(error) }; }
 	};
 	var recordBackpackBattleDebugLog = function (phase, payload) {
-		var entry = cloneDebugValue(payload || {});
-		var replay = core.status && core.status.replay || {};
-		entry.logIndex = ++debugLogSequence;
-		entry.recordedAt = new Date().toISOString();
-		entry.sessionStartedAt = debugSessionStartedAt;
-		entry.phase = String(phase || entry.phase || "debug");
-		entry.replaying = replay.replaying === true;
-		entry.replayStep = replay.steps == null ? null : replay.steps;
-		entry.replayRemainingActions = Array.isArray(replay.toReplay) ? replay.toReplay.length : null;
-		entry.routeLength = core.status && Array.isArray(core.status.route) ? core.status.route.length : null;
-		debugLogEntries.push(entry);
-		if (typeof console !== "undefined" && typeof console.log === "function") {
-			console.log("[背包战斗调试][" + entry.phase + "]", entry);
-		}
-		return cloneDebugValue(entry);
+		// var entry = cloneDebugValue(payload || {});
+		// var replay = core.status && core.status.replay || {};
+		// entry.logIndex = ++debugLogSequence;
+		// entry.recordedAt = new Date().toISOString();
+		// entry.sessionStartedAt = debugSessionStartedAt;
+		// entry.phase = String(phase || entry.phase || "debug");
+		// entry.replaying = replay.replaying === true;
+		// entry.replayStep = replay.steps == null ? null : replay.steps;
+		// entry.replayRemainingActions = Array.isArray(replay.toReplay) ? replay.toReplay.length : null;
+		// entry.routeLength = core.status && Array.isArray(core.status.route) ? core.status.route.length : null;
+		// debugLogEntries.push(entry);
+		// if (typeof console !== "undefined" && typeof console.log === "function") {
+			// console.log("[背包战斗调试][" + entry.phase + "]", entry);
+		// }
+		// return cloneDebugValue(entry);
 	};
 	var clearBackpackBattleDebugLog = function () {
 		debugLogEntries = [];
@@ -61,7 +61,7 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 	var activeBattleContext = null;
 	var lastLayoutSignature = null;
 	var EVENT_ID = "backpackBattle";
-	var BATTLE_RULE_VERSION = 5;
+	var BATTLE_RULE_VERSION = 7;
 	var WEAPON_CONFIG_VERSION = 1;
 
 	var clone = function (value) {
@@ -75,7 +75,11 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 		return (backpackState.placed || []).map(function (entry) {
 			var attributes = clone(calculated.byInstanceId[entry.instanceId] || {});
 			attributes.hitRate = attributes.hitRate == null ? 1 : Number(attributes.hitRate);
-			attributes.attackInterval = attributes.attackInterval == null ? 0 : Number(attributes.attackInterval);
+			// 是否能主动攻击由武器原始间隔决定：原始 0 永久锁定，原始正数最低 1 Tick。
+			var hasBaseAttackInterval = Number(attributes.baseAttackInterval) > 0;
+			attributes.attackInterval = hasBaseAttackInterval
+				? Math.max(0.01, Number(attributes.attackInterval) || 0)
+				: 0;
 			attributes.attackIntervalTicks = attributes.attackInterval > 0
 				? Math.max(1, Math.round(attributes.attackInterval * 100))
 				: 0;
@@ -241,23 +245,41 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 		}
 		if (effect.type === "gainUltimate") return "获得" + amount + "点奥义";
 		if (effect.type === "statusDamageBonus") {
-			var typeText = Array.isArray(effect.weaponTypes) && effect.weaponTypes.length
-				? effect.weaponTypes.join("/") + "类武器" : "所有武器";
-			return "自身每拥有" + (effect.every || 10) + "层" + getStatusName(effect.status || "mark")
+			var typeText = effect.scope === "all"
+				? (Array.isArray(effect.weaponTypes) && effect.weaponTypes.length
+					? effect.weaponTypes.join("/") + "类武器" : "所有武器")
+				: (effect.scope === "nearby" ? "范围内武器" : "本武器");
+			var damageStatusText = effect.mode === "presence"
+				? "自身拥有" + getStatusName(effect.status || "mark") + "时"
+				: "自身每拥有" + (effect.every || 10) + "层" + getStatusName(effect.status || "mark");
+			return damageStatusText
 				+ "，" + typeText + "攻击伤害+" + (effect.value || 0);
 		}
 		if (effect.type === "statusIntervalBonus") {
-			var intervalTypeText = Array.isArray(effect.weaponTypes) && effect.weaponTypes.length
-				? effect.weaponTypes.join("/") + "类武器" : "所有武器";
+			var intervalTypeText = effect.scope === "all"
+				? (Array.isArray(effect.weaponTypes) && effect.weaponTypes.length
+					? effect.weaponTypes.join("/") + "类武器" : "所有武器")
+				: "本武器";
 			var who = effect.target === "enemy" || effect.target === "opponent" ? "敌方" : "自身";
-			return who + "每有" + (effect.every || 10) + "层" + getStatusName(effect.status || "ice")
+			var intervalStatusText = effect.mode === "presence"
+				? who + "拥有" + getStatusName(effect.status || "ice") + "时"
+				: who + "每有" + (effect.every || 10) + "层" + getStatusName(effect.status || "ice");
+			return intervalStatusText
 				+ "，" + intervalTypeText + "攻击间隔" + (Number(effect.value) < 0 ? "" : "+") + (effect.value || 0) + "回合";
 		}
 		if (effect.type === "statusExtraAttack") {
 			var extraWho = effect.target === "enemy" || effect.target === "opponent" ? "敌方" : "自身";
-			return extraWho + "每有" + (effect.every || 10) + "层" + getStatusName(effect.status || "ice")
-				+ "，本武器攻击次数+" + (effect.value || 1) + "（多次伤害/联动，奥义只判一次）";
+			var extraTargetText = effect.scope === "all"
+				? (Array.isArray(effect.weaponTypes) && effect.weaponTypes.length
+					? effect.weaponTypes.join("/") + "类武器" : "所有武器")
+				: "本武器";
+			var extraStatusText = effect.mode === "presence"
+				? extraWho + "拥有" + getStatusName(effect.status || "ice") + "时"
+				: extraWho + "每有" + (effect.every || 10) + "层" + getStatusName(effect.status || "ice");
+			return extraStatusText + "，" + extraTargetText + "攻击次数+" + (effect.value || 1)
+				+ "（多次伤害/联动，奥义只判一次）";
 		}
+		if (effect.type === "modifyCurrentAttackCount") return "本次攻击次数+" + (effect.value || 0);
 		if (effect.type === "statusHitRateBonus") {
 			var hitWho = effect.target === "enemy" || effect.target === "opponent" ? "敌方" : "自身";
 			return hitWho + "拥有" + getStatusName(effect.status || "wolfSkin") + "时，本武器命中率+"
@@ -402,6 +424,16 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 		return lines;
 	};
 
+	var getEnemyAttackSpeed = function (source, x, y, floorId) {
+		var attackSpeed = null;
+		if (typeof core.getEnemyValue === "function") {
+			attackSpeed = core.getEnemyValue(source, "attackInterval", x, y, floorId);
+		}
+		if (attackSpeed == null && source) attackSpeed = source.attackInterval;
+		attackSpeed = Number(attackSpeed);
+		return Number.isFinite(attackSpeed) && attackSpeed > 0 ? attackSpeed : 1;
+	};
+
 	var getEnemySnapshot = function (enemyId, x, y, floorId) {
 		floorId = floorId || core.status.floorId;
 		var source = core.material.enemys[enemyId];
@@ -415,7 +447,7 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 			mdef: hero.mdef
 		};
 		var info = core.enemys.getEnemyInfo(source, heroForEnemyInfo, x, y, floorId);
-		var interval = Number(core.getEnemyValue(source, "attackInterval", x, y, floorId));
+		var attackSpeed = getEnemyAttackSpeed(source, x, y, floorId);
 		var hitRate = Number(core.getEnemyValue(source, "hitRate", x, y, floorId));
 		return {
 			id: enemyId,
@@ -425,9 +457,8 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 			atk: Math.max(0, Number(info.atk) || 0),
 			def: Math.max(0, Number(info.def) || 0),
 			hitRate: Number.isFinite(hitRate) ? Math.max(0, Math.min(1, hitRate)) : 1,
-			attackIntervalTicks: Number.isFinite(interval) && interval > 0
-				? Math.max(1, Math.round(interval * 100))
-				: 100,
+			// 怪物 attackInterval 配置表示每秒出手次数；内部仍统一换算成攻击间隔 Tick。
+			attackIntervalTicks: rules.getEnemyAttackIntervalTicks(attackSpeed),
 			// 怪物奥义获取词条：怪物定义（enemys.js）里的 "ultimateGain" 字段，可被楼层属性动态覆盖。
 			ultimateGain: Math.max(0, Number(core.getEnemyValue(source, "ultimateGain", x, y, floorId)) || 0),
 			buffs: [],
@@ -597,8 +628,9 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 		else if (entry.status === "error") rounds = "失败";
 		else if (result.roundsExceeded) rounds = "???";
 		else rounds = formatNumber(result.rounds);
-		var interval = Number((core.material.enemys[enemy.id] || {}).attackInterval);
-		if (!Number.isFinite(interval) || interval <= 0) interval = 1;
+		var coordinates = getEstimateCoordinates(enemy);
+		var attackSpeed = getEnemyAttackSpeed(core.material.enemys[enemy.id],
+			coordinates.x, coordinates.y, coordinates.floorId);
 		core.setTextAlign("ui", "left");
 		var bold = this._buildFont(13, true);
 		var normal = this._buildFont(13, false);
@@ -607,8 +639,8 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 		// 只保留"回合 / 间隔"两列（原第三列的"攻击"与第一行重复，已删除）。
 		core.fillText("ui", "回合", col1, position, "#DDDDDD", normal);
 		core.fillText("ui", rounds, col1 + 30, position, null, bold);
-		core.fillText("ui", "间隔", col2, position, "#DDDDDD", normal);
-		core.fillText("ui", formatNumber(interval), col2 + 30, position, null, bold);
+		core.fillText("ui", "攻速", col2, position, "#DDDDDD", normal);
+		core.fillText("ui", formatNumber(attackSpeed), col2 + 30, position, null, bold);
 	};
 	core.ui._drawBook_drawRow3 = drawBookRow3;
 	if (typeof ui !== "undefined") ui.prototype._drawBook_drawRow3 = drawBookRow3;
@@ -636,8 +668,9 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 		if (entry.status === "ready" && !entry.result.roundsExceeded) {
 			texts.push("预计回合：" + formatNumber(entry.result.rounds));
 		}
-		var interval = Number((core.material.enemys[enemy.id] || {}).attackInterval);
-		texts.push("攻击间隔：" + (Number.isFinite(interval) && interval > 0 ? interval : 1) + " 回合");
+		var attackSpeed = getEnemyAttackSpeed(core.material.enemys[enemy.id],
+			coordinates.x, coordinates.y, floorId || coordinates.floorId);
+		texts.push("攻速：" + formatNumber(attackSpeed) + " 次/秒");
 		texts.push("攻击：" + formatNumber(enemy.atk || 0));
 		var abilities = buildEnemyAbilityTexts(enemy.id, coordinates.x, coordinates.y, floorId);
 		if (abilities.length) {

@@ -13,10 +13,10 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		maxRows: 10, // 背包允许向上下各扩展两圈（初始 8 行，最大 12 行）。
 		maxCellSize: 40, // 单个格子的最大屏幕像素尺寸。
 		expansionItemId: "I429", // 解锁一个格子时消耗的地图道具 ID。
-		stateFlag: "__backpack_state__", // 保存完整背包状态的勇士 flag 名称。
+		stateFlag: "__backpack_state__", // 只保存定义 ID、实例 ID、位置和旋转等基础信息。
 		attackFlag: "__backpack_attack__", // 缓存已摆放武器总攻击的 flag 名称。
 		instanceIdFlag: "__backpack_instance_id__", // 已分配的最大实例 ID；新游戏从 1 开始自增。
-		stateVersion: 5, // v5：武器攻击改为上下限，并加入命中、间隔和奥义获取。
+		stateVersion: 6, // v6：不再保存完整武器定义，读档时始终从中央定义表重建。
 		eventId: "backpack", // 背包界面占用的事件面板 ID。
 		sellPrice: 30, // 拖到售卖区出售武器时的固定售价（金币）。
 		imageInsetCells: 0.12 // 武器图片与占格外缘之间保留的格子距离，与商店预览一致。
@@ -267,6 +267,27 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		return getWeaponSystem().normalizeWeapon(weaponDefinition);
 	};
 
+	/** 将中央定义 ID、地图物品 ID 或旧版武器身份字段统一成稳定的 definitionId。 */
+	const resolveWeaponDefinitionId = function (weaponOrId) {
+		const resolver = getWeaponSystem().resolveDefinitionId;
+		return typeof resolver === "function" ? resolver(weaponOrId) : null;
+	};
+
+	/**
+	 * 从 weapons.js 读取最新定义并构造运行时武器。itemId 只表示地图道具来源，
+	 * 不存在时仍用 definitionId 填充运行时 sourceItemId，供战斗规则按物品 ID 过滤。
+	 */
+	const buildRuntimeWeapon = function (definitionId, itemId, uniqueKey) {
+		const latestDefinition = getWeaponDefinition(definitionId);
+		if (!latestDefinition) return null;
+		const runtimeDefinition = Object.assign(latestDefinition, {
+			definitionId: definitionId,
+			sourceItemId: itemId || definitionId
+		});
+		if (uniqueKey) runtimeDefinition.uniqueKey = uniqueKey;
+		return normalizeWeapon(runtimeDefinition);
+	};
+
 	/** 获取武器旋转后的相对占格，用于碰撞和拖拽预览。 */
 	const getRotatedCells = function (weaponDefinition, rotation) {
 		return getWeaponSystem().getRotatedCells(weaponDefinition, rotation);
@@ -279,33 +300,62 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 
 	/**
 	 * 把存档或外部输入规范化为背包实例。placed=true 时还会校验列、行坐标。
-	 * 旧存档中的武器会用中央定义表中的最新配置自动迁移。
+	 * 旧存档只提取 definitionId/itemId 等身份信息；所有详细属性均从中央定义表重建。
 	 */
 	const normalizeEntry = function (entry, placed) {
 		if (!entry || typeof entry !== "object") return null;
-		let weapon = normalizeWeapon(entry.weapon || entry);
-		if (!weapon) return null;
-		// 已注册的地图道具以中央武器定义为准；修改任何属性后旧存档也会自动迁移。
-		const latestWeaponDefinition = weapon.sourceItemId
-			? getWeaponDefinition(weapon.sourceItemId)
+		const definitionId = resolveWeaponDefinitionId(entry);
+		if (!definitionId) return null;
+		const legacyWeapon = entry.weapon && typeof entry.weapon === "object" ? entry.weapon : null;
+		const sourceItemCandidate = entry.itemId || entry.sourceItemId
+			|| (legacyWeapon && legacyWeapon.sourceItemId);
+		const itemId = sourceItemCandidate
+			&& resolveWeaponDefinitionId(sourceItemCandidate) === definitionId
+			? String(sourceItemCandidate)
 			: null;
-		if (latestWeaponDefinition) {
-			weapon = normalizeWeapon(Object.assign(
-				latestWeaponDefinition,
-				{ sourceItemId: weapon.sourceItemId }
-			));
-		}
+		const uniqueKey = entry.uniqueKey == null ? null : String(entry.uniqueKey);
+		const weapon = buildRuntimeWeapon(definitionId, itemId, uniqueKey);
+		if (!weapon) return null;
 		const result = {
 			instanceId: String(entry.instanceId || makeInstanceId()),
+			definitionId: definitionId,
+			itemId: itemId,
 			weapon: weapon,
 			rotation: normalizeRotation(entry.rotation)
 		};
+		if (uniqueKey) result.uniqueKey = uniqueKey;
 		if (placed) {
 			result.col = Math.floor(Number(entry.col));
 			result.row = Math.floor(Number(entry.row));
 			if (!Number.isFinite(result.col) || !Number.isFinite(result.row)) return null;
 		}
 		return result;
+	};
+
+	/** 将运行时实例压缩为可持久化的基础信息，绝不写入 weapon 详细对象。 */
+	const serializeEntry = function (entry, placed) {
+		const result = {
+			instanceId: String(entry.instanceId),
+			definitionId: String(entry.definitionId),
+			rotation: normalizeRotation(entry.rotation)
+		};
+		if (entry.itemId) result.itemId = String(entry.itemId);
+		if (entry.uniqueKey) result.uniqueKey = String(entry.uniqueKey);
+		if (placed) {
+			result.col = Math.floor(Number(entry.col));
+			result.row = Math.floor(Number(entry.row));
+		}
+		return result;
+	};
+
+	/** 返回可直接写进勇士 flag 的 v6 紧凑存档。 */
+	const serializeState = function () {
+		return {
+			version: CONFIG.stateVersion,
+			placed: state.placed.map(function (entry) { return serializeEntry(entry, true); }),
+			inventory: state.inventory.map(function (entry) { return serializeEntry(entry, false); }),
+			unlockedCells: cloneData(state.unlockedCells)
+		};
 	};
 
 	/** 把武器实例的位置和旋转交给武器系统，换算成背包绝对格子。 */
@@ -406,18 +456,24 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 			});
 		}
 		syncInstanceIdCounter(next.placed.concat(next.inventory));
+		// 旧版本或仍含完整 weapon 对象的存档在首次读取后立即压缩，避免再次随整档保存。
+		const rawEntries = raw && typeof raw === "object"
+			? (raw.placed || []).concat(raw.inventory || [])
+			: [];
+		const needsMigration = raw && typeof raw === "object"
+			&& (Number(raw.version) !== CONFIG.stateVersion || rawEntries.some(function (entry) {
+				return entry && (entry.weapon || !entry.definitionId);
+			}));
+		if (needsMigration && core.status && core.status.hero && core.status.hero.flags && core.setFlag) {
+			core.setFlag(CONFIG.stateFlag, serializeState());
+		}
 		return next;
 	};
 
 	/** 保存背包状态，并同步缓存已摆放武器的最终总攻击。 */
 	const persistState = function () {
 		if (!core.status.hero || !core.status.hero.flags) return;
-		core.setFlag(CONFIG.stateFlag, {
-			version: CONFIG.stateVersion,
-			placed: cloneData(state.placed),
-			inventory: cloneData(state.inventory),
-			unlockedCells: cloneData(state.unlockedCells)
-		});
+		core.setFlag(CONFIG.stateFlag, serializeState());
 		const calculated = calculateBackpackAttributes();
 		core.setFlag(CONFIG.attackFlag, {
 			version: CONFIG.stateVersion,
@@ -1698,61 +1754,6 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		return true;
 	};
 
-	/** 按占格数量从大到小重新寻找位置，放不下的实例保留在库存。 */
-	const autoArrange = function () {
-		readState();
-		const previous = {};
-		state.placed.forEach(function (entry) {
-			previous[entry.instanceId] = {
-				placed: true,
-				col: entry.col,
-				row: entry.row,
-				rotation: entry.rotation
-			};
-		});
-		state.inventory.forEach(function (entry) {
-			previous[entry.instanceId] = { placed: false };
-		});
-		const entries = getAllEntries().sort(function (a, b) {
-			return b.weapon.cells.length - a.weapon.cells.length;
-		});
-		state.placed = [];
-		state.inventory = [];
-		entries.forEach(function (entry) {
-			delete entry.col;
-			delete entry.row;
-			const fit = findFirstFit(entry);
-			if (fit) {
-				entry.col = fit.col;
-				entry.row = fit.row;
-				entry.rotation = fit.rotation;
-				state.placed.push(entry);
-			} else {
-				state.inventory.push(entry);
-			}
-		});
-		persistState();
-		state.placed.forEach(function (entry) {
-			const before = previous[entry.instanceId];
-			if (!before || !before.placed) {
-				recordWeaponEnter(entry);
-				recordWeaponMove(entry);
-			} else if (before.col !== entry.col || before.row !== entry.row
-				|| before.rotation !== entry.rotation) {
-				recordWeaponMove(entry);
-			}
-		});
-		state.inventory.forEach(function (entry) {
-			const before = previous[entry.instanceId];
-			if (before && before.placed) recordWeaponOut(entry);
-		});
-		renderAll();
-		if (core.drawTip) {
-			core.drawTip(state.inventory.length ? "已整理，仍有物品放不下" : "背包整理完成");
-		}
-		return state.inventory.length === 0;
-	};
-
 	/** 把所有已摆放实例收回库存，并清除它们的列、行坐标。 */
 	const collectAll = function () {
 		readState();
@@ -1799,7 +1800,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		}
 	};
 
-	/** 桌面端展开为原来的三个按钮，手机端收进“操作”二级菜单。 */
+	/** 桌面端展开为操作按钮，手机端收进“操作”二级菜单。 */
 	const createSecondaryActions = function () {
 		secondaryActions = document.createElement("div");
 		secondaryActions.className = "backpack-secondary-actions";
@@ -1822,7 +1823,6 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		menu.className = "backpack-secondary-actions-menu";
 		menu.setAttribute("role", "menu");
 		[
-			["自动整理", autoArrange],
 			["合成", openCraftPanel],
 			["全部收回", collectAll]
 		].forEach(function (action) {
@@ -2153,18 +2153,30 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	};
 
 	/**
-	 * 从通用武器定义创建独立实例。autoPlace=true 时自动找位置，否则进入待摆放库存。
+	 * 从中央武器定义创建独立实例。传入对象时也只读取身份字段，再按 definitionId 取最新定义。
+	 * autoPlace=true 时自动找位置，否则进入待摆放库存。
 	 * uniqueKey 可用于需要全局唯一的特殊物品；普通同类武器默认允许重复。
 	 */
 	const addBackpackWeapon = function (weapon, options) {
 		options = options || {};
 		readState();
-		const normalized = normalizeWeapon(weapon);
+		const definitionId = resolveWeaponDefinitionId(options.definitionId)
+			|| resolveWeaponDefinitionId(weapon);
+		const sourceItemCandidate = options.itemId || options.sourceItemId
+			|| (weapon && typeof weapon === "object" && weapon.sourceItemId);
+		const itemId = sourceItemCandidate
+			&& resolveWeaponDefinitionId(sourceItemCandidate) === definitionId
+			? String(sourceItemCandidate)
+			: null;
+		const requestedUniqueKey = options.uniqueKey == null ? null : String(options.uniqueKey);
+		const normalized = definitionId
+			? buildRuntimeWeapon(definitionId, itemId, requestedUniqueKey)
+			: null;
 		if (!normalized) {
-			if (core.drawTip) core.drawTip("物品形状数据无效");
+			if (core.drawTip) core.drawTip("找不到武器中央定义，无法加入背包");
 			return null;
 		}
-		const uniqueKey = options.uniqueKey || normalized.uniqueKey;
+		const uniqueKey = requestedUniqueKey || normalized.uniqueKey;
 		if (uniqueKey) {
 			const existing = getAllEntries().find(function (entry) {
 				return entry.weapon.uniqueKey === uniqueKey;
@@ -2174,9 +2186,12 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		}
 		const entry = {
 			instanceId: String(options.instanceId || makeInstanceId()),
+			definitionId: definitionId,
+			itemId: itemId,
 			weapon: normalized,
 			rotation: normalizeRotation(options.rotation)
 		};
+		if (uniqueKey) entry.uniqueKey = uniqueKey;
 		if (options.autoPlace) {
 			const fit = findFirstFit(entry);
 			if (fit) {
@@ -2218,13 +2233,15 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	const addBackpackItem = function (itemId, options) {
 		options = options || {};
 		const item = core.material.items[itemId];
-		const weapon = item && getWeaponDefinition(item.backpackWeaponId || itemId);
+		const definitionId = item && resolveWeaponDefinitionId(item.backpackWeaponId || itemId);
+		const weapon = definitionId && getWeaponDefinition(definitionId);
 		if (!item || !weapon) {
 			if (core.drawTip) core.drawTip("该道具没有配置背包物品");
 			return null;
 		}
-		weapon.sourceItemId = itemId;
 		const instanceId = addBackpackWeapon(weapon, {
+			definitionId: definitionId,
+			itemId: itemId,
 			rotation: options.rotation,
 			autoPlace: options.autoPlace,
 			uniqueKey: options.uniqueKey
@@ -2243,20 +2260,20 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		Object.keys(core.material.items || {}).forEach(function (itemId) {
 			const item = core.material.items[itemId];
 			if (!item || !item.backpackWeaponId) return;
-			const sourceWeapon = getWeaponDefinition(item.backpackWeaponId);
+			const definitionId = resolveWeaponDefinitionId(item.backpackWeaponId);
+			const sourceWeapon = definitionId && getWeaponDefinition(definitionId);
 			if (!sourceWeapon) return;
 			const owned = core.itemCount(itemId);
 			const existing = getAllEntries().filter(function (entry) {
-				return entry.weapon.sourceItemId === itemId;
+				return entry.itemId === itemId;
 			}).length;
 			for (let index = existing; index < owned; index++) {
-				const weapon = normalizeWeapon(Object.assign(
-					sourceWeapon,
-					{ sourceItemId: itemId }
-				));
+				const weapon = buildRuntimeWeapon(definitionId, itemId);
 				if (!weapon) break;
 				state.inventory.push({
 					instanceId: makeInstanceId(),
+					definitionId: definitionId,
+					itemId: itemId,
 					weapon: weapon,
 					rotation: 0
 				});
@@ -2337,12 +2354,11 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	};
 
 	// 武器伤害始终按单件属性与单件 CD 结算，不修改勇士状态栏攻击力。
-	// 公共实例管理 API：分别支持通用定义、地图道具、旧存档同步、删除、整理和旧拖拽。
+	// 公共实例管理 API：分别支持通用定义、地图道具、旧存档同步、删除和旧拖拽。
 	this.addBackpackWeapon = addBackpackWeapon;
 	this.addBackpackItem = addBackpackItem;
 	this.syncBackpackItems = syncBackpackItems;
 	this.removeBackpackWeapon = removeBackpackWeapon;
-	this.autoArrangeBackpack = autoArrange;
 	this.startDragWeapon = startDragWeapon;
 
 	// 兼容已经写进 items.js 和状态栏中的旧接口。

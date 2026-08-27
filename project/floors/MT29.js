@@ -41,7 +41,7 @@ main.floors.MT29=
                         "action": [
                             {
                                 "type": "choices",
-                                "text": "\t[流浪者,man]你可以转职了",
+                                "text": "\t[艾露达,man]你可以转职了",
                                 "choices": [
                                     {
                                         "text": "狂战士",
@@ -51,6 +51,12 @@ main.floors.MT29=
                                                 "name": "item:I560",
                                                 "operator": "+=",
                                                 "value": "1"
+                                            },
+                                            {
+                                                "type": "setValue",
+                                                "name": "flag:zhuanzhi",
+                                                "operator": "=",
+                                                "value": "狂战士"
                                             },
                                             {
                                                 "type": "function",
@@ -67,7 +73,13 @@ main.floors.MT29=
                                                 "name": "item:I522",
                                                 "operator": "+=",
                                                 "value": "1"
-                                            }
+                                            },
+                                            {
+                                                "type": "setValue",
+                                                "name": "flag:zhuanzhi",
+                                                "operator": "=",
+                                                "value": "双剑士"
+                                            },
                                         ]
                                     },
                                     {
@@ -78,7 +90,13 @@ main.floors.MT29=
                                                 "name": "item:I568",
                                                 "operator": "+=",
                                                 "value": "1"
-                                            }
+                                            },
+                                            {
+                                                "type": "setValue",
+                                                "name": "flag:zhuanzhi",
+                                                "operator": "=",
+                                                "value": "盾誓士"
+                                            },
                                         ]
                                     },
                                     {
@@ -89,7 +107,13 @@ main.floors.MT29=
                                                 "name": "item:I599",
                                                 "operator": "+=",
                                                 "value": "1"
-                                            }
+                                            },
+                                            {
+                                                "type": "setValue",
+                                                "name": "flag:zhuanzhi",
+                                                "operator": "=",
+                                                "value": "魔剑士"
+                                            },
                                         ]
                                     }
                                 ]
@@ -106,7 +130,7 @@ main.floors.MT29=
                         "action": [
                             {
                                 "type": "choices",
-                                "text": "\t[流浪者,man]你可以转职了",
+                                "text": "\t[艾露达,man]你可以转职了",
                                 "choices": [
                                     {
                                         "text": "黑猫道士",
@@ -116,6 +140,12 @@ main.floors.MT29=
                                                 "name": "item:I584",
                                                 "operator": "+=",
                                                 "value": "1"
+                                            },
+                                            {
+                                                "type": "setValue",
+                                                "name": "flag:zhuanzhi",
+                                                "operator": "=",
+                                                "value": "黑猫道士"
                                             },
                                             {
                                                 "type": "function",
@@ -134,6 +164,12 @@ main.floors.MT29=
                                                 "value": "1"
                                             },
                                             {
+                                                "type": "setValue",
+                                                "name": "flag:zhuanzhi",
+                                                "operator": "=",
+                                                "value": "使役者"
+                                            },
+                                            {
                                                 "type": "function",
                                                 "function": "function(){\ncore.push(flags.randomList, ['I514', 'I544', 'I409', 'I408', 'I389', 'I551', 'I556', 'I540'])\n}"
                                             },
@@ -149,7 +185,7 @@ main.floors.MT29=
                         "action": [
                             {
                                 "type": "choices",
-                                "text": "\t[流浪者,man]你可以转职了",
+                                "text": "\t[艾露达,man]你可以转职了",
                                 "choices": [
                                     {
                                         "text": "兽王",
@@ -159,6 +195,12 @@ main.floors.MT29=
                                                 "name": "item:I516",
                                                 "operator": "+=",
                                                 "value": "1"
+                                            },
+                                            {
+                                                "type": "setValue",
+                                                "name": "flag:zhuanzhi",
+                                                "operator": "=",
+                                                "value": "兽王"
                                             },
                                             {
                                                 "type": "function",
@@ -182,6 +224,12 @@ main.floors.MT29=
                                                 "operator": "+=",
                                                 "value": "1"
                                             },
+                                            {
+                                                "type": "setValue",
+                                                "name": "flag:zhuanzhi",
+                                                "operator": "=",
+                                                "value": "摇滚巨星"
+                                            },
                                             "\t[小妖精,fairy]现在商店和盲盒可以获取‘吉他’以及甄选吉他拨片了",
                                             {
                                                 "type": "function",
@@ -197,6 +245,12 @@ main.floors.MT29=
                                                 "name": "item:I524",
                                                 "operator": "+=",
                                                 "value": "1"
+                                            },
+                                            {
+                                                "type": "setValue",
+                                                "name": "flag:zhuanzhi",
+                                                "operator": "=",
+                                                "value": "极乐净土"
                                             },
                                             "\t[小妖精,fairy]现在商店和盲盒可以获取‘吉他’了",
                                             {
