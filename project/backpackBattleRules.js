@@ -1342,6 +1342,14 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 					appendLog(state, "所有武器攻击次数+" + allExtraValue, "status");
 				}
 			}
+			else if (effect.type === "selfExtraAttack") {
+				// 仅本武器"攻击次数 +value"（无条件，如暗黑被提·拟像"本武器攻击次数+5"）；只对自身生效，不作用于其他武器。
+				var selfExtraValue = Math.max(0, Math.floor(toNumber(effect.value, 1)));
+				if (selfExtraValue) {
+					weapon.extraAttackCount = Math.max(0, Math.floor(Number(weapon.extraAttackCount) || 0)) + selfExtraValue;
+					appendLog(state, weapon.name + "攻击次数+" + selfExtraValue, "status");
+				}
+			}
 			else if (effect.type === "nearbyDamageBonus") {
 				// 附近武器数量驱动的伤害加成：注册武器 directions/distance/filter 范围内每有一个匹配武器，其攻击伤害 +value。
 				var nearbyBonuses = state.nearbyDamageBonuses || (state.nearbyDamageBonuses = []);

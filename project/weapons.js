@@ -539,7 +539,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"type": "triggerWeaponEffects",
 						"directions": [
 							"up"
-						],"rotate": false,
+						],
+						"rotate": false,
 						"distance": 1,
 						"filter": {
 							"weaponTypes": [
@@ -4237,11 +4238,6 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"name": "使役者之证",
 		"shape": [
 			[
-				1,
-				1
-			],
-			[
-				1,
 				1
 			]
 		],
@@ -5461,7 +5457,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"type": "triggerWeaponEffects",
 						"directions": [
 							"up"
-						],"rotate": false,
+						],
+						"rotate": false,
 						"distance": 1,
 						"filter": {
 							"weaponTypes": [
@@ -5745,7 +5742,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"type": "triggerWeaponEffects",
 						"directions": [
 							"up"
-						],"rotate": false,
+						],
+						"rotate": false,
 						"distance": 1,
 						"filter": {
 							"weaponTypes": [
@@ -5802,7 +5800,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"type": "triggerWeaponEffects",
 						"directions": [
 							"up"
-						],"rotate": false,
+						],
+						"rotate": false,
 						"distance": 1,
 						"filter": {
 							"weaponTypes": [
@@ -5862,7 +5861,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"type": "triggerWeaponEffects",
 						"directions": [
 							"up"
-						],"rotate": false,
+						],
+						"rotate": false,
 						"distance": 1,
 						"filter": {
 							"weaponTypes": [
@@ -6847,7 +6847,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"精灵"
 		],
-		"synergyText": "战斗开始时，自身刻印+1\n本武器攻击次数为6\n自身刻印达到5层时：本武器伤害+5，且造成的伤害无视敌方格挡\n攻击时：自身HP-5",
+		"synergyText": "本武器攻击次数为6\n自身刻印达到5层时：本武器伤害+5，且造成的伤害无视敌方格挡\n攻击时：自身HP-5",
 		"combatRules": [
 			{
 				"id": "battleStartMark",
@@ -6862,14 +6862,11 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			},
 			{
-				"id": "markExtraAttack",
+				"id": "selfExtraAttack5",
 				"trigger": "battleStart",
 				"effects": [
 					{
-						"type": "statusExtraAttack",
-						"id": "extraAttack",
-						"status": "mark",
-						"every": 1,
+						"type": "selfExtraAttack",
 						"value": 5
 					}
 				]
@@ -8716,7 +8713,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"type": "triggerWeaponEffects",
 						"directions": [
 							"up"
-						],"rotate": false,
+						],
+						"rotate": false,
 						"distance": 1,
 						"filter": {
 							"weaponTypes": [
@@ -9467,7 +9465,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"type": "triggerWeaponEffects",
 						"directions": [
 							"up"
-						],"rotate": false,
+						],
+						"rotate": false,
 						"distance": 1,
 						"filter": {
 							"weaponTypes": [
