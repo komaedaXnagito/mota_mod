@@ -457,7 +457,8 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71 = (functio
 		}
 
 		return {
-			damage: rules.fixed(Math.max(0, initialPlayerHp - state.player.hp)),
+			// 显伤与实际结算保持一致；战后生命增加时显示为负伤害。
+			damage: rules.fixed(initialPlayerHp - state.player.hp),
 			rounds: rules.fixed(state.tick / 100),
 			ticks: state.tick,
 			rngCallCount: state.rngCallCount,

@@ -1754,61 +1754,6 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		return true;
 	};
 
-	/** 按占格数量从大到小重新寻找位置，放不下的实例保留在库存。 */
-	const autoArrange = function () {
-		readState();
-		const previous = {};
-		state.placed.forEach(function (entry) {
-			previous[entry.instanceId] = {
-				placed: true,
-				col: entry.col,
-				row: entry.row,
-				rotation: entry.rotation
-			};
-		});
-		state.inventory.forEach(function (entry) {
-			previous[entry.instanceId] = { placed: false };
-		});
-		const entries = getAllEntries().sort(function (a, b) {
-			return b.weapon.cells.length - a.weapon.cells.length;
-		});
-		state.placed = [];
-		state.inventory = [];
-		entries.forEach(function (entry) {
-			delete entry.col;
-			delete entry.row;
-			const fit = findFirstFit(entry);
-			if (fit) {
-				entry.col = fit.col;
-				entry.row = fit.row;
-				entry.rotation = fit.rotation;
-				state.placed.push(entry);
-			} else {
-				state.inventory.push(entry);
-			}
-		});
-		persistState();
-		state.placed.forEach(function (entry) {
-			const before = previous[entry.instanceId];
-			if (!before || !before.placed) {
-				recordWeaponEnter(entry);
-				recordWeaponMove(entry);
-			} else if (before.col !== entry.col || before.row !== entry.row
-				|| before.rotation !== entry.rotation) {
-				recordWeaponMove(entry);
-			}
-		});
-		state.inventory.forEach(function (entry) {
-			const before = previous[entry.instanceId];
-			if (before && before.placed) recordWeaponOut(entry);
-		});
-		renderAll();
-		if (core.drawTip) {
-			core.drawTip(state.inventory.length ? "已整理，仍有物品放不下" : "背包整理完成");
-		}
-		return state.inventory.length === 0;
-	};
-
 	/** 把所有已摆放实例收回库存，并清除它们的列、行坐标。 */
 	const collectAll = function () {
 		readState();
@@ -1855,7 +1800,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		}
 	};
 
-	/** 桌面端展开为原来的三个按钮，手机端收进“操作”二级菜单。 */
+	/** 桌面端展开为操作按钮，手机端收进“操作”二级菜单。 */
 	const createSecondaryActions = function () {
 		secondaryActions = document.createElement("div");
 		secondaryActions.className = "backpack-secondary-actions";
@@ -1878,7 +1823,6 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		menu.className = "backpack-secondary-actions-menu";
 		menu.setAttribute("role", "menu");
 		[
-			["自动整理", autoArrange],
 			["合成", openCraftPanel],
 			["全部收回", collectAll]
 		].forEach(function (action) {
@@ -2410,12 +2354,11 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	};
 
 	// 武器伤害始终按单件属性与单件 CD 结算，不修改勇士状态栏攻击力。
-	// 公共实例管理 API：分别支持通用定义、地图道具、旧存档同步、删除、整理和旧拖拽。
+	// 公共实例管理 API：分别支持通用定义、地图道具、旧存档同步、删除和旧拖拽。
 	this.addBackpackWeapon = addBackpackWeapon;
 	this.addBackpackItem = addBackpackItem;
 	this.syncBackpackItems = syncBackpackItems;
 	this.removeBackpackWeapon = removeBackpackWeapon;
-	this.autoArrangeBackpack = autoArrange;
 	this.startDragWeapon = startDragWeapon;
 
 	// 兼容已经写进 items.js 和状态栏中的旧接口。

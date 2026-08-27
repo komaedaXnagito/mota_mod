@@ -371,7 +371,8 @@ test("手机背包默认展开待放置列表并移除展开按钮", () => {
 	const indexSource = fs.readFileSync(path.join(root, "index.html"), "utf8");
 
 	assert.match(backpackSource, /const createSecondaryActions = function \(\)/);
-	assert.match(backpackSource, /\["自动整理", autoArrange\][\s\S]*?\["合成", openCraftPanel\][\s\S]*?\["全部收回", collectAll\]/);
+	assert.match(backpackSource, /\["合成", openCraftPanel\][\s\S]*?\["全部收回", collectAll\]/);
+	assert.doesNotMatch(backpackSource, /自动整理|autoArrangeBackpack|const autoArrange/);
 	assert.match(backpackSource, /toolbarElement\.appendChild\(createSecondaryActions\(\)\)/);
 	assert.match(backpackSource, /root\.dataset\.inventoryExpanded = compact \? "true" : "false"/);
 	assert.match(backpackSource, /const panelHeight = expandedPanelHeight/);
@@ -972,6 +973,12 @@ test("预计伤害颜色保持原版的绿白黄橙红分级", () => {
 	assert.equal(colorOf(200), "#FF9933");
 	assert.equal(colorOf(299), "#FF9933");
 	assert.equal(colorOf(300), "#FF2222");
+	const healing = context.formatEstimate({
+		status: "ready",
+		result: { damage: -100, canWin: true, roundsExceeded: false }
+	});
+	assert.equal(healing.text, "-100", "战后净回血应在地图和怪物手册显示为负伤害");
+	assert.equal(healing.color, "#11FF11");
 });
 
 test("防御不再参与减伤，伤害直接全额结算", () => {
@@ -1351,6 +1358,66 @@ test("预计计算使用当前生命与最大生命处理回血和血量条件",
 		weapons: [lowHpWeapon]
 	}));
 	assert.equal(lowHp.rounds, 1, "当前生命为 40% 时应立即触发半血增伤");
+});
+
+test("怪物 attackInterval 配置按每秒出手次数换算", () => {
+	const context = loadPure();
+	const rules = context.backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87;
+	const battleSource = fs.readFileSync(path.join(root, "project/backpackBattle.js"), "utf8");
+	assert.equal(rules.getEnemyAttackIntervalTicks(1), 100);
+	assert.equal(rules.getEnemyAttackIntervalTicks(1.6), 63);
+	assert.equal(rules.getEnemyAttackIntervalTicks(2.5), 40);
+	assert.equal(rules.getEnemyAttackIntervalTicks(0), 100, "无效攻速使用默认每秒 1 次");
+	assert.match(battleSource,
+		/attackIntervalTicks:\s*rules\.getEnemyAttackIntervalTicks\(attackSpeed\)/,
+		"实际战斗快照应使用攻速换算冷却 Tick");
+
+	const state = rules.createBattleState(makeInput({
+		enemy: Object.assign({}, makeInput().enemy, {
+			attackIntervalTicks: rules.getEnemyAttackIntervalTicks(2.5),
+			debuffs: [{ id: "ice", stacks: 5 }]
+		})
+	}));
+	assert.equal(rules.getEnemyIntervalTicks(state), 45, "冰洁仍在换算后的间隔上每层增加 1 Tick");
+});
+
+test("战后生命高于战前时预计与实际伤害均为负值", () => {
+	const core = {
+		randBattle() { return 0; },
+		registerAnimationFrame() {},
+		unregisterAnimationFrame() {}
+	};
+	const context = loadScripts([
+		"project/backpackBattleStatuses.js",
+		"project/backpackBattleRules.js",
+		"project/backpackBattleEstimateKernel.js",
+		"project/backpackBattleCore.js"
+	], { core });
+	const kernel = context.backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71;
+	const runtime = context.createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc(core);
+	const healingWeapon = makeWeapon({
+		combatRules: [{
+			trigger: "battleStart",
+			effects: [{ type: "heal", target: "self", value: 100 }]
+		}]
+	});
+	const input = makeInput({
+		player: Object.assign({}, makeInput().player, { hp: 50, maxHp: 1000 }),
+		enemy: Object.assign({}, makeInput().enemy, { hp: 10, maxHp: 10, atk: 0 }),
+		weapons: [healingWeapon],
+		meta: { initialPlayerHp: 50 }
+	});
+
+	const predicted = kernel.simulate(JSON.parse(JSON.stringify(input)));
+	assert.equal(predicted.damage, -100, "预计显伤应显示战后多出的 100 生命");
+
+	let actualResult = null;
+	runtime.start(JSON.parse(JSON.stringify(input)), { onFinish(result) { actualResult = result; } });
+	runtime.stepTicks(100);
+	assert.ok(actualResult, "实际战斗应正常结束");
+	assert.equal(actualResult.playerHp, 150);
+	assert.equal(actualResult.netDamage, -100, "实际结算应保留负伤害");
+	runtime.destroy();
 });
 
 test("预计计算在负生命后继续行动并保留后续自伤", () => {
@@ -2619,6 +2686,8 @@ test("怪物手册详情显示怪物的 buff 与 debuff 能力", () => {
 	// 详情绘制时把能力文本追加进 texts。
 	assert.match(battleSource, /drawBookDetailEstimate = function[\s\S]*?buildEnemyAbilityTexts\(enemy\.id/);
 	assert.match(battleSource, /abilities\.forEach\(function \(line\) \{ texts\.push\(line\); \}\)/);
+	assert.match(battleSource, /fillText\("ui", "攻速"/);
+	assert.match(battleSource, /texts\.push\("攻速：" \+ formatNumber\(attackSpeed\) \+ " 次\/秒"\)/);
 
 	// 减益/增益/其他分别使用不同颜色标记，且必须由 \r 触发解析（否则 [ ] 会作为普通字符显示）。
 	assert.match(battleSource, /\\r\[#FF7043\]· " \+ text \+ "\\r\[\]/);

@@ -648,7 +648,8 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 			rounds: rules.fixed(state.tick / 100),
 			playerHp: rules.fixed(Math.max(0, state.player.hp)),
 			enemyHp: rules.fixed(Math.max(0, state.enemy.hp)),
-			netDamage: rules.fixed(Math.max(0, initialHp - state.player.hp)),
+			// 净伤害允许为负：战后生命高于战前时，负值表示本场战斗净回复的生命。
+			netDamage: rules.fixed(initialHp - state.player.hp),
 			grossDamage: rules.fixed(state.player.damageTaken || 0),
 			goldMultiplier: rules.fixed(Math.max(0, state.goldMultiplier || 1)),
 			goldBonus: rules.fixed(Math.max(0, state.goldBonus || 0)),

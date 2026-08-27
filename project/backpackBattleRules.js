@@ -546,6 +546,13 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		return Math.max(1, Math.round(interval));
 	};
 
+	/** 怪物配置沿用 attackInterval 字段名，但数值语义是每秒出手次数。 */
+	var getEnemyAttackIntervalTicks = function (attackSpeed) {
+		attackSpeed = toNumber(attackSpeed, 1);
+		if (attackSpeed <= 0) attackSpeed = 1;
+		return Math.max(1, Math.round(100 / attackSpeed));
+	};
+
 	var getEnemyIntervalTicks = function (state) {
 		var interval = Math.max(1, Math.round(toNumber(state.enemy.attackIntervalTicks, 100)));
 		interval += getStatusStacks(state.enemy, "ice");
@@ -1550,6 +1557,7 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		getNearbyIntervalBonusTicks: getNearbyIntervalBonusTicks,
 		getNearbyIntervalPercent: getNearbyIntervalPercent,
 		getWeaponIntervalTicks: getWeaponIntervalTicks,
+		getEnemyAttackIntervalTicks: getEnemyAttackIntervalTicks,
 		getEnemyIntervalTicks: getEnemyIntervalTicks,
 		getRoundRemainingTicks: getRoundRemainingTicks,
 		settlePeriodicStatuses: settlePeriodicStatuses,
