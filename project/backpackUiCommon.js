@@ -17,6 +17,153 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	var weaponCardRenderer = null;
 	var modalStack = [];
 	var modalKeyboardInstalled = false;
+	// 武器定义保存项目相对路径，引擎则按文件名缓存已加载的 Image。
+	// 在这里统一两者，避免各界面使用无版本参数的 URL 再请求一次相同文件。
+	var weaponImageCache = Object.create(null);
+	var weaponImageCore = null;
+
+	var normalizeImagePath = function (source) {
+		return String(source || "").replace(/\\/g, "/");
+	};
+
+	var stripImageQuery = function (source) {
+		return normalizeImagePath(source).split("#")[0].split("?")[0];
+	};
+
+	/** 把 project/images/foo.png 转成引擎图片缓存使用的 foo.png。 */
+	var getWeaponImageKey = function (source) {
+		var path = stripImageQuery(source);
+		var marker = "project/images/";
+		var markerIndex = path.indexOf(marker);
+		if (markerIndex >= 0) return path.substring(markerIndex + marker.length);
+		if (/^(?:data|blob):/i.test(path)) return "";
+		return path;
+	};
+
+	var getEngineWeaponImage = function (source, coreRef) {
+		coreRef = coreRef || weaponImageCore || (typeof core !== "undefined" ? core : null);
+		var images = coreRef && coreRef.material && coreRef.material.images
+			? coreRef.material.images.images : null;
+		var key = getWeaponImageKey(source);
+		return images && key ? images[key] || null : null;
+	};
+
+	var buildVersionedImageSource = function (source) {
+		var path = normalizeImagePath(source);
+		if (!path || /^(?:data|blob):/i.test(path)) return path;
+		if (/^(?:https?:)?\/\//i.test(path)) return path;
+		if (/[?&]v=/.test(path)) return path;
+		var version = typeof main !== "undefined" && main ? main.version : null;
+		return version == null || version === "" ? path : path + (path.indexOf("?") >= 0 ? "&" : "?") + "v=" + version;
+	};
+
+	/** 压缩资源使用会被释放的 blob URL；转为稳定 data URL 后才能供后续 DOM 图片复用。 */
+	var makeStableEngineImageSource = function (image, fallbackSource) {
+		if (!image || !image.src) return buildVersionedImageSource(fallbackSource);
+		if (!/^blob:/i.test(image.src)) return image.src;
+		if (typeof document === "undefined" || typeof document.createElement !== "function") {
+			return buildVersionedImageSource(fallbackSource);
+		}
+		try {
+			var width = image.naturalWidth || image.width;
+			var height = image.naturalHeight || image.height;
+			if (!width || !height) return buildVersionedImageSource(fallbackSource);
+			var canvas = document.createElement("canvas");
+			canvas.width = width;
+			canvas.height = height;
+			canvas.getContext("2d").drawImage(image, 0, 0);
+			return canvas.toDataURL("image/png");
+		}
+		catch (e) {
+			return buildVersionedImageSource(fallbackSource);
+		}
+	};
+
+	var cacheWeaponImage = function (source, coreRef) {
+		var key = getWeaponImageKey(source);
+		if (!key) return { key: "", src: normalizeImagePath(source), image: null, ready: null };
+		var record = weaponImageCache[key] || { key: key, src: "", image: null, ready: null };
+		var engineImage = getEngineWeaponImage(source, coreRef);
+		if (engineImage) {
+			record.image = engineImage;
+			record.src = makeStableEngineImageSource(engineImage, source);
+			record.ready = typeof Promise === "function" ? Promise.resolve(engineImage) : null;
+			weaponImageCache[key] = record;
+			return record;
+		}
+		if (record.image) return record;
+
+		record.src = buildVersionedImageSource(source);
+		if (typeof Image === "undefined") {
+			weaponImageCache[key] = record;
+			return record;
+		}
+		var image = new Image();
+		image.decoding = "async";
+		record.image = image;
+		if (typeof Promise === "function") {
+			record.ready = new Promise(function (resolve) {
+				image.onload = function () { resolve(image); };
+				image.onerror = function () { resolve(null); };
+			});
+		}
+		image.src = record.src;
+		weaponImageCache[key] = record;
+		return record;
+	};
+
+	/** 在引擎开始加载资源前，把所有武器图自动并入 core.images。 */
+	var registerWeaponImages = function (coreRef, definitions) {
+		weaponImageCore = coreRef || weaponImageCore;
+		if (!coreRef || !Array.isArray(coreRef.images)) return 0;
+		var known = Object.create(null);
+		coreRef.images.forEach(function (name) { known[normalizeImagePath(name)] = true; });
+		var added = 0;
+		Object.keys(definitions || {}).forEach(function (definitionId) {
+			var name = getWeaponImageKey(definitions[definitionId] && definitions[definitionId].image);
+			if (!name || known[name]) return;
+			known[name] = true;
+			coreRef.images.push(name);
+			added++;
+		});
+		return added;
+	};
+
+	/** 资源加载完成后，将武器路径一次性映射到引擎已加载的 Image。 */
+	var preloadWeaponImages = function (coreRef, definitions) {
+		weaponImageCore = coreRef || weaponImageCore;
+		var waits = [];
+		Object.keys(definitions || {}).forEach(function (definitionId) {
+			var source = definitions[definitionId] && definitions[definitionId].image;
+			if (!source) return;
+			var record = cacheWeaponImage(source, coreRef);
+			if (record.ready) waits.push(record.ready);
+		});
+		return typeof Promise === "function" ? Promise.all(waits) : null;
+	};
+
+	var getWeaponImageSource = function (source) {
+		return cacheWeaponImage(source, weaponImageCore).src || normalizeImagePath(source);
+	};
+
+	var setWeaponImageSource = function (imageElement, source) {
+		if (!imageElement) return imageElement;
+		imageElement.decoding = "async";
+		imageElement.src = getWeaponImageSource(source);
+		return imageElement;
+	};
+
+	var getCachedWeaponImage = function (source) {
+		return cacheWeaponImage(source, weaponImageCore).image;
+	};
+
+	var getWeaponImageCacheStats = function () {
+		var keys = Object.keys(weaponImageCache);
+		return {
+			count: keys.length,
+			loaded: keys.filter(function (key) { return !!weaponImageCache[key].image; }).length
+		};
+	};
 
 	/**
 	 * 弹层会在捕获阶段拦截方向键的 keyup；若玩家在弹层打开前正按着方向键，
@@ -391,7 +538,7 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 				+ (((frameRows - shownCropHeight) / 2 - (Number(crop[1]) || 0) * scale) / frameRows * 100) + "%;";
 		}
 		html.push("<div class='bui-weapon-grid-image-frame' style='" + frameStyle + "'><img src='"
-			+ escapeHtml(weapon.image || "") + "' alt='' style='" + imageStyle + "'></div>");
+			+ escapeHtml(getWeaponImageSource(weapon.image || "")) + "' alt='' decoding='async' style='" + imageStyle + "'></div>");
 		html.push("</div><small>占 " + cells.length + " 格 · " + boundsCols + "×" + boundsRows + "</small></div>");
 		return html.join("");
 	};
@@ -868,6 +1015,12 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 
 	return {
 		escapeHtml: escapeHtml,
+		registerWeaponImages: registerWeaponImages,
+		preloadWeaponImages: preloadWeaponImages,
+		getWeaponImageSource: getWeaponImageSource,
+		setWeaponImageSource: setWeaponImageSource,
+		getCachedWeaponImage: getCachedWeaponImage,
+		getWeaponImageCacheStats: getWeaponImageCacheStats,
 		formatNumber: formatNumber,
 		formatPercent: formatPercent,
 		formatSpecialEffectHtml: formatSpecialEffectHtml,

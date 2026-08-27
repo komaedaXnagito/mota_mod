@@ -53,6 +53,11 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	var ctx = null;
 	var titleCanvas = null;
 	var titleCtx = null;
+	var titleVideo = null;
+	var titleImage = null;
+	var buttonFrameImage = null;
+	var titleAnimationFrame = null;
+	var titleLastFrame = 0;
 	var titleHitboxes = [];
 	var titleSelection = 0;
 	var selectedIndex = 0;
@@ -483,24 +488,71 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		titleCtx.restore();
 	};
 
+	// buttons.png 中央透明开口的原图坐标。按开口而不是整图对齐，
+	// 可以让两侧正半圆精确包住胶囊按钮，同时保留龙纹向外延展的比例。
+	var BUTTON_FRAME_OPENING = { x: 245, y: 292, w: 1188, h: 330 };
+	// 从 buttons.png 边框取样得到的金色组，统一用于 hover、键盘选中和发光。
+	var BUTTON_GOLD = "#d0a068";
+	var BUTTON_GOLD_LIGHT = "#f0d0a0";
+	var BUTTON_GOLD_DARK = "#987850";
+
+	var drawButtonFrame = function (box, accent, selected) {
+		if (!buttonFrameImage || !buttonFrameImage.complete || !buttonFrameImage.naturalWidth) return;
+		var opening = BUTTON_FRAME_OPENING;
+		var scaleX = box.w / opening.w;
+		var scaleY = box.h / opening.h;
+		var drawX = box.x - opening.x * scaleX;
+		var drawY = box.y - opening.y * scaleY;
+		var pulse = selected ? 0.5 + Math.sin(Date.now() / 260) * 0.5 : 0;
+
+		titleCtx.save();
+		titleCtx.globalAlpha = selected ? 1 : 0.88;
+		titleCtx.shadowColor = accent;
+		titleCtx.shadowBlur = selected ? 10 + pulse * 8 : 3;
+		titleCtx.drawImage(
+			buttonFrameImage,
+			drawX,
+			drawY,
+			buttonFrameImage.naturalWidth * scaleX,
+			buttonFrameImage.naturalHeight * scaleY
+		);
+		titleCtx.restore();
+	};
+
 	var drawTitleButton = function (index, textValue, box, accent, primary) {
 		var selected = index === titleSelection;
 		var gradient = titleCtx.createLinearGradient(box.x, box.y, box.x + box.w, box.y + box.h);
-		gradient.addColorStop(0, selected ? accent : "rgba(15,24,45,0.88)");
-		gradient.addColorStop(1, selected ? "#7c67ff" : "rgba(7,12,26,0.92)");
+		gradient.addColorStop(0, selected ? BUTTON_GOLD_LIGHT : "rgba(15,24,45,0.88)");
+		gradient.addColorStop(0.48, selected ? accent : "rgba(10,17,32,0.91)");
+		gradient.addColorStop(1, selected ? BUTTON_GOLD_DARK : "rgba(7,12,26,0.92)");
 		titleRoundRect(box.x, box.y, box.w, box.h, box.h / 2);
 		titleCtx.fillStyle = gradient;
 		titleCtx.fill();
-		titleCtx.strokeStyle = selected ? "#ffffff" : "rgba(255,255,255,0.55)";
-		titleCtx.lineWidth = primary ? 2.5 : 1.5;
-		titleCtx.stroke();
+		drawButtonFrame(box, accent, selected);
 		titleText(textValue, box.x + box.w / 2, box.y + box.h / 2 + 1, primary ? 20 : 15, "#ffffff", "bold");
 		titleHitboxes.push({ type: "title", index: index, x: box.x, y: box.y, w: box.w, h: box.h });
+	};
+
+	var drawTitleImage = function (vertical, canvasWidth) {
+		if (!titleImage || !titleImage.complete || !titleImage.naturalWidth) return;
+		var maxWidth = vertical ? canvasWidth - 36 : 630;
+		var maxHeight = vertical ? 118 : 130;
+		var scale = Math.min(maxWidth / titleImage.naturalWidth, maxHeight / titleImage.naturalHeight);
+		var drawWidth = titleImage.naturalWidth * scale;
+		var drawHeight = titleImage.naturalHeight * scale;
+		var drawX = (canvasWidth - drawWidth) / 2;
+		var drawY = vertical ? 52 : 24;
+		titleCtx.drawImage(titleImage, drawX, drawY, drawWidth, drawHeight);
 	};
 
 	var renderTitle = function () {
 		if (!titleCanvas || titleCanvas.style.display === "none") return;
 		var vertical = !!(core.domStyle && core.domStyle.isVertical);
+		if (main.dom.startBackground) {
+			main.dom.startBackground.style.objectFit = "cover";
+			main.dom.startBackground.style.objectPosition = vertical ? "57% center" : "center center";
+		}
+		if (titleVideo) titleVideo.style.objectPosition = vertical ? "57% center" : "center center";
 		var width = vertical ? 416 : 676;
 		var height = vertical ? 676 : 416;
 		core.maps._setHDCanvasSize(titleCtx, width, height);
@@ -521,23 +573,19 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		titleCtx.fillRect(0, 0, width, height);
 
 		if (vertical) {
-			titleText("50层魔塔", 208, 92, 36, "#ffffff", "bold");
-			titleText("背 包 乱 斗", 208, 137, 22, "#8edcff", "bold");
-			titleText("整理武器 · 构筑流派 · 挑战魔塔", 208, 171, 12, "#d4def1", "normal");
-			drawTitleButton(0, "开始冒险", { x: 108, y: 500, w: 200, h: 46 }, "#ff744a", true);
-			drawTitleButton(1, "续关再战", { x: 20, y: 575, w: 116, h: 38 }, "#4cb9ff", false);
-			drawTitleButton(3, "武器图鉴", { x: 150, y: 575, w: 116, h: 38 }, "#9b6cff", false);
-			drawTitleButton(2, "精彩回放", { x: 280, y: 575, w: 116, h: 38 }, "#44d3ac", false);
-			titleText("开始后选择你的初始职业", 208, 650, 12, "rgba(255,255,255,0.76)", "normal");
+			drawTitleImage(true, width);
+			drawTitleButton(0, "开始冒险", { x: 108, y: 450, w: 200, h: 46 }, BUTTON_GOLD, true);
+			drawTitleButton(1, "续关再战", { x: 25, y: 570, w: 90, h: 32 }, BUTTON_GOLD, false);
+			drawTitleButton(3, "武器图鉴", { x: 163, y: 570, w: 90, h: 32 }, BUTTON_GOLD, false);
+			drawTitleButton(2, "精彩回放", { x: 301, y: 570, w: 90, h: 32 }, BUTTON_GOLD, false);
+			// titleText("开始后选择你的初始职业", 208, 650, 12, "rgba(255,255,255,0.76)", "normal");
 		} else {
-			titleText("50层魔塔", 338, 70, 38, "#ffffff", "bold");
-			titleText("背 包 乱 斗", 338, 111, 23, "#8edcff", "bold");
-			titleText("整理武器 · 构筑流派 · 挑战魔塔", 338, 143, 12, "#d4def1", "normal");
-			drawTitleButton(0, "开始冒险", { x: 238, y: 276, w: 200, h: 44 }, "#ff744a", true);
-			drawTitleButton(1, "续关再战", { x: 38, y: 348, w: 170, h: 36 }, "#4cb9ff", false);
-			drawTitleButton(3, "武器图鉴", { x: 253, y: 348, w: 170, h: 36 }, "#9b6cff", false);
-			drawTitleButton(2, "精彩回放", { x: 468, y: 348, w: 170, h: 36 }, "#44d3ac", false);
-			titleText("开始后选择你的初始职业", 338, 405, 11, "rgba(255,255,255,0.76)", "normal");
+			drawTitleImage(false, width);
+			drawTitleButton(0, "开始冒险", { x: 238, y: 230, w: 200, h: 44 }, BUTTON_GOLD, true);
+			drawTitleButton(1, "续关再战", { x: 42, y: 330, w: 150, h: 36 }, BUTTON_GOLD, false);
+			drawTitleButton(3, "武器图鉴", { x: 263, y: 330, w: 150, h: 36 }, BUTTON_GOLD, false);
+			drawTitleButton(2, "精彩回放", { x: 484, y: 330, w: 150, h: 36 }, BUTTON_GOLD, false);
+			// titleText("开始后选择你的初始职业", 338, 405, 11, "rgba(255,255,255,0.76)", "normal");
 		}
 	};
 
@@ -563,13 +611,84 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		main.dom.startButtonGroup.style.display = "none";
 		main.dom.startButtons.style.display = "none";
 		main.dom.levelChooseButtons.style.display = "none";
+		if (titleVideo) {
+			titleVideo.style.display = "block";
+			var playPromise = titleVideo.play();
+			if (playPromise && playPromise.catch) playPromise.catch(function () {});
+		}
 		titleCanvas.style.display = "block";
 		renderTitle();
+		if (!titleAnimationFrame) {
+			var animateTitle = function (timestamp) {
+				if (!titleCanvas || titleCanvas.style.display === "none") {
+					titleAnimationFrame = null;
+					return;
+				}
+				if (timestamp - titleLastFrame >= 70) {
+					titleLastFrame = timestamp;
+					renderTitle();
+				}
+				titleAnimationFrame = window.requestAnimationFrame(animateTitle);
+			};
+			titleAnimationFrame = window.requestAnimationFrame(animateTitle);
+		}
 		titleCanvas.focus();
 	};
 
 	var hideTitle = function () {
 		if (titleCanvas) titleCanvas.style.display = "none";
+		if (titleAnimationFrame) window.cancelAnimationFrame(titleAnimationFrame);
+		titleAnimationFrame = null;
+		titleLastFrame = 0;
+		if (titleVideo) {
+			titleVideo.pause();
+			titleVideo.style.display = "none";
+		}
+	};
+
+	var createTitleVideo = function () {
+		titleVideo = document.createElement("video");
+		titleVideo.id = "careerTitleVideo";
+		titleVideo.src = "project/video/background.mp4";
+		titleVideo.poster = "project/images/origin_background.png";
+		titleVideo.autoplay = true;
+		titleVideo.loop = true;
+		titleVideo.muted = true;
+		titleVideo.defaultMuted = true;
+		titleVideo.playsInline = true;
+		titleVideo.preload = "auto";
+		titleVideo.setAttribute("muted", "");
+		titleVideo.setAttribute("playsinline", "");
+		titleVideo.setAttribute("webkit-playsinline", "");
+		titleVideo.setAttribute("aria-hidden", "true");
+		titleVideo.style.position = "absolute";
+		titleVideo.style.left = "0";
+		titleVideo.style.top = "0";
+		titleVideo.style.width = "100%";
+		titleVideo.style.height = "100%";
+		titleVideo.style.objectFit = "cover";
+		titleVideo.style.zIndex = "270";
+		titleVideo.style.opacity = "0";
+		titleVideo.style.transition = "opacity 240ms ease";
+		titleVideo.style.pointerEvents = "none";
+		titleVideo.style.display = "none";
+		titleVideo.addEventListener("canplay", function () {
+			titleVideo.style.opacity = "1";
+		});
+		core.dom.startPanel.appendChild(titleVideo);
+	};
+
+	var loadTitleImage = function () {
+		titleImage = new Image();
+		titleImage.onload = function () {
+			if (titleCanvas && titleCanvas.style.display !== "none") renderTitle();
+		};
+		titleImage.src = "project/images/title2.png";
+		buttonFrameImage = new Image();
+		buttonFrameImage.onload = function () {
+			if (titleCanvas && titleCanvas.style.display !== "none") renderTitle();
+		};
+		buttonFrameImage.src = "project/images/buttons.png";
 	};
 
 	var createTitleCanvas = function () {
@@ -634,6 +753,8 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		});
 	};
 
+	createTitleVideo();
+	loadTitleImage();
 	createTitleCanvas();
 
 	plugin.careerSelect = {

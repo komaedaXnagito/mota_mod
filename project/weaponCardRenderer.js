@@ -220,7 +220,7 @@ var installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c = function (c
 		var imageFrame = document.createElement("div");
 		imageFrame.className = "weapon-card-preview-image-frame";
 		var image = document.createElement("img");
-		image.src = geometry.weapon.image || "";
+		uiCommon.setWeaponImageSource(image, geometry.weapon.image || "");
 		image.alt = locked ? "未解锁武器" : (geometry.weapon.name || "");
 		image.draggable = false;
 		layoutPreviewImage(imageFrame, image, geometry);

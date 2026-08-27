@@ -483,7 +483,7 @@ var installBackpackCraft_9c4e7b2a_6f1d_4a8c_9e3b_5d7f2c1a8e64 = function (core, 
 			const imageFrame = document.createElement("div");
 			imageFrame.className = "backpack-craft-grid-image-frame";
 			const image = document.createElement("img");
-			image.src = geometry.weapon.image || "";
+			uiCommon.setWeaponImageSource(image, geometry.weapon.image || "");
 			image.alt = geometry.weapon.name || "";
 			image.draggable = false;
 			layoutCraftPreviewImage(imageFrame, image, geometry);

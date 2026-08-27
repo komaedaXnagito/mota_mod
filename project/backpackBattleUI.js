@@ -249,7 +249,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		var image = document.createElement("img");
 		image.alt = weapon.name || "武器";
 		image.draggable = false;
-		image.src = weapon.image || "";
+		common.setWeaponImageSource(image, weapon.image || "");
 		var crop = weapon.imageCrop;
 		if (Array.isArray(crop) && crop.length >= 6 && crop[2] > 0 && crop[3] > 0) {
 			// 完整图片和裁剪区域共用同一个缩放值，禁止横纵轴分别拉伸。

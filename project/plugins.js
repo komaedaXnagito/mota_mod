@@ -1,9 +1,17 @@
 var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = 
 {
     "init": function () {
+	var weaponImageCommon = typeof backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 !== "undefined"
+		? backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 : null;
+	var weaponImageDefinitions = typeof weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 !== "undefined"
+		? weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 : {};
+	// 自动注册所有武器图，新增武器时无需再手工维护 data.js 的 images 列表。
+	if (weaponImageCommon) weaponImageCommon.registerWeaponImages(core, weaponImageDefinitions);
 	this._afterLoadResources = function () {
 		// 本函数将在所有资源加载完毕后，游戏开启前被执行
 		core.ui.statusBar.init();
+		// 将定义路径统一映射到引擎缓存，后续所有武器界面复用同一资源 URL。
+		if (weaponImageCommon) weaponImageCommon.preloadWeaponImages(core, weaponImageDefinitions);
 		// I373 使用独立的盲盒贴图；覆盖到 items 图集格位，保证所有绘制入口显示一致。
 		var blindBoxImage = core.material.images.images["blindBoxSet06Volcanic.png"];
 		var itemIcon = core.material.icons.items.I373;

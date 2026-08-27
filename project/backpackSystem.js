@@ -816,7 +816,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		const image = document.createElement("img");
 		image.draggable = false;
 		image.alt = weapon.name;
-		image.src = weapon.image;
+		uiCommon.setWeaponImageSource(image, weapon.image);
 		const crop = weapon.imageCrop;
 		if (Array.isArray(crop) && crop.length >= 6 && crop[2] > 0 && crop[3] > 0) {
 			// 裁剪素材横纵方向使用同一个比例，并把裁剪区域等比居中到留白后的图片框内。
