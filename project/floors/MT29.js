@@ -55,8 +55,7 @@ main.floors.MT29=
                                             {
                                                 "type": "setValue",
                                                 "name": "flag:zhuanzhi",
-                                                "operator": "=",
-                                                "value": "狂战士"
+                                                "value": "'狂战士'"
                                             },
                                             {
                                                 "type": "function",
@@ -77,9 +76,8 @@ main.floors.MT29=
                                             {
                                                 "type": "setValue",
                                                 "name": "flag:zhuanzhi",
-                                                "operator": "=",
-                                                "value": "双剑士"
-                                            },
+                                                "value": "'双剑士'"
+                                            }
                                         ]
                                     },
                                     {
@@ -94,9 +92,8 @@ main.floors.MT29=
                                             {
                                                 "type": "setValue",
                                                 "name": "flag:zhuanzhi",
-                                                "operator": "=",
-                                                "value": "盾誓士"
-                                            },
+                                                "value": "'盾誓士'"
+                                            }
                                         ]
                                     },
                                     {
@@ -111,9 +108,8 @@ main.floors.MT29=
                                             {
                                                 "type": "setValue",
                                                 "name": "flag:zhuanzhi",
-                                                "operator": "=",
-                                                "value": "魔剑士"
-                                            },
+                                                "value": "'魔剑士'"
+                                            }
                                         ]
                                     }
                                 ]
@@ -144,8 +140,7 @@ main.floors.MT29=
                                             {
                                                 "type": "setValue",
                                                 "name": "flag:zhuanzhi",
-                                                "operator": "=",
-                                                "value": "黑猫道士"
+                                                "value": "'黑猫道士'"
                                             },
                                             {
                                                 "type": "function",
@@ -166,8 +161,7 @@ main.floors.MT29=
                                             {
                                                 "type": "setValue",
                                                 "name": "flag:zhuanzhi",
-                                                "operator": "=",
-                                                "value": "使役者"
+                                                "value": "'使役者'"
                                             },
                                             {
                                                 "type": "function",
@@ -199,8 +193,7 @@ main.floors.MT29=
                                             {
                                                 "type": "setValue",
                                                 "name": "flag:zhuanzhi",
-                                                "operator": "=",
-                                                "value": "兽王"
+                                                "value": "'兽王'"
                                             },
                                             {
                                                 "type": "function",
@@ -227,8 +220,7 @@ main.floors.MT29=
                                             {
                                                 "type": "setValue",
                                                 "name": "flag:zhuanzhi",
-                                                "operator": "=",
-                                                "value": "摇滚巨星"
+                                                "value": "'摇滚巨星'"
                                             },
                                             "\t[小妖精,fairy]现在商店和盲盒可以获取‘吉他’以及甄选吉他拨片了",
                                             {
@@ -249,8 +241,7 @@ main.floors.MT29=
                                             {
                                                 "type": "setValue",
                                                 "name": "flag:zhuanzhi",
-                                                "operator": "=",
-                                                "value": "极乐净土"
+                                                "value": "'极乐净土'"
                                             },
                                             "\t[小妖精,fairy]现在商店和盲盒可以获取‘吉他’了",
                                             {

@@ -818,7 +818,7 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			{
 				"id": "shop1",
 				"text": "\t[贪婪之神,moneyShop]勇士啊, 给我${20+10*flag:次数*(flag:次数-1)}金币就可以：",
-				"textInList": "一区商店",
+				"textInList": "加血商店",
 				"mustEnable": true,
 				"disablePreview": false,
 				"choices": [
@@ -835,34 +835,6 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 								"name": "status:hp",
 								"operator": "+=",
 								"value": "100*flag:次数"
-							},
-							{
-								"type": "setValue",
-								"name": "status:money",
-								"operator": "-=",
-								"value": "20+10*flag:次数*(flag:次数-1)"
-							},
-							{
-								"type": "setValue",
-								"name": "flag:次数",
-								"operator": "+=",
-								"value": "1"
-							}
-						]
-					},
-					{
-						"text": "背包格子+1",
-						"need": "status:money>=20+10*flag:次数*(flag:次数-1)",
-						"action": [
-							{
-								"type": "playSound",
-								"name": "item.mp3"
-							},
-							{
-								"type": "setValue",
-								"name": "item:I429",
-								"operator": "+=",
-								"value": "1"
 							},
 							{
 								"type": "setValue",
@@ -882,14 +854,14 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			},
 			{
 				"id": "shop2",
-				"text": "\t[贪婪之神,moneyShop]勇士啊, 给我${20+10*flag:次数*(flag:次数-1)}金币就可以：",
-				"textInList": "二区商店",
+				"text": "\t[贪婪之神,moneyShop]勇士啊, 给我${20+5*flag:次数*(flag:次数-2)}金币就可以：",
+				"textInList": "背包扩容商店",
 				"mustEnable": true,
 				"disablePreview": false,
 				"choices": [
 					{
-						"text": "生命+${100*flag:次数}",
-						"need": "status:money>=20+10*flag:次数*(flag:次数-1)",
+						"text": "背包格子+1",
+						"need": "status:money>=20+5*flag:次数*(flag:次数-2)",
 						"action": [
 							{
 								"type": "playSound",
@@ -897,71 +869,15 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 							},
 							{
 								"type": "setValue",
-								"name": "status:hp",
-								"operator": "+=",
-								"value": "100*flag:次数"
-							},
-							{
-								"type": "setValue",
-								"name": "status:money",
-								"operator": "-=",
-								"value": "20+10*flag:次数*(flag:次数-1)"
-							},
-							{
-								"type": "setValue",
-								"name": "flag:次数",
+								"name": "item:I429",
 								"operator": "+=",
 								"value": "1"
-							}
-						]
-					},
-					{
-						"text": "攻击+4",
-						"need": "status:money>=20+10*flag:次数*(flag:次数-1)",
-						"action": [
-							{
-								"type": "playSound",
-								"name": "item.mp3"
-							},
-							{
-								"type": "setValue",
-								"name": "status:atk",
-								"operator": "+=",
-								"value": "4"
 							},
 							{
 								"type": "setValue",
 								"name": "status:money",
 								"operator": "-=",
-								"value": "20+10*flag:次数*(flag:次数-1)"
-							},
-							{
-								"type": "setValue",
-								"name": "flag:次数",
-								"operator": "+=",
-								"value": "1"
-							}
-						]
-					},
-					{
-						"text": "防御+8",
-						"need": "status:money>=20+10*flag:次数*(flag:次数-1)",
-						"action": [
-							{
-								"type": "playSound",
-								"name": "item.mp3"
-							},
-							{
-								"type": "setValue",
-								"name": "status:def",
-								"operator": "+=",
-								"value": "8"
-							},
-							{
-								"type": "setValue",
-								"name": "status:money",
-								"operator": "-=",
-								"value": "20+10*flag:次数*(flag:次数-1)"
+								"value": "20+5*flag:次数*(flag:次数-2)"
 							},
 							{
 								"type": "setValue",

@@ -96,6 +96,43 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			}
 			return weights.length;
 		};
+		const FLAG_TYPE_ODDS = "randomTypeOdds"; // 武器类型概率权重 flag（存 {类型: 权重增量}，缺省 = 每把武器基础权重 1）。
+
+		/** 读取类型概率权重表（{ "剑": 2, "饮料": 1 } 等）；不存在或非法时返回空表。 */
+		const getTypeOdds = function () {
+			const odds = core.getFlag(FLAG_TYPE_ODDS);
+			if (!odds || typeof odds !== "object" || Array.isArray(odds)) return {};
+			return odds;
+		};
+
+		/**
+		 * 提高指定类型武器的出现概率：该类型每把武器的抽取权重 = 基础 1 + 累计加成。
+		 * 例如 addOdds('剑', 1)：随机池（flags.randomList）中所有"剑"类型武器的权重 +1（从 1 变为 2）。
+		 * 权重支持小数（如 0.5 = +50%）；多次调用累加；立即生效并持久化（跨刷新/重开保持）。
+		 */
+		const addOdds = function (type, num) {
+			if (typeof type !== "string" || !type) return 0;
+			const value = Number(num);
+			if (!isFinite(value)) return 0;
+			const odds = getTypeOdds();
+			odds[type] = Number(odds[type] || 0) + value;
+			core.setFlag(FLAG_TYPE_ODDS, odds);
+			return odds[type];
+		};
+
+		/** 计算一把武器在类型权重加成下的抽取权重：基础 1 + 该武器各类型累计加成之和。 */
+		const getWeaponWeight = function (id) {
+			const odds = getTypeOdds();
+			const types = weaponDefs[id] && weaponDefs[id].weaponTypes;
+			if (!Array.isArray(types) || !types.length) return 1;
+			let w = 1;
+			for (let i = 0; i < types.length; i++) {
+				const o = Number(odds[types[i]]);
+				if (isFinite(o) && o) w += o;
+			}
+			return w;
+		};
+
 		const rollWeaponOfRarity = function (rarity) {
 			const pool = getPool();
 			const candidates = pool.filter(function (id) {
@@ -105,7 +142,16 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 				const all = pool.filter(function (id) { return !!weaponDefs[id]; });
 				return all.length ? all[randShop(all.length)] : null;
 			}
-			return candidates[randShop(candidates.length)];
+			// 按类型权重加权抽取：初始每把武器权重 1，addOdds 提升对应类型的权重。
+			const weights = candidates.map(getWeaponWeight);
+			let total = 0;
+			weights.forEach(function (w) { total += w; });
+			let r = randShop() * total;
+			for (let i = 0; i < candidates.length; i++) {
+				r -= weights[i];
+				if (r <= 0) return candidates[i];
+			}
+			return candidates[candidates.length - 1];
 		};
 		const rollOne = function () { return rollWeaponOfRarity(rollRarity()); };
 
@@ -252,10 +298,55 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			return true;
 		};
 		/** 获得一把武器进背包（不扣钱、不涨价；用于购买与免费赠予共用）。返回是否成功。 */
+		/**
+		 * 把武器定义中的 itemEffect/itemEffectTip 同步到对应道具条目（仅运行态，不改文件），
+		 * 便于直接在 weapons.js 的武器条目里填写 itemEffect —— getItem 内部 getItemEffect 会读取并执行。
+		 */
+		const syncWeaponItemEntry = function (definitionId) {
+			const def = weaponDefs[definitionId];
+			const item = core.material && core.material.items && core.material.items[definitionId];
+			if (!def || !item) return;
+			if (def.itemEffect != null) item.itemEffect = def.itemEffect;
+			if (def.itemEffectTip != null && item.itemEffectTip == null) item.itemEffectTip = def.itemEffectTip;
+		};
+
+		/**
+		 * 通过样板标准 getItem 流程获得武器（与地图拾取武器完全一致）：
+		 * getItem → getItemEffect（执行 itemEffect）→ afterGetItem → addBackpackItem（入库）。
+		 * 仅当武器有对应道具条目（backpackWeaponId）时可用；临时注入 autoPlace 保持"购买后自动放入背包格"。
+		 */
+		const obtainWeaponViaGetItem = function (definitionId) {
+			try {
+				const materialItems = core.material && core.material.items;
+				if (!core.getItem || !materialItems) return false;
+				const item = materialItems[definitionId];
+				if (!item || !item.backpackWeaponId) return false;
+				if (!core.plugin || typeof core.plugin.addBackpackItem !== "function") return false;
+				syncWeaponItemEntry(definitionId);
+				const originalAddItem = core.plugin.addBackpackItem;
+				core.plugin.addBackpackItem = function (itemId, options) {
+					return originalAddItem.call(core.plugin, itemId, Object.assign({}, options || {}, { autoPlace: true }));
+				};
+				try {
+					// x/y 缺省：removeBlock 与楼层 afterGetItem 事件均无匹配，仅执行 itemEffect + 入库 + 提示，无副作用。
+					core.getItem(definitionId, 1);
+				} finally {
+					core.plugin.addBackpackItem = originalAddItem;
+				}
+				return true;
+			} catch (e) {
+				console.error("obtainWeaponViaGetItem", definitionId, e);
+				return false;
+			}
+		};
+
 		const grantWeapon = function (definitionId) {
 			const def = weaponDefs[definitionId];
 			if (!def) return false;
-			// 优先走背包系统插件 API；插件缺失/未挂载时兜底直接写入背包状态 flag
+			// 优先走样板标准 getItem（执行 itemEffect + 提示 + 由 afterGetItem 入库）；
+			// 武器无对应道具条目（如 I602~I617）时退回直接入库，避免 getItem 因缺少条目报错。
+			if (obtainWeaponViaGetItem(definitionId)) return true;
+			// 兜底：优先走背包系统插件 API；插件缺失/未挂载时直接写入背包状态 flag
 			// （__backpack_state__，未放置武器进 inventory，刷新界面后即可在库存看到）。
 			const backpack = core.plugin;
 			if (backpack && typeof backpack.addBackpackWeapon === "function") {
@@ -836,6 +927,11 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 
 		plugin.openBackpackShop = openShop;
 		plugin.openRewardPicker = openRewardPicker;
+		plugin.addOdds = addOdds;
+		plugin.getTypeOdds = getTypeOdds;
+		plugin.getWeaponWeight = getWeaponWeight;
+		plugin.rollWeaponOfRarity = rollWeaponOfRarity;
+		plugin.grantWeapon = grantWeapon;
 		plugin.closeBackpackShop = closeShop;
 		plugin.getShopState = function () {
 			return {

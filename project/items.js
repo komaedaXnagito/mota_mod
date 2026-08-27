@@ -1110,7 +1110,8 @@ var items_296f5d02_12fd_4166_a7c1_b5e830c9ee3a =
 		"name": "甄选吉他拨片",
 		"text": "null",
 		"backpackWeaponId": "I523",
-		"itemEffectTip": "，已放入背包"
+		"itemEffectTip": "，已放入背包",
+		"itemEffect": "core.plugin.addOdds('吉他', 1)"
 	},
 	"I524": {
 		"cls": "items",

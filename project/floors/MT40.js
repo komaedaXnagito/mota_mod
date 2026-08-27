@@ -545,187 +545,6 @@ main.floors.MT40=
                 ]
             }
         ],
-        "4,2": [
-            {
-                "type": "function",
-                "function": "function(){\nvar bool = true;\nvar loc_arr = [\n\t[3, 4],\n\t[4, 4],\n\t[5, 4],\n\t[7, 4],\n\t[8, 4],\n\t[9, 4],\n\t[2, 2],\n\t[3, 2],\n\t[4, 2],\n\t[8, 2],\n\t[9, 2],\n\t[10, 2],\n\t[6, 1]\n]\nloc_arr.forEach(loc => {\n\tif (core.getBlockCls(loc[0], loc[1]) == \"enemys\") {\n\t\tbool = false;\n\t}\n});\ncore.setFlag(\"open_yes\", bool)\n}"
-            },
-            {
-                "type": "if",
-                "condition": "flag:open_yes",
-                "true": [
-                    "\t[骑士队长,yellowKnight]这次先饶了你，下次碰到我会和你正式的决斗，你最好投降。",
-                    {
-                        "type": "playSound",
-                        "name": "door.mp3"
-                    },
-                    {
-                        "type": "setBlock",
-                        "number": "21",
-                        "loc": [
-                            [
-                                2,
-                                2
-                            ]
-                        ]
-                    },
-                    {
-                        "type": "setBlock",
-                        "number": "21",
-                        "loc": [
-                            [
-                                3,
-                                2
-                            ]
-                        ]
-                    },
-                    {
-                        "type": "setBlock",
-                        "number": "21",
-                        "loc": [
-                            [
-                                4,
-                                2
-                            ]
-                        ]
-                    },
-                    {
-                        "type": "setBlock",
-                        "number": "429",
-                        "loc": [
-                            [
-                                8,
-                                2
-                            ]
-                        ]
-                    },
-                    {
-                        "type": "setBlock",
-                        "number": "429",
-                        "loc": [
-                            [
-                                9,
-                                2
-                            ]
-                        ]
-                    },
-                    {
-                        "type": "setBlock",
-                        "number": "429",
-                        "loc": [
-                            [
-                                10,
-                                2
-                            ]
-                        ]
-                    },
-                    {
-                        "type": "setBlock",
-                        "number": "32",
-                        "loc": [
-                            [
-                                3,
-                                4
-                            ]
-                        ]
-                    },
-                    {
-                        "type": "setBlock",
-                        "number": "32",
-                        "loc": [
-                            [
-                                4,
-                                4
-                            ]
-                        ]
-                    },
-                    {
-                        "type": "setBlock",
-                        "number": "32",
-                        "loc": [
-                            [
-                                5,
-                                4
-                            ]
-                        ]
-                    },
-                    {
-                        "type": "setBlock",
-                        "number": "429",
-                        "loc": [
-                            [
-                                7,
-                                4
-                            ]
-                        ]
-                    },
-                    {
-                        "type": "setBlock",
-                        "number": "429",
-                        "loc": [
-                            [
-                                8,
-                                4
-                            ]
-                        ]
-                    },
-                    {
-                        "type": "setBlock",
-                        "number": "429",
-                        "loc": [
-                            [
-                                9,
-                                4
-                            ]
-                        ]
-                    },
-                    {
-                        "type": "show",
-                        "loc": [
-                            [
-                                6,
-                                1
-                            ]
-                        ]
-                    },
-                    {
-                        "type": "show",
-                        "loc": [
-                            [
-                                6,
-                                10
-                            ]
-                        ],
-                        "floorId": "MT42"
-                    },
-                    {
-                        "type": "setBlock",
-                        "number": "87",
-                        "loc": [
-                            [
-                                6,
-                                1
-                            ]
-                        ]
-                    },
-                    {
-                        "type": "hide",
-                        "loc": [
-                            [
-                                6,
-                                7
-                            ]
-                        ],
-                        "time": 0
-                    },
-                    {
-                        "type": "setValue",
-                        "name": "flag:40F",
-                        "value": "1"
-                    }
-                ]
-            }
-        ],
         "8,2": [
             {
                 "type": "function",
@@ -2401,7 +2220,7 @@ main.floors.MT40=
                     },
                     {
                         "type": "setBlock",
-                        "number": "373",
+                        "number": "429",
                         "loc": [
                             [
                                 8,
@@ -2411,7 +2230,7 @@ main.floors.MT40=
                     },
                     {
                         "type": "setBlock",
-                        "number": "373",
+                        "number": "429",
                         "loc": [
                             [
                                 9,
@@ -2421,7 +2240,7 @@ main.floors.MT40=
                     },
                     {
                         "type": "setBlock",
-                        "number": "373",
+                        "number": "429",
                         "loc": [
                             [
                                 10,
@@ -2461,7 +2280,7 @@ main.floors.MT40=
                     },
                     {
                         "type": "setBlock",
-                        "number": "373",
+                        "number": "429",
                         "loc": [
                             [
                                 7,
@@ -2471,7 +2290,7 @@ main.floors.MT40=
                     },
                     {
                         "type": "setBlock",
-                        "number": "373",
+                        "number": "429",
                         "loc": [
                             [
                                 8,
@@ -2481,7 +2300,188 @@ main.floors.MT40=
                     },
                     {
                         "type": "setBlock",
-                        "number": "373",
+                        "number": "429",
+                        "loc": [
+                            [
+                                9,
+                                4
+                            ]
+                        ]
+                    },
+                    {
+                        "type": "show",
+                        "loc": [
+                            [
+                                6,
+                                1
+                            ]
+                        ]
+                    },
+                    {
+                        "type": "show",
+                        "loc": [
+                            [
+                                6,
+                                10
+                            ]
+                        ],
+                        "floorId": "MT42"
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "87",
+                        "loc": [
+                            [
+                                6,
+                                1
+                            ]
+                        ]
+                    },
+                    {
+                        "type": "hide",
+                        "loc": [
+                            [
+                                6,
+                                7
+                            ]
+                        ],
+                        "time": 0
+                    },
+                    {
+                        "type": "setValue",
+                        "name": "flag:40F",
+                        "value": "1"
+                    }
+                ]
+            }
+        ],
+        "4,2": [
+            {
+                "type": "function",
+                "function": "function(){\nvar bool = true;\nvar loc_arr = [\n\t[3, 4],\n\t[4, 4],\n\t[5, 4],\n\t[7, 4],\n\t[8, 4],\n\t[9, 4],\n\t[2, 2],\n\t[3, 2],\n\t[4, 2],\n\t[8, 2],\n\t[9, 2],\n\t[10, 2],\n\t[6, 1]\n]\nloc_arr.forEach(loc => {\n\tif (core.getBlockCls(loc[0], loc[1]) == \"enemys\") {\n\t\tbool = false;\n\t}\n});\ncore.setFlag(\"open_yes\", bool)\n}"
+            },
+            {
+                "type": "if",
+                "condition": "flag:open_yes",
+                "true": [
+                    "\t[骑士队长,yellowKnight]这次先饶了你，下次碰到我会和你正式的决斗，你最好投降。",
+                    {
+                        "type": "playSound",
+                        "name": "door.mp3"
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                2,
+                                2
+                            ]
+                        ]
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                3,
+                                2
+                            ]
+                        ]
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "21",
+                        "loc": [
+                            [
+                                4,
+                                2
+                            ]
+                        ]
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "429",
+                        "loc": [
+                            [
+                                8,
+                                2
+                            ]
+                        ]
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "429",
+                        "loc": [
+                            [
+                                9,
+                                2
+                            ]
+                        ]
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "429",
+                        "loc": [
+                            [
+                                10,
+                                2
+                            ]
+                        ]
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "32",
+                        "loc": [
+                            [
+                                3,
+                                4
+                            ]
+                        ]
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "32",
+                        "loc": [
+                            [
+                                4,
+                                4
+                            ]
+                        ]
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "32",
+                        "loc": [
+                            [
+                                5,
+                                4
+                            ]
+                        ]
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "429",
+                        "loc": [
+                            [
+                                7,
+                                4
+                            ]
+                        ]
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "429",
+                        "loc": [
+                            [
+                                8,
+                                4
+                            ]
+                        ]
+                    },
+                    {
+                        "type": "setBlock",
+                        "number": "429",
                         "loc": [
                             [
                                 9,

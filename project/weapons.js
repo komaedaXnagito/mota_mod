@@ -1533,7 +1533,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"盾"
 		],
-		"synergyText": "被攻击时：20%概率使受到的伤害-7\n被攻击时：自身再生+1、奥义值+10%，敌方奥义值-10%\n∧内的盾牌触发被攻击效果时：自身格挡+1",
+		"synergyText": "被攻击时：50%概率使受到的伤害-7\n被攻击时：自身再生+1、奥义值+10%，敌方奥义值-10%\n∧内的盾牌触发被攻击效果时：自身格挡+1",
 		"combatRules": [
 			{
 				"id": "defenseDamageReduction",
@@ -1541,7 +1541,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				"conditions": [
 					{
 						"kind": "chance",
-						"base": 0.2
+						"base": 0.5
 					}
 				],
 				"effects": [
@@ -2959,7 +2959,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"盾"
 		],
-		"synergyText": "被攻击时：20%概率降低受到的5点伤害\n被攻击时：自身反射+1",
+		"synergyText": "被攻击时：50%概率降低受到的5点伤害\n被攻击时：自身反射+1",
 		"combatRules": [
 			{
 				"id": "chanceReduceDamage",
@@ -2967,7 +2967,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				"conditions": [
 					{
 						"kind": "chance",
-						"base": 0.2
+						"base": 0.5
 					}
 				],
 				"effects": [
@@ -3150,7 +3150,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"盾"
 		],
-		"synergyText": "被攻击时：20%概率使受到的伤害-10\n∧内的武器攻击时：自身格挡+2\n∧内的武器使用间隔-0.2、伤害+3",
+		"synergyText": "被攻击时：50%概率使受到的伤害-10\n∧内的武器攻击时：自身格挡+2\n∧内的武器使用间隔-0.2、伤害+3",
 		"synergyRules": [
 			{
 				"id": "nearbyWeaponBoost",
@@ -3194,7 +3194,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				"conditions": [
 					{
 						"kind": "chance",
-						"base": 0.2
+						"base": 0.5
 					}
 				],
 				"effects": [
@@ -5001,7 +5001,8 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"rarity": 3,
 		"weaponTypes": [
 			"道具"
-		]
+		],
+		"synergyText": "获取时，永久增加“吉他”出现概率"
 	},
 	"I524": {
 		"id": "吟游诗人之证",
@@ -6013,7 +6014,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				"conditions": [
 					{
 						"kind": "chance",
-						"base": 0.2
+						"base": 0.5
 					}
 				],
 				"effects": [
@@ -6025,7 +6026,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "被攻击时：20%概率使受到的伤害-7\n∧内的武器使用间隔-0.1",
+		"synergyText": "被攻击时：50%概率使受到的伤害-7\n∧内的武器使用间隔-0.1",
 		"rarity": 4,
 		"weaponTypes": [
 			"盾"
@@ -8083,7 +8084,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				"effects": [
 					{
 						"type": "nearbyChanceBonus",
-						"value": 0.2,
+						"value": 0.5,
 						"directions": [
 							"up",
 							"down",
@@ -8161,7 +8162,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "盾骑士的证书，最坚实的城墙！\n∧内的盾牌触发被攻击效果的概率+20%\n所有铳和斧伤害+3\n被攻击时：∧内每有1个盾牌，自身格挡+2、高扬+1",
+		"synergyText": "盾骑士的证书，最坚实的城墙！\n∧内的盾牌触发被攻击效果的概率+50%\n所有铳和斧伤害+3\n被攻击时：∧内每有1个盾牌，自身格挡+2、高扬+1",
 		"synergyRules": null
 	},
 	"I569": {
@@ -9710,7 +9711,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				"conditions": [
 					{
 						"kind": "chance",
-						"base": 0.2
+						"base": 0.5
 					}
 				],
 				"effects": [
@@ -9722,7 +9723,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "被攻击时：20%概率降低受到的5点伤害",
+		"synergyText": "被攻击时：50%概率降低受到的5点伤害",
 		"weaponTypes": [
 			"盾"
 		]
