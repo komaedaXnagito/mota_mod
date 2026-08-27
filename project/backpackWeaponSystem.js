@@ -536,9 +536,9 @@ var installBackpackWeaponSystem_41d4dd44_8f7d_4bbc_b890_80db42f1ad76 = function 
 
 		const calculatedEntries = safePlacedEntries.map(function (weaponEntry) {
 			const attributes = attributesByInstanceId[weaponEntry.instanceId];
-			// 主动武器的布局间隔最低为 0.01 回合（1 Tick）；原始 0 间隔永久锁定为 0。
+			// 主动武器的布局间隔最低为 0.1 回合（10 Tick）；原始 0 间隔永久锁定为 0。
 			attributes.attackInterval = Number(attributes.baseAttackInterval) > 0
-				? Math.max(0.01, Number(attributes.attackInterval) || 0)
+				? Math.max(0.1, Number(attributes.attackInterval) || 0)
 				: 0;
 			return attributes;
 		});

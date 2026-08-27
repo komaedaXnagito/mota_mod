@@ -1522,7 +1522,7 @@ test("0.25 攻击间隔在 100 Tick 实际攻击四次", () => {
 	runtime.destroy();
 });
 
-test("原始正间隔最低1 Tick，原始0间隔不受任何间隔增减影响", () => {
+test("原始正间隔最低10 Tick，原始0间隔不受任何间隔增减影响", () => {
 	const context = loadPure();
 	const rules = context.backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87;
 	const active = makeWeapon({
@@ -1550,13 +1550,13 @@ test("原始正间隔最低1 Tick，原始0间隔不受任何间隔增减影响"
 		]
 	});
 	const state = rules.createBattleState(makeInput({ weapons: [active, passive] }));
-	assert.equal(rules.getWeaponIntervalTicks(state, state.weapons[0]), 1,
-		"原始正间隔被减穿后仍保留1 Tick");
+	assert.equal(rules.getWeaponIntervalTicks(state, state.weapons[0]), 10,
+		"原始正间隔被减穿后仍保留10 Tick");
 	assert.equal(rules.getWeaponIntervalTicks(state, state.weapons[1]), 0,
 		"原始0间隔即使得到正向间隔修正也保持0");
 });
 
-test("布局联动同样锁定原始0间隔并给主动武器保留1 Tick", () => {
+test("布局联动同样锁定原始0间隔并给主动武器保留10 Tick", () => {
 	const core = {
 		material: { items: {} },
 		clone(value) { return value == null ? value : JSON.parse(JSON.stringify(value)); }
@@ -1587,7 +1587,7 @@ test("布局联动同样锁定原始0间隔并给主动武器保留1 Tick", () =
 		entry("active", 1, -2, 0),
 		entry("passive", 0, 2, 1)
 	]);
-	assert.equal(result.byInstanceId.active.attackInterval, 0.01);
+	assert.equal(result.byInstanceId.active.attackInterval, 0.1);
 	assert.equal(result.byInstanceId.passive.attackInterval, 0);
 	assert.equal(result.byInstanceId.passive.bonuses.length, 0,
 		"原始0间隔不应记录无效的间隔加成");

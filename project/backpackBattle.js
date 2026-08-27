@@ -75,10 +75,10 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 		return (backpackState.placed || []).map(function (entry) {
 			var attributes = clone(calculated.byInstanceId[entry.instanceId] || {});
 			attributes.hitRate = attributes.hitRate == null ? 1 : Number(attributes.hitRate);
-			// 是否能主动攻击由武器原始间隔决定：原始 0 永久锁定，原始正数最低 1 Tick。
+			// 是否能主动攻击由武器原始间隔决定：原始 0 永久锁定，原始正数最低 10 Tick。
 			var hasBaseAttackInterval = Number(attributes.baseAttackInterval) > 0;
 			attributes.attackInterval = hasBaseAttackInterval
-				? Math.max(0.01, Number(attributes.attackInterval) || 0)
+				? Math.max(0.1, Number(attributes.attackInterval) || 0)
 				: 0;
 			attributes.attackIntervalTicks = attributes.attackInterval > 0
 				? Math.max(1, Math.round(attributes.attackInterval * 100))
