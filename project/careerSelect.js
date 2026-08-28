@@ -527,7 +527,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		}
 	};
 	var TITLE_IMAGE_LAYOUT = {
-		landscape: { topRatio: 0.024, opacity: 0.86 },
+		landscape: { topRatio: 0.024, opacity: 0.72 },
 		portrait: { topRatio: 0.077, opacity: 1 }
 	};
 
