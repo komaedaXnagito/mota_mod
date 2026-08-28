@@ -59,6 +59,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	var titleCharacterMaskSource = null;
 	var titleCharacterMaskCache = {};
 	var titleCompositeCache = {};
+	var titleAnimatedComposite = null;
 	var buttonFrameImage = null;
 	var titleAnimationFrame = null;
 	var titleLastFrame = 0;
@@ -543,6 +544,11 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	};
 	// 最终蒙版中：人物为黑、背景为白，边缘已经包含 10px 羽化。
 	var TITLE_CHARACTER_MASK_PATH = "project/images/title-character-mask.png";
+	// 生成的人物轮廓比底图人物约大 9%，围绕背景焦点等比收缩后再参与遮罩。
+	var TITLE_CHARACTER_MASK_LAYOUT = {
+		landscape: { scale: 0.91, offsetX: 0, offsetY: 0 },
+		portrait: { scale: 0.91, offsetX: 0, offsetY: 0 }
+	};
 
 	var makeTitleButtonBox = function (centerX, centerY, width) {
 		var height = width / TITLE_BUTTON_LAYOUT.buttonAspectRatio;
@@ -654,24 +660,30 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		}
 	};
 
-	var getTitleCharacterMask = function (vertical, canvasWidth, canvasHeight) {
+	var getTitleCharacterMask = function (vertical, canvasWidth, canvasHeight, renderRatio) {
 		if (!titleCharacterMaskSource) return null;
-		var cacheKey = (vertical ? "portrait" : "landscape") + "@" + canvasWidth + "x" + canvasHeight;
+		renderRatio = renderRatio || 1;
+		var cacheKey = (vertical ? "portrait" : "landscape") + "@" +
+			canvasWidth + "x" + canvasHeight + "@" + renderRatio.toFixed(3);
 		if (titleCharacterMaskCache[cacheKey]) return titleCharacterMaskCache[cacheKey];
 
 		var fittedMask = document.createElement("canvas");
-		fittedMask.width = canvasWidth;
-		fittedMask.height = canvasHeight;
+		fittedMask.width = Math.max(1, Math.round(canvasWidth * renderRatio));
+		fittedMask.height = Math.max(1, Math.round(canvasHeight * renderRatio));
 		var fittedCtx = fittedMask.getContext("2d");
+		fittedCtx.setTransform(renderRatio, 0, 0, renderRatio, 0, 0);
+		fittedCtx.imageSmoothingEnabled = true;
+		if ("imageSmoothingQuality" in fittedCtx) fittedCtx.imageSmoothingQuality = "high";
 		var sourceWidth = titleCharacterMaskSource.width;
 		var sourceHeight = titleCharacterMaskSource.height;
-		var scale = Math.max(canvasWidth / sourceWidth, canvasHeight / sourceHeight);
-		var drawWidth = sourceWidth * scale;
-		var drawHeight = sourceHeight * scale;
+		var fitScale = Math.max(canvasWidth / sourceWidth, canvasHeight / sourceHeight);
+		var layout = vertical ? TITLE_CHARACTER_MASK_LAYOUT.portrait : TITLE_CHARACTER_MASK_LAYOUT.landscape;
+		var drawWidth = sourceWidth * fitScale * layout.scale;
+		var drawHeight = sourceHeight * fitScale * layout.scale;
 		// 与启动背景的 object-fit: cover / object-position 保持一致。
 		var positionX = vertical ? 0.57 : 0.5;
-		var drawX = (canvasWidth - drawWidth) * positionX;
-		var drawY = (canvasHeight - drawHeight) * 0.5;
+		var drawX = (canvasWidth - drawWidth) * positionX + layout.offsetX;
+		var drawY = (canvasHeight - drawHeight) * 0.5 + layout.offsetY;
 		fittedCtx.drawImage(titleCharacterMaskSource, drawX, drawY, drawWidth, drawHeight);
 
 		// 位图已完成 10px 羽化，这里只做与背景一致的 cover 适配。
@@ -683,7 +695,12 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		if (!titleImage || !titleImage.complete || !titleImage.naturalWidth) return null;
 		offsetY = offsetY || 0;
 		var canCache = offsetY === 0;
-		var cacheKey = (vertical ? "portrait" : "landscape") + "@" + canvasWidth + "x" + canvasHeight;
+		var renderRatio = titleCtx && titleCtx.canvas.width
+			? titleCtx.canvas.width / canvasWidth : 1;
+		var pixelWidth = Math.max(1, Math.round(canvasWidth * renderRatio));
+		var pixelHeight = Math.max(1, Math.round(canvasHeight * renderRatio));
+		var cacheKey = (vertical ? "portrait" : "landscape") + "@" +
+			canvasWidth + "x" + canvasHeight + "@" + renderRatio.toFixed(3);
 		if (canCache && titleCompositeCache[cacheKey]) return titleCompositeCache[cacheKey];
 		var layout = vertical ? TITLE_IMAGE_LAYOUT.portrait : TITLE_IMAGE_LAYOUT.landscape;
 		var maxWidth = vertical ? canvasWidth - 36 : 630;
@@ -693,18 +710,29 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		var drawHeight = titleImage.naturalHeight * scale;
 		var drawX = (canvasWidth - drawWidth) / 2;
 		var drawY = canvasHeight * layout.topRatio + offsetY;
-		var composite = document.createElement("canvas");
-		composite.width = canvasWidth;
-		composite.height = canvasHeight;
+		var composite = canCache ? document.createElement("canvas") : titleAnimatedComposite;
+		if (!composite || composite.width !== pixelWidth || composite.height !== pixelHeight) {
+			composite = document.createElement("canvas");
+			composite.width = pixelWidth;
+			composite.height = pixelHeight;
+			if (!canCache) titleAnimatedComposite = composite;
+		}
 		var compositeCtx = composite.getContext("2d");
+		compositeCtx.setTransform(1, 0, 0, 1, 0, 0);
+		compositeCtx.clearRect(0, 0, composite.width, composite.height);
+		compositeCtx.globalCompositeOperation = "source-over";
+		compositeCtx.globalAlpha = 1;
+		compositeCtx.setTransform(renderRatio, 0, 0, renderRatio, 0, 0);
+		compositeCtx.imageSmoothingEnabled = true;
+		if ("imageSmoothingQuality" in compositeCtx) compositeCtx.imageSmoothingQuality = "high";
 		compositeCtx.globalAlpha = layout.opacity;
 		compositeCtx.drawImage(titleImage, drawX, drawY, drawWidth, drawHeight);
 
-		var characterMask = getTitleCharacterMask(vertical, canvasWidth, canvasHeight);
+		var characterMask = getTitleCharacterMask(vertical, canvasWidth, canvasHeight, renderRatio);
 		if (characterMask) {
 			compositeCtx.globalAlpha = 1;
 			compositeCtx.globalCompositeOperation = "destination-out";
-			compositeCtx.drawImage(characterMask, 0, 0);
+			compositeCtx.drawImage(characterMask, 0, 0, canvasWidth, canvasHeight);
 		}
 		if (canCache) titleCompositeCache[cacheKey] = composite;
 		return composite;
@@ -715,7 +743,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		if (!composite) return;
 		titleCtx.save();
 		titleCtx.globalAlpha = opacity;
-		titleCtx.drawImage(composite, 0, 0);
+		titleCtx.drawImage(composite, 0, 0, canvasWidth, canvasHeight);
 		titleCtx.restore();
 	};
 
@@ -744,6 +772,8 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		var width = vertical ? 416 : 676;
 		var height = vertical ? 676 : 416;
 		core.maps._setHDCanvasSize(titleCtx, width, height);
+		titleCtx.imageSmoothingEnabled = true;
+		if ("imageSmoothingQuality" in titleCtx) titleCtx.imageSmoothingQuality = "high";
 		titleCtx.clearRect(0, 0, width, height);
 		titleHitboxes = [];
 
