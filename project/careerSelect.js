@@ -483,8 +483,13 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		titleCtx.font = (weight || "normal") + " " + size + "px 'Microsoft YaHei', sans-serif";
 		titleCtx.fillStyle = color || "#fff";
 		titleCtx.textAlign = "center";
-		titleCtx.textBaseline = "middle";
-		titleCtx.fillText(textValue, x, y);
+		// Canvas 的 middle 基线并不是字形视觉中心；按实际字形边界反推基线，
+		// 让中文文字的可见区域在按钮中严格上下居中。
+		titleCtx.textBaseline = "alphabetic";
+		var metrics = titleCtx.measureText(textValue);
+		var ascent = metrics.actualBoundingBoxAscent || size * 0.78;
+		var descent = metrics.actualBoundingBoxDescent || size * 0.22;
+		titleCtx.fillText(textValue, x, y + (ascent - descent) / 2);
 		titleCtx.restore();
 	};
 
@@ -495,10 +500,15 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	var BUTTON_GOLD = "#d0a068";
 	var BUTTON_GOLD_LIGHT = "#f0d0a0";
 	var BUTTON_GOLD_DARK = "#987850";
-	var BUTTON_OPENING_ASPECT = BUTTON_FRAME_OPENING.w / BUTTON_FRAME_OPENING.h;
 	// 标题按钮的唯一尺寸/位置配置。后续想调整大小，只改 widthRatio；
+	// 想调整扁平程度则改 buttonAspectRatio，数值越大按钮越扁。
 	// x、y、高度、字号、龙纹框和点击区域都会自动跟随。
 	var TITLE_BUTTON_LAYOUT = {
+		buttonAspectRatio: 4.6,
+		primaryFontHeightRatio: 0.44,
+		secondaryFontHeightRatio: 0.48,
+		primaryFontWidthRatio: 0.095,
+		secondaryFontWidthRatio: 0.125,
 		landscape: {
 			primaryWidthRatio: 0.21,
 			secondaryWidthRatio: 0.15,
@@ -514,7 +524,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	};
 
 	var makeTitleButtonBox = function (centerX, centerY, width) {
-		var height = width / BUTTON_OPENING_ASPECT;
+		var height = width / TITLE_BUTTON_LAYOUT.buttonAspectRatio;
 		return {
 			x: centerX - width / 2,
 			y: centerY - height / 2,
@@ -561,7 +571,16 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 
 	var drawTitleButton = function (index, textValue, box, accent, primary) {
 		var selected = index === titleSelection;
-		var fontSize = Math.max(1, Math.round(box.h * (primary ? 0.46 : 0.52)));
+		var fontHeightRatio = primary
+			? TITLE_BUTTON_LAYOUT.primaryFontHeightRatio
+			: TITLE_BUTTON_LAYOUT.secondaryFontHeightRatio;
+		var fontWidthRatio = primary
+			? TITLE_BUTTON_LAYOUT.primaryFontWidthRatio
+			: TITLE_BUTTON_LAYOUT.secondaryFontWidthRatio;
+		var fontSize = Math.max(1, Math.round(Math.max(
+			box.h * fontHeightRatio,
+			box.w * fontWidthRatio
+		)));
 		var gradient = titleCtx.createLinearGradient(box.x, box.y, box.x + box.w, box.y + box.h);
 		gradient.addColorStop(0, selected ? BUTTON_GOLD_LIGHT : "rgba(15,24,45,0.88)");
 		gradient.addColorStop(0.48, selected ? accent : "rgba(10,17,32,0.91)");
