@@ -495,6 +495,46 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	var BUTTON_GOLD = "#d0a068";
 	var BUTTON_GOLD_LIGHT = "#f0d0a0";
 	var BUTTON_GOLD_DARK = "#987850";
+	var BUTTON_OPENING_ASPECT = BUTTON_FRAME_OPENING.w / BUTTON_FRAME_OPENING.h;
+	// 标题按钮的唯一尺寸/位置配置。后续想调整大小，只改 widthRatio；
+	// x、y、高度、字号、龙纹框和点击区域都会自动跟随。
+	var TITLE_BUTTON_LAYOUT = {
+		landscape: {
+			primaryWidthRatio: 0.21,
+			secondaryWidthRatio: 0.15,
+			primaryCenterYRatio: 0.606,
+			secondaryCenterYRatio: 0.837
+		},
+		portrait: {
+			primaryWidthRatio: 0.34,
+			secondaryWidthRatio: 0.17,
+			primaryCenterYRatio: 0.7,
+			secondaryCenterYRatio: 0.867
+		}
+	};
+
+	var makeTitleButtonBox = function (centerX, centerY, width) {
+		var height = width / BUTTON_OPENING_ASPECT;
+		return {
+			x: centerX - width / 2,
+			y: centerY - height / 2,
+			w: width,
+			h: height
+		};
+	};
+
+	var getTitleButtonLayout = function (width, height, vertical) {
+		var config = vertical ? TITLE_BUTTON_LAYOUT.portrait : TITLE_BUTTON_LAYOUT.landscape;
+		var primaryWidth = width * config.primaryWidthRatio;
+		var secondaryWidth = width * config.secondaryWidthRatio;
+		var secondaryY = height * config.secondaryCenterYRatio;
+		return {
+			primary: makeTitleButtonBox(width / 2, height * config.primaryCenterYRatio, primaryWidth),
+			secondary: [1 / 6, 1 / 2, 5 / 6].map(function (centerXRatio) {
+				return makeTitleButtonBox(width * centerXRatio, secondaryY, secondaryWidth);
+			})
+		};
+	};
 
 	var drawButtonFrame = function (box, accent, selected) {
 		if (!buttonFrameImage || !buttonFrameImage.complete || !buttonFrameImage.naturalWidth) return;
@@ -521,6 +561,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 
 	var drawTitleButton = function (index, textValue, box, accent, primary) {
 		var selected = index === titleSelection;
+		var fontSize = Math.max(1, Math.round(box.h * (primary ? 0.46 : 0.52)));
 		var gradient = titleCtx.createLinearGradient(box.x, box.y, box.x + box.w, box.y + box.h);
 		gradient.addColorStop(0, selected ? BUTTON_GOLD_LIGHT : "rgba(15,24,45,0.88)");
 		gradient.addColorStop(0.48, selected ? accent : "rgba(10,17,32,0.91)");
@@ -529,7 +570,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		titleCtx.fillStyle = gradient;
 		titleCtx.fill();
 		drawButtonFrame(box, accent, selected);
-		titleText(textValue, box.x + box.w / 2, box.y + box.h / 2 + 1, primary ? 18 : 14, "#ffffff", "bold");
+		titleText(textValue, box.x + box.w / 2, box.y + box.h / 2, fontSize, "#ffffff", "bold");
 		titleHitboxes.push({ type: "title", index: index, x: box.x, y: box.y, w: box.w, h: box.h });
 	};
 
@@ -572,21 +613,12 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		titleCtx.fillStyle = glow;
 		titleCtx.fillRect(0, 0, width, height);
 
-		if (vertical) {
-			drawTitleImage(true, width);
-			drawTitleButton(0, "开始冒险", { x: 123, y: 453, w: 170, h: 40 }, BUTTON_GOLD, true);
-			drawTitleButton(1, "续关再战", { x: 31, y: 572, w: 78, h: 28 }, BUTTON_GOLD, false);
-			drawTitleButton(3, "武器图鉴", { x: 169, y: 572, w: 78, h: 28 }, BUTTON_GOLD, false);
-			drawTitleButton(2, "精彩回放", { x: 307, y: 572, w: 78, h: 28 }, BUTTON_GOLD, false);
-			// titleText("开始后选择你的初始职业", 208, 650, 12, "rgba(255,255,255,0.76)", "normal");
-		} else {
-			drawTitleImage(false, width);
-			drawTitleButton(0, "开始冒险", { x: 253, y: 233, w: 170, h: 38 }, BUTTON_GOLD, true);
-			drawTitleButton(1, "续关再战", { x: 54, y: 333, w: 126, h: 30 }, BUTTON_GOLD, false);
-			drawTitleButton(3, "武器图鉴", { x: 275, y: 333, w: 126, h: 30 }, BUTTON_GOLD, false);
-			drawTitleButton(2, "精彩回放", { x: 496, y: 333, w: 126, h: 30 }, BUTTON_GOLD, false);
-			// titleText("开始后选择你的初始职业", 338, 405, 11, "rgba(255,255,255,0.76)", "normal");
-		}
+		drawTitleImage(vertical, width);
+		var buttonLayout = getTitleButtonLayout(width, height, vertical);
+		drawTitleButton(0, "开始冒险", buttonLayout.primary, BUTTON_GOLD, true);
+		drawTitleButton(1, "续关再战", buttonLayout.secondary[0], BUTTON_GOLD, false);
+		drawTitleButton(3, "武器图鉴", buttonLayout.secondary[1], BUTTON_GOLD, false);
+		drawTitleButton(2, "精彩回放", buttonLayout.secondary[2], BUTTON_GOLD, false);
 	};
 
 	var runTitleAction = function (index) {
@@ -765,6 +797,8 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		hideTitle: hideTitle,
 		getSelectedCareer: function () { return CAREERS[selectedIndex].id; },
 		getCareers: function () { return CAREERS.slice(); },
+		titleButtonLayout: TITLE_BUTTON_LAYOUT,
+		getTitleButtonLayout: getTitleButtonLayout,
 		render: render,
 		renderTitle: renderTitle
 	};
