@@ -512,14 +512,16 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		landscape: {
 			primaryWidthRatio: 0.21,
 			secondaryWidthRatio: 0.15,
+			secondaryGroupSpanRatio: 0.42,
 			primaryCenterYRatio: 0.606,
-			secondaryCenterYRatio: 0.837
+			secondaryCenterYRatio: 0.8
 		},
 		portrait: {
 			primaryWidthRatio: 0.34,
 			secondaryWidthRatio: 0.17,
+			secondaryGroupSpanRatio: 0.46,
 			primaryCenterYRatio: 0.7,
-			secondaryCenterYRatio: 0.867
+			secondaryCenterYRatio: 0.81
 		}
 	};
 
@@ -538,10 +540,11 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		var primaryWidth = width * config.primaryWidthRatio;
 		var secondaryWidth = width * config.secondaryWidthRatio;
 		var secondaryY = height * config.secondaryCenterYRatio;
+		var secondaryGroupSpan = width * config.secondaryGroupSpanRatio;
 		return {
 			primary: makeTitleButtonBox(width / 2, height * config.primaryCenterYRatio, primaryWidth),
-			secondary: [1 / 6, 1 / 2, 5 / 6].map(function (centerXRatio) {
-				return makeTitleButtonBox(width * centerXRatio, secondaryY, secondaryWidth);
+			secondary: [-0.5, 0, 0.5].map(function (groupPosition) {
+				return makeTitleButtonBox(width / 2 + secondaryGroupSpan * groupPosition, secondaryY, secondaryWidth);
 			})
 		};
 	};
