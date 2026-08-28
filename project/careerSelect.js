@@ -527,8 +527,8 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		}
 	};
 	var TITLE_IMAGE_LAYOUT = {
-		landscape: { topRatio: 0.024, opacityBoost: 0.28 },
-		portrait: { topRatio: 0.077, opacityBoost: 0 }
+		landscape: { topRatio: 0.024, opacity: 0.86 },
+		portrait: { topRatio: 0.077, opacity: 1 }
 	};
 
 	var makeTitleButtonBox = function (centerX, centerY, width) {
@@ -614,12 +614,8 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		var drawX = (canvasWidth - drawWidth) / 2;
 		var drawY = canvasHeight * layout.topRatio;
 		titleCtx.save();
+		titleCtx.globalAlpha = layout.opacity;
 		titleCtx.drawImage(titleImage, drawX, drawY, drawWidth, drawHeight);
-		// 第二次轻叠绘只增强素材中的半透明像素，完全不透明区域不会改变颜色。
-		if (layout.opacityBoost > 0) {
-			titleCtx.globalAlpha = layout.opacityBoost;
-			titleCtx.drawImage(titleImage, drawX, drawY, drawWidth, drawHeight);
-		}
 		titleCtx.restore();
 	};
 
