@@ -755,14 +755,14 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			},
 			{
-				"id": "hpBelow80DamageUp",
+				"id": "hpLostDamageBonus",
 				"trigger": "beforeAttack",
 				"conditions": [
 					{
-						"kind": "hpPercent",
+						"kind": "hpLost",
 						"target": "self",
-						"operator": "lte",
-						"value": 0.8
+						"operator": "gte",
+						"value": 20
 					}
 				],
 				"effects": [
@@ -774,7 +774,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			}
 		],
-		"synergyText": "攻击时：自身HP-5\n自身HP低于最大HP的80%时：本武器伤害+10"
+		"synergyText": "攻击时：自身HP-5\n自身HP累计损失20后：本武器伤害+10"
 	},
 	"I396": {
 		"id": "windDagger",
@@ -4079,47 +4079,48 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"枪"
 		],
-		"synergyText": "战斗开始时：∧内每有1个武器，自身HP-50\n自身HP低于最大HP的50%时：本武器攻击次数+2、伤害+20",
+		"synergyText": "战斗开始时：∧内每有1个武器，自身HP-50\n自身HP累计损失200后：本武器攻击次数+2、伤害+20",
 		"combatRules": [
 			{
-				"id": "lowHpAttackAndDamage",
-				"trigger": "beforeAttack",
-				"conditions": [
-					{
-						"kind": "hpPercent",
-						"target": "self",
-						"operator": "lte",
-						"value": 0.5
-					}
-				],
-				"effects": [
-					{
-						"type": "modifyCurrentAttackCount",
-						"operation": "add",
-						"value": 2
-					},
-					{
-						"type": "modifyAttackDamage",
-						"operation": "add",
-						"value": 20
-					}
-				]
-			},
-			{
+				"id": "startDamageByNearby",
 				"trigger": "battleStart",
 				"effects": [
 					{
 						"type": "nearbyDamageSelf",
-						"value": 50,
 						"directions": [
 							"up",
-							"down"
+							"down",
+							"left",
+							"right"
 						],
 						"distance": 1,
-						"relation": "sideBox",
-						"span": 3,
-						"filter": {},
-						"every": 1
+						"every": 1,
+						"value": 50
+					}
+				]
+			},
+			{
+				"id": "hpLostBonus",
+				"trigger": "afterAttack",
+				"once": true,
+				"conditions": [
+					{
+						"kind": "hpLost",
+						"target": "self",
+						"operator": "gte",
+						"value": 200
+					}
+				],
+				"effects": [
+					{
+						"type": "selfExtraAttack",
+						"value": 2
+					},
+					{
+						"type": "modifyWeaponStat",
+						"stat": "attack",
+						"operation": "add",
+						"value": 20
 					}
 				]
 			}
@@ -4510,7 +4511,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			312
 		],
 		"sourceName": "格里姆尼尔",
-		"rarity": 5,
+		"rarity": 4,
 		"attackInterval": 8,
 		"synergyText": "战斗开始时：自身格挡+20\n攻击时：自身反射+3",
 		"minAttack": 3,
@@ -5254,7 +5255,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				"conditions": [
 					{
 						"kind": "chance",
-						"base": 0.2
+						"base": 0.5
 					}
 				],
 				"effects": [
@@ -5295,7 +5296,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"盾"
 		],
-		"synergyText": "被攻击时：20%概率使受到的伤害-5\n被攻击时：∧内每有1个盾牌，自身格挡+1"
+		"synergyText": "被攻击时：50%概率使受到的伤害-5\n被攻击时：∧内每有1个盾牌，自身格挡+1"
 	},
 	"I528": {
 		"id": "塔赫尔玛萨拉",
@@ -6712,7 +6713,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			312
 		],
 		"sourceName": "欧罗巴",
-		"rarity": 5,
+		"rarity": 4,
 		"weaponTypes": [
 			"召唤石"
 		]
@@ -6998,7 +6999,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			312
 		],
 		"sourceName": "湿婆",
-		"rarity": 5,
+		"rarity": 4,
 		"synergyRules": [
 			{
 				"id": "allWeaponsAttackPlus1",
@@ -7456,41 +7457,47 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"ultimateGain": 10,
 		"combatRules": [
 			{
-				"id": "lowHpUltimateOnce",
-				"trigger": "afterTakeDamage",
+				"id": "hpLostUltimate",
+				"trigger": "afterAttack",
 				"once": true,
 				"conditions": [
 					{
-						"kind": "hpPercent",
+						"kind": "hpLost",
 						"target": "self",
-						"operator": "lte",
-						"value": 0.5
+						"operator": "gte",
+						"value": 200
 					}
 				],
 				"effects": [
 					{
 						"type": "modifyUltimate",
-						"operation": "add",
+						"operation": "set",
 						"value": 100
 					}
 				]
 			},
 			{
-				"id": "wolfSkinDamageBonus",
-				"trigger": "battleStart",
-				"effects": [
+				"id": "wolfSkinDamage",
+				"trigger": "beforeAttack",
+				"conditions": [
 					{
-						"type": "statusDamageBonus",
-						"id": "wolfSkinDmg",
+						"kind": "status",
 						"target": "self",
 						"status": "wolfSkin",
-						"every": 1,
+						"operator": "gte",
+						"value": 1
+					}
+				],
+				"effects": [
+					{
+						"type": "modifyAttackDamage",
+						"operation": "add",
 						"value": 4
 					}
 				]
 			}
 		],
-		"synergyText": "自身HP低于最大HP的50%时：自身奥义值+100%（每场战斗仅触发1次）\n狼皮效果中：本武器伤害+4"
+		"synergyText": "自身HP累计损失200后：自身奥义值+100%（每场战斗仅触发1次）\n狼皮效果中：本武器伤害+4"
 	},
 	"I560": {
 		"id": "狂战士之证",
@@ -8247,7 +8254,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			312
 		],
 		"sourceName": "神域守护·布洛蒂亚",
-		"rarity": 5,
+		"rarity": 4,
 		"weaponTypes": [
 			"召唤石"
 		],
@@ -8637,18 +8644,18 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"饮料"
 		],
-		"synergyText": "自身HP低于50%时：回复30HP、随机净化1个弱体效果，并立即发动∧内的饮料效果（每场战斗仅触发1次）",
+		"synergyText": "自身HP累计损失200时：回复30HP、随机净化1个弱体效果，并立即发动∧内的饮料效果（每场战斗仅触发1次）",
 		"combatRules": [
 			{
-				"id": "lowHpHealCleanseDrink",
-				"trigger": "afterTakeDamage",
+				"id": "hpLostTrigger",
+				"trigger": "afterAttack",
 				"once": true,
 				"conditions": [
 					{
-						"kind": "hpPercent",
+						"kind": "hpLost",
 						"target": "self",
-						"operator": "lte",
-						"value": 0.5
+						"operator": "gte",
+						"value": 200
 					}
 				],
 				"effects": [
@@ -8666,13 +8673,13 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 						"directions": [
 							"up"
 						],
-						"rotate": false,
 						"distance": 1,
 						"filter": {
 							"weaponTypes": [
 								"饮料"
 							]
-						}
+						},
+						"rotate": false
 					}
 				]
 			}
@@ -9894,12 +9901,11 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		],
 		"sourceName": "阿斯克勒庇俄斯之杖",
 		"rarity": 4,
-		"synergyText": "攻击命中时：自身MP+1，并净化1个弱体效果\n自身HP低于最大HP的50%且处于黑之魅力效果中时：回复100HP（每场战斗仅触发1次）",
+		"synergyText": "攻击命中时：自身MP+1，并净化1个弱体效果\n自身HP累计损失200点且处于黑之魅力效果中时：回复200HP（每场战斗仅触发1次）",
 		"combatRules": [
 			{
 				"id": "hitMpCleanse",
 				"trigger": "afterHit",
-				"conditions": [],
 				"effects": [
 					{
 						"type": "applyStatus",
@@ -9914,15 +9920,15 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			},
 			{
-				"id": "blackCharmLowHpHeal",
-				"trigger": "afterTakeDamage",
+				"id": "hpLostBlackCharmHeal",
+				"trigger": "afterAttack",
 				"once": true,
 				"conditions": [
 					{
-						"kind": "hpPercent",
+						"kind": "hpLost",
 						"target": "self",
-						"operator": "lte",
-						"value": 0.5
+						"operator": "gte",
+						"value": 200
 					},
 					{
 						"kind": "status",
@@ -9936,7 +9942,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 					{
 						"type": "heal",
 						"target": "self",
-						"value": 100
+						"value": 200
 					}
 				]
 			}

@@ -93,5 +93,14 @@ var weaponRecipes_7f2e9c4a_3b5d_4f8a_9c1e_6d4b8a2f9c31 = {
 		{ "id": "r_example_68", "a": "I406", "b": "I614", "result": "I615" },
 		{ "id": "r_example_68", "a": "I406", "b": "I615", "result": "I616" },
 		{ "id": "r_example_68", "a": "I406", "b": "I616", "result": "I617" },
+		{ "id": "r_example_69", "a": "I600", "b": "I601", "result": "I558" },
+		{ "id": "r_example_70", "a": "I400", "b": "I564", "result": "I413" },
+		{ "id": "r_example_71", "a": "I400", "b": "I578", "result": "I413" },
+		{ "id": "r_example_72", "a": "I402", "b": "I518", "result": "I412" },
+		{ "id": "r_example_73", "a": "I402", "b": "I520", "result": "I412" },
+		{ "id": "r_example_74", "a": "I402", "b": "I557", "result": "I412" },
+		{ "id": "r_example_75", "a": "I402", "b": "I564", "result": "I412" },
+		{ "id": "r_example_76", "a": "I402", "b": "I578", "result": "I412" },
+		{ "id": "r_example_77", "a": "I402", "b": "I597", "result": "I412" },
 	]
 };
