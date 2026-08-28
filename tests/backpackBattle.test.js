@@ -2067,7 +2067,7 @@ test("暗黑被提·拟像固定攻击次数+5，5层刻印增伤无视格挡，
 	const definitions = context.weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44;
 	const definition = definitions.I551;
 	assert.equal(definition.synergyText,
-		"本武器攻击次数+5\n自身刻印达到5层时：本武器伤害+5，且造成的伤害无视敌方格挡\n攻击时：自身HP-5");
+		"本武器攻击次数+5\n自身刻印达到5层时：本武器伤害+5，且造成的伤害无视敌方格挡\n攻击时：自身HP-5\n自身HP累计损失20点后：本武器伤害+10");
 	assert.ok(!definition.combatRules.some((rule) => rule.id === "battleStartMark"),
 		"武器不再在战斗开始时自动获得刻印");
 

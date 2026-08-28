@@ -24,8 +24,8 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			[70, 20, 8, 2, 0],
 			[55, 25, 17, 3, 0],
 			[40, 30, 25, 5, 0],
-			[30, 25, 37, 8, 0],
-			[15, 20, 54, 10, 1]
+			[30, 24, 37, 8, 1],
+			[15, 20, 50, 10, 5]
 		];
 		const SLOT_COUNT = 5;            // 每次刷新出现的武器数量。
 		const REFRESH_COST_BASE = 10;    // 刷新初始价格。

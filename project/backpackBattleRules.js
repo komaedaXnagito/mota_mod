@@ -293,6 +293,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		var damage = fixed(remainingRawDamage);
 		target.hp = fixed(target.hp - damage);
 		target.damageTaken = fixed((target.damageTaken || 0) + damage);
+		// 累计 HP 损失：统计所有来源（被攻击、持续伤害、武器自伤等）实际扣减的血量，供 hpLost 条件使用。
+		if (damage > 0) target.totalHpLost = fixed((target.totalHpLost || 0) + damage);
 		if (damage > 0 && !options.silent) {
 			appendLog(state, target.name + "受到" + damage + "点" + (options.direct ? "直接" : "") + "伤害", "damage");
 		}
@@ -322,8 +324,11 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 	};
 
 	var subtractPlayerHp = function (state, amount) {
-		var nextHp = state.player.hp - Math.max(0, toNumber(amount, 0));
+		var loss = Math.max(0, toNumber(amount, 0));
+		var nextHp = state.player.hp - loss;
 		state.player.hp = fixed(state.allowNegativePlayerHp ? nextHp : Math.max(0, nextHp));
+		// 武器自伤也计入累计 HP 损失（与 applyDamage 的 totalHpLost 同一统计口径）。
+		if (loss > 0) state.player.totalHpLost = fixed((state.player.totalHpLost || 0) + loss);
 	};
 
 	var getEffectiveHitRate = function (side, baseHitRate) {
@@ -794,6 +799,13 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 					return sum + Math.max(0, toNumber(buff.stacks, 0));
 				}, 0);
 				return compare(buffTotal, condition.operator || "gte", toNumber(condition.value, 1));
+			}
+			if (condition.kind === "hpLost") {
+				// 累计 HP 损失条件：本场战斗所有来源（被攻击、持续伤害、武器自伤）累计损失的血量
+				// （如"自身HP累计损失20点后"：target self、operator gte、value 20）。
+				var lostSide = getSide(state, resolveSideKey(condition.target || "self", context.sourceSide));
+				var lostTotal = lostSide ? (Number(lostSide.totalHpLost) || 0) : 0;
+				return compare(lostTotal, condition.operator || "gte", toNumber(condition.value, 20));
 			}
 			if (condition.kind === "attackOrigin") {
 				return compare(context.attackOrigin, condition.operator || "eq", condition.value || "normal");
