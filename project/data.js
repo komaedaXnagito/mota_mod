@@ -388,7 +388,7 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			"atk": 100,
 			"def": 100,
 			"mdef": 0,
-			"money": 300,
+			"money": 999999,
 			"exp": 0,
 			"equipment": [],
 			"items": {
