@@ -45,7 +45,7 @@ main.floors.MT1=
                     "action": [
                         {
                             "type": "function",
-                            "function": "function(){\ncore.plugin.addOdds('剑', 1)\n}"
+                            "function": "function(){\ncore.plugin.addOdds('剑', 1);\ncore.setHeroIcon('sword_walk.png');\n}"
                         }
                     ]
                 },

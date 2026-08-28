@@ -14,12 +14,13 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 			tagline: "攻守兼备的近战起点",
 			color: "#ffb45b",
 			accent: "#ff6b4a",
-			portrait: "career-sword.png",
+			portrait: "sword_character.png",
 			portraitFilter: "none",
 			promotions: ["狂战士", "双剑士", "盾誓士", "魔剑士"],
 			poolTypes: ["剑", "盾", "短", "斧"],
 			poolPreview: "七星剑、修瓦利耶之剑、真龙之盾",
-			unlockText: "29层解锁刀类；狂战士额外解锁专属斧。"
+			unlockText: "29层解锁刀类；狂战士额外解锁专属斧。",
+			walk: "sword_walk.png"
 		},
 		{
 			id: "琴",
@@ -65,6 +66,9 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	var titleLastFrame = 0;
 	var titleEntranceStart = null;
 	var titleEntrancePlayed = false;
+	var titleEntrancePending = false;
+	var titleEntranceStartScheduled = false;
+	var titleEntranceVisibilityObserver = null;
 	var titleHitboxes = [];
 	var titleSelection = 0;
 	var selectedIndex = 0;
@@ -238,18 +242,28 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		ctx.fillRect(box.x, box.y + box.h - 72, box.w, 72);
 		ctx.restore();
 		strokeRoundRect(box.x, box.y, box.w, box.h, 12, career.color, 2);
-		drawText("临时职业立绘", box.x + box.w / 2, box.y + box.h - 16, 12, "#ffffff", "center", "bold");
+		// drawText("临时职业立绘", box.x + box.w / 2, box.y + box.h - 16, 12, "#ffffff", "center", "bold");
 	};
 
 	var drawHeroSprite = function (x, y, size, career) {
 		fillRoundRect(x, y, size, size, 9, "rgba(5,10,22,0.72)");
 		strokeRoundRect(x, y, size, size, 9, career.color, 1.5);
 		var heroImage = core.material && core.material.images ? core.material.images.hero : null;
+		if (career.walk && core.material?.images?.images?.[career.walk]) {
+			heroImage = core.material.images.images[career.walk]
+		}
+		if (career.walk && core.material?.images?.images?.[career.walk]) {
+			heroImage = core.material.images.images[career.walk]
+		}
+
 		if (heroImage && heroImage.width && heroImage.height) {
 			var frameWidth = heroImage.width / 4;
 			var frameHeight = heroImage.height / 4;
 			ctx.imageSmoothingEnabled = false;
-			ctx.drawImage(heroImage, walkFrame * frameWidth, 0, frameWidth, frameHeight, x + 8, y + 8, size - 16, size - 16);
+			const smallSize = 15;
+			const renderW = frameWidth - smallSize * (frameWidth / frameHeight);
+			const renderH = frameHeight - smallSize;
+			ctx.drawImage(heroImage, walkFrame * frameWidth, 0, frameWidth, frameHeight, x + size / 2 - renderW / 2 + 1 , y + size / 2 - renderH / 2, renderW, renderH);
 			ctx.imageSmoothingEnabled = true;
 		} else drawText("勇", x + size / 2, y + size / 2, 24, career.color, "center", "bold");
 	};
@@ -316,7 +330,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		drawText(career.name, 422, 80, 25, "#ffffff", "left", "bold");
 		drawText(career.id + "系初始职业", 422, 105, 12, career.color, "left", "bold");
 		drawHeroSprite(596, 70, 48, career);
-		drawText("行走图：勇者（临时）", 644, 126, 10, "#93a0b6", "right", "normal");
+		// drawText("行走图：勇者（临时）", 644, 126, 10, "#93a0b6", "right", "normal");
 
 		drawText("进一步转职", 422, 147, 13, "#ffffff", "left", "bold");
 		var promotionBottom = drawPromotions(career, 422, 163, 224, false);
@@ -748,6 +762,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	};
 
 	var getTitleEntranceState = function () {
+		if (titleEntrancePending) return { opacity: 0, eased: 0 };
 		if (titleEntranceStart == null) return { opacity: 1, eased: 1 };
 		var now = window.performance && window.performance.now
 			? window.performance.now() : Date.now();
@@ -759,6 +774,37 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 			opacity: progress,
 			eased: 1 - Math.pow(1 - progress, 3)
 		};
+	};
+
+	var startTitleEntranceWhenVisible = function () {
+		if (!titleEntrancePending || titleEntranceStartScheduled ||
+			!titleCanvas || titleCanvas.style.display === "none") return;
+		var openingOverlay = document.getElementById("startImageBackgroundDiv");
+		if (openingOverlay && getComputedStyle(openingOverlay).display !== "none") {
+			if (!titleEntranceVisibilityObserver) {
+				titleEntranceVisibilityObserver = new MutationObserver(startTitleEntranceWhenVisible);
+				titleEntranceVisibilityObserver.observe(openingOverlay, {
+					attributes: true,
+					attributeFilter: ["style"]
+				});
+			}
+			return;
+		}
+		if (titleEntranceVisibilityObserver) {
+			titleEntranceVisibilityObserver.disconnect();
+			titleEntranceVisibilityObserver = null;
+		}
+		titleEntranceStartScheduled = true;
+		// 先让首页 Canvas 的透明首帧真正提交，再从下一帧开始计时。
+		window.requestAnimationFrame(function () {
+			window.requestAnimationFrame(function (timestamp) {
+				titleEntranceStartScheduled = false;
+				if (!titleEntrancePending || !titleCanvas || titleCanvas.style.display === "none") return;
+				titleEntrancePending = false;
+				titleEntranceStart = timestamp;
+				renderTitle();
+			});
+		});
 	};
 
 	var renderTitle = function () {
@@ -825,8 +871,8 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		titleSelection = 0;
 		if (!titleEntrancePlayed) {
 			titleEntrancePlayed = true;
-			titleEntranceStart = window.performance && window.performance.now
-				? window.performance.now() : Date.now();
+			titleEntrancePending = true;
+			titleEntranceStart = null;
 		}
 		main.dom.startButtonGroup.style.display = "none";
 		main.dom.startButtons.style.display = "none";
@@ -834,10 +880,11 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		if (titleVideo) {
 			titleVideo.style.display = "block";
 			var playPromise = titleVideo.play();
-			if (playPromise && playPromise.catch) playPromise.catch(function () {});
+			if (playPromise && playPromise.catch) playPromise.catch(function () { });
 		}
 		titleCanvas.style.display = "block";
 		renderTitle();
+		startTitleEntranceWhenVisible();
 		if (!titleAnimationFrame) {
 			var animateTitle = function (timestamp) {
 				if (!titleCanvas || titleCanvas.style.display === "none") {
@@ -857,6 +904,8 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 
 	var hideTitle = function () {
 		if (titleCanvas) titleCanvas.style.display = "none";
+		if (titleEntranceVisibilityObserver) titleEntranceVisibilityObserver.disconnect();
+		titleEntranceVisibilityObserver = null;
 		if (titleAnimationFrame) window.cancelAnimationFrame(titleAnimationFrame);
 		titleAnimationFrame = null;
 		titleLastFrame = 0;
