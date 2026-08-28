@@ -514,7 +514,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 			secondaryWidthRatio: 0.15,
 			secondaryGroupSpanRatio: 0.42,
 			groupOffsetYRatio: 0.075,
-			primaryCenterYRatio: 0.606,
+			primaryCenterYRatio: 0.63,
 			secondaryCenterYRatio: 0.8
 		},
 		portrait: {
@@ -525,6 +525,10 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 			primaryCenterYRatio: 0.7,
 			secondaryCenterYRatio: 0.81
 		}
+	};
+	var TITLE_IMAGE_LAYOUT = {
+		landscape: { topRatio: 0.024, opacityBoost: 0.28 },
+		portrait: { topRatio: 0.077, opacityBoost: 0 }
 	};
 
 	var makeTitleButtonBox = function (centerX, centerY, width) {
@@ -599,16 +603,24 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		titleHitboxes.push({ type: "title", index: index, x: box.x, y: box.y, w: box.w, h: box.h });
 	};
 
-	var drawTitleImage = function (vertical, canvasWidth) {
+	var drawTitleImage = function (vertical, canvasWidth, canvasHeight) {
 		if (!titleImage || !titleImage.complete || !titleImage.naturalWidth) return;
+		var layout = vertical ? TITLE_IMAGE_LAYOUT.portrait : TITLE_IMAGE_LAYOUT.landscape;
 		var maxWidth = vertical ? canvasWidth - 36 : 630;
 		var maxHeight = vertical ? 118 : 130;
 		var scale = Math.min(maxWidth / titleImage.naturalWidth, maxHeight / titleImage.naturalHeight);
 		var drawWidth = titleImage.naturalWidth * scale;
 		var drawHeight = titleImage.naturalHeight * scale;
 		var drawX = (canvasWidth - drawWidth) / 2;
-		var drawY = vertical ? 52 : 24;
+		var drawY = canvasHeight * layout.topRatio;
+		titleCtx.save();
 		titleCtx.drawImage(titleImage, drawX, drawY, drawWidth, drawHeight);
+		// 第二次轻叠绘只增强素材中的半透明像素，完全不透明区域不会改变颜色。
+		if (layout.opacityBoost > 0) {
+			titleCtx.globalAlpha = layout.opacityBoost;
+			titleCtx.drawImage(titleImage, drawX, drawY, drawWidth, drawHeight);
+		}
+		titleCtx.restore();
 	};
 
 	var renderTitle = function () {
@@ -638,7 +650,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		titleCtx.fillStyle = glow;
 		titleCtx.fillRect(0, 0, width, height);
 
-		drawTitleImage(vertical, width);
+		drawTitleImage(vertical, width, height);
 		var buttonLayout = getTitleButtonLayout(width, height, vertical);
 		drawTitleButton(0, "开始冒险", buttonLayout.primary, BUTTON_GOLD, true);
 		drawTitleButton(1, "续关再战", buttonLayout.secondary[0], BUTTON_GOLD, false);
