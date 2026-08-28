@@ -55,9 +55,15 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	var titleCtx = null;
 	var titleVideo = null;
 	var titleImage = null;
+	var titleCharacterMaskImage = null;
+	var titleCharacterMaskSource = null;
+	var titleCharacterMaskCache = {};
+	var titleCompositeCache = {};
 	var buttonFrameImage = null;
 	var titleAnimationFrame = null;
 	var titleLastFrame = 0;
+	var titleEntranceStart = null;
+	var titleEntrancePlayed = false;
 	var titleHitboxes = [];
 	var titleSelection = 0;
 	var selectedIndex = 0;
@@ -527,9 +533,16 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		}
 	};
 	var TITLE_IMAGE_LAYOUT = {
-		landscape: { topRatio: 0.024, opacity: 0.72 },
+		landscape: { topRatio: 0.024, opacity: 1 },
 		portrait: { topRatio: 0.077, opacity: 1 }
 	};
+	var TITLE_ENTRANCE = {
+		duration: 700,
+		titleOffsetY: 24,
+		buttonOffsetY: 28
+	};
+	// 最终蒙版中：人物为黑、背景为白，边缘已经包含 10px 羽化。
+	var TITLE_CHARACTER_MASK_PATH = "project/images/title-character-mask.png";
 
 	var makeTitleButtonBox = function (centerX, centerY, width) {
 		var height = width / TITLE_BUTTON_LAYOUT.buttonAspectRatio;
@@ -539,6 +552,10 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 			w: width,
 			h: height
 		};
+	};
+
+	var offsetTitleButtonBox = function (box, offsetY) {
+		return { x: box.x, y: box.y + offsetY, w: box.w, h: box.h };
 	};
 
 	var getTitleButtonLayout = function (width, height, vertical) {
@@ -565,8 +582,9 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		var drawY = box.y - opening.y * scaleY;
 		var pulse = selected ? 0.5 + Math.sin(Date.now() / 260) * 0.5 : 0;
 
+		var entranceAlpha = titleCtx.globalAlpha;
 		titleCtx.save();
-		titleCtx.globalAlpha = selected ? 1 : 0.88;
+		titleCtx.globalAlpha = entranceAlpha * (selected ? 1 : 0.88);
 		titleCtx.shadowColor = accent;
 		titleCtx.shadowBlur = selected ? 10 + pulse * 8 : 3;
 		titleCtx.drawImage(
@@ -603,8 +621,70 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		titleHitboxes.push({ type: "title", index: index, x: box.x, y: box.y, w: box.w, h: box.h });
 	};
 
-	var drawTitleImage = function (vertical, canvasWidth, canvasHeight) {
-		if (!titleImage || !titleImage.complete || !titleImage.naturalWidth) return;
+	var prepareTitleCharacterMask = function () {
+		if (!titleCharacterMaskImage || !titleCharacterMaskImage.naturalWidth) return;
+		var width = titleCharacterMaskImage.naturalWidth;
+		var height = titleCharacterMaskImage.naturalHeight;
+		var maskCanvas = document.createElement("canvas");
+		maskCanvas.width = width;
+		maskCanvas.height = height;
+		var maskCtx = maskCanvas.getContext("2d", { willReadFrequently: true });
+		maskCtx.drawImage(titleCharacterMaskImage, 0, 0);
+
+		try {
+			var imageData = maskCtx.getImageData(0, 0, width, height);
+			var pixels = imageData.data;
+			for (var offset = 0; offset < pixels.length; offset += 4) {
+				var luminance = Math.round(
+					pixels[offset] * 0.2126 +
+					pixels[offset + 1] * 0.7152 +
+					pixels[offset + 2] * 0.0722
+				);
+				pixels[offset] = pixels[offset + 1] = pixels[offset + 2] = 255;
+				// destination-out 需要人物为不透明、背景为透明。
+				pixels[offset + 3] = 255 - luminance;
+			}
+			maskCtx.putImageData(imageData, 0, 0);
+			titleCharacterMaskSource = maskCanvas;
+			titleCharacterMaskCache = {};
+			titleCompositeCache = {};
+			if (titleCanvas && titleCanvas.style.display !== "none") renderTitle();
+		} catch (error) {
+			console.warn("标题人物蒙版初始化失败，将保留未遮罩标题。", error);
+		}
+	};
+
+	var getTitleCharacterMask = function (vertical, canvasWidth, canvasHeight) {
+		if (!titleCharacterMaskSource) return null;
+		var cacheKey = (vertical ? "portrait" : "landscape") + "@" + canvasWidth + "x" + canvasHeight;
+		if (titleCharacterMaskCache[cacheKey]) return titleCharacterMaskCache[cacheKey];
+
+		var fittedMask = document.createElement("canvas");
+		fittedMask.width = canvasWidth;
+		fittedMask.height = canvasHeight;
+		var fittedCtx = fittedMask.getContext("2d");
+		var sourceWidth = titleCharacterMaskSource.width;
+		var sourceHeight = titleCharacterMaskSource.height;
+		var scale = Math.max(canvasWidth / sourceWidth, canvasHeight / sourceHeight);
+		var drawWidth = sourceWidth * scale;
+		var drawHeight = sourceHeight * scale;
+		// 与启动背景的 object-fit: cover / object-position 保持一致。
+		var positionX = vertical ? 0.57 : 0.5;
+		var drawX = (canvasWidth - drawWidth) * positionX;
+		var drawY = (canvasHeight - drawHeight) * 0.5;
+		fittedCtx.drawImage(titleCharacterMaskSource, drawX, drawY, drawWidth, drawHeight);
+
+		// 位图已完成 10px 羽化，这里只做与背景一致的 cover 适配。
+		titleCharacterMaskCache[cacheKey] = fittedMask;
+		return fittedMask;
+	};
+
+	var getTitleComposite = function (vertical, canvasWidth, canvasHeight, offsetY) {
+		if (!titleImage || !titleImage.complete || !titleImage.naturalWidth) return null;
+		offsetY = offsetY || 0;
+		var canCache = offsetY === 0;
+		var cacheKey = (vertical ? "portrait" : "landscape") + "@" + canvasWidth + "x" + canvasHeight;
+		if (canCache && titleCompositeCache[cacheKey]) return titleCompositeCache[cacheKey];
 		var layout = vertical ? TITLE_IMAGE_LAYOUT.portrait : TITLE_IMAGE_LAYOUT.landscape;
 		var maxWidth = vertical ? canvasWidth - 36 : 630;
 		var maxHeight = vertical ? 118 : 130;
@@ -612,11 +692,45 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		var drawWidth = titleImage.naturalWidth * scale;
 		var drawHeight = titleImage.naturalHeight * scale;
 		var drawX = (canvasWidth - drawWidth) / 2;
-		var drawY = canvasHeight * layout.topRatio;
+		var drawY = canvasHeight * layout.topRatio + offsetY;
+		var composite = document.createElement("canvas");
+		composite.width = canvasWidth;
+		composite.height = canvasHeight;
+		var compositeCtx = composite.getContext("2d");
+		compositeCtx.globalAlpha = layout.opacity;
+		compositeCtx.drawImage(titleImage, drawX, drawY, drawWidth, drawHeight);
+
+		var characterMask = getTitleCharacterMask(vertical, canvasWidth, canvasHeight);
+		if (characterMask) {
+			compositeCtx.globalAlpha = 1;
+			compositeCtx.globalCompositeOperation = "destination-out";
+			compositeCtx.drawImage(characterMask, 0, 0);
+		}
+		if (canCache) titleCompositeCache[cacheKey] = composite;
+		return composite;
+	};
+
+	var drawTitleImage = function (vertical, canvasWidth, canvasHeight, opacity, offsetY) {
+		var composite = getTitleComposite(vertical, canvasWidth, canvasHeight, offsetY);
+		if (!composite) return;
 		titleCtx.save();
-		titleCtx.globalAlpha = layout.opacity;
-		titleCtx.drawImage(titleImage, drawX, drawY, drawWidth, drawHeight);
+		titleCtx.globalAlpha = opacity;
+		titleCtx.drawImage(composite, 0, 0);
 		titleCtx.restore();
+	};
+
+	var getTitleEntranceState = function () {
+		if (titleEntranceStart == null) return { opacity: 1, eased: 1 };
+		var now = window.performance && window.performance.now
+			? window.performance.now() : Date.now();
+		var progress = Math.max(0, Math.min(1,
+			(now - titleEntranceStart) / TITLE_ENTRANCE.duration
+		));
+		if (progress >= 1) titleEntranceStart = null;
+		return {
+			opacity: progress,
+			eased: 1 - Math.pow(1 - progress, 3)
+		};
 	};
 
 	var renderTitle = function () {
@@ -646,12 +760,18 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		titleCtx.fillStyle = glow;
 		titleCtx.fillRect(0, 0, width, height);
 
-		drawTitleImage(vertical, width, height);
+		var entrance = getTitleEntranceState();
+		var titleOffsetY = -TITLE_ENTRANCE.titleOffsetY * (1 - entrance.eased);
+		var buttonOffsetY = TITLE_ENTRANCE.buttonOffsetY * (1 - entrance.eased);
+		drawTitleImage(vertical, width, height, entrance.opacity, titleOffsetY);
 		var buttonLayout = getTitleButtonLayout(width, height, vertical);
-		drawTitleButton(0, "开始冒险", buttonLayout.primary, BUTTON_GOLD, true);
-		drawTitleButton(1, "续关再战", buttonLayout.secondary[0], BUTTON_GOLD, false);
-		drawTitleButton(3, "武器图鉴", buttonLayout.secondary[1], BUTTON_GOLD, false);
-		drawTitleButton(2, "精彩回放", buttonLayout.secondary[2], BUTTON_GOLD, false);
+		titleCtx.save();
+		titleCtx.globalAlpha = entrance.opacity;
+		drawTitleButton(0, "开始冒险", offsetTitleButtonBox(buttonLayout.primary, buttonOffsetY), BUTTON_GOLD, true);
+		drawTitleButton(1, "续关再战", offsetTitleButtonBox(buttonLayout.secondary[0], buttonOffsetY), BUTTON_GOLD, false);
+		drawTitleButton(3, "武器图鉴", offsetTitleButtonBox(buttonLayout.secondary[1], buttonOffsetY), BUTTON_GOLD, false);
+		drawTitleButton(2, "精彩回放", offsetTitleButtonBox(buttonLayout.secondary[2], buttonOffsetY), BUTTON_GOLD, false);
+		titleCtx.restore();
 	};
 
 	var runTitleAction = function (index) {
@@ -673,6 +793,11 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	var showTitle = function () {
 		if (!titleCanvas) return;
 		titleSelection = 0;
+		if (!titleEntrancePlayed) {
+			titleEntrancePlayed = true;
+			titleEntranceStart = window.performance && window.performance.now
+				? window.performance.now() : Date.now();
+		}
 		main.dom.startButtonGroup.style.display = "none";
 		main.dom.startButtons.style.display = "none";
 		main.dom.levelChooseButtons.style.display = "none";
@@ -689,7 +814,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 					titleAnimationFrame = null;
 					return;
 				}
-				if (timestamp - titleLastFrame >= 70) {
+				if (titleEntranceStart != null || timestamp - titleLastFrame >= 70) {
 					titleLastFrame = timestamp;
 					renderTitle();
 				}
@@ -746,9 +871,13 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	var loadTitleImage = function () {
 		titleImage = new Image();
 		titleImage.onload = function () {
+			titleCompositeCache = {};
 			if (titleCanvas && titleCanvas.style.display !== "none") renderTitle();
 		};
 		titleImage.src = "project/images/title2.png";
+		titleCharacterMaskImage = new Image();
+		titleCharacterMaskImage.onload = prepareTitleCharacterMask;
+		titleCharacterMaskImage.src = TITLE_CHARACTER_MASK_PATH;
 		buttonFrameImage = new Image();
 		buttonFrameImage.onload = function () {
 			if (titleCanvas && titleCanvas.style.display !== "none") renderTitle();
