@@ -529,7 +529,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		titleCtx.fillStyle = gradient;
 		titleCtx.fill();
 		drawButtonFrame(box, accent, selected);
-		titleText(textValue, box.x + box.w / 2, box.y + box.h / 2 + 1, primary ? 20 : 15, "#ffffff", "bold");
+		titleText(textValue, box.x + box.w / 2, box.y + box.h / 2 + 1, primary ? 18 : 14, "#ffffff", "bold");
 		titleHitboxes.push({ type: "title", index: index, x: box.x, y: box.y, w: box.w, h: box.h });
 	};
 
@@ -574,17 +574,17 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 
 		if (vertical) {
 			drawTitleImage(true, width);
-			drawTitleButton(0, "开始冒险", { x: 108, y: 450, w: 200, h: 46 }, BUTTON_GOLD, true);
-			drawTitleButton(1, "续关再战", { x: 25, y: 570, w: 90, h: 32 }, BUTTON_GOLD, false);
-			drawTitleButton(3, "武器图鉴", { x: 163, y: 570, w: 90, h: 32 }, BUTTON_GOLD, false);
-			drawTitleButton(2, "精彩回放", { x: 301, y: 570, w: 90, h: 32 }, BUTTON_GOLD, false);
+			drawTitleButton(0, "开始冒险", { x: 123, y: 453, w: 170, h: 40 }, BUTTON_GOLD, true);
+			drawTitleButton(1, "续关再战", { x: 31, y: 572, w: 78, h: 28 }, BUTTON_GOLD, false);
+			drawTitleButton(3, "武器图鉴", { x: 169, y: 572, w: 78, h: 28 }, BUTTON_GOLD, false);
+			drawTitleButton(2, "精彩回放", { x: 307, y: 572, w: 78, h: 28 }, BUTTON_GOLD, false);
 			// titleText("开始后选择你的初始职业", 208, 650, 12, "rgba(255,255,255,0.76)", "normal");
 		} else {
 			drawTitleImage(false, width);
-			drawTitleButton(0, "开始冒险", { x: 238, y: 230, w: 200, h: 44 }, BUTTON_GOLD, true);
-			drawTitleButton(1, "续关再战", { x: 42, y: 330, w: 150, h: 36 }, BUTTON_GOLD, false);
-			drawTitleButton(3, "武器图鉴", { x: 263, y: 330, w: 150, h: 36 }, BUTTON_GOLD, false);
-			drawTitleButton(2, "精彩回放", { x: 484, y: 330, w: 150, h: 36 }, BUTTON_GOLD, false);
+			drawTitleButton(0, "开始冒险", { x: 253, y: 233, w: 170, h: 38 }, BUTTON_GOLD, true);
+			drawTitleButton(1, "续关再战", { x: 54, y: 333, w: 126, h: 30 }, BUTTON_GOLD, false);
+			drawTitleButton(3, "武器图鉴", { x: 275, y: 333, w: 126, h: 30 }, BUTTON_GOLD, false);
+			drawTitleButton(2, "精彩回放", { x: 496, y: 333, w: 126, h: 30 }, BUTTON_GOLD, false);
 			// titleText("开始后选择你的初始职业", 338, 405, 11, "rgba(255,255,255,0.76)", "normal");
 		}
 	};
