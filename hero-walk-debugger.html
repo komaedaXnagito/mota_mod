@@ -1,0 +1,756 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>勇士四方向行走图调试器</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090d16;
+      --panel: rgba(18, 25, 40, 0.92);
+      --panel-2: rgba(12, 18, 31, 0.92);
+      --line: rgba(148, 163, 184, 0.22);
+      --text: #e8eef8;
+      --muted: #91a0b7;
+      --cyan: #5ee7f7;
+      --blue: #6aa7ff;
+      --orange: #ffb45d;
+      --danger: #ff7285;
+      --success: #6ee7a8;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 15% 0%, rgba(49, 99, 187, 0.25), transparent 34rem),
+        radial-gradient(circle at 90% 12%, rgba(21, 164, 181, 0.17), transparent 32rem),
+        var(--bg);
+    }
+
+    button, input, select { font: inherit; }
+
+    .page {
+      width: min(1320px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 48px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0 0 7px;
+      font-size: clamp(24px, 3vw, 38px);
+      letter-spacing: 0.02em;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .engine-badge {
+      flex: none;
+      padding: 8px 12px;
+      border: 1px solid rgba(94, 231, 247, 0.4);
+      border-radius: 999px;
+      color: var(--cyan);
+      background: rgba(17, 91, 106, 0.2);
+      font-size: 13px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: linear-gradient(155deg, var(--panel), var(--panel-2));
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.23);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: minmax(280px, 2fr) minmax(220px, 1fr) auto;
+      gap: 14px;
+      align-items: end;
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    input[type="text"], select {
+      width: 100%;
+      min-height: 40px;
+      padding: 0 11px;
+      color: var(--text);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 9px;
+      outline: none;
+      background: rgba(4, 9, 19, 0.72);
+    }
+
+    input[type="text"]:focus, select:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(94, 231, 247, 0.12);
+    }
+
+    button, .file-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      padding: 0 14px;
+      color: #07111f;
+      border: 0;
+      border-radius: 9px;
+      background: linear-gradient(135deg, var(--cyan), var(--blue));
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    button.secondary, .file-button.secondary {
+      color: var(--text);
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      background: rgba(25, 35, 54, 0.86);
+    }
+
+    button:hover, .file-button:hover { filter: brightness(1.08); }
+
+    .button-stack {
+      display: flex;
+      gap: 8px;
+    }
+
+    .file-button input { display: none; }
+
+    .status {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      min-height: 44px;
+      margin: -2px 18px 18px;
+      padding: 11px 13px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--muted);
+      background: rgba(5, 10, 20, 0.52);
+      line-height: 1.55;
+    }
+
+    .status::before {
+      content: "i";
+      flex: none;
+      display: grid;
+      place-items: center;
+      width: 20px;
+      height: 20px;
+      margin-top: 1px;
+      border-radius: 50%;
+      color: #07111f;
+      background: var(--blue);
+      font: 700 12px/1 system-ui;
+    }
+
+    .status.warn { color: #ffd39a; border-color: rgba(255, 180, 93, 0.35); }
+    .status.warn::before { content: "!"; background: var(--orange); }
+    .status.error { color: #ffafba; border-color: rgba(255, 114, 133, 0.4); }
+    .status.error::before { content: "×"; background: var(--danger); }
+    .status.ok { color: #aaf1ca; border-color: rgba(110, 231, 168, 0.34); }
+    .status.ok::before { content: "✓"; background: var(--success); }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(310px, 0.72fr);
+      gap: 18px;
+    }
+
+    .preview-panel, .sheet-panel { padding: 18px; }
+
+    .panel-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 17px;
+    }
+
+    .inline-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .compact {
+      min-height: 34px;
+      padding: 0 10px;
+      font-size: 12px;
+    }
+
+    .range-wrap {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    input[type="range"] { width: 120px; accent-color: var(--cyan); }
+
+    .directions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(190px, 1fr));
+      gap: 12px;
+    }
+
+    .direction-card {
+      display: grid;
+      justify-items: center;
+      gap: 9px;
+      min-height: 250px;
+      padding: 14px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background:
+        linear-gradient(45deg, rgba(255,255,255,0.035) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.035) 75%),
+        linear-gradient(45deg, rgba(255,255,255,0.035) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.035) 75%),
+        rgba(3, 8, 16, 0.54);
+      background-position: 0 0, 8px 8px;
+      background-size: 16px 16px;
+    }
+
+    .direction-card canvas, #sheetCanvas {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    .direction-name { font-weight: 700; }
+    .frame-label { color: var(--muted); font: 12px/1.4 Consolas, monospace; }
+
+    .sheet-wrap {
+      display: grid;
+      place-items: center;
+      min-height: 420px;
+      padding: 14px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(3, 8, 16, 0.6);
+    }
+
+    #sheetCanvas {
+      width: auto;
+      height: auto;
+      max-width: none;
+    }
+
+    .legend {
+      display: grid;
+      gap: 7px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .legend span::before {
+      content: "";
+      display: inline-block;
+      width: 18px;
+      height: 2px;
+      margin-right: 7px;
+      vertical-align: middle;
+      background: var(--cyan);
+    }
+
+    .legend .ignored::before { background: var(--danger); }
+
+    @media (max-width: 900px) {
+      .controls, .workspace { grid-template-columns: 1fr; }
+      header { align-items: flex-start; flex-direction: column; }
+    }
+
+    @media (max-width: 560px) {
+      .page { width: min(100% - 18px, 1320px); padding-top: 16px; }
+      .directions { grid-template-columns: 1fr; }
+      .input-row, .button-stack { flex-wrap: wrap; }
+      .input-row input { flex: 1 1 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <div>
+        <h1>勇士四方向行走图调试器</h1>
+        <p class="subtitle">严格复现项目 <code>drawHero</code> 的 32×48 取帧、四方向行顺序与四帧插件动画。</p>
+      </div>
+      <div class="engine-badge">drawHero strict mode · 32×48</div>
+    </header>
+
+    <section class="panel controls">
+      <div class="field">
+        <label for="pathInput">手动输入图片路径</label>
+        <div class="input-row">
+          <input id="pathInput" type="text" value="project/images/what_is_this_walk.png" spellcheck="false" autocomplete="off">
+          <button id="loadButton" type="button">载入</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="autoSelect">自动发现的 128×192、*_walk.png</label>
+        <select id="autoSelect">
+          <option value="">正在扫描……</option>
+        </select>
+      </div>
+
+      <div class="button-stack">
+        <button id="scanButton" class="secondary" type="button">重新扫描</button>
+        <label class="file-button secondary">
+          选择本地图片
+          <input id="fileInput" type="file" accept="image/png,image/webp,image/gif">
+        </label>
+      </div>
+    </section>
+
+    <div id="status" class="status">等待载入图片。</div>
+
+    <section class="workspace">
+      <article class="panel preview-panel">
+        <div class="panel-title">
+          <h2>四方向同步动画</h2>
+          <div class="inline-controls">
+            <button id="playButton" class="secondary compact" type="button">暂停</button>
+            <button id="stepButton" class="secondary compact" type="button">单步</button>
+            <label class="range-wrap">
+              帧间隔
+              <input id="speedInput" type="range" min="20" max="500" step="10" value="50">
+              <b id="speedValue">50ms</b>
+            </label>
+            <label class="range-wrap">
+              放大
+              <select id="scaleSelect" class="compact">
+                <option value="2">2×</option>
+                <option value="3">3×</option>
+                <option value="4" selected>4×</option>
+                <option value="6">6×</option>
+                <option value="8">8×</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="directions">
+          <div class="direction-card">
+            <div class="direction-name">向下 · row 0</div>
+            <canvas data-row="0" width="32" height="48"></canvas>
+            <div class="frame-label"></div>
+          </div>
+          <div class="direction-card">
+            <div class="direction-name">向左 · row 1</div>
+            <canvas data-row="1" width="32" height="48"></canvas>
+            <div class="frame-label"></div>
+          </div>
+          <div class="direction-card">
+            <div class="direction-name">向右 · row 2</div>
+            <canvas data-row="2" width="32" height="48"></canvas>
+            <div class="frame-label"></div>
+          </div>
+          <div class="direction-card">
+            <div class="direction-name">向上 · row 3</div>
+            <canvas data-row="3" width="32" height="48"></canvas>
+            <div class="frame-label"></div>
+          </div>
+        </div>
+      </article>
+
+      <aside class="panel sheet-panel">
+        <div class="panel-title">
+          <h2>原图与 drawHero 取帧网格</h2>
+          <button id="gridButton" class="secondary compact" type="button">隐藏网格</button>
+        </div>
+        <div class="sheet-wrap">
+          <canvas id="sheetCanvas"></canvas>
+        </div>
+        <div class="legend">
+          <span>青色线：drawHero 的 32×48 取帧边界</span>
+          <span class="ignored">红色区域：图片宽度超过128时不会被 drawHero 使用</span>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    "use strict";
+
+    // 当前仓库的静态兜底；页面仍会优先尝试扫描目录和 project/data.js。
+    const FALLBACK_WALK_FILES = [
+      "what_is_this_walk.png",
+      "what_is_this_2_walk.png",
+      "what_is_this_3_walk.png",
+      "what_is_this_4_walk.png",
+      "what_is_this_5_walk.png"
+    ];
+
+    const FRAME_WIDTH = 32;
+    const FRAME_HEIGHT = 48;
+    const FRAME_SEQUENCE = [
+      { column: 0, status: "stop" },
+      { column: 1, status: "leftFoot" },
+      { column: 2, status: "midFoot" },
+      { column: 3, status: "rightFoot" }
+    ];
+
+    const directionCanvases = [...document.querySelectorAll("canvas[data-row]")];
+    const frameLabels = [...document.querySelectorAll(".frame-label")];
+    const pathInput = document.getElementById("pathInput");
+    const autoSelect = document.getElementById("autoSelect");
+    const statusBox = document.getElementById("status");
+    const sheetCanvas = document.getElementById("sheetCanvas");
+    const sheetContext = sheetCanvas.getContext("2d");
+    const speedInput = document.getElementById("speedInput");
+    const speedValue = document.getElementById("speedValue");
+    const playButton = document.getElementById("playButton");
+    const gridButton = document.getElementById("gridButton");
+    const scaleSelect = document.getElementById("scaleSelect");
+
+    const state = {
+      image: null,
+      sourceLabel: "",
+      frameIndex: 0,
+      playing: true,
+      showGrid: true,
+      lastTick: performance.now(),
+      objectUrl: null
+    };
+
+    function setStatus(message, type = "") {
+      statusBox.textContent = message;
+      statusBox.className = "status" + (type ? " " + type : "");
+    }
+
+    function normalizePath(value) {
+      const path = value.trim().replaceAll("\\", "/");
+      if (!path) return "";
+      if (/^(blob:|data:|https?:\/\/|\/)/i.test(path)) return path;
+      if (path.includes("/")) return path.replace(/^\.\//, "");
+      return "project/images/" + path;
+    }
+
+    function imageWithCacheBust(path) {
+      if (/^(blob:|data:)/i.test(path)) return path;
+      return path + (path.includes("?") ? "&" : "?") + "walkDebug=" + Date.now();
+    }
+
+    function createImage(path) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error("无法载入图片：" + path));
+        image.src = imageWithCacheBust(path);
+      });
+    }
+
+    async function loadPath(path, label = path) {
+      const normalized = normalizePath(path);
+      if (!normalized) {
+        setStatus("请输入图片路径。", "error");
+        return;
+      }
+
+      setStatus("正在载入 " + label + " …");
+      try {
+        const image = await createImage(normalized);
+        state.image = image;
+        state.sourceLabel = label;
+        state.frameIndex = 0;
+        state.lastTick = performance.now();
+        pathInput.value = normalized;
+        renderAll();
+
+        const size = image.naturalWidth + "×" + image.naturalHeight;
+        if (image.naturalWidth < 128 || image.naturalHeight < 192) {
+          setStatus(label + " 为 " + size + "，不足 drawHero 所需的前128×192区域。", "error");
+        } else if (image.naturalWidth === 144 && image.naturalHeight === 192) {
+          setStatus(label + " 为144×192。页面正按 drawHero 的32×48逻辑读取前128像素；最右16像素会被忽略，便于直接发现帧布局问题。", "warn");
+        } else if (image.naturalWidth === 128 && image.naturalHeight === 192) {
+          setStatus(label + " 为标准128×192四帧行走图，尺寸与 drawHero 完全匹配。", "ok");
+        } else {
+          setStatus(label + " 为 " + size + "；动画仍严格读取左上角的128×192区域。", "warn");
+        }
+      } catch (error) {
+        state.image = null;
+        clearCanvases();
+        setStatus(error.message, "error");
+      }
+    }
+
+    function clearCanvases() {
+      directionCanvases.forEach(canvas => canvas.getContext("2d").clearRect(0, 0, 32, 48));
+      sheetContext.clearRect(0, 0, sheetCanvas.width, sheetCanvas.height);
+      frameLabels.forEach(label => label.textContent = "未载入");
+    }
+
+    function renderDirections() {
+      if (!state.image) return;
+      const frame = FRAME_SEQUENCE[state.frameIndex];
+      directionCanvases.forEach((canvas, index) => {
+        const row = Number(canvas.dataset.row);
+        const context = canvas.getContext("2d");
+        context.imageSmoothingEnabled = false;
+        context.clearRect(0, 0, FRAME_WIDTH, FRAME_HEIGHT);
+        context.drawImage(
+          state.image,
+          frame.column * FRAME_WIDTH,
+          row * FRAME_HEIGHT,
+          FRAME_WIDTH,
+          FRAME_HEIGHT,
+          0,
+          0,
+          FRAME_WIDTH,
+          FRAME_HEIGHT
+        );
+        frameLabels[index].textContent = "frame " + frame.column + " · " + frame.status;
+      });
+    }
+
+    function renderSheet() {
+      if (!state.image) return;
+      const width = state.image.naturalWidth;
+      const height = state.image.naturalHeight;
+      sheetCanvas.width = width;
+      sheetCanvas.height = height;
+      sheetCanvas.style.width = width * 2 + "px";
+      sheetCanvas.style.height = height * 2 + "px";
+      sheetContext.imageSmoothingEnabled = false;
+      sheetContext.clearRect(0, 0, width, height);
+      sheetContext.drawImage(state.image, 0, 0);
+
+      if (!state.showGrid) return;
+      sheetContext.save();
+      sheetContext.lineWidth = 1;
+      sheetContext.strokeStyle = "rgba(94, 231, 247, 0.95)";
+      for (let x = 0; x <= 128; x += FRAME_WIDTH) {
+        sheetContext.beginPath();
+        sheetContext.moveTo(x + 0.5, 0);
+        sheetContext.lineTo(x + 0.5, Math.min(192, height));
+        sheetContext.stroke();
+      }
+      for (let y = 0; y <= Math.min(192, height); y += FRAME_HEIGHT) {
+        sheetContext.beginPath();
+        sheetContext.moveTo(0, y + 0.5);
+        sheetContext.lineTo(Math.min(128, width), y + 0.5);
+        sheetContext.stroke();
+      }
+
+      if (width > 128) {
+        sheetContext.fillStyle = "rgba(255, 63, 89, 0.24)";
+        sheetContext.fillRect(128, 0, width - 128, height);
+        sheetContext.strokeStyle = "rgba(255, 114, 133, 1)";
+        sheetContext.setLineDash([3, 2]);
+        sheetContext.beginPath();
+        sheetContext.moveTo(128.5, 0);
+        sheetContext.lineTo(128.5, height);
+        sheetContext.stroke();
+      }
+      sheetContext.restore();
+    }
+
+    function renderAll() {
+      renderDirections();
+      renderSheet();
+    }
+
+    function setPreviewScale(scale) {
+      directionCanvases.forEach(canvas => {
+        canvas.style.width = FRAME_WIDTH * scale + "px";
+        canvas.style.height = FRAME_HEIGHT * scale + "px";
+      });
+    }
+
+    function advanceFrame() {
+      state.frameIndex = (state.frameIndex + 1) % FRAME_SEQUENCE.length;
+      renderDirections();
+    }
+
+    function animationLoop(timestamp) {
+      if (state.playing && state.image && timestamp - state.lastTick >= Number(speedInput.value)) {
+        const elapsedFrames = Math.max(1, Math.floor((timestamp - state.lastTick) / Number(speedInput.value)));
+        state.frameIndex = (state.frameIndex + elapsedFrames) % FRAME_SEQUENCE.length;
+        state.lastTick = timestamp;
+        renderDirections();
+      }
+      requestAnimationFrame(animationLoop);
+    }
+
+    function basenameFromHref(href) {
+      try {
+        const url = new URL(href, location.href);
+        return decodeURIComponent(url.pathname.split("/").filter(Boolean).pop() || "");
+      } catch (_) {
+        return "";
+      }
+    }
+
+    async function discoverWalkFiles() {
+      scanButton.disabled = true;
+      autoSelect.innerHTML = "<option value=\"\">正在扫描……</option>";
+      const names = new Set(FALLBACK_WALK_FILES);
+
+      try {
+        const response = await fetch("/listFile", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+          body: "name=project/images",
+          cache: "no-store"
+        });
+        if (response.ok) {
+          const files = await response.json();
+          if (Array.isArray(files)) {
+            files.forEach(name => {
+              if (/_walk\.(png|webp)$/i.test(name)) names.add(name);
+            });
+          }
+        }
+      } catch (_) {
+        // 非魔塔项目服务器没有 /listFile 时，继续尝试普通目录列表。
+      }
+
+      try {
+        const response = await fetch("project/images/", { cache: "no-store" });
+        if (response.ok) {
+          const html = await response.text();
+          const documentFragment = new DOMParser().parseFromString(html, "text/html");
+          documentFragment.querySelectorAll("a[href]").forEach(anchor => {
+            const name = basenameFromHref(anchor.getAttribute("href"));
+            if (/_walk\.(png|webp)$/i.test(name)) names.add(name);
+          });
+        }
+      } catch (_) {
+        // 静态服务器可能禁止目录列表，继续使用 data.js 与内置兜底。
+      }
+
+      try {
+        const response = await fetch("project/data.js", { cache: "no-store" });
+        if (response.ok) {
+          const source = await response.text();
+          for (const match of source.matchAll(/["']([^"']+_walk\.(?:png|webp))["']/gi)) {
+            names.add(match[1].split("/").pop());
+          }
+        }
+      } catch (_) {
+        // 手动路径仍然可用。
+      }
+
+      const checks = [...names]
+        .filter(name => /_walk\.(png|webp)$/i.test(name))
+        .map(async name => {
+          const path = "project/images/" + name;
+          try {
+            const image = await createImage(path);
+            return image.naturalWidth === 128 && image.naturalHeight === 192 ? { name, path } : null;
+          } catch (_) {
+            return null;
+          }
+        });
+
+      const matches = (await Promise.all(checks)).filter(Boolean).sort((a, b) => a.name.localeCompare(b.name, "zh-CN", { numeric: true }));
+      autoSelect.innerHTML = "";
+      if (!matches.length) {
+        autoSelect.innerHTML = "<option value=\"\">未发现符合条件的图片</option>";
+      } else {
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "发现 " + matches.length + " 张，选择后载入";
+        autoSelect.appendChild(placeholder);
+        matches.forEach(item => {
+          const option = document.createElement("option");
+          option.value = item.path;
+          option.textContent = item.name;
+          autoSelect.appendChild(option);
+        });
+      }
+      scanButton.disabled = false;
+      return matches;
+    }
+
+    document.getElementById("loadButton").addEventListener("click", () => loadPath(pathInput.value));
+    pathInput.addEventListener("keydown", event => {
+      if (event.key === "Enter") loadPath(pathInput.value);
+    });
+    autoSelect.addEventListener("change", () => {
+      if (autoSelect.value) loadPath(autoSelect.value, autoSelect.options[autoSelect.selectedIndex].textContent);
+    });
+    document.getElementById("scanButton").addEventListener("click", discoverWalkFiles);
+    document.getElementById("fileInput").addEventListener("change", event => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      if (state.objectUrl) URL.revokeObjectURL(state.objectUrl);
+      state.objectUrl = URL.createObjectURL(file);
+      loadPath(state.objectUrl, file.name);
+    });
+    playButton.addEventListener("click", () => {
+      state.playing = !state.playing;
+      state.lastTick = performance.now();
+      playButton.textContent = state.playing ? "暂停" : "播放";
+    });
+    document.getElementById("stepButton").addEventListener("click", () => {
+      state.playing = false;
+      playButton.textContent = "播放";
+      advanceFrame();
+    });
+    speedInput.addEventListener("input", () => {
+      speedValue.textContent = speedInput.value + "ms";
+      state.lastTick = performance.now();
+    });
+    scaleSelect.addEventListener("change", () => setPreviewScale(Number(scaleSelect.value)));
+    gridButton.addEventListener("click", () => {
+      state.showGrid = !state.showGrid;
+      gridButton.textContent = state.showGrid ? "隐藏网格" : "显示网格";
+      renderSheet();
+    });
+
+    setPreviewScale(Number(scaleSelect.value));
+    requestAnimationFrame(animationLoop);
+    discoverWalkFiles().then(matches => {
+      if (matches.length) {
+        autoSelect.value = matches[0].path;
+        loadPath(matches[0].path, matches[0].name);
+      } else {
+        loadPath(pathInput.value);
+      }
+    });
+  </script>
+</body>
+</html>

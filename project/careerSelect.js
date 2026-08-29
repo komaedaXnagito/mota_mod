@@ -41,12 +41,13 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 			tagline: "法术、召唤与资源循环",
 			color: "#c79cff",
 			accent: "#53d8b4",
-			portrait: "career-staff.png",
+			portrait: "witch_character.png",
 			portraitFilter: "none",
 			promotions: ["黑猫道士", "使役者"],
 			poolTypes: ["杖", "召唤石", "道具"],
 			poolPreview: "巖迫之躯杖、钢棍、格里姆尼尔",
-			unlockText: "29层可追加专属法杖或精灵相关武器。"
+			unlockText: "29层可追加专属法杖或精灵相关武器。",
+			walk: "witch_walk.png"
 		}
 	];
 

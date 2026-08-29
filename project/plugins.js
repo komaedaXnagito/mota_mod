@@ -3730,7 +3730,6 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 =
 
 
 					if (item.startsWith("flag:")) {
-						console.log(baseX, curh)
 						let offset = 60
 						if (core.domStyle.isVertical) {
 							offset = 90
