@@ -733,6 +733,10 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 		restoreEventState(context.savedEvent);
 		clearHeldMovementKeys();
 		if (!context.wasLocked) core.unlockControl();
+		if (plugin.achievementSystem && typeof plugin.achievementSystem.recordBattleResult === "function") {
+			try { plugin.achievementSystem.recordBattleResult(result); }
+			catch (error) { console.error("成就战斗结算失败", error); }
+		}
 		if (result.outcome === "victory") {
 			pendingSettlement = clone(result);
 			core.events.afterBattle(context.id, context.x, context.y);
@@ -813,8 +817,12 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 			return core.clearContinueAutomaticRoute(callback);
 		}
 
+		var isGuideBattle = !!(core.getFlag && core.getFlag("inGuide"))
+			&& !(core.isReplaying && core.isReplaying());
 		var started = runtime.start(input, {
-			fastForward: core.isReplaying && core.isReplaying(),
+			// 教程必须展示完整战斗过程；显式指定 1 倍速也可屏蔽此前保存的“立即结算”偏好。
+			speed: isGuideBattle ? 1 : undefined,
+			fastForward: !isGuideBattle && core.isReplaying && core.isReplaying(),
 			onFinish: function (result) {
 				settleFinishedBattle(result);
 			}
@@ -825,6 +833,8 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 			if (!wasLocked) core.unlockControl();
 			return core.clearContinueAutomaticRoute(callback);
 		}
+		// start() 只完成战斗初始化，尚未推进时间；在这里暂停可保证教程开始前不会发生攻击。
+		if (isGuideBattle) runtime.pause();
 		return true;
 	};
 

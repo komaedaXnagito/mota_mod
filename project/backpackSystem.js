@@ -61,6 +61,17 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	let tooltipPlacementAnchor = null; // 待放置 Tooltip 当前对齐的武器卡片。
 	let gameGroup = null; // 魔塔引擎提供的游戏容器 DOM 节点。
 	let layout = null; // 最近一次计算出的自适应尺寸和坐标结果。
+	let backpackGuideTour = null; // 当前背包 Guides.js 教程实例。
+	let backpackGuideStarted = false;
+	let backpackGuideStartFrame = null;
+	let backpackGuideLayoutFrame = null;
+	let backpackGuideTargets = [];
+	let backpackGuideStep = null;
+	let backpackGuideStepIndex = -1;
+	let backpackGuideActionTarget = null;
+	let backpackGuideActionHandler = null;
+	let backpackGuideKeyHandler = null;
+	let backpackGuideCompletionDialoguePending = false;
 
 	/** 深拷贝背包状态，避免存档对象和界面对象共享引用。 */
 	const cloneData = function (data) {
@@ -1831,6 +1842,8 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 				action[1]();
 			});
 			button.classList.add("backpack-secondary-action");
+			button.classList.add(action[0] === "合成"
+				? "backpack-action-craft" : "backpack-action-collect-all");
 			button.setAttribute("role", "menuitem");
 			menu.appendChild(button);
 		});
@@ -1921,6 +1934,316 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		return dragActions;
 	};
 
+	const isGuideBackpack = function () {
+		return !!(core.getFlag && core.getFlag("inGuide"))
+			&& !(core.isReplaying && core.isReplaying());
+	};
+
+	/** Guides.js 锁定的是 body 直属节点；背包位于 gameGroup 内，交互步骤需临时解锁这一层。 */
+	const getBackpackGuideHost = function () {
+		let host = root;
+		while (host && host.parentNode && host.parentNode !== document.body) host = host.parentNode;
+		return host || root;
+	};
+
+	const getTopLeftPlacedWeapon = function () {
+		return Array.prototype.slice.call(root ? root.querySelectorAll(".backpack-placed") : [])
+			.sort(function (left, right) {
+				const leftRect = left.getBoundingClientRect();
+				const rightRect = right.getBoundingClientRect();
+				return leftRect.top - rightRect.top || leftRect.left - rightRect.left;
+			})[0] || null;
+	};
+
+	const getBackpackPlacementRect = function () {
+		if (!root || !layout) return null;
+		const rootRect = root.getBoundingClientRect();
+		const scaleX = root.clientWidth ? rootRect.width / root.clientWidth : 1;
+		const scaleY = root.clientHeight ? rootRect.height / root.clientHeight : 1;
+		return {
+			left: rootRect.left + layout.bagX * scaleX,
+			top: rootRect.top + layout.bagY * scaleY,
+			width: layout.bagWidth * scaleX,
+			height: layout.bagHeight * scaleY
+		};
+	};
+
+	/** 返回当前最外圈所有可扩展格子的整体区域，供教程随网格布局动态定位。 */
+	const getBackpackExpansionRect = function () {
+		const slots = Array.prototype.slice.call(
+			expansionLayer ? expansionLayer.querySelectorAll(".backpack-expansion-slot") : []
+		);
+		if (!slots.length) return getBackpackPlacementRect();
+		const rects = slots.map(function (slot) { return slot.getBoundingClientRect(); });
+		const left = Math.min.apply(null, rects.map(function (rect) { return rect.left; }));
+		const top = Math.min.apply(null, rects.map(function (rect) { return rect.top; }));
+		const right = Math.max.apply(null, rects.map(function (rect) { return rect.right; }));
+		const bottom = Math.max.apply(null, rects.map(function (rect) { return rect.bottom; }));
+		return { left: left, top: top, width: right - left, height: bottom - top };
+	};
+
+	/** 定位代理绕开 gameGroup 的堆叠上下文，目标元素重绘后也能通过 resolver 重新获取。 */
+	const syncBackpackGuideTargets = function () {
+		backpackGuideTargets.forEach(function (entry) {
+			if (!entry.proxy) return;
+			const source = entry.resolve && entry.resolve();
+			const rect = source && typeof source.getBoundingClientRect === "function"
+				? source.getBoundingClientRect() : source;
+			if (!rect || !Number.isFinite(Number(rect.left)) || !Number.isFinite(Number(rect.top))) {
+				entry.proxy.style.visibility = "hidden";
+				return;
+			}
+			entry.proxy.style.visibility = "visible";
+			entry.proxy.style.left = Math.round(rect.left) + "px";
+			entry.proxy.style.top = Math.round(rect.top) + "px";
+			entry.proxy.style.width = Math.max(1, Math.round(rect.width)) + "px";
+			entry.proxy.style.height = Math.max(1, Math.round(rect.height)) + "px";
+		});
+	};
+
+	const disableBackpackGuideInteraction = function () {
+		document.body.classList.remove("backpack-guide-interactive");
+		if (backpackGuideActionTarget && backpackGuideActionHandler) {
+			backpackGuideActionTarget.removeEventListener("click", backpackGuideActionHandler, true);
+			backpackGuideActionTarget.classList.remove("backpack-guide-action-target");
+		}
+		backpackGuideActionTarget = null;
+		backpackGuideActionHandler = null;
+		const host = getBackpackGuideHost();
+		if (host && backpackGuideTour && backpackGuideTour.inProgress) {
+			host.inert = true;
+			host.setAttribute("aria-hidden", "true");
+		}
+	};
+
+	const advanceBackpackGuide = function () {
+		if (backpackGuideTour && backpackGuideTour.inProgress) backpackGuideTour.next();
+	};
+
+	const enableBackpackGuideInteraction = function (step) {
+		disableBackpackGuideInteraction();
+		const target = step && step.actionTarget && step.actionTarget();
+		const host = getBackpackGuideHost();
+		if (!target || !host) return;
+		host.inert = false;
+		host.removeAttribute("aria-hidden");
+		document.body.classList.add("backpack-guide-interactive");
+		target.classList.add("backpack-guide-action-target");
+		backpackGuideActionTarget = target;
+		backpackGuideActionHandler = function () {
+			requestAnimationFrame(function () {
+				if (!backpackGuideTour || !backpackGuideTour.inProgress) return;
+				syncBackpackGuideTargets();
+				advanceBackpackGuide();
+			});
+		};
+		// 已摆放武器会在自身捕获监听中阻止冒泡，教程也使用捕获阶段才能可靠感知单击。
+		target.addEventListener("click", backpackGuideActionHandler, true);
+	};
+
+	const openSecondaryActionsForGuide = function () {
+		if (!secondaryActions || !secondaryActionsToggle) return;
+		secondaryActions.classList.add("is-open");
+		secondaryActionsToggle.setAttribute("aria-expanded", "true");
+	};
+
+	const cleanupBackpackGuide = function () {
+		disableBackpackGuideInteraction();
+		document.body.classList.remove("backpack-guide-active");
+		if (root) root.classList.remove("backpack-guide-show-drag-actions");
+		if (backpackGuideKeyHandler) document.body.removeEventListener("keyup", backpackGuideKeyHandler, true);
+		backpackGuideKeyHandler = null;
+		backpackGuideTargets.forEach(function (entry) {
+			if (entry.proxy && entry.proxy.parentNode) entry.proxy.parentNode.removeChild(entry.proxy);
+		});
+		backpackGuideTargets = [];
+		backpackGuideStep = null;
+		backpackGuideStepIndex = -1;
+		if (document.querySelector(".backpack-craft-root")
+			&& plugin && typeof plugin.closeCraftPanel === "function") plugin.closeCraftPanel();
+	};
+
+	const endBackpackGuide = function () {
+		const wasActive = !!backpackGuideTour || backpackGuideStartFrame != null
+			|| backpackGuideLayoutFrame != null || backpackGuideTargets.length > 0
+			|| document.body.classList.contains("backpack-guide-active");
+		if (!wasActive) return;
+		if (backpackGuideStartFrame != null) cancelAnimationFrame(backpackGuideStartFrame);
+		if (backpackGuideLayoutFrame != null) cancelAnimationFrame(backpackGuideLayoutFrame);
+		backpackGuideStartFrame = null;
+		backpackGuideLayoutFrame = null;
+		const currentTour = backpackGuideTour;
+		if (currentTour && currentTour.inProgress) currentTour.end();
+		backpackGuideTour = null;
+		cleanupBackpackGuide();
+	};
+
+	const startBackpackGuide = function () {
+		backpackGuideStartFrame = null;
+		if (!root || !layout || !isGuideBackpack() || !getTopLeftPlacedWeapon()) return;
+		const GuidesConstructor = window.Guides && (window.Guides.default || window.Guides);
+		if (typeof GuidesConstructor !== "function") {
+			backpackGuideStarted = true;
+			console.error("背包教程启动失败：Guides.js 未加载");
+			return;
+		}
+		backpackGuideStarted = true;
+		const compact = layout.compact;
+		const tooltip = function () {
+			return document.querySelector(".bui-tooltip.backpack-panel-tooltip.show, .bui-tooltip.show");
+		};
+		const craftArea = function () {
+			const currentTooltip = tooltip();
+			return currentTooltip && (currentTooltip.querySelector(".bui-rarity-row")
+				|| currentTooltip.querySelector("header") || currentTooltip);
+		};
+		const actionButton = function (className) {
+			return root && root.querySelector("." + className);
+		};
+		const steps = [
+			{ target: getBackpackPlacementRect, text: "这里就是会出战的武器，你需要自行规划武器的摆放以及方向，拖拽武器可以移动武器的位置" },
+			{
+				target: getTopLeftPlacedWeapon,
+				text: "单击武器可以查看该武器的详细说明",
+				leave: function () {
+					const weapon = getTopLeftPlacedWeapon();
+					if (weapon) weapon.click();
+				}
+			},
+			{ target: tooltip, text: "这里会展示武器的名称、稀有度、伤害、命中率、攻击间隔、奥义获取、以及特殊效果" },
+			{ target: craftArea, text: "如果武器可以向上合成，这里会出现合成提示按钮，点击可以查看该武器的合成表" },
+			{
+				target: function () { return root && root.querySelector(".backpack-battle-speed-control"); },
+				text: "这里可以调整战斗动画的播放速度",
+				beforeEnter: function () {
+					uiCommon.hideTooltip();
+					if (root) root.dataset.tooltipPinned = "false";
+				}
+			},
+			{
+				target: function () { return actionButton("backpack-action-craft"); },
+				text: "这里可以开启合成窗口",
+				beforeEnter: compact ? openSecondaryActionsForGuide : null,
+				leave: function () {
+					closeSecondaryActions();
+					openCraftPanel();
+				}
+			},
+			{ target: function () { return document.querySelector(".backpack-craft-recipes"); }, text: "当背包中武器可以合成时，可以点击高亮的选项快速填充合成材料" },
+			{
+				target: function () { return actionButton("backpack-action-collect-all"); },
+				text: "可以快速将战斗区的武器全部收回到背包中",
+				beforeEnter: function () {
+					if (plugin && typeof plugin.closeCraftPanel === "function") plugin.closeCraftPanel();
+					if (compact) openSecondaryActionsForGuide();
+				},
+				leave: function () {
+					closeSecondaryActions();
+					collectAll();
+				}
+			},
+			{ target: function () { return inventoryPanel; }, text: "嘿嘿，我帮你全收回来了，这里是你拥有的所有武器，在待放置区域中并不会参与战斗，也不会提供联动效果" },
+			{ target: function () { return root && root.querySelector(".backpack-inventory-filters"); }, text: "武器较多时可以按类型 或 星级进行筛选，快速找到想要的武器" },
+			{
+				target: function () { return root && root.querySelector(".backpack-inventory-list"); },
+				text: compact
+					? "点击武器，可以展开武器的详细信息，通过拖拽武器图标，可以将该武器参与战斗"
+					: "鼠标悬浮在武器上，可以看到武器的详细信息，通过拖拽武器，可以将该武器参与战斗"
+			},
+			{
+				target: function () { return pendingDropZone; },
+				text: "武器进入拖拽模式后，在这里松手可以将武器放回待放置中",
+				beforeEnter: function () { if (root) root.classList.add("backpack-guide-show-drag-actions"); }
+			},
+			{ target: function () { return rotateDropZone; }, text: compact ? "将武器拖入该区域可以将武器旋转90°" : "将武器拖入该区域，或按R键，可以将武器旋转90°" },
+			{
+				target: function () { return sellDropZone; },
+				text: "将武器拖入该区域并松手，可以卖出武器",
+				leave: function () { if (root) root.classList.remove("backpack-guide-show-drag-actions"); }
+			},
+			{
+				target: getBackpackExpansionRect,
+				text: "使用背包格子解锁战斗区域，可以让你能够摆下更多的武器"
+			},
+			{
+				target: function () { return root && root.querySelector(".backpack-close-button"); },
+				text: "点击这里可以关闭背包，关闭之前确保你已经装备了足够多的武器，接下来你可能会面临一场恶战！"
+			}
+		];
+
+		const guides = steps.map(function (step, index) {
+			const proxy = document.createElement("div");
+			proxy.className = "backpack-guide-target-proxy";
+			proxy.setAttribute("aria-hidden", "true");
+			document.body.appendChild(proxy);
+			backpackGuideTargets.push({ resolve: step.target, proxy: proxy });
+			return {
+				target: proxy,
+				html: step.text + "<small class='bb-guide-progress'>" + (index + 1) + " / " + steps.length + "</small>",
+				backpackStep: step,
+				backpackStepIndex: index
+			};
+		});
+		syncBackpackGuideTargets();
+		document.body.classList.add("backpack-guide-active");
+		backpackGuideKeyHandler = function (event) {
+			if (!backpackGuideTour || !backpackGuideTour.inProgress || event.key === "Escape") return;
+			if (["ArrowRight", "ArrowLeft", " ", "Backspace"].indexOf(event.key) < 0) return;
+			event.preventDefault();
+			event.stopImmediatePropagation();
+			if ((event.key === "ArrowRight" || event.key === " ")
+				&& backpackGuideStep && !backpackGuideStep.requireAction) advanceBackpackGuide();
+		};
+		document.body.addEventListener("keyup", backpackGuideKeyHandler, true);
+		try {
+			backpackGuideTour = new GuidesConstructor({
+				color: "#f2c86f",
+				distance: 36,
+				className: "bb-battle-guide backpack-guide",
+				guides: guides,
+				render: function (event) {
+					const nextIndex = event.guide.backpackStepIndex;
+					if (backpackGuideStep && nextIndex > backpackGuideStepIndex
+						&& typeof backpackGuideStep.leave === "function") backpackGuideStep.leave();
+					disableBackpackGuideInteraction();
+					backpackGuideStep = event.guide.backpackStep;
+					backpackGuideStepIndex = nextIndex;
+					if (typeof backpackGuideStep.beforeEnter === "function") backpackGuideStep.beforeEnter();
+					syncBackpackGuideTargets();
+					if (backpackGuideStep.requireAction) {
+						requestAnimationFrame(function () { enableBackpackGuideInteraction(backpackGuideStep); });
+					}
+				},
+				end: function (event) {
+					const completed = event.sender.current >= steps.length;
+					cleanupBackpackGuide();
+					if (backpackGuideTour === event.sender) backpackGuideTour = null;
+					if (completed) {
+						backpackGuideCompletionDialoguePending = true;
+						if (core.setFlag) core.setFlag("inGuide", false);
+					}
+				}
+			});
+			backpackGuideTour.start();
+		} catch (error) {
+			backpackGuideTour = null;
+			cleanupBackpackGuide();
+			console.error("背包教程启动失败", error);
+		}
+	};
+
+	const queueBackpackGuide = function () {
+		if (backpackGuideStarted || backpackGuideStartFrame != null
+			|| backpackGuideLayoutFrame != null || !isGuideBackpack()) return;
+		backpackGuideStartFrame = requestAnimationFrame(function () {
+			backpackGuideStartFrame = null;
+			backpackGuideLayoutFrame = requestAnimationFrame(function () {
+				backpackGuideLayoutFrame = null;
+				startBackpackGuide();
+			});
+		});
+	};
+
 	/** 创建背包所需 DOM 图层、工具栏和全局事件监听。 */
 	const buildInterface = function () {
 		gameGroup = document.getElementById("gameGroup");
@@ -1988,7 +2311,9 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		rotateDragButton.classList.add("backpack-rotate-drag-button");
 		toolbarElement.appendChild(rotateDragButton);
 		toolbarElement.appendChild(createSecondaryActions());
-		toolbarElement.appendChild(createButton("关闭", function () { closeBackpack(); }));
+		const closeButton = createButton("关闭", function () { closeBackpack(); });
+		closeButton.classList.add("backpack-close-button");
+		toolbarElement.appendChild(closeButton);
 		root.appendChild(toolbarElement);
 		root.addEventListener("pointerdown", function (event) {
 			if (secondaryActions && !secondaryActions.contains(event.target)) closeSecondaryActions();
@@ -2011,6 +2336,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		document.addEventListener("keydown", onKeyDown, true);
 		document.addEventListener("keyup", onKeyUp, true);
 		renderAll();
+		queueBackpackGuide();
 		return true;
 	};
 
@@ -2102,6 +2428,10 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	 */
 	const closeBackpack = function (options) {
 		options = options || {};
+		const showGuideCompletionDialogue = backpackGuideCompletionDialoguePending && !options.keepLocked;
+		backpackGuideCompletionDialoguePending = false;
+		endBackpackGuide();
+		backpackGuideStarted = false;
 		uiCommon.hideTooltip();
 		clearBackpackTooltipPlacement();
 		clearInventoryDragGesture();
@@ -2148,6 +2478,11 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 			core.status.event.interval = null;
 			if (!options.keepLocked) core.unlockControl();
 			if (core.updateStatusBar) core.updateStatusBar(true);
+		}
+		if (showGuideCompletionDialogue && core.insertAction) {
+			core.insertAction([
+				"\t[艾露达,N447]很好，你已经学会了所有内容，是时候来场真男人之间1V1的决斗了，来战胜我，迈出征服魔塔的第一步吧！"
+			]);
 		}
 		return true;
 	};

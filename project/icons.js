@@ -172,10 +172,7 @@ var icons_4665ee12_3a1f_44a4_bea3_0fccba634dc1 =
 		"N380": 19,
 		"N381": 20,
 		"N382": 21,
-		"N447": 22,
-		"N448": 23,
-		"N449": 24,
-		"N450": 25
+		"N447": 22
 	},
 	"enemys": {
 		"greenSlime": 0,
@@ -259,7 +256,8 @@ var icons_4665ee12_3a1f_44a4_bea3_0fccba634dc1 =
 		"angel": 0,
 		"elemental": 1,
 		"steelGuard": 2,
-		"evilBat": 3
+		"evilBat": 3,
+		"E448": 4
 	},
 	"items": {
 		"yellowKey": 0,

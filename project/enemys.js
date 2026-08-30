@@ -79,5 +79,6 @@ var enemys_fcae963b_31c9_42b4_b48c_bb48d09f3f80 =
 	"E354": {"name":"魔龙","hp":1500,"atk":600,"def":250,"money":800,"experience":0,"special":[],"notBomb":true,"displayIdInBook":null,"faceIds":{"down":"magicDragon"},"point":0,"exp":0,"attackInterval":1.9,"ultimateGain":38},
 	"E355": {"name":"魔龙","hp":1500,"atk":600,"def":250,"money":800,"experience":0,"special":[],"notBomb":true,"displayIdInBook":null,"faceIds":{"down":"magicDragon"},"point":0,"exp":0,"attackInterval":1.9,"ultimateGain":38},
 	"E356": {"name":"魔龙","hp":1500,"atk":600,"def":250,"money":800,"experience":0,"special":[],"notBomb":true,"displayIdInBook":null,"faceIds":{"down":"magicDragon"},"point":0,"exp":0,"attackInterval":1.9,"ultimateGain":38},
-	"E357": {"name":"魔龙","hp":1500,"atk":600,"def":250,"money":800,"experience":0,"special":[],"notBomb":true,"displayIdInBook":null,"faceIds":{"down":"magicDragon"},"point":0,"exp":0,"attackInterval":1.9,"ultimateGain":38}
+	"E357": {"name":"魔龙","hp":1500,"atk":600,"def":250,"money":800,"experience":0,"special":[],"notBomb":true,"displayIdInBook":null,"faceIds":{"down":"magicDragon"},"point":0,"exp":0,"attackInterval":1.9,"ultimateGain":38},
+	"E448": {"name":"艾露达","hp":5000,"atk":300,"def":0,"money":0,"exp":0,"point":0,"special":[]}
 }

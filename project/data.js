@@ -52,7 +52,8 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			"MT47",
 			"MT48",
 			"MT49",
-			"MT50"
+			"MT50",
+			"GUIDE"
 		],
 		"floorPartitions": [],
 		"images": [
@@ -116,6 +117,7 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			"guiwanguogang.png",
 			"gundamFist.png",
 			"h25.png",
+			"harp_chatacter.png",
 			"hero.png",
 			"hongzhigong.png",
 			"huixinglieshou.png",
@@ -291,6 +293,7 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			"Slash12.ogg",
 			"Sword4.ogg",
 			"Sword5.ogg",
+			"achivement.ogg",
 			"attack.mp3",
 			"attack2.mp3",
 			"bomb.mp3",
@@ -319,6 +322,7 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			"number"
 		],
 		"nameMap": {
+			"成就解锁": "achivement.ogg",
 			"确定": "confirm.mp3",
 			"取消": "cancel.mp3",
 			"操作失败": "error.mp3",
@@ -389,7 +393,7 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 		"title": "碧蓝幻想",
 		"name": "51_gbf",
 		"version": "Ver 2.02",
-		"floorId": "MT1",
+		"floorId": "GUIDE",
 		"hero": {
 			"image": "hero.png",
 			"animate": true,
@@ -402,7 +406,7 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			"atk": 100,
 			"def": 100,
 			"mdef": 0,
-			"money": 999999,
+			"money": 0,
 			"exp": 0,
 			"equipment": [],
 			"items": {
@@ -414,8 +418,8 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			},
 			"loc": {
 				"direction": "down",
-				"x": 6,
-				"y": 11
+				"x": 4,
+				"y": 10
 			},
 			"flags": {
 				"nowWeapon": "sword5",
@@ -805,6 +809,37 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 						"type": "function",
 						"async": true,
 						"function": "function(){\ncore.plugin.careerSelect.open()\n}"
+					}
+				]
+			},
+			{
+				"type": "function",
+				"function": "function(){\nvar careerWalkImages = {\n\t\"剑\": \"sword_walk.png\",\n\t\"琴\": \"hero.png\",\n\t\"杖\": \"witch_walk.png\"\n};\ncore.setHeroIcon(careerWalkImages[flags.kaiju] || \"hero.png\");\n}"
+			},
+			{
+				"type": "confirm",
+				"text": "是否观看新手教程？\n（初次游玩建议观看）",
+				"default": true,
+				"yes": [
+					{
+						"type": "setValue",
+						"name": "flag:inGuide",
+						"value": "true"
+					},
+					{
+						"type": "function",
+						"function": "function(){\ncore.firstData.floorId = \"GUIDE\";\ncore.firstData.hero.loc = { direction: \"down\", x: 4, y: 10 };\n}"
+					}
+				],
+				"no": [
+					{
+						"type": "setValue",
+						"name": "flag:inGuide",
+						"value": "false"
+					},
+					{
+						"type": "function",
+						"function": "function(){\ncore.firstData.floorId = \"MT1\";\ncore.firstData.hero.loc = { direction: \"up\", x: 6, y: 11 };\n}"
 					}
 				]
 			},

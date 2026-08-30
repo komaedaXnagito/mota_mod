@@ -294,6 +294,10 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			if (cost > 0) core.setFlag(FLAG_REFRESH, getRefreshCount() + 1);
 			refreshOffer();
 			render();
+			if (cost === 0 && plugin.achievementSystem && typeof plugin.achievementSystem.recordFreeShopRefresh === "function") {
+				try { plugin.achievementSystem.recordFreeShopRefresh(); }
+				catch (error) { console.error("成就免费刷新计数失败", error); }
+			}
 			if (!options.silent && core.playSound) core.playSound("item.mp3");
 			return true;
 		};

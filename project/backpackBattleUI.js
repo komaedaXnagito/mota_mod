@@ -13,6 +13,12 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 	var unsubscribe = null;
 	var resizeHandler = null;
 	var delayedOpenTimer = null;
+	var guideTour = null;
+	var guideStarted = false;
+	var guideStartFrame = null;
+	var guideLayoutFrame = null;
+	var guideTargets = [];
+	var guideResumeHandler = null;
 	var INSTANT_OPEN_DELAY = 100;
 	var GRID_COLS = 10;
 	var GRID_ROWS = 10;
@@ -21,6 +27,11 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 
 	var format = function (value, digits) {
 		return common.formatNumber(value, digits == null ? 1 : digits);
+	};
+
+	var isGuideBattle = function () {
+		return !!(core.getFlag && core.getFlag("inGuide"))
+			&& !(core.isReplaying && core.isReplaying());
 	};
 
 	/** 将所有状态矢量图形注册为当前战斗面板内的 SVG symbol，不再发起图标图片请求。 */
@@ -112,17 +123,17 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		root.innerHTML = [
 			"<section class='bb-panel' role='dialog' aria-label='背包乱斗战斗'>",
 			"<header class='bb-topbar'><div class='bb-brand'>背包战斗</div><div class='bb-controls'>",
-			"<button class='bb-button bb-pause'>暂停</button><span class='bb-speed-label'>速度</span>",
+			"<button class='bb-button bb-pause'>暂停</button><div class='bb-guide-speed'><span class='bb-speed-label'>速度</span>",
 			"<button class='bb-button bb-speed' data-speed='0.25'>0.25×</button><button class='bb-button bb-speed' data-speed='0.5'>0.5×</button><button class='bb-button bb-speed' data-speed='1'>1×</button><button class='bb-button bb-speed' data-speed='2'>2×</button><button class='bb-button bb-speed' data-speed='3'>3×</button><button class='bb-button bb-speed' data-speed='10'>10×</button>",
-			"<button class='bb-button bb-fast'>立即</button></div></header>",
+			"<button class='bb-button bb-fast'>立即</button></div></div></header>",
 			"<div class='bb-content'>",
 			"<section class='bb-arsenal'><div class='bb-arsenal-title'>武器阵列 <small class='bb-weapon-count'></small></div><div class='bb-weapon-board'><div class='bb-weapon-stage'><div class='bb-synergy-layer'></div></div><div class='bb-weapon-empty'>尚未摆放武器</div></div></section>",
 			"<aside class='bb-sidebar'>",
 			"<div class='bb-duel'>",
-			"<article class='bb-side player'><div class='bb-portrait-wrap'><span class='bb-side-tag'>勇士</span><canvas class='bb-portrait bb-player-portrait' width='128' height='128'></canvas></div><div class='bb-side-name bb-player-name'></div><div class='bb-hp-line'><span>HP</span><strong class='bb-player-hp-text'></strong></div><div class='bb-bar bb-player-hp'><i></i></div><div class='bb-side-meta bb-player-meta'></div><div class='bb-statuses bb-player-statuses'></div></article>",
-			"<article class='bb-side enemy'><div class='bb-portrait-wrap'><span class='bb-side-tag'>敌人</span><canvas class='bb-portrait bb-enemy-portrait' width='128' height='128'></canvas></div><div class='bb-side-name bb-enemy-name'></div><div class='bb-hp-line'><span>HP</span><strong class='bb-enemy-hp-text'></strong></div><div class='bb-bar bb-enemy-hp'><i></i></div><div class='bb-side-meta bb-enemy-meta'></div><div class='bb-statuses bb-enemy-statuses'></div></article>",
+			"<article class='bb-side player'><div class='bb-portrait-wrap'><span class='bb-side-tag'>勇士</span><canvas class='bb-portrait bb-player-portrait' width='128' height='128'></canvas></div><div class='bb-side-name bb-player-name'></div><div class='bb-guide-player-stats'><div class='bb-hp-line'><span>HP</span><strong class='bb-player-hp-text'></strong></div><div class='bb-bar bb-player-hp'><i></i></div><div class='bb-side-meta bb-player-meta'></div></div><div class='bb-statuses bb-player-statuses'></div></article>",
+			"<article class='bb-side enemy'><div class='bb-portrait-wrap'><span class='bb-side-tag'>敌人</span><canvas class='bb-portrait bb-enemy-portrait' width='128' height='128'></canvas></div><div class='bb-side-name bb-enemy-name'></div><div class='bb-guide-enemy-data'><div class='bb-hp-line'><span>HP</span><strong class='bb-enemy-hp-text'></strong></div><div class='bb-bar bb-enemy-hp'><i></i></div><div class='bb-side-meta bb-enemy-meta'></div><div class='bb-statuses bb-enemy-statuses'></div></div></article>",
 			"</div>",
-			"<section class='bb-resource'><div class='bb-resource-row'><span>奥义</span><strong class='bb-ultimate-text'></strong></div><div class='bb-bar bb-ultimate-bar'><i></i></div><div class='bb-enemy-ultimate'><div class='bb-resource-row'><span>敌方奥义</span><strong class='bb-enemy-ultimate-text'></strong></div><div class='bb-bar bb-enemy-ultimate-bar'><i></i></div></div><div class='bb-enemy-action'><div class='bb-resource-row'><span>敌方攻击准备</span><strong class='bb-enemy-action-text'></strong></div><div class='bb-bar bb-enemy-action-bar'><i></i></div></div></section>",
+			"<section class='bb-resource'><div class='bb-guide-ultimates'><div class='bb-resource-row'><span>奥义</span><strong class='bb-ultimate-text'></strong></div><div class='bb-bar bb-ultimate-bar'><i></i></div><div class='bb-enemy-ultimate'><div class='bb-resource-row'><span>敌方奥义</span><strong class='bb-enemy-ultimate-text'></strong></div><div class='bb-bar bb-enemy-ultimate-bar'><i></i></div></div></div><div class='bb-enemy-action'><div class='bb-resource-row'><span>敌方攻击准备</span><strong class='bb-enemy-action-text'></strong></div><div class='bb-bar bb-enemy-action-bar'><i></i></div></div></section>",
 			"<section class='bb-log'><button type='button' class='bb-log-toggle' aria-expanded='true'>战斗日志 ▾</button><div class='bb-log-list'></div></section>",
 			"</aside></div></section>"
 		].join("");
@@ -188,6 +199,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		root.addEventListener("contextmenu", function (event) { event.preventDefault(); });
 		resizeHandler = function () {
 			if (latestSnapshot && root) renderWeapons(latestSnapshot, true);
+			syncGuideTargets();
 		};
 		window.addEventListener("resize", resizeHandler);
 		if (nodes.pause && nodes.pause.focus) nodes.pause.focus();
@@ -517,6 +529,149 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		delayedOpenTimer = null;
 	};
 
+	/**
+	 * 战斗面板自身是一个固定定位堆叠上下文，Guides.js 无法直接把内部节点提到遮罩之上。
+	 * 因此按选择器为每个步骤创建一个 body 直属定位层：它只负责高亮和箭头定位，事件仍由真实控件处理。
+	 */
+	var syncGuideTargets = function () {
+		guideTargets.forEach(function (entry) {
+			if (!entry.source || !entry.proxy || !entry.source.isConnected) return;
+			var rect = entry.source.getBoundingClientRect();
+			entry.proxy.style.left = Math.round(rect.left) + "px";
+			entry.proxy.style.top = Math.round(rect.top) + "px";
+			entry.proxy.style.width = Math.max(1, Math.round(rect.width)) + "px";
+			entry.proxy.style.height = Math.max(1, Math.round(rect.height)) + "px";
+		});
+	};
+
+	var removeGuideResumeMode = function () {
+		document.body.classList.remove("bb-battle-guide-await-resume");
+		if (root && guideTour && guideTour.inProgress) {
+			root.inert = true;
+			root.setAttribute("aria-hidden", "true");
+		}
+		if (nodes.pause && guideResumeHandler) {
+			nodes.pause.removeEventListener("click", guideResumeHandler);
+		}
+		guideResumeHandler = null;
+	};
+
+	var enableGuideResumeMode = function () {
+		removeGuideResumeMode();
+		if (!root || !nodes.pause) return;
+		// Guides 默认锁定背景；最后一步只解锁战斗根节点，并让点击穿过遮罩抵达真实“继续”按钮。
+		root.inert = false;
+		root.removeAttribute("aria-hidden");
+		document.body.classList.add("bb-battle-guide-await-resume");
+		guideResumeHandler = function () {
+			if (guideTour && guideTour.inProgress) guideTour.end();
+		};
+		nodes.pause.addEventListener("click", guideResumeHandler);
+	};
+
+	var cleanupBattleGuide = function () {
+		removeGuideResumeMode();
+		document.body.classList.remove("bb-battle-guide-active");
+		guideTargets.forEach(function (entry) {
+			if (entry.proxy && entry.proxy.parentNode) entry.proxy.parentNode.removeChild(entry.proxy);
+		});
+		guideTargets = [];
+	};
+
+	var endBattleGuide = function () {
+		var wasActive = !!guideTour || guideStartFrame != null || guideLayoutFrame != null
+			|| guideTargets.length > 0;
+		if (!wasActive) return;
+		if (guideStartFrame != null) cancelAnimationFrame(guideStartFrame);
+		if (guideLayoutFrame != null) cancelAnimationFrame(guideLayoutFrame);
+		guideStartFrame = null;
+		guideLayoutFrame = null;
+		var currentTour = guideTour;
+		if (currentTour && currentTour.inProgress) currentTour.end();
+		guideTour = null;
+		cleanupBattleGuide();
+	};
+
+	var startBattleGuide = function () {
+		guideStartFrame = null;
+		if (!root || !latestSnapshot || !latestSnapshot.active || !latestSnapshot.paused || !isGuideBattle()) return;
+		var GuidesConstructor = window.Guides && (window.Guides.default || window.Guides);
+		if (typeof GuidesConstructor !== "function") {
+			guideStarted = true;
+			console.error("战斗教程启动失败：Guides.js 未加载");
+			return;
+		}
+		guideStarted = true;
+		var definitions = [
+			[".bb-guide-player-stats", "这里是你的当前生命值、战斗内生命上限、当前基础命中率"],
+			[".bb-player-statuses", "这里会展示你的Buff和Debuff，点击或悬浮查看详细数据"],
+			[".bb-guide-enemy-data", "怪物的数据在这里"],
+			[".bb-guide-ultimates", "这里是奥义条，攻击命中会获得奥义，奥义满后会触发奥义效果"],
+			[".bb-enemy-action", "这是怪物的攻击进度条，满了后怪物会发起攻击"],
+			[".bb-arsenal", "每把放置在背包内的武器都会自动进行攻击，武器有不同的攻击频率，武器下方的倒计时可以看到还有多长时间该武器会发动一次攻击"],
+			[".bb-log", "这里可以看到详细的战斗日志"],
+			[".bb-guide-speed", "这里可以调节战斗动画播放的速率，初次战斗就让我们完整的看完吧"],
+			[".bb-pause", "接下来点击继续开始战斗吧！", true]
+		];
+		var guides = [];
+		definitions.forEach(function (definition, index) {
+			var source = root.querySelector(definition[0]);
+			if (!source) {
+				console.warn("战斗教程未找到目标：" + definition[0]);
+				return;
+			}
+			var proxy = document.createElement("div");
+			proxy.className = "bb-guide-target-proxy";
+			proxy.setAttribute("aria-hidden", "true");
+			document.body.appendChild(proxy);
+			guideTargets.push({ source: source, proxy: proxy });
+			guides.push({
+				target: proxy,
+				html: definition[1] + "<small class='bb-guide-progress'>" + (index + 1) + " / " + definitions.length + "</small>",
+				awaitResume: !!definition[2]
+			});
+		});
+		if (!guides.length) {
+			cleanupBattleGuide();
+			return;
+		}
+		syncGuideTargets();
+		document.body.classList.add("bb-battle-guide-active");
+		try {
+			guideTour = new GuidesConstructor({
+				color: "#f2c86f",
+				distance: 36,
+				className: "bb-battle-guide",
+				guides: guides,
+				render: function (event) {
+					syncGuideTargets();
+					if (event.guide && event.guide.awaitResume) enableGuideResumeMode();
+					else removeGuideResumeMode();
+				},
+				end: function (event) {
+					cleanupBattleGuide();
+					if (guideTour === event.sender) guideTour = null;
+				}
+			});
+			guideTour.start();
+		} catch (error) {
+			guideTour = null;
+			cleanupBattleGuide();
+			console.error("战斗教程启动失败", error);
+		}
+	};
+
+	var queueBattleGuide = function () {
+		if (guideStarted || guideStartFrame != null || guideLayoutFrame != null || !isGuideBattle()) return;
+		guideStartFrame = requestAnimationFrame(function () {
+			guideStartFrame = null;
+			guideLayoutFrame = requestAnimationFrame(function () {
+				guideLayoutFrame = null;
+				startBattleGuide();
+			});
+		});
+	};
+
 	var render = function (snapshot, allowInstantOpen) {
 		if (!snapshot || snapshot.active === false) {
 			close();
@@ -527,7 +682,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 			return;
 		}
 		latestSnapshot = snapshot;
-		var preferredSpeed = typeof runtime.getPreferredSpeed === "function"
+		var preferredSpeed = !isGuideBattle() && typeof runtime.getPreferredSpeed === "function"
 			? runtime.getPreferredSpeed() : snapshot.speed;
 		// “立即”先静默模拟 100ms：期间完成则从未创建过面板，较慢的战斗才补显示结算进度。
 		if (preferredSpeed === "instant" && !root && !allowInstantOpen) {
@@ -573,10 +728,12 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		var enemyProgress = Math.max(0, Math.min(1, snapshot.enemy.cooldownProgress || 0));
 		nodes.enemyActionBar.style.width = (enemyProgress * 100) + "%";
 		nodes.enemyActionText.textContent = enemyProgress >= 0.999 ? "就绪" : format((1 - enemyProgress) * snapshot.enemy.effectiveIntervalTicks / 100, 1) + "s";
+		if (snapshot.paused) queueBattleGuide();
 	};
 
 	var close = function () {
 		cancelDelayedOpen();
+		endBattleGuide();
 		common.hideTooltip();
 		if (resizeHandler) window.removeEventListener("resize", resizeHandler);
 		resizeHandler = null;
@@ -587,6 +744,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		weaponNodes = {};
 		statusIconNodes = {};
 		latestSnapshot = null;
+		guideStarted = false;
 	};
 
 	unsubscribe = runtime.subscribe(render);

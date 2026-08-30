@@ -1458,6 +1458,14 @@ body.backpack-drag-selection-locked * {
 	gap: 6px;
 }
 
+.bb-guide-speed {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
 .bb-speed-label {
 	margin: 0 2px 0 7px;
 	color: #a99b87;
@@ -1985,6 +1993,95 @@ body.backpack-drag-selection-locked * {
 
 .bb-log-line.ultimate {
 	color: #ffe071;
+}
+
+/* Guides.js 教程：定位层绕开战斗弹层或 gameGroup 自身的 stacking context。 */
+.bb-guide-target-proxy,
+.backpack-guide-target-proxy {
+	position: fixed;
+	box-sizing: border-box;
+	border-radius: 9px;
+	pointer-events: none;
+}
+
+.bb-guide-target-proxy.guides-current-element,
+.backpack-guide-target-proxy.guides-current-element {
+	position: fixed;
+	box-shadow: 0 0 0 9999px rgba(3, 5, 8, .78), 0 0 0 3px rgba(242, 200, 111, .9);
+}
+
+body.bb-battle-guide-active .guides-overlay,
+body.backpack-guide-active .guides-overlay {
+	background: transparent;
+	backdrop-filter: none;
+}
+
+/* 定位代理层负责聚光，Guides 画布必须在它上方，否则代理层的全屏阴影会压暗提示文字。 */
+body.bb-battle-guide-active .guides-canvas,
+body.backpack-guide-active .guides-canvas {
+	z-index: var(--guides-z-mask);
+}
+
+@keyframes bb-guide-fade-in {
+	from {
+		opacity: 0;
+	}
+
+	to {
+		opacity: 1;
+	}
+}
+
+body.bb-battle-guide-active .guides-fade-in,
+body.backpack-guide-active .guides-fade-in {
+	animation: bb-guide-fade-in .25s ease both;
+}
+
+.guides-guide.bb-battle-guide:focus {
+	outline: none;
+}
+
+.guides-guide.bb-battle-guide>span {
+	max-width: min(390px, calc(100vw - 32px));
+	box-sizing: border-box;
+	padding: 13px 15px;
+	border: 1px solid #d0a96a;
+	border-radius: 10px;
+	background: linear-gradient(145deg, #382d22, #171514);
+	box-shadow: 0 12px 34px rgba(0, 0, 0, .75);
+	color: #fff1d4;
+	font: 600 14px/1.6 'Microsoft YaHei', sans-serif;
+	text-shadow: none;
+}
+
+.bb-guide-progress {
+	display: block;
+	margin-top: 5px;
+	color: #c6a96f;
+	font: 500 11px/1.2 sans-serif;
+}
+
+body.bb-battle-guide-await-resume .guides-canvas {
+	pointer-events: none;
+}
+
+/* 需要点击真实控件的教程步骤（选择武器、打开合成、关闭背包）允许事件穿过 Guides 画布。 */
+body.backpack-guide-interactive .guides-canvas {
+	pointer-events: none;
+}
+
+.backpack-guide-action-target {
+	position: relative;
+	z-index: 5;
+}
+
+/* 教程只展示拖拽时的三块操作区，不创建虚假的拖拽状态或改动武器。 */
+#backpack-system-root.backpack-guide-show-drag-actions .backpack-inventory {
+	display: none;
+}
+
+#backpack-system-root.backpack-guide-show-drag-actions .backpack-drag-actions {
+	display: grid;
 }
 
 @keyframes backpack-synergy-flow {

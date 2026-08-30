@@ -11,6 +11,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		{
 			id: "剑",
 			name: "剑士",
+			shortTagline: "攻守兼备",
 			tagline: "攻守兼备的近战起点",
 			color: "#ffb45b",
 			accent: "#ff6b4a",
@@ -19,25 +20,27 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 			promotions: ["狂战士", "双剑士", "盾誓士", "魔剑士"],
 			poolTypes: ["剑", "盾", "短", "斧"],
 			poolPreview: "七星剑、修瓦利耶之剑、真龙之盾",
-			unlockText: "29层解锁刀类；狂战士额外解锁专属斧。",
+			unlockText: "转职后解锁刀类；狂战士额外解锁专属斧。",
 			walk: "sword_walk.png"
 		},
 		{
 			id: "琴",
-			name: "乐师",
+			name: "琴师",
+			shortTagline: "节奏联动",
 			tagline: "围绕节奏与联动展开战斗",
 			color: "#53e4ff",
 			accent: "#8b7bff",
-			portrait: "career-qin.png",
+			portrait: "harp_chatacter.png",
 			portraitFilter: "none",
 			promotions: ["兽王", "摇滚巨星", "极乐净土"],
 			poolTypes: ["乐器", "食物", "饮料"],
 			poolPreview: "追忆小提琴、语部之弦、史莱姆铃铛",
-			unlockText: "29层可追加动物或吉他相关武器。"
+			unlockText: "转职后可追加动物或吉他相关武器。"
 		},
 		{
 			id: "杖",
 			name: "术士",
+			shortTagline: "法术召唤",
 			tagline: "法术、召唤与资源循环",
 			color: "#c79cff",
 			accent: "#53d8b4",
@@ -46,7 +49,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 			promotions: ["黑猫道士", "使役者"],
 			poolTypes: ["杖", "召唤石", "道具"],
 			poolPreview: "巖迫之躯杖、钢棍、格里姆尼尔",
-			unlockText: "29层可追加专属法杖或精灵相关武器。",
+			unlockText: "转职后可追加专属法杖或精灵相关武器。",
 			walk: "witch_walk.png"
 		}
 	];
@@ -56,6 +59,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	var titleCanvas = null;
 	var titleCtx = null;
 	var titleVideo = null;
+	var careerVideo = null;
 	var titleImage = null;
 	var titleCharacterMaskImage = null;
 	var titleCharacterMaskSource = null;
@@ -77,6 +81,8 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	var walkFrame = 0;
 	var walkTimer = null;
 	var hitboxes = [];
+	var canvasLogicalWidth = 676;
+	var canvasLogicalHeight = 416;
 
 	var roundRect = function (context, x, y, width, height, radius) {
 		radius = Math.max(0, Math.min(radius, Math.min(width, height) / 2));
@@ -112,11 +118,15 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 
 	var drawText = function (text, x, y, size, color, align, weight) {
 		ctx.save();
+		var textValue = String(text);
 		ctx.font = (weight || "normal") + " " + size + "px 'Microsoft YaHei', sans-serif";
 		ctx.fillStyle = color || "#fff";
 		ctx.textAlign = align || "left";
-		ctx.textBaseline = "middle";
-		ctx.fillText(String(text), x, y);
+		ctx.textBaseline = "alphabetic";
+		var metrics = ctx.measureText(textValue);
+		var ascent = metrics.actualBoundingBoxAscent || size * 0.78;
+		var descent = metrics.actualBoundingBoxDescent || size * 0.22;
+		ctx.fillText(textValue, x, y + (ascent - descent) / 2);
 		ctx.restore();
 	};
 
@@ -147,49 +157,46 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		ctx.font = "bold 12px 'Microsoft YaHei', sans-serif";
 		var width = Math.ceil(ctx.measureText(text).width) + 18;
 		ctx.restore();
-		fillRoundRect(x, y, width, 24, 12, "rgba(255,255,255,0.08)");
+		fillRoundRect(x, y, width, 24, 12, "rgba(8,15,31,0.82)");
 		strokeRoundRect(x, y, width, 24, 12, color, 1.5);
 		drawText(text, x + width / 2, y + 12, 12, color, "center", "bold");
 		return width;
 	};
 
 	var drawBackground = function (width, height) {
-		var gradient = ctx.createLinearGradient(0, 0, width, height);
-		gradient.addColorStop(0, "#111827");
-		gradient.addColorStop(0.55, "#172036");
-		gradient.addColorStop(1, "#24172e");
-		ctx.fillStyle = gradient;
+		var shade = ctx.createLinearGradient(0, 0, 0, height);
+		shade.addColorStop(0, "rgba(4,8,22,0.42)");
+		shade.addColorStop(0.5, "rgba(4,9,22,0.57)");
+		shade.addColorStop(1, "rgba(3,7,18,0.86)");
+		ctx.fillStyle = shade;
 		ctx.fillRect(0, 0, width, height);
 
-		ctx.save();
-		ctx.globalAlpha = 0.08;
-		ctx.strokeStyle = "#ffffff";
-		ctx.lineWidth = 1;
-		for (var line = -height; line < width + height; line += 28) {
-			ctx.beginPath();
-			ctx.moveTo(line, 0);
-			ctx.lineTo(line - height, height);
-			ctx.stroke();
-		}
-		ctx.restore();
-
-		var glow = ctx.createRadialGradient(width * 0.58, height * 0.34, 10, width * 0.58, height * 0.34, width * 0.45);
-		glow.addColorStop(0, CAREERS[selectedIndex].color + "30");
+		var glow = ctx.createRadialGradient(width * 0.5, 26, 8, width * 0.5, 26, width * 0.7);
+		glow.addColorStop(0, "rgba(92,126,255,0.22)");
+		glow.addColorStop(0.68, CAREERS[selectedIndex].color + "12");
 		glow.addColorStop(1, "rgba(0,0,0,0)");
 		ctx.fillStyle = glow;
 		ctx.fillRect(0, 0, width, height);
+
+		ctx.save();
+		ctx.strokeStyle = "rgba(208,160,104,0.72)";
+		ctx.lineWidth = 1.2;
+		ctx.strokeRect(1, 1, width - 2, height - 2);
+		ctx.restore();
 	};
 
 	var drawCareerCard = function (career, index, box) {
 		var selected = index === selectedIndex;
-		fillRoundRect(box.x, box.y, box.w, box.h, 10, selected ? "rgba(255,255,255,0.13)" : "rgba(5,10,22,0.68)");
-		strokeRoundRect(box.x, box.y, box.w, box.h, 10, selected ? career.color : "rgba(255,255,255,0.20)", selected ? 3 : 1.5);
-		fillRoundRect(box.x + 9, box.y + 12, 38, 38, 19, selected ? career.color : "rgba(255,255,255,0.12)");
-		drawText(career.id, box.x + 28, box.y + 31, 22, selected ? "#101522" : "#d8dfeb", "center", "bold");
-		drawText(career.name, box.x + 57, box.y + 23, 18, selected ? "#ffffff" : "#d7dce7", "left", "bold");
-		drawWrappedText(career.tagline, box.x + 57, box.y + 43, box.w - 66, 15, 2, selected ? career.color : "#8792a7", 11);
+		var compact = box.w <= 110;
+		var textX = box.x + (compact ? 53 : 57);
+		fillRoundRect(box.x, box.y, box.w, box.h, 10, selected ? "rgba(25,31,46,0.92)" : "rgba(6,12,27,0.78)");
+		strokeRoundRect(box.x, box.y, box.w, box.h, 10, selected ? BUTTON_GOLD_LIGHT : "rgba(208,160,104,0.48)", selected ? 2.5 : 1.2);
+		fillRoundRect(box.x + 9, box.y + 12, 38, 38, 19, selected ? BUTTON_GOLD_LIGHT : "rgba(208,160,104,0.16)");
+		drawText(career.id, box.x + 28, box.y + 31, 22, selected ? "#17111a" : "#ead1aa", "center", "bold");
+		drawText(career.name, textX, box.y + 23, compact ? 17 : 18, selected ? "#ffffff" : "#d8dce5", "left", "bold");
+		drawText(career.shortTagline || career.tagline, textX, box.y + 52, compact ? 9 : 11, selected ? "#f0d0a0" : "#929db0", "left", "normal");
 		if (selected) {
-			ctx.fillStyle = career.color;
+			ctx.fillStyle = BUTTON_GOLD_LIGHT;
 			ctx.beginPath();
 			ctx.moveTo(box.x + box.w - 12, box.y + box.h / 2 - 7);
 			ctx.lineTo(box.x + box.w - 4, box.y + box.h / 2);
@@ -210,8 +217,9 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		roundRect(ctx, box.x, box.y, box.w, box.h, 12);
 		ctx.clip();
 		var gradient = ctx.createLinearGradient(box.x, box.y, box.x, box.y + box.h);
-		gradient.addColorStop(0, career.color + "35");
-		gradient.addColorStop(1, "#080d18");
+		gradient.addColorStop(0, career.color + "28");
+		gradient.addColorStop(0.55, "rgba(9,15,30,0.36)");
+		gradient.addColorStop(1, "#070c18");
 		ctx.fillStyle = gradient;
 		ctx.fillRect(box.x, box.y, box.w, box.h);
 
@@ -242,13 +250,13 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		ctx.fillStyle = shade;
 		ctx.fillRect(box.x, box.y + box.h - 72, box.w, 72);
 		ctx.restore();
-		strokeRoundRect(box.x, box.y, box.w, box.h, 12, career.color, 2);
+		strokeRoundRect(box.x, box.y, box.w, box.h, 12, BUTTON_GOLD_LIGHT, 2);
 		// drawText("临时职业立绘", box.x + box.w / 2, box.y + box.h - 16, 12, "#ffffff", "center", "bold");
 	};
 
 	var drawHeroSprite = function (x, y, size, career) {
-		fillRoundRect(x, y, size, size, 9, "rgba(5,10,22,0.72)");
-		strokeRoundRect(x, y, size, size, 9, career.color, 1.5);
+		fillRoundRect(x, y, size, size, 9, "rgba(6,12,27,0.86)");
+		strokeRoundRect(x, y, size, size, 9, BUTTON_GOLD_LIGHT, 1.5);
 		var heroImage = core.material && core.material.images ? core.material.images.hero : null;
 		if (career.walk && core.material?.images?.images?.[career.walk]) {
 			heroImage = core.material.images.images[career.walk]
@@ -282,8 +290,8 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 				cursorX = x;
 				cursorY += rowHeight;
 			}
-			fillRoundRect(cursorX, cursorY, width, compact ? 22 : 24, 6, "rgba(255,255,255,0.08)");
-			strokeRoundRect(cursorX, cursorY, width, compact ? 22 : 24, 6, career.color, 1);
+			fillRoundRect(cursorX, cursorY, width, compact ? 22 : 24, 6, "rgba(8,15,31,0.82)");
+			strokeRoundRect(cursorX, cursorY, width, compact ? 22 : 24, 6, "rgba(208,160,104,0.78)", 1);
 			drawText(promotion, cursorX + width / 2, cursorY + (compact ? 11 : 12), compact ? 11 : 12, "#ffffff", "center", "bold");
 			cursorX += width + 7;
 		});
@@ -293,76 +301,81 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	var drawPool = function (career, x, y, maxWidth, compact) {
 		var cursorX = x;
 		career.poolTypes.forEach(function (type) {
-			var width = drawTag(type, cursorX, y, career.color);
+			var width = drawTag(type, cursorX, y, BUTTON_GOLD_LIGHT);
 			cursorX += width + 6;
 		});
-		drawWrappedText("代表武器：" + career.poolPreview, x, y + 33, maxWidth, compact ? 15 : 17, 2, "#e5ebf5", compact ? 11 : 12);
-		drawWrappedText(career.unlockText, x, y + (compact ? 66 : 71), maxWidth, compact ? 15 : 17, 2, career.color, compact ? 11 : 12);
+		drawWrappedText("代表武器：" + career.poolPreview, x, y + (compact ? 30 : 33), maxWidth, compact ? 15 : 17, 2, "#e5ebf5", compact ? 11 : 12);
+		if (!compact) drawWrappedText(career.unlockText, x, y + 71, maxWidth, 17, 2, career.color, 12);
 	};
 
 	var drawConfirmButton = function (box, career) {
-		var gradient = ctx.createLinearGradient(box.x, box.y, box.x + box.w, box.y);
-		gradient.addColorStop(0, career.accent);
-		gradient.addColorStop(1, career.color);
+		var gradient = ctx.createLinearGradient(box.x, box.y, box.x + box.w, box.y + box.h);
+		gradient.addColorStop(0, BUTTON_GOLD_LIGHT);
+		gradient.addColorStop(0.48, BUTTON_GOLD);
+		gradient.addColorStop(1, BUTTON_GOLD_DARK);
 		fillRoundRect(box.x, box.y, box.w, box.h, box.h / 2, gradient);
-		strokeRoundRect(box.x, box.y, box.w, box.h, box.h / 2, "rgba(255,255,255,0.86)", 2);
-		drawText("以" + career.name + "开始", box.x + box.w / 2, box.y + box.h / 2, 16, "#111827", "center", "bold");
+		drawButtonFrameOn(ctx, box, BUTTON_GOLD, true);
+		drawText("以" + career.name + "开始", box.x + box.w / 2, box.y + box.h / 2, 12, "#ffffff", "center", "bold");
 		hitboxes.push({ type: "confirm", x: box.x, y: box.y, w: box.w, h: box.h });
 	};
 
 	var renderLandscape = function () {
 		var career = CAREERS[selectedIndex];
 		drawBackground(676, 416);
-		drawText("选择初始职业", 18, 26, 23, "#ffffff", "left", "bold");
-		drawText("职业决定29层的转职路线；当前基础武器池保持共享", 658, 27, 12, "#aab5c8", "right", "normal");
+		fillRoundRect(12, 8, 652, 39, 9, "rgba(7,13,29,0.78)");
+		strokeRoundRect(12, 8, 652, 39, 9, "rgba(208,160,104,0.74)", 1.2);
+		drawText("选择初始职业", 23, 27, 22, "#ffffff", "left", "bold");
 
 		CAREERS.forEach(function (one, index) {
 			drawCareerCard(one, index, { x: 14, y: 57 + index * 89, w: 148, h: 78 });
 		});
-		fillRoundRect(14, 329, 148, 69, 10, "rgba(5,10,22,0.62)");
-		strokeRoundRect(14, 329, 148, 69, 10, "rgba(255,255,255,0.16)", 1);
-		drawText("操作提示", 25, 345, 12, career.color, "left", "bold");
-		drawWrappedText("点击左侧职业查看详情，确认后进入游戏。", 25, 358, 126, 16, 3, "#aab5c8", 11);
 
 		drawPortrait(career, { x: 174, y: 57, w: 220, h: 341 });
 
-		fillRoundRect(406, 57, 256, 341, 12, "rgba(5,10,22,0.72)");
-		strokeRoundRect(406, 57, 256, 341, 12, "rgba(255,255,255,0.18)", 1.5);
+		fillRoundRect(406, 57, 256, 341, 12, "rgba(6,12,27,0.86)");
+		strokeRoundRect(406, 57, 256, 341, 12, "rgba(208,160,104,0.70)", 1.4);
 		drawText(career.name, 422, 80, 25, "#ffffff", "left", "bold");
-		drawText(career.id + "系初始职业", 422, 105, 12, career.color, "left", "bold");
+		drawText(career.id + "系初始职业", 422, 105, 12, BUTTON_GOLD_LIGHT, "left", "bold");
 		drawHeroSprite(596, 70, 48, career);
-		// drawText("行走图：勇者（临时）", 644, 126, 10, "#93a0b6", "right", "normal");
 
 		drawText("进一步转职", 422, 147, 13, "#ffffff", "left", "bold");
 		var promotionBottom = drawPromotions(career, 422, 163, 224, false);
 		drawText("职业武器池", 422, promotionBottom + 19, 13, "#ffffff", "left", "bold");
 		drawPool(career, 422, promotionBottom + 34, 224, false);
-		drawConfirmButton({ x: 476, y: 354, w: 168, h: 34 }, career);
+		drawConfirmButton({ x: 478, y: 361, w: 112, h: 24 }, career);
 	};
 
-	var renderVertical = function () {
+	var renderVertical = function (viewHeight) {
 		var career = CAREERS[selectedIndex];
-		drawBackground(416, 676);
-		drawText("选择初始职业", 14, 27, 22, "#ffffff", "left", "bold");
-		drawText("点击左侧切换", 402, 28, 11, "#aab5c8", "right", "normal");
+		var detailHeight = 233;
+		var bottomPadding = 7;
+		var sectionGap = 12;
+		var portraitY = 55;
+		var detailY = viewHeight - bottomPadding - detailHeight;
+		var portraitHeight = detailY - sectionGap - portraitY;
+
+		drawBackground(416, viewHeight);
+		fillRoundRect(8, 8, 400, 39, 9, "rgba(7,13,29,0.80)");
+		strokeRoundRect(8, 8, 400, 39, 9, "rgba(208,160,104,0.74)", 1.2);
+		drawText("选择初始职业", 18, 27, 21, "#ffffff", "left", "bold");
+		drawText("点击左侧切换", 398, 28, 11, "#dfc8a3", "right", "normal");
 
 		CAREERS.forEach(function (one, index) {
 			drawCareerCard(one, index, { x: 10, y: 55 + index * 89, w: 103, h: 78 });
 		});
-		drawPortrait(career, { x: 123, y: 55, w: 283, h: 256 });
-		drawHeroSprite(348, 67, 46, career);
-		drawText("勇者行走图", 371, 121, 9, "#ffffff", "center", "bold");
+		drawPortrait(career, { x: 123, y: portraitY, w: 283, h: portraitHeight });
+		drawHeroSprite(342, 63, 54, career);
 
-		fillRoundRect(10, 323, 396, 343, 12, "rgba(5,10,22,0.75)");
-		strokeRoundRect(10, 323, 396, 343, 12, "rgba(255,255,255,0.18)", 1.5);
-		drawText(career.name, 24, 350, 24, "#ffffff", "left", "bold");
-		drawText(career.tagline, 392, 351, 11, career.color, "right", "bold");
-		drawText("进一步转职", 24, 383, 13, "#ffffff", "left", "bold");
-		var promotionBottom = drawPromotions(career, 24, 400, 368, true);
-		drawText("职业武器池", 24, promotionBottom + 21, 13, "#ffffff", "left", "bold");
-		drawPool(career, 24, promotionBottom + 38, 368, true);
-		drawWrappedText("基础池当前为三职业共享；转职后按路线追加专属武器。", 24, 581, 368, 16, 2, "#93a0b6", 11);
-		drawConfirmButton({ x: 116, y: 621, w: 184, h: 34 }, career);
+		fillRoundRect(10, detailY, 396, detailHeight, 12, "rgba(6,12,27,0.87)");
+		strokeRoundRect(10, detailY, 396, detailHeight, 12, "rgba(208,160,104,0.70)", 1.4);
+		drawText(career.name, 24, detailY + 24, 24, "#ffffff", "left", "bold");
+		drawText(career.tagline, 392, detailY + 25, 11, career.color, "right", "bold");
+		drawText(career.unlockText, 392, detailY + 42, 10, career.color, "right", "normal");
+		drawText("进一步转职", 24, detailY + 59, 13, "#ffffff", "left", "bold");
+		var promotionBottom = drawPromotions(career, 24, detailY + 75, 368, true);
+		drawText("职业武器池", 24, promotionBottom + 14, 13, "#ffffff", "left", "bold");
+		drawPool(career, 24, promotionBottom + 29, 368, true);
+		drawConfirmButton({ x: 244, y: detailY + 196, w: 124, h: 24 }, career);
 	};
 
 	var render = function () {
@@ -370,16 +383,25 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		hitboxes = [];
 		var vertical = !!(core.domStyle && core.domStyle.isVertical);
 		var groupRect = core.dom.gameGroup.getBoundingClientRect();
+		canvasLogicalWidth = vertical ? 416 : 676;
+		canvasLogicalHeight = vertical
+			? Math.max(676, Math.round(canvasLogicalWidth * groupRect.height / Math.max(1, groupRect.width)))
+			: 416;
 		canvas.style.width = groupRect.width + "px";
 		canvas.style.height = groupRect.height + "px";
-		if (core.maps && typeof core.maps._setHDCanvasSize === "function") {
-			core.maps._setHDCanvasSize(ctx, vertical ? 416 : 676, vertical ? 676 : 416);
-		} else {
-			canvas.width = vertical ? 416 : 676;
-			canvas.height = vertical ? 676 : 416;
+		if (careerVideo) {
+			careerVideo.style.width = groupRect.width + "px";
+			careerVideo.style.height = groupRect.height + "px";
+			careerVideo.style.objectPosition = vertical ? "57% center" : "center center";
 		}
-		ctx.clearRect(0, 0, vertical ? 416 : 676, vertical ? 676 : 416);
-		if (vertical) renderVertical();
+		if (core.maps && typeof core.maps._setHDCanvasSize === "function") {
+			core.maps._setHDCanvasSize(ctx, canvasLogicalWidth, canvasLogicalHeight);
+		} else {
+			canvas.width = canvasLogicalWidth;
+			canvas.height = canvasLogicalHeight;
+		}
+		ctx.clearRect(0, 0, canvasLogicalWidth, canvasLogicalHeight);
+		if (vertical) renderVertical(canvasLogicalHeight);
 		else renderLandscape();
 	};
 
@@ -390,8 +412,8 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	var getPointerPosition = function (event) {
 		var rect = canvas.getBoundingClientRect();
 		return {
-			x: (event.clientX - rect.left) * (core.domStyle && core.domStyle.isVertical ? 416 : 676) / rect.width,
-			y: (event.clientY - rect.top) * (core.domStyle && core.domStyle.isVertical ? 676 : 416) / rect.height
+			x: (event.clientX - rect.left) * canvasLogicalWidth / rect.width,
+			y: (event.clientY - rect.top) * canvasLogicalHeight / rect.height
 		};
 	};
 
@@ -409,6 +431,10 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		}
 		visible = false;
 		canvas.style.display = "none";
+		if (careerVideo) {
+			careerVideo.pause();
+			careerVideo.style.display = "none";
+		}
 		if (walkTimer) clearInterval(walkTimer);
 		walkTimer = null;
 		if (main.dom.outerBackground) main.dom.outerBackground.style.display = "block";
@@ -428,8 +454,9 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		canvas.style.display = "none";
 		canvas.style.touchAction = "none";
 		canvas.style.cursor = "default";
-		canvas.style.background = "#050912";
+		canvas.style.background = "transparent";
 		canvas.style.boxShadow = "0 0 0 9999px #000";
+		canvas.style.outline = "none";
 		canvas.tabIndex = 0;
 		canvas.setAttribute("role", "dialog");
 		canvas.setAttribute("aria-label", "选择初始职业");
@@ -473,13 +500,50 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		});
 	};
 
+	var createCareerVideo = function () {
+		if (careerVideo) return;
+		careerVideo = document.createElement("video");
+		careerVideo.id = "careerSelectVideo";
+		careerVideo.src = "project/video/background.mp4";
+		careerVideo.poster = "project/images/origin_background.png";
+		careerVideo.autoplay = true;
+		careerVideo.loop = true;
+		careerVideo.muted = true;
+		careerVideo.defaultMuted = true;
+		careerVideo.playsInline = true;
+		careerVideo.preload = "auto";
+		careerVideo.setAttribute("muted", "");
+		careerVideo.setAttribute("playsinline", "");
+		careerVideo.setAttribute("webkit-playsinline", "");
+		careerVideo.setAttribute("aria-hidden", "true");
+		careerVideo.style.position = "fixed";
+		careerVideo.style.left = "50%";
+		careerVideo.style.top = "50%";
+		careerVideo.style.transform = "translate(-50%, -50%)";
+		careerVideo.style.objectFit = "cover";
+		careerVideo.style.zIndex = "9999";
+		careerVideo.style.pointerEvents = "none";
+		careerVideo.style.display = "none";
+		careerVideo.style.boxShadow = "0 0 0 9999px #000";
+		core.dom.gameGroup.insertAdjacentElement("afterend", careerVideo);
+	};
+
 	var prepare = function () {
+		createCareerVideo();
 		createCanvas();
 		selectedIndex = 0;
 		walkFrame = 0;
 		visible = true;
 		if (main.dom.outerBackground) main.dom.outerBackground.style.display = "none";
 		if (main.dom.outerUI) main.dom.outerUI.style.display = "none";
+		if (careerVideo) {
+			careerVideo.style.display = "block";
+			if (titleVideo && titleVideo.readyState >= 1) {
+				try { careerVideo.currentTime = titleVideo.currentTime; } catch (error) { }
+			}
+			var playPromise = careerVideo.play();
+			if (playPromise && playPromise.catch) playPromise.catch(function () { });
+		}
 		canvas.style.display = "block";
 		render();
 		if (walkTimer) clearInterval(walkTimer);
@@ -534,18 +598,19 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		landscape: {
 			primaryWidthRatio: 0.21,
 			secondaryWidthRatio: 0.15,
-			secondaryGroupSpanRatio: 0.42,
+			secondaryGroupSpanRatio: 0.62,
 			groupOffsetYRatio: 0.075,
 			primaryCenterYRatio: 0.63,
 			secondaryCenterYRatio: 0.8
 		},
 		portrait: {
 			primaryWidthRatio: 0.34,
-			secondaryWidthRatio: 0.17,
-			secondaryGroupSpanRatio: 0.46,
+			secondaryWidthRatio: 0.23,
+			secondaryGroupSpanRatio: 0.42,
+			secondaryRowGapRatio: 0.074,
 			groupOffsetYRatio: 0.075,
 			primaryCenterYRatio: 0.7,
-			secondaryCenterYRatio: 0.81
+			secondaryCenterYRatio: 0.803
 		}
 	};
 	var TITLE_IMAGE_LAYOUT = {
@@ -586,15 +651,27 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		var groupOffsetY = height * config.groupOffsetYRatio;
 		var secondaryY = height * config.secondaryCenterYRatio + groupOffsetY;
 		var secondaryGroupSpan = width * config.secondaryGroupSpanRatio;
+		var secondary;
+		if (vertical) {
+			var rowGap = height * config.secondaryRowGapRatio;
+			secondary = [
+				[-0.5, 0], [0.5, 0],
+				[-0.5, rowGap], [0.5, rowGap]
+			].map(function (position) {
+				return makeTitleButtonBox(width / 2 + secondaryGroupSpan * position[0], secondaryY + position[1], secondaryWidth);
+			});
+		} else {
+			secondary = [-0.5, -1 / 6, 1 / 6, 0.5].map(function (groupPosition) {
+				return makeTitleButtonBox(width / 2 + secondaryGroupSpan * groupPosition, secondaryY, secondaryWidth);
+			});
+		}
 		return {
 			primary: makeTitleButtonBox(width / 2, height * config.primaryCenterYRatio + groupOffsetY, primaryWidth),
-			secondary: [-0.5, 0, 0.5].map(function (groupPosition) {
-				return makeTitleButtonBox(width / 2 + secondaryGroupSpan * groupPosition, secondaryY, secondaryWidth);
-			})
+			secondary: secondary
 		};
 	};
 
-	var drawButtonFrame = function (box, accent, selected) {
+	var drawButtonFrameOn = function (context, box, accent, selected) {
 		if (!buttonFrameImage || !buttonFrameImage.complete || !buttonFrameImage.naturalWidth) return;
 		var opening = BUTTON_FRAME_OPENING;
 		var scaleX = box.w / opening.w;
@@ -603,19 +680,23 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		var drawY = box.y - opening.y * scaleY;
 		var pulse = selected ? 0.5 + Math.sin(Date.now() / 260) * 0.5 : 0;
 
-		var entranceAlpha = titleCtx.globalAlpha;
-		titleCtx.save();
-		titleCtx.globalAlpha = entranceAlpha * (selected ? 1 : 0.88);
-		titleCtx.shadowColor = accent;
-		titleCtx.shadowBlur = selected ? 10 + pulse * 8 : 3;
-		titleCtx.drawImage(
+		var entranceAlpha = context.globalAlpha;
+		context.save();
+		context.globalAlpha = entranceAlpha * (selected ? 1 : 0.88);
+		context.shadowColor = accent;
+		context.shadowBlur = selected ? 10 + pulse * 8 : 3;
+		context.drawImage(
 			buttonFrameImage,
 			drawX,
 			drawY,
 			buttonFrameImage.naturalWidth * scaleX,
 			buttonFrameImage.naturalHeight * scaleY
 		);
-		titleCtx.restore();
+		context.restore();
+	};
+
+	var drawButtonFrame = function (box, accent, selected) {
+		drawButtonFrameOn(titleCtx, box, accent, selected);
 	};
 
 	var drawTitleButton = function (index, textValue, box, accent, primary) {
@@ -718,9 +799,10 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 			canvasWidth + "x" + canvasHeight + "@" + renderRatio.toFixed(3);
 		if (canCache && titleCompositeCache[cacheKey]) return titleCompositeCache[cacheKey];
 		var layout = vertical ? TITLE_IMAGE_LAYOUT.portrait : TITLE_IMAGE_LAYOUT.landscape;
-		var maxWidth = vertical ? canvasWidth - 36 : 630;
-		var maxHeight = vertical ? 118 : 130;
-		var scale = Math.min(maxWidth / titleImage.naturalWidth, maxHeight / titleImage.naturalHeight);
+		var maxWidth = vertical ? canvasWidth * 0.8 : 630;
+		var scale = vertical
+			? maxWidth / titleImage.naturalWidth
+			: Math.min(maxWidth / titleImage.naturalWidth, 130 / titleImage.naturalHeight);
 		var drawWidth = titleImage.naturalWidth * scale;
 		var drawHeight = titleImage.naturalHeight * scale;
 		var drawX = (canvasWidth - drawWidth) / 2;
@@ -847,7 +929,8 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		drawTitleButton(0, "开始冒险", offsetTitleButtonBox(buttonLayout.primary, buttonOffsetY), BUTTON_GOLD, true);
 		drawTitleButton(1, "续关再战", offsetTitleButtonBox(buttonLayout.secondary[0], buttonOffsetY), BUTTON_GOLD, false);
 		drawTitleButton(3, "武器图鉴", offsetTitleButtonBox(buttonLayout.secondary[1], buttonOffsetY), BUTTON_GOLD, false);
-		drawTitleButton(2, "精彩回放", offsetTitleButtonBox(buttonLayout.secondary[2], buttonOffsetY), BUTTON_GOLD, false);
+		drawTitleButton(4, "成就预览", offsetTitleButtonBox(buttonLayout.secondary[2], buttonOffsetY), BUTTON_GOLD, false);
+		drawTitleButton(2, "精彩回放", offsetTitleButtonBox(buttonLayout.secondary[3], buttonOffsetY), BUTTON_GOLD, false);
 		titleCtx.restore();
 	};
 
@@ -864,6 +947,8 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 			core.chooseReplayFile();
 		} else if (index === 3 && core.plugin.weaponCompendium) {
 			core.plugin.weaponCompendium.open();
+		} else if (index === 4 && core.plugin.achievementSystem) {
+			core.plugin.achievementSystem.open();
 		}
 	};
 
@@ -977,6 +1062,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		titleCanvas.style.display = "none";
 		titleCanvas.style.touchAction = "none";
 		titleCanvas.style.cursor = "default";
+		titleCanvas.style.outline = "none";
 		titleCanvas.tabIndex = 0;
 		titleCanvas.setAttribute("role", "menu");
 		titleCanvas.setAttribute("aria-label", "游戏标题菜单");
@@ -1011,7 +1097,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		});
 
 		titleCanvas.addEventListener("keydown", function (event) {
-			var order = [0, 1, 3, 2];
+			var order = [0, 1, 3, 4, 2];
 			var current = Math.max(0, order.indexOf(titleSelection));
 			if (event.key === "ArrowLeft" || event.key === "ArrowUp") current = (current + order.length - 1) % order.length;
 			else if (event.key === "ArrowRight" || event.key === "ArrowDown") current = (current + 1) % order.length;
