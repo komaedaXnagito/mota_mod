@@ -2565,6 +2565,22 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		return true;
 	};
 
+	/** 清空已摆放与待摆放物品；可同时把扩展区域恢复为新游戏初始格子。 */
+	const clearBackpackItems = function (options) {
+		options = options || {};
+		readState();
+		const removedCount = state.placed.length + state.inventory.length;
+		state.placed = [];
+		state.inventory = [];
+		if (options.resetUnlockedCells) {
+			state.unlockedCells = normalizeUnlockedCells(getInitialUnlockedCells());
+		}
+		core.setFlag(CONFIG.instanceIdFlag, 0);
+		persistState();
+		renderAll();
+		return removedCount;
+	};
+
 	/**
 	 * 将地图道具引用的中央武器定义转换成独立实例。
 	 * 默认不去重：拾取或使用同类武器多次，就会得到多个实例。
@@ -2698,6 +2714,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	this.addBackpackItem = addBackpackItem;
 	this.syncBackpackItems = syncBackpackItems;
 	this.removeBackpackWeapon = removeBackpackWeapon;
+	this.clearBackpackItems = clearBackpackItems;
 	this.startDragWeapon = startDragWeapon;
 
 	// 兼容已经写进 items.js 和状态栏中的旧接口。
