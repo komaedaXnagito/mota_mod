@@ -929,6 +929,18 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			}
 		}
 
+		/** 清空本局商店购买、付费刷新和货架记录，职业随机池与类型权重保持不变。 */
+		const resetShopProgress = function () {
+			[FLAG_REFRESH, FLAG_BUY, FLAG_OFFER].forEach(function (flagName) {
+				if (typeof core.removeFlag === "function") core.removeFlag(flagName);
+				else core.setFlag(flagName, null);
+			});
+			currentOffer = [];
+			replayChoiceMode = null;
+			replayRewardOffer = [];
+			return true;
+		};
+
 		plugin.openBackpackShop = openShop;
 		plugin.openRewardPicker = openRewardPicker;
 		plugin.addOdds = addOdds;
@@ -937,6 +949,7 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 		plugin.rollWeaponOfRarity = rollWeaponOfRarity;
 		plugin.grantWeapon = grantWeapon;
 		plugin.closeBackpackShop = closeShop;
+		plugin.resetBackpackShopProgress = resetShopProgress;
 		plugin.getShopState = function () {
 			return {
 				ratio: getRatio(),
