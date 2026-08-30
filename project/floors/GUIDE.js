@@ -11,7 +11,13 @@ main.floors.GUIDE=
     "images": [],
     "ratio": 5,
     "defaultGround": "ground",
-    "firstArrive": [],
+    "firstArrive": [
+        {
+            "type": "setValue",
+            "name": "flag:disableOpenBackpack",
+            "value": "true"
+        }
+    ],
     "eachArrive": [],
     "parallelDo": "",
     "events": {
@@ -19,7 +25,7 @@ main.floors.GUIDE=
             "\t[艾露达,N447]你好，欢迎来到碧蓝幻想的世界，我是艾露达，接下来由我带你了解这个世界",
             "\t[艾露达,N447]首先，我要没收你的双手！",
             "\t[勇者,hero]什么？那我怎么拿起我的剑盾，我怎么和怪物战斗？你这坏猫！",
-            "\t[艾露达,N447]别担心，在碧蓝幻想里，不需要你自己战斗，我会赐予你魔法书包，你可以驱使其中的武器完成战斗",
+            "\t[艾露达,N447]别担心，在碧蓝幻想里，不需要你自己战斗，我会赐予你魔法背包，你可以驱使其中的武器完成战斗",
             {
                 "type": "setBlock",
                 "number": "I385",
@@ -182,6 +188,11 @@ main.floors.GUIDE=
                         "type": "setValue",
                         "name": "flag:inGuide",
                         "value": "true"
+                    },
+                    {
+                        "type": "setValue",
+                        "name": "flag:disableOpenBackpack",
+                        "value": "false"
                     },
                     {
                         "type": "setBlock",

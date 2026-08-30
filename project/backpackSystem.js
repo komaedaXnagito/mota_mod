@@ -2407,6 +2407,10 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	 */
 	const openBackpack = function () {
 		if (root) return true;
+		if (core.getFlag && core.getFlag("disableOpenBackpack")) {
+			if (core.drawTip) core.drawTip("当前无法操作背包");
+			return false;
+		}
 		if (!core.isPlaying || !core.isPlaying()) return false;
 		if (core.isReplaying && core.isReplaying()) {
 			if (core.drawTip) core.drawTip("录像播放中不能整理背包");
