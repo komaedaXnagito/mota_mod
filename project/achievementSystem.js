@@ -207,6 +207,8 @@ var installAchievementSystem_d38bb038_c4fa_43be_927c_168680046baa = function (co
 	var customSoundUnavailable = false;
 	var unlockListeners = [];
 	var skipNextBackpackAfterBattle = null;
+	// 仅缓存成就列表使用的小图；点击图标后的高清图仍按需加载。
+	var previewImageCache = Object.create(null);
 
 	var cloneData = function (value) {
 		if (value == null) return value;
@@ -380,19 +382,42 @@ var installAchievementSystem_d38bb038_c4fa_43be_927c_168680046baa = function (co
 		}
 	};
 
+	var isImageSource = function (source) {
+		return /^(?:https?:\/\/|project\/|\.\.?\/|\/).+\.(?:png|jpe?g|gif|webp|svg)(?:[?#].*)?$/i.test(source);
+	};
+
+	var preloadPreviewImages = function () {
+		if (typeof Image !== "function") return 0;
+		definitions.forEach(function (definition) {
+			var source = String(definition.icon || "");
+			if (!isImageSource(source) || previewImageCache[source]) return;
+			var image = new Image();
+			image.decoding = "async";
+			image.loading = "eager";
+			image.onerror = function () {
+				// 预加载失败时移出缓存，打开面板后仍可正常重试并走原有降级逻辑。
+				if (previewImageCache[source] === image) delete previewImageCache[source];
+			};
+			previewImageCache[source] = image;
+			image.src = source;
+		});
+		return Object.keys(previewImageCache).length;
+	};
+
 	var createIcon = function (definition, className, interactive, imageAlt, source) {
 		var holder = document.createElement(interactive ? "button" : "div");
 		holder.className = className || "achievement-icon";
 		if (interactive) holder.type = "button";
 		var icon = String(source || definition.icon || "★");
-		if (/^(?:https?:\/\/|project\/|\.\.?\/|\/).+\.(?:png|jpe?g|gif|webp|svg)(?:[?#].*)?$/i.test(icon)) {
-			var image = document.createElement("img");
-			image.src = icon;
+		if (isImageSource(icon)) {
+			var cachedImage = source == null ? previewImageCache[icon] : null;
+			var image = cachedImage ? cachedImage.cloneNode(false) : document.createElement("img");
 			image.alt = imageAlt || "";
 			image.onerror = function () {
 				image.remove();
 				holder.textContent = "★";
 			};
+			if (!cachedImage) image.src = icon;
 			holder.appendChild(image);
 		} else holder.textContent = icon;
 		return holder;
@@ -943,6 +968,7 @@ var installAchievementSystem_d38bb038_c4fa_43be_927c_168680046baa = function (co
 		getEntries: function () { return cloneData(getEntries()); },
 		getStatistics: function () { return cloneData(getStatistics()); },
 		getProfile: function () { return cloneData(readProfile()); },
+		preloadPreviewImages: preloadPreviewImages,
 		open: openPreview,
 		close: closePreview,
 		isOpen: function () { return !!root; },

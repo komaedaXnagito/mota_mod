@@ -986,6 +986,10 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 			titleAnimationFrame = window.requestAnimationFrame(animateTitle);
 		}
 		titleCanvas.focus();
+		// 主界面已显示后提前缓存成就预览小图，避免首次打开成就面板时逐张等待。
+		if (core.plugin.achievementSystem && core.plugin.achievementSystem.preloadPreviewImages) {
+			core.plugin.achievementSystem.preloadPreviewImages();
+		}
 	};
 
 	var hideTitle = function () {

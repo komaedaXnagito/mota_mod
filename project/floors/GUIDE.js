@@ -195,6 +195,10 @@ main.floors.GUIDE=
                         "value": "false"
                     },
                     {
+                        "type": "hide",
+                        "remove": true
+                    },
+                    {
                         "type": "setBlock",
                         "number": "E448",
                         "loc": [
@@ -283,10 +287,6 @@ main.floors.GUIDE=
                                 9
                             ]
                         ]
-                    },
-                    {
-                        "type": "hide",
-                        "remove": true
                     },
                     {
                         "type": "useItem",

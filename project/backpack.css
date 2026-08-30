@@ -1472,6 +1472,36 @@ body.backpack-drag-selection-locked * {
 	font-size: 11px;
 }
 
+.bb-speed-select {
+	display: none;
+	min-width: 76px;
+	padding: 7px 26px 7px 10px;
+	border: 1px solid #856d49;
+	border-radius: 7px;
+	outline: none;
+	background: #342c23;
+	color: #efe1c6;
+	font: 600 12px sans-serif;
+	cursor: pointer;
+}
+
+.bb-speed-select:focus {
+	border-color: #efc56e;
+	box-shadow: 0 0 0 2px rgba(239, 197, 110, .18);
+}
+
+.bb-overlay[data-mobile='true'] .bb-guide-speed {
+	flex-wrap: nowrap;
+}
+
+.bb-overlay[data-mobile='true'] .bb-guide-speed .bb-speed {
+	display: none;
+}
+
+.bb-overlay[data-mobile='true'] .bb-speed-select {
+	display: block;
+}
+
 .bb-button {
 	min-width: 40px;
 	padding: 7px 10px;
@@ -2177,6 +2207,18 @@ body.backpack-guide-interactive .guides-canvas {
 		width: 100%;
 		flex-wrap: wrap;
 		justify-content: center;
+	}
+
+	.bb-guide-speed {
+		flex-wrap: nowrap;
+	}
+
+	.bb-guide-speed .bb-speed {
+		display: none;
+	}
+
+	.bb-speed-select {
+		display: block;
 	}
 
 	.bb-content {

@@ -120,11 +120,13 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		if (root) return;
 		root = document.createElement("div");
 		root.className = "bb-overlay";
+		root.dataset.mobile = core.domStyle && core.domStyle.isVertical ? "true" : "false";
 		root.innerHTML = [
 			"<section class='bb-panel' role='dialog' aria-label='背包乱斗战斗'>",
 			"<header class='bb-topbar'><div class='bb-brand'>背包战斗</div><div class='bb-controls'>",
 			"<button class='bb-button bb-pause'>暂停</button><div class='bb-guide-speed'><span class='bb-speed-label'>速度</span>",
 			"<button class='bb-button bb-speed' data-speed='0.25'>0.25×</button><button class='bb-button bb-speed' data-speed='0.5'>0.5×</button><button class='bb-button bb-speed' data-speed='1'>1×</button><button class='bb-button bb-speed' data-speed='2'>2×</button><button class='bb-button bb-speed' data-speed='3'>3×</button><button class='bb-button bb-speed' data-speed='10'>10×</button>",
+			"<select class='bb-speed-select' aria-label='战斗速度'><option value='0.25'>0.25×</option><option value='0.5'>0.5×</option><option value='1'>1×</option><option value='2'>2×</option><option value='3'>3×</option><option value='10'>10×</option></select>",
 			"<button class='bb-button bb-fast'>立即</button></div></div></header>",
 			"<div class='bb-content'>",
 			"<section class='bb-arsenal'><div class='bb-arsenal-title'>武器阵列 <small class='bb-weapon-count'></small></div><div class='bb-weapon-board'><div class='bb-weapon-stage'><div class='bb-synergy-layer'></div></div><div class='bb-weapon-empty'>尚未摆放武器</div></div></section>",
@@ -165,6 +167,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		nodes.logToggle = root.querySelector(".bb-log-toggle");
 		nodes.log = root.querySelector(".bb-log-list");
 		nodes.pause = root.querySelector(".bb-pause");
+		nodes.speedSelect = root.querySelector(".bb-speed-select");
 		nodes.fast = root.querySelector(".bb-fast");
 		if (common.registerModal) {
 			common.registerModal(root, function () {
@@ -187,6 +190,11 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 				} else runtime.setSpeed(Number(button.dataset.speed));
 			};
 		});
+		nodes.speedSelect.onchange = function () {
+			var speed = Number(nodes.speedSelect.value);
+			if (typeof runtime.setPreferredSpeed === "function") runtime.setPreferredSpeed(speed);
+			else runtime.setSpeed(speed);
+		};
 		nodes.fast.onclick = function () {
 			if (typeof runtime.setPreferredSpeed === "function") runtime.setPreferredSpeed("instant");
 			else runtime.fastForward();
@@ -198,6 +206,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		};
 		root.addEventListener("contextmenu", function (event) { event.preventDefault(); });
 		resizeHandler = function () {
+			if (root) root.dataset.mobile = core.domStyle && core.domStyle.isVertical ? "true" : "false";
 			if (latestSnapshot && root) renderWeapons(latestSnapshot, true);
 			syncGuideTargets();
 		};
@@ -720,6 +729,9 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 			button.classList.toggle("active", preferredSpeed !== "instant"
 				&& Number(button.dataset.speed) === Number(preferredSpeed));
 		});
+		if (nodes.speedSelect && preferredSpeed !== "instant") {
+			nodes.speedSelect.value = String(Number(preferredSpeed));
+		}
 		nodes.ultimateText.textContent = format(snapshot.player.ultimate, 1) + " / 100";
 		nodes.ultimateBar.style.width = Math.min(100, snapshot.player.ultimate) + "%";
 		// 怪物奥义条（有 ultimateGain 词条的怪物才会累计；颜色与玩家奥义条区分）。
