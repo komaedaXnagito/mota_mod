@@ -115,10 +115,9 @@ main.floors.MT2=
             {
                 "type": "move",
                 "time": 50,
-                "keep": true,
                 "steps": [
                     "left:2",
-                    "down:2"
+                    "down:4"
                 ]
             },
             {
@@ -186,35 +185,7 @@ main.floors.MT2=
                 "remove": true,
                 "time": 200
             }
-        ],
-        "1,9": {
-            "trigger": null,
-            "enable": false,
-            "noPass": null,
-            "displayDamage": true,
-            "opacity": 1,
-            "filter": {
-                "blur": 0,
-                "hue": 0,
-                "grayscale": 0,
-                "invert": false,
-                "shadow": 0
-            },
-            "data": [
-                "\t[小偷,thief]我们终于逃出来了 你的剑盾被警卫拿走了 你必须先找到武器 我知道铁剑在5楼 铁盾在9楼 你最好先取到他们 我现在有事要做没法帮你 再见",
-                {
-                    "type": "move",
-                    "time": 200,
-                    "steps": [
-                        "down:2"
-                    ]
-                },
-                {
-                    "type": "hide",
-                    "time": 0
-                }
-            ]
-        }
+        ]
     },
     "changeFloor": {
         "1,11": {

@@ -1550,8 +1550,9 @@ test("原始正间隔最低10 Tick，原始0间隔不受任何间隔增减影响
 		]
 	});
 	const state = rules.createBattleState(makeInput({ weapons: [active, passive] }));
+	rules.applyStatus(state, "player", "excitation", 999, "player");
 	assert.equal(rules.getWeaponIntervalTicks(state, state.weapons[0]), 10,
-		"原始正间隔被减穿后仍保留10 Tick");
+		"原始正间隔被布局、运行时修正和高层激奏减穿后仍保留10 Tick");
 	assert.equal(rules.getWeaponIntervalTicks(state, state.weapons[1]), 0,
 		"原始0间隔即使得到正向间隔修正也保持0");
 });
@@ -1756,17 +1757,17 @@ test("联动武器每命中 X 次触发一次效果并保留余数", () => {
 		cells: [[0, 0]],
 		attributes: Object.assign({}, makeWeapon().attributes, {
 			weaponTypes: ["刀"],
-			attackIntervalTicks: 1
+			attackIntervalTicks: 10
 		})
 	});
 	runtime.start(makeInput({
 		enemy: Object.assign({}, makeInput().enemy, { hp: 1000, maxHp: 1000, atk: 0 }),
 		weapons: [source, linkedKnife]
 	}));
-	let snapshot = runtime.stepTicks(5);
+	let snapshot = runtime.stepTicks(50);
 	assert.equal(snapshot.weapons.find((weapon) => weapon.instanceId === "knife").runtimeCounters.hits, 5);
 	assert.equal(snapshot.enemy.debuffs.find((status) => status.id === "exhaustion").stacks, 1);
-	snapshot = runtime.stepTicks(1);
+	snapshot = runtime.stepTicks(10);
 	assert.equal(snapshot.enemy.debuffs.find((status) => status.id === "exhaustion").stacks, 2);
 	runtime.destroy();
 });
@@ -1788,7 +1789,7 @@ test("立即联动攻击保留 CD、获取奥义、计数命中且不会递归�
 		row: 1,
 		col: 1,
 		cells: [[1, 1]],
-		attributes: Object.assign({}, makeWeapon().attributes, { attackIntervalTicks: 1 }),
+		attributes: Object.assign({}, makeWeapon().attributes, { attackIntervalTicks: 10 }),
 		combatRules: [{
 			id: "triggerUpperKnife",
 			trigger: "afterHit",
@@ -1832,12 +1833,12 @@ test("立即联动攻击保留 CD、获取奥义、计数命中且不会递归�
 		enemy: Object.assign({}, makeInput().enemy, { hp: 1000, maxHp: 1000, atk: 0 }),
 		weapons: [source, linkedKnife]
 	}));
-	const snapshot = runtime.stepTicks(1);
+	const snapshot = runtime.stepTicks(10);
 	const sourceSnapshot = snapshot.weapons.find((weapon) => weapon.instanceId === "source");
 	const knifeSnapshot = snapshot.weapons.find((weapon) => weapon.instanceId === "knife");
 	assert.equal(sourceSnapshot.runtimeCounters.attacks, 1);
 	assert.equal(knifeSnapshot.runtimeCounters.attacks, 1);
-	assert.equal(knifeSnapshot.cooldownTicks, 1);
+	assert.equal(knifeSnapshot.cooldownTicks, 10);
 	assert.equal(snapshot.player.ultimate, 7);
 	assert.equal(snapshot.enemy.debuffs.find((status) => status.id === "burn").stacks, 1);
 	assert.equal(snapshot.enemy.debuffs.find((status) => status.id === "exhaustion").stacks, 1);
@@ -1859,7 +1860,7 @@ test("负奥义武器满 CD 等待，奥义恰好足够时允许减到 0", () =>
 	const costWeapon = makeWeapon({
 		instanceId: "cost",
 		row: 0,
-		attributes: Object.assign({}, makeWeapon().attributes, { attackIntervalTicks: 1, ultimateGain: -5 })
+		attributes: Object.assign({}, makeWeapon().attributes, { attackIntervalTicks: 10, ultimateGain: -5 })
 	});
 	let runtime = createRuntime();
 	runtime.start(makeInput({
@@ -1867,9 +1868,9 @@ test("负奥义武器满 CD 等待，奥义恰好足够时允许减到 0", () =>
 		enemy: Object.assign({}, makeInput().enemy, { hp: 1000, maxHp: 1000, atk: 0 }),
 		weapons: [costWeapon]
 	}));
-	let snapshot = runtime.stepTicks(3);
+	let snapshot = runtime.stepTicks(12);
 	assert.equal(snapshot.weapons[0].runtimeCounters.attacks || 0, 0);
-	assert.equal(snapshot.weapons[0].cooldownTicks, 3);
+	assert.equal(snapshot.weapons[0].cooldownTicks, 12);
 	runtime.destroy();
 
 	runtime = createRuntime();
@@ -1878,7 +1879,7 @@ test("负奥义武器满 CD 等待，奥义恰好足够时允许减到 0", () =>
 		enemy: Object.assign({}, makeInput().enemy, { hp: 1000, maxHp: 1000, atk: 0 }),
 		weapons: [costWeapon]
 	}));
-	snapshot = runtime.stepTicks(1);
+	snapshot = runtime.stepTicks(10);
 	assert.equal(snapshot.weapons[0].runtimeCounters.attacks, 1);
 	assert.equal(snapshot.player.ultimate, 0);
 	assert.equal(snapshot.weapons[0].cooldownTicks, 0);
@@ -1900,18 +1901,18 @@ test("同 Tick 其他武器补足奥义后，满 CD 的负奥义武器立即重�
 	const costWeapon = makeWeapon({
 		instanceId: "cost",
 		row: 0,
-		attributes: Object.assign({}, makeWeapon().attributes, { attackIntervalTicks: 2, ultimateGain: -5 })
+		attributes: Object.assign({}, makeWeapon().attributes, { attackIntervalTicks: 10, ultimateGain: -5 })
 	});
 	const generator = makeWeapon({
 		instanceId: "generator",
 		row: 1,
-		attributes: Object.assign({}, makeWeapon().attributes, { attackIntervalTicks: 2, ultimateGain: 5 })
+		attributes: Object.assign({}, makeWeapon().attributes, { attackIntervalTicks: 10, ultimateGain: 5 })
 	});
 	runtime.start(makeInput({
 		enemy: Object.assign({}, makeInput().enemy, { hp: 1000, maxHp: 1000, atk: 0 }),
 		weapons: [costWeapon, generator]
 	}));
-	const snapshot = runtime.stepTicks(2);
+	const snapshot = runtime.stepTicks(10);
 	assert.equal(snapshot.weapons.find((weapon) => weapon.instanceId === "cost").runtimeCounters.attacks, 1);
 	assert.equal(snapshot.weapons.find((weapon) => weapon.instanceId === "generator").runtimeCounters.attacks, 1);
 	assert.equal(snapshot.player.ultimate, 0);
@@ -2154,7 +2155,7 @@ test("预计内核同步计算立即联动攻击与奥义来源增伤", () => {
 		instanceId: "source",
 		row: 1,
 		cells: [[0, 1]],
-		attributes: Object.assign({}, makeWeapon().attributes, { attackIntervalTicks: 1 }),
+		attributes: Object.assign({}, makeWeapon().attributes, { attackIntervalTicks: 10 }),
 		combatRules: [{
 			trigger: "afterHit",
 			effects: [{
@@ -2178,7 +2179,7 @@ test("预计内核同步计算立即联动攻击与奥义来源增伤", () => {
 		enemy: Object.assign({}, makeInput().enemy, { hp: 14, maxHp: 14, atk: 0 }),
 		weapons: [source, linked]
 	}));
-	assert.equal(linkedResult.rounds, 0.01);
+	assert.equal(linkedResult.rounds, 0.1);
 
 	const ultimateWeapon = makeWeapon({
 		attributes: Object.assign({}, makeWeapon().attributes, { ultimateGain: 100 }),
@@ -2345,13 +2346,13 @@ test("实际战斗调试日志记录阶段与随机序号且不额外推进随�
 	context.installGameRandomStreams_5f63c10e_25de_47de_99aa_4d0e300d7a3f(core);
 	const runtime = context.createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc(core);
 	const weapon = makeWeapon({
-		attributes: Object.assign({}, makeWeapon().attributes, { attackIntervalTicks: 1 })
+		attributes: Object.assign({}, makeWeapon().attributes, { attackIntervalTicks: 10 })
 	});
 	runtime.start(makeInput({
-		enemy: Object.assign({}, makeInput().enemy, { hp: 100, maxHp: 100, attackIntervalTicks: 1 }),
+		enemy: Object.assign({}, makeInput().enemy, { hp: 100, maxHp: 100, attackIntervalTicks: 10 }),
 		weapons: [weapon]
 	}));
-	const snapshot = runtime.stepTicks(1);
+	const snapshot = runtime.stepTicks(10);
 
 	const phases = logs.map((entry) => entry.payload.phase);
 	assert.equal(logs[0].message, "[背包战斗调试][战斗开始]");
@@ -3823,8 +3824,8 @@ test("敌方每10层冰结自身间隔-1.9（statusIntervalBonus）+ 命中冰�
 	};
 	assert.equal(intervalOf(0), 100, "冰结0层 → 间隔100");
 	assert.equal(intervalOf(5), 100, "冰结5层不足10 → 不修正");
-	assert.equal(intervalOf(10), 1, "冰结10层 → -190ticks 压到最低1");
-	assert.equal(intervalOf(25), 1, "冰结25层 floor(25/10)=2 → 更低");
+	assert.equal(intervalOf(10), 10, "冰结10层 → -190ticks 压到全局最低10 Tick");
+	assert.equal(intervalOf(25), 10, "冰结25层 floor(25/10)=2 → 仍为全局最低10 Tick");
 
 	// 端到端：命中冰结+2；预置冰结20 → 间隔压缩、攻击次数大增。
 	const core = { rand() { return 0; }, getLocalStorage() {}, setLocalStorage() {}, registerAnimationFrame() {}, unregisterAnimationFrame() {} };
@@ -3846,7 +3847,7 @@ test("敌方每10层冰结自身间隔-1.9（statusIntervalBonus）+ 命中冰�
 	runtime.start(input);
 	const snap = runtime.stepTicks(100);
 	runtime.destroy();
-	assert.ok(snap.weapons[0].runtimeCounters.attacks >= 90, "冰结20层 → 间隔压到1tick，100ticks内近100次攻击");
+	assert.equal(snap.weapons[0].runtimeCounters.attacks, 10, "冰结20层 → 间隔压到全局最低10 Tick，100 Tick内攻击10次");
 	const ice = snap.enemy.debuffs.find((d) => d.id === "ice");
 	assert.ok(ice && ice.stacks > 20, "命中继续叠加冰结");
 

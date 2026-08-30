@@ -35,7 +35,8 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 			promotions: ["兽王", "摇滚巨星", "极乐净土"],
 			poolTypes: ["乐器", "食物", "饮料"],
 			poolPreview: "追忆小提琴、语部之弦、史莱姆铃铛",
-			unlockText: "转职后可追加动物或吉他相关武器。"
+			unlockText: "转职后可追加动物或吉他相关武器。",
+			walk: "harp_walk.png"
 		},
 		{
 			id: "杖",
@@ -319,12 +320,23 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		hitboxes.push({ type: "confirm", x: box.x, y: box.y, w: box.w, h: box.h });
 	};
 
+	var drawBackButton = function (box) {
+		var gradient = ctx.createLinearGradient(box.x, box.y, box.x, box.y + box.h);
+		gradient.addColorStop(0, "rgba(38,47,69,0.96)");
+		gradient.addColorStop(1, "rgba(10,17,33,0.96)");
+		fillRoundRect(box.x, box.y, box.w, box.h, 6, gradient);
+		strokeRoundRect(box.x, box.y, box.w, box.h, 6, BUTTON_GOLD, 1.2);
+		drawText("返回标题", box.x + box.w / 2, box.y + box.h / 2, 11, "#f5deb5", "center", "bold");
+		hitboxes.push({ type: "back", x: box.x, y: box.y, w: box.w, h: box.h });
+	};
+
 	var renderLandscape = function () {
 		var career = CAREERS[selectedIndex];
 		drawBackground(676, 416);
 		fillRoundRect(12, 8, 652, 39, 9, "rgba(7,13,29,0.78)");
 		strokeRoundRect(12, 8, 652, 39, 9, "rgba(208,160,104,0.74)", 1.2);
 		drawText("选择初始职业", 23, 27, 22, "#ffffff", "left", "bold");
+		drawBackButton({ x: 574, y: 14, w: 76, h: 26 });
 
 		CAREERS.forEach(function (one, index) {
 			drawCareerCard(one, index, { x: 14, y: 57 + index * 89, w: 148, h: 78 });
@@ -358,7 +370,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		fillRoundRect(8, 8, 400, 39, 9, "rgba(7,13,29,0.80)");
 		strokeRoundRect(8, 8, 400, 39, 9, "rgba(208,160,104,0.74)", 1.2);
 		drawText("选择初始职业", 18, 27, 21, "#ffffff", "left", "bold");
-		drawText("点击左侧切换", 398, 28, 11, "#dfc8a3", "right", "normal");
+		drawBackButton({ x: 320, y: 14, w: 76, h: 26 });
 
 		CAREERS.forEach(function (one, index) {
 			drawCareerCard(one, index, { x: 10, y: 55 + index * 89, w: 103, h: 78 });
@@ -422,6 +434,36 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		render();
 	};
 
+	var getGameBackgroundVideos = function () {
+		if (main.dom.outerBackgroundVideos && main.dom.outerBackgroundVideos.length) {
+			return main.dom.outerBackgroundVideos.slice();
+		}
+		return main.dom.outerBackgroundVideo ? [main.dom.outerBackgroundVideo] : [];
+	};
+
+	var hideCareer = function (targetVideos) {
+		visible = false;
+		if (canvas) canvas.style.display = "none";
+		if (!Array.isArray(targetVideos)) targetVideos = targetVideos ? [targetVideos] : [];
+		if (careerVideo && careerVideo.readyState >= 1) {
+			targetVideos.forEach(function (targetVideo) {
+				try { targetVideo.currentTime = careerVideo.currentTime; } catch (error) { }
+			});
+		}
+		if (careerVideo) {
+			careerVideo.pause();
+			careerVideo.style.display = "none";
+		}
+		if (walkTimer) clearInterval(walkTimer);
+		walkTimer = null;
+	};
+
+	var returnToTitle = function () {
+		if (!visible) return;
+		hideCareer(titleVideo);
+		core.showStartAnimate(true);
+	};
+
 	var confirm = function () {
 		if (!visible) return;
 		var career = CAREERS[selectedIndex];
@@ -429,16 +471,15 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		if (core.status && Array.isArray(core.status.route) && !(core.isReplaying && core.isReplaying())) {
 			core.status.route.push("input2:" + core.encodeBase64(core.encodeBase64(career.id)));
 		}
-		visible = false;
-		canvas.style.display = "none";
-		if (careerVideo) {
-			careerVideo.pause();
-			careerVideo.style.display = "none";
-		}
-		if (walkTimer) clearInterval(walkTimer);
-		walkTimer = null;
+		var backgroundVideos = getGameBackgroundVideos();
+		hideCareer(backgroundVideos);
 		if (main.dom.outerBackground) main.dom.outerBackground.style.display = "block";
 		if (main.dom.outerUI) main.dom.outerUI.style.display = "block";
+		backgroundVideos.forEach(function (backgroundVideo) {
+			backgroundVideo.style.display = "block";
+			var backgroundPlayPromise = backgroundVideo.play();
+			if (backgroundPlayPromise && backgroundPlayPromise.catch) backgroundPlayPromise.catch(function () { });
+		});
 		core.doAction();
 	};
 
@@ -471,6 +512,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 				if (!isInside(point.x, point.y, box)) continue;
 				if (box.type === "career") chooseCareer(box.index);
 				else if (box.type === "confirm") confirm();
+				else if (box.type === "back") returnToTitle();
 				break;
 			}
 		});
@@ -492,6 +534,9 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 			} else if (event.key === "Enter" || event.key === " ") {
 				event.preventDefault();
 				confirm();
+			} else if (event.key === "Escape") {
+				event.preventDefault();
+				returnToTitle();
 			}
 		});
 
@@ -1125,6 +1170,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		prepare: prepare,
 		open: open,
 		confirm: confirm,
+		returnToTitle: returnToTitle,
 		showTitle: showTitle,
 		hideTitle: hideTitle,
 		getSelectedCareer: function () { return CAREERS[selectedIndex].id; },

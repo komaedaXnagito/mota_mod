@@ -3,6 +3,8 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 	"use strict";
 
 	var rules = backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87;
+	var MIN_ATTACK_INTERVAL_SECONDS = rules.MIN_ATTACK_INTERVAL_SECONDS;
+	var MIN_ATTACK_INTERVAL_TICKS = rules.MIN_ATTACK_INTERVAL_TICKS;
 	var statusRegistry = backpackBattleStatusDefinitions_7d94f05e_2f6d_4b8e_9c23_5a317ccab120;
 	var debugLogEntries = [];
 	var debugLogSequence = 0;
@@ -61,7 +63,7 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 	var activeBattleContext = null;
 	var lastLayoutSignature = null;
 	var EVENT_ID = "backpackBattle";
-	var BATTLE_RULE_VERSION = 7;
+	var BATTLE_RULE_VERSION = 8;
 	var WEAPON_CONFIG_VERSION = 1;
 
 	var clone = function (value) {
@@ -78,10 +80,10 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 			// 是否能主动攻击由武器原始间隔决定：原始 0 永久锁定，原始正数最低 10 Tick。
 			var hasBaseAttackInterval = Number(attributes.baseAttackInterval) > 0;
 			attributes.attackInterval = hasBaseAttackInterval
-				? Math.max(0.1, Number(attributes.attackInterval) || 0)
+				? Math.max(MIN_ATTACK_INTERVAL_SECONDS, Number(attributes.attackInterval) || 0)
 				: 0;
 			attributes.attackIntervalTicks = attributes.attackInterval > 0
-				? Math.max(1, Math.round(attributes.attackInterval * 100))
+				? Math.max(MIN_ATTACK_INTERVAL_TICKS, Math.round(attributes.attackInterval * rules.TICKS_PER_SECOND))
 				: 0;
 			attributes.ultimateGain = attributes.ultimateGain == null ? 0 : Number(attributes.ultimateGain);
 			return {

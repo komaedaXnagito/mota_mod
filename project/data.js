@@ -118,6 +118,7 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			"gundamFist.png",
 			"h25.png",
 			"harp_chatacter.png",
+			"harp_walk.png",
 			"hero.png",
 			"hongzhigong.png",
 			"huixinglieshou.png",
@@ -814,7 +815,7 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			},
 			{
 				"type": "function",
-				"function": "function(){\nvar careerWalkImages = {\n\t\"剑\": \"sword_walk.png\",\n\t\"琴\": \"hero.png\",\n\t\"杖\": \"witch_walk.png\"\n};\ncore.setHeroIcon(careerWalkImages[flags.kaiju] || \"hero.png\");\n}"
+				"function": "function(){\nvar careerWalkImages = {\n\t\"剑\": \"sword_walk.png\",\n\t\"琴\": \"harp_walk.png\",\n\t\"杖\": \"witch_walk.png\"\n};\ncore.setHeroIcon(careerWalkImages[flags.kaiju] || \"hero.png\");\n}"
 			},
 			{
 				"type": "confirm",

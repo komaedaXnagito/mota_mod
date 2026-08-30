@@ -319,7 +319,7 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 		 * getItem → getItemEffect（执行 itemEffect）→ afterGetItem → addBackpackItem（入库）。
 		 * 仅当武器有对应道具条目（backpackWeaponId）时可用；临时注入 autoPlace 保持"购买后自动放入背包格"。
 		 */
-		const obtainWeaponViaGetItem = function (definitionId) {
+		const obtainWeaponViaGetItem = function (definitionId, suppressPickupSound) {
 			try {
 				const materialItems = core.material && core.material.items;
 				if (!core.getItem || !materialItems) return false;
@@ -331,11 +331,20 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 				core.plugin.addBackpackItem = function (itemId, options) {
 					return originalAddItem.call(core.plugin, itemId, Object.assign({}, options || {}, { autoPlace: true }));
 				};
+				const originalPlaySound = suppressPickupSound ? core.playSound : null;
+				if (originalPlaySound) {
+					core.playSound = function (sound) {
+						// 商店会在购买流程结束后统一播放一次成功音效；避免 getItem 的 afterGetItem 再播放同一音效。
+						if (sound === "获得道具") return;
+						return originalPlaySound.apply(this, arguments);
+					};
+				}
 				try {
 					// x/y 缺省：removeBlock 与楼层 afterGetItem 事件均无匹配，仅执行 itemEffect + 入库 + 提示，无副作用。
 					core.getItem(definitionId, 1);
 				} finally {
 					core.plugin.addBackpackItem = originalAddItem;
+					if (originalPlaySound) core.playSound = originalPlaySound;
 				}
 				return true;
 			} catch (e) {
@@ -344,12 +353,13 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			}
 		};
 
-		const grantWeapon = function (definitionId) {
+		const grantWeapon = function (definitionId, options) {
+			options = options || {};
 			const def = weaponDefs[definitionId];
 			if (!def) return false;
 			// 优先走样板标准 getItem（执行 itemEffect + 提示 + 由 afterGetItem 入库）；
 			// 武器无对应道具条目（如 I602~I617）时退回直接入库，避免 getItem 因缺少条目报错。
-			if (obtainWeaponViaGetItem(definitionId)) return true;
+			if (obtainWeaponViaGetItem(definitionId, options.suppressPickupSound)) return true;
 			// 兜底：优先走背包系统插件 API；插件缺失/未挂载时直接写入背包状态 flag
 			// （__backpack_state__，未放置武器进 inventory，刷新界面后即可在库存看到）。
 			const backpack = core.plugin;
@@ -387,7 +397,7 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			const recorded = options.recordChoice !== false && choiceIndex != null
 				? pushShopChoice(choiceIndex)
 				: false;
-			if (!grantWeapon(item.id)) {
+			if (!grantWeapon(item.id, { suppressPickupSound: true })) {
 				rollbackShopChoice(choiceIndex, recorded);
 				if (core.drawTip) core.drawTip("背包系统未安装，无法获得武器");
 				core.status.hero.money = toInt(core.status.hero.money) + cost;
@@ -417,7 +427,7 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			const def = item && weaponDefs[item.id];
 			if (!def) return false;
 			const recorded = options.recordChoice !== false ? pushShopChoice(choiceIndex) : false;
-			if (!grantWeapon(item.id)) {
+			if (!grantWeapon(item.id, { suppressPickupSound: true })) {
 				rollbackShopChoice(choiceIndex, recorded);
 				if (!options.silent && core.drawTip) core.drawTip("背包系统未安装，无法获得武器");
 				return false;

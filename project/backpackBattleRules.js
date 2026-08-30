@@ -8,6 +8,9 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 	"use strict";
 
 	var FIXED_SCALE = 1000;
+	var TICKS_PER_SECOND = 100;
+	var MIN_ATTACK_INTERVAL_SECONDS = 0.1;
+	var MIN_ATTACK_INTERVAL_TICKS = Math.round(MIN_ATTACK_INTERVAL_SECONDS * TICKS_PER_SECOND);
 	var getStatusRegistry = function () {
 		return backpackBattleStatusDefinitions_7d94f05e_2f6d_4b8e_9c23_5a317ccab120;
 	};
@@ -536,19 +539,19 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 
 		var baseTicks = toNumber(attributes.attackIntervalTicks, 0);
 		var baseRounds = toNumber(attributes.attackInterval, 0);
-		var interval = baseTicks > 0 ? baseTicks : Math.round(baseRounds * 100);
+		var interval = baseTicks > 0 ? baseTicks : Math.round(baseRounds * TICKS_PER_SECOND);
 		// Tick 修正直接叠加；attackInterval（回合单位）的修正换算为 ticks 叠加。
-		// 两者都按各自相对快照的差值计算，减穿 0 后统一压到 1 Tick。
+		// 两者都按各自相对快照的差值计算；所有攻速修正最终统一受 0.1 秒全局下限约束。
 		interval += getWeaponStat(weapon, "attackIntervalTicks", state.tick) - baseTicks;
-		interval += Math.round((getWeaponStat(weapon, "attackInterval", state.tick) - baseRounds) * 100);
+		interval += Math.round((getWeaponStat(weapon, "attackInterval", state.tick) - baseRounds) * TICKS_PER_SECOND);
 		interval += getStatusStacks(state.player, "ice");
 		interval -= getStatusStacks(state.player, "excitation");
 		interval += getStatusIntervalBonusTicks(state, weapon);
 		interval += getNearbyIntervalBonusTicks(state, weapon);
 		// 附近武器数量驱动的间隔百分比修正（乘算）：interval × (1 - 总百分比)。
 		var nearbyPercent = getNearbyIntervalPercent(state, weapon);
-		if (nearbyPercent > 0) interval = Math.max(1, Math.round(interval * (1 - nearbyPercent)));
-		return Math.max(1, Math.round(interval));
+		if (nearbyPercent > 0) interval = Math.round(interval * (1 - nearbyPercent));
+		return Math.max(MIN_ATTACK_INTERVAL_TICKS, Math.round(interval));
 	};
 
 	/** 怪物配置沿用 attackInterval 字段名，但数值语义是每秒出手次数。 */
@@ -1542,6 +1545,9 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 	};
 
 	return {
+		TICKS_PER_SECOND: TICKS_PER_SECOND,
+		MIN_ATTACK_INTERVAL_SECONDS: MIN_ATTACK_INTERVAL_SECONDS,
+		MIN_ATTACK_INTERVAL_TICKS: MIN_ATTACK_INTERVAL_TICKS,
 		FIXED_SCALE: FIXED_SCALE,
 		toNumber: toNumber,
 		clamp: clamp,

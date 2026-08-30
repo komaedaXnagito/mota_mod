@@ -1,3 +1,98 @@
+/**
+ * 创建游戏内左右分区背景视频；状态栏 Canvas 继续作为透明装饰层叠在视频上方。
+ * 视频的几何位置由状态栏 resize 结果计算，画面取景只使用百分比 object-position，
+ * 因此不会受游戏缩放倍率或窗口尺寸变化影响。
+ */
+var ensureGameBackgroundVideo_24f89c4e_0dc7_42f4_a103_6a68de53bb75 = function (anchor) {
+	var layer = document.getElementById("outerBackgroundVideoLayer");
+	var createVideo = function (id, objectPosition) {
+		var video = document.createElement("video");
+		video.id = id;
+		video.src = "project/video/background.mp4";
+		video.poster = "project/images/origin_background.png";
+		video.autoplay = true;
+		video.loop = true;
+		video.muted = true;
+		video.defaultMuted = true;
+		video.playsInline = true;
+		video.preload = "auto";
+		video.setAttribute("muted", "");
+		video.setAttribute("playsinline", "");
+		video.setAttribute("webkit-playsinline", "");
+		video.setAttribute("aria-hidden", "true");
+		video.style.position = "absolute";
+		video.style.objectFit = "cover";
+		video.style.objectPosition = objectPosition;
+		video.style.zIndex = "0";
+		video.style.pointerEvents = "none";
+		return video;
+	};
+	if (!layer) {
+		layer = document.createElement("div");
+		layer.id = "outerBackgroundVideoLayer";
+		layer.style.position = "absolute";
+		layer.style.left = "0";
+		layer.style.top = "0";
+		layer.style.overflow = "hidden";
+		layer.style.zIndex = "4";
+		layer.style.pointerEvents = "none";
+		var leftVideo = createVideo("outerBackgroundVideoLeft", "27% center");
+		var rightVideo = createVideo("outerBackgroundVideoRight", "78% center");
+		layer.appendChild(leftVideo);
+		layer.appendChild(rightVideo);
+		anchor.insertAdjacentElement("afterend", layer);
+	}
+	var videos = [
+		document.getElementById("outerBackgroundVideoLeft"),
+		document.getElementById("outerBackgroundVideoRight")
+	].filter(function (video) { return !!video; });
+	main.dom.outerBackgroundVideoLayer = layer;
+	main.dom.outerBackgroundVideos = videos;
+	// 保留旧字段作为主视频引用，兼容职业选择等既有逻辑。
+	main.dom.outerBackgroundVideo = videos[0] || null;
+	videos.forEach(function (video, index) {
+		if (index > 0 && videos[0] && videos[0].readyState >= 1) {
+			try { video.currentTime = videos[0].currentTime; } catch (error) { }
+		}
+		var playPromise = video.play();
+		if (playPromise && playPromise.catch) playPromise.catch(function () { });
+	});
+	return layer;
+};
+
+/** 根据实际游戏画布的位置，动态把两段视频限制在横屏左右栏或竖屏上下栏。 */
+var resizeGameBackgroundVideos_2ff8051c_b4b9_45cc_bf79_488c267f2095 = function (obj) {
+	var layer = main.dom.outerBackgroundVideoLayer;
+	var videos = main.dom.outerBackgroundVideos || [];
+	if (!layer || videos.length < 2) return;
+	var scale = Number(core.domStyle.scale) || 1;
+	var mapLeft = Math.max(0, Number(obj.gameDrawBox.left) * scale);
+	var mapTop = Math.max(0, Number(obj.gameDrawBox.top) * scale);
+	var mapSize = Math.max(0, Number(obj.canvasWidth) * scale);
+	var totalWidth = Math.max(0, Number(obj.totalWidth));
+	var totalHeight = Math.max(0, Number(obj.totalHeight));
+	layer.style.width = totalWidth + "px";
+	layer.style.height = totalHeight + "px";
+
+	var setRegion = function (video, left, top, width, height, objectPosition) {
+		video.style.display = width > 0 && height > 0 ? "block" : "none";
+		video.style.left = left + "px";
+		video.style.top = top + "px";
+		video.style.width = Math.max(0, width) + "px";
+		video.style.height = Math.max(0, height) + "px";
+		video.style.objectPosition = objectPosition;
+	};
+	if (core.domStyle.isVertical) {
+		var bottomTop = Math.min(totalHeight, mapTop + mapSize);
+		setRegion(videos[0], 0, 0, totalWidth, mapTop, "27% center");
+		setRegion(videos[1], 0, bottomTop, totalWidth, totalHeight - bottomTop, "78% center");
+	} else {
+		var rightLeft = Math.min(totalWidth, mapLeft + mapSize);
+		setRegion(videos[0], 0, 0, mapLeft, totalHeight, "27% center");
+		setRegion(videos[1], rightLeft, 0, totalWidth - rightLeft, totalHeight, "78% center");
+	}
+};
+
 var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = 
 {
     "init": function () {
@@ -2393,12 +2488,13 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 =
 
 
 
-	const outerBackground = document.createElement("canvas"); //背景画布设置
+	const outerBackgroundVideoLayer = ensureGameBackgroundVideo_24f89c4e_0dc7_42f4_a103_6a68de53bb75(main.dom.startPanel);
+	const outerBackground = document.createElement("canvas"); //背景装饰画布设置
 	outerBackground.style.position = "absolute";
 	outerBackground.style.zIndex = 5;
 	outerBackground.id = "outerBackground";
 	main.dom.outerBackground = outerBackground;
-	main.dom.startPanel.insertAdjacentElement("afterend", outerBackground);
+	outerBackgroundVideoLayer.insertAdjacentElement("afterend", outerBackground);
 
 	const outerUI = document.createElement("canvas"); //额外ui画布设置（状态栏所有绘制、点击都在额外ui上）
 	outerUI.style.position = "absolute";
@@ -2469,6 +2565,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 =
 	};
 	const _resize_canvas = function (obj) {
 		//自适应画布
+		resizeGameBackgroundVideos_2ff8051c_b4b9_45cc_bf79_488c267f2095(obj);
 		main.dom.outerBackground.style.width = obj.totalWidth + "px";
 		main.dom.outerBackground.style.height = obj.totalHeight + "px";
 		main.dom.outerUI.style.width = obj.totalWidth + "px";
@@ -2620,19 +2717,10 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 =
 	}
 	statusBar.prototype.init = function () {
 
-		if (!core.domStyle.isVertical) { //横屏背景图
-			var bgx = 1920,
-				bgy = 1200;
-			var bg = core.material.images.images["statusBackground.jpg"];
-		} else { //竖屏背景图
-			var bgx = 1200,
-				bgy = 1920;
-			var bg = core.material.images.images["statusBackground3.jpg"];
-		}
+		var bgx = core.domStyle.isVertical ? 1200 : 1920;
+		var bgy = core.domStyle.isVertical ? 1986 : 1266;
 		var bgctx = document.getElementById("outerBackground").getContext("2d");
-		bgctx.drawImage(bg, 0, 0, bgx, bgy);
-		bgctx.fillStyle = "#484b6c";
-		bgctx.fillRect(0, bgy, bgx, 66);
+		bgctx.clearRect(0, 0, bgx, bgy);
 		core.setTextAlign('outerUI', 'center');
 
 
@@ -3431,12 +3519,13 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 =
 	const globalAlpha = 0.7; //默认底框透明度
 	const FORCE_COUNTABLE_ITEMS = ["centerFly"]; //常态显示数量的非永久道具，如果道具不在此数组中，则只有道具多余1时显示数量
 
-	const outerBackground = document.createElement("canvas"); //背景画布设置
+	const outerBackgroundVideoLayer = ensureGameBackgroundVideo_24f89c4e_0dc7_42f4_a103_6a68de53bb75(main.dom.startPanel);
+	const outerBackground = document.createElement("canvas"); //背景装饰画布设置
 	outerBackground.style.position = "absolute";
 	outerBackground.style.zIndex = 5;
 	outerBackground.id = "outerBackground";
 	main.dom.outerBackground = outerBackground;
-	main.dom.startPanel.insertAdjacentElement("afterend", outerBackground);
+	outerBackgroundVideoLayer.insertAdjacentElement("afterend", outerBackground);
 
 	const outerUI = document.createElement("canvas"); //额外ui画布设置（状态栏所有绘制、点击都在额外ui上）
 	outerUI.style.position = "absolute";
@@ -3506,6 +3595,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 =
 	};
 	const _resize_canvas = function (obj) {
 		//自适应画布
+		resizeGameBackgroundVideos_2ff8051c_b4b9_45cc_bf79_488c267f2095(obj);
 		main.dom.outerBackground.style.width = obj.totalWidth + "px";
 		main.dom.outerBackground.style.height = obj.totalHeight + "px";
 		main.dom.outerUI.style.width = obj.totalWidth + "px";
@@ -3665,23 +3755,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 =
 				bgctx.canvas.height = GAMEVIEW_HEIGHT_VERTICAL;
 				uictx.canvas.width = GAMEVIEW_WIDTH_VERTICAL;
 				uictx.canvas.height = GAMEVIEW_HEIGHT_VERTICAL;
-
-				const bg = core.material.images.images["shangmian.png"]; //竖屏背景（上）
-				bgctx.drawImage(
-					bg,
-					0,
-					0,
-					GAMEVIEW_WIDTH_VERTICAL,
-					BAR_HEIGHT_VERTICAL
-				);
-				const bg2 = core.material.images.images["xiamian.png"]; //竖屏背景（下）
-				bgctx.drawImage(
-					bg2,
-					0,
-					BAR_HEIGHT_VERTICAL + GAMEVIEW_WIDTH_VERTICAL,
-					GAMEVIEW_WIDTH_VERTICAL,
-					BAR_HEIGHT_VERTICAL
-				);
+				bgctx.clearRect(0, 0, GAMEVIEW_WIDTH_VERTICAL, GAMEVIEW_HEIGHT_VERTICAL);
 				bgctx.globalAlpha = globalAlpha;
 				const bg3 = core.material.images.images["statusBackground2.png"]; //竖屏按钮
 				bgctx.drawImage(
@@ -3698,17 +3772,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 =
 				bgctx.canvas.height = GAMEVIEW_HEIGHT;
 				uictx.canvas.width = GAMEVIEW_WIDTH;
 				uictx.canvas.height = GAMEVIEW_HEIGHT;
-
-				const bg = core.material.images.images["zuobian.png"]; //横屏背景（左）
-				bgctx.drawImage(bg, 0, 0, BAR_WIDTH, GAMEVIEW_HEIGHT);
-				const bg2 = core.material.images.images["youbian.png"]; //横屏背景（右）
-				bgctx.drawImage(
-					bg2,
-					BAR_WIDTH + GAMEVIEW_HEIGHT,
-					0,
-					BAR_WIDTH,
-					GAMEVIEW_HEIGHT
-				);
+				bgctx.clearRect(0, 0, GAMEVIEW_WIDTH, GAMEVIEW_HEIGHT);
 				bgctx.globalAlpha = globalAlpha;
 				const bg3 = core.material.images.images["statusBackground.png"]; //横屏按钮
 				bgctx.drawImage(bg3, 0, 0, GAMEVIEW_WIDTH, GAMEVIEW_HEIGHT);
