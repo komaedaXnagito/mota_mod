@@ -7214,5 +7214,43 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 =
 		return content_top;
 	}
 
+},
+"rollingFloor": function () {
+	// 每次正常行走离开格子后，将它与下一层按从上到下、从左到右
+	// 找到的第一个非墙格交换。最底层没有可交换的楼层。
+	this.swapRollingFloorTile = function (floorId, x, y) {
+		const floorIndex = core.floorIds.indexOf(floorId);
+		if (floorIndex <= 0) return false;
+
+		const lowerFloorId = core.floorIds[floorIndex - 1];
+		const lowerFloor = core.floors[lowerFloorId];
+		if (!lowerFloor) return false;
+
+		let target = null;
+		for (let targetY = 0; targetY < lowerFloor.height && !target; targetY++) {
+			for (let targetX = 0; targetX < lowerFloor.width; targetX++) {
+				const blockId = core.getBlockId(targetX, targetY, lowerFloorId, true);
+				if (blockId == null || !/wall/i.test(blockId)) {
+					target = { x: targetX, y: targetY };
+					break;
+				}
+			}
+		}
+		if (!target) return false;
+
+		const currentNumber = core.getBlockNumber(x, y, floorId, true) || 0;
+		const lowerNumber = core.getBlockNumber(target.x, target.y, lowerFloorId, true) || 0;
+		core.setBlock(lowerNumber, x, y, floorId);
+		core.setBlock(currentNumber, target.x, target.y, lowerFloorId);
+		return true;
+	};
+
+	const originalMoveOneStep = core.control.moveOneStep;
+	core.control.moveOneStep = function (fromX, fromY, callback) {
+		const floorId = core.status.floorId;
+		const result = originalMoveOneStep.call(this, fromX, fromY, callback);
+		core.plugin.swapRollingFloorTile(floorId, fromX, fromY);
+		return result;
+	};
 }
 }
