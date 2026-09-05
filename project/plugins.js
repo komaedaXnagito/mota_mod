@@ -10,12 +10,12 @@ var ensureGameBackgroundVideo_24f89c4e_0dc7_42f4_a103_6a68de53bb75 = function (a
 		video.id = id;
 		video.src = "project/video/background.mp4";
 		video.poster = "project/images/origin_background.png";
-		video.autoplay = true;
+		video.autoplay = false;
 		video.loop = true;
 		video.muted = true;
 		video.defaultMuted = true;
 		video.playsInline = true;
-		video.preload = "auto";
+		video.preload = "metadata";
 		video.setAttribute("muted", "");
 		video.setAttribute("playsinline", "");
 		video.setAttribute("webkit-playsinline", "");
@@ -50,7 +50,16 @@ var ensureGameBackgroundVideo_24f89c4e_0dc7_42f4_a103_6a68de53bb75 = function (a
 	main.dom.outerBackgroundVideos = videos;
 	// 保留旧字段作为主视频引用，兼容职业选择等既有逻辑。
 	main.dom.outerBackgroundVideo = videos[0] || null;
+	var careerSelection = document.getElementById("careerSelect");
+	var shouldPlay = core.status && core.status.played
+		&& main.dom.startPanel.style.display === "none"
+		&& (!careerSelection || careerSelection.style.display === "none");
 	videos.forEach(function (video, index) {
+		// 标题和选职页不解码隐藏的游戏背景，避免同时占用多个视频解码器。
+		if (!shouldPlay) {
+			video.pause();
+			return;
+		}
 		if (index > 0 && videos[0] && videos[0].readyState >= 1) {
 			try { video.currentTime = videos[0].currentTime; } catch (error) { }
 		}

@@ -55,6 +55,50 @@ const listenedFloors = [];
  */
 async function getFile(req, res, path) {
     try {
+        const mediaType = {
+            mp4: 'video/mp4', webm: 'video/webm',
+            mp3: 'audio/mpeg', ogg: 'audio/ogg', wav: 'audio/wav', m4a: 'audio/mp4'
+        }[path.split('.').pop().toLowerCase()];
+        if (mediaType) {
+            // 视频切换和循环会请求部分字节，不能按普通文件无类型地整段返回。
+            const { size } = await fs.stat(path);
+            let start = 0;
+            let end = size - 1;
+            const range = req.headers.range;
+            const match = range && /^bytes=(\d*)-(\d*)$/.exec(range);
+            res.setHeader('Content-Type', mediaType);
+            res.setHeader('Accept-Ranges', 'bytes');
+            if (range) {
+                if (!match || (!match[1] && !match[2])) {
+                    res.writeHead(416, { 'Content-Range': `bytes */${size}` });
+                    res.end();
+                    return true;
+                }
+                if (match[1]) {
+                    start = Number(match[1]);
+                    end = match[2] ? Math.min(Number(match[2]), size - 1) : size - 1;
+                } else {
+                    start = Math.max(0, size - Number(match[2]));
+                }
+                if (!Number.isSafeInteger(start) || start < 0 || start >= size || end < start) {
+                    res.writeHead(416, { 'Content-Range': `bytes */${size}` });
+                    res.end();
+                    return true;
+                }
+                res.statusCode = 206;
+                res.setHeader('Content-Range', `bytes ${start}-${end}/${size}`);
+            }
+            res.setHeader('Content-Length', Math.max(0, end - start + 1));
+            if (req.method === 'HEAD' || size === 0) {
+                res.end();
+                return true;
+            }
+            const stream = fss.createReadStream(path, { start, end });
+            stream.on('error', error => res.destroy(error));
+            res.on('close', () => stream.destroy());
+            stream.pipe(res);
+            return true;
+        }
         const data = await fs.readFile(path);
         if (path.endsWith('.js'))
             res.writeHead(200, { 'Content-type': 'text/javascript' });
@@ -62,7 +106,7 @@ async function getFile(req, res, path) {
             res.writeHead(200, { 'Content-type': 'text/css' });
         if (path.endsWith('.html'))
             res.writeHead(200, { 'Content-type': 'text/html' });
-        return res.end(data), true;
+        return res.end(req.method === 'HEAD' ? undefined : data), true;
     } catch {
         return false;
     }
@@ -602,7 +646,7 @@ server.on('request', async (req, res) => {
     /** @type {string} */
     const p = req.url.replace(`/games/${name}`, '').replace('/all/', '/');
 
-    if (req.method === 'GET') {
+    if (req.method === 'GET' || req.method === 'HEAD') {
         const dir = path
             .resolve(__dirname, p === '/' ? 'index.html' : p.slice(1))
             .split('?v=')[0];
