@@ -20,7 +20,7 @@ var achievementDefinitions_f21a6f89_1840_47d9_9f6a_79d54a2f790e = [
 	{
 		id: "begin_journey",
 		name: "冒险启程",
-		unlock: "开始一场新的冒险",
+		unlock: "首次选择职业并进入游戏",
 		description: "从这里开始，写下属于你的登塔故事。",
 		level: "bronze",
 		hidden: false,
@@ -964,9 +964,15 @@ var installAchievementSystem_d38bb038_c4fa_43be_927c_168680046baa = function (co
 	};
 
 	var installAutomaticTriggers = function () {
-		wrapEvent("startGame", function (args) {
-			// 第三个参数为录像路线；回放不会写入局外成就。
-			if (args[2] == null && isRealPlay()) unlock("begin_journey");
+		wrapEvent("_startGame_afterStart", function () {}, function (args) {
+			// 开场事件（含职业确认）完成后，等待首层地图真正进入成功。
+			// startGame 返回时仍可能停在职业选择层，不能在那个时点解锁。
+			var callback = args[0];
+			var careerChosen = isRealPlay() && core.hasFlag("kaiju");
+			args[0] = function () {
+				if (careerChosen && isRealPlay()) unlock("begin_journey");
+				if (typeof callback === "function") return callback.apply(this, arguments);
+			};
 		});
 		wrapEvent("afterBattle", function (args) {
 			if (!isRealPlay()) return;

@@ -12,8 +12,10 @@ function makeHarness(options) {
 	options = options || {};
 	const context = {
 		console,
+		main: { version: "test", mode: "play" },
 		setTimeout,
 		clearTimeout,
+		fantasyUI_6f31b8ea_7c4d_4b67_a215_03b247f8e903: { decorate() {}, releaseTree() {} },
 		document: {
 			getElementById() { return null; },
 			head: { appendChild() {} },
@@ -124,7 +126,8 @@ test("共享武器卡片 lock 属性输出黑色轮廓样式和全量问号数�
 	const meta = nodes.find(node => node.className === "weapon-card-meta");
 	const summary = nodes.find(node => node.className === "weapon-card-summary");
 	const mobileToggle = nodes.find(node => node.className === "weapon-card-mobile-toggle");
-	assert.match(card.className, /weapon-card is-locked/);
+	assert.ok(card.className.split(/\s+/).includes("weapon-card"));
+	assert.ok(card.className.split(/\s+/).includes("is-locked"));
 	assert.equal(card.dataset.locked, "true");
 	assert.equal(card.attributes.lock, "");
 	assert.equal(image.alt, "未解锁武器");
@@ -162,7 +165,7 @@ test("共享武器卡片 lock 属性输出黑色轮廓样式和全量问号数�
 	]);
 	const compactSummary = compactNodes.find(node => node.className === "weapon-card-summary");
 	assert.deepEqual(Array.from(compactSummary.children, node => node.className), [
-		"weapon-card-name bui-weapon-name", "weapon-card-meta", "weapon-card-action backpack-shop-buy", "weapon-card-mobile-toggle"
+		"weapon-card-name bui-weapon-name", "weapon-card-meta", "weapon-card-action backpack-shop-buy weapon-ui-surface", "weapon-card-mobile-toggle"
 	]);
 	assert.equal(actionButton.textContent, "60 金币");
 	assert.equal(actionButton.dataset.price, "60");
@@ -364,7 +367,7 @@ test("主加载表、插件安装器与 50 层战后事件均已接入图鉴", (
 	assert.match(mainSource, /['"]weaponCompendium['"]/);
 	assert.match(pluginSource, /installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37/);
 	assert.match(floorSource, /weaponCompendium\.completeRun\(\)/);
-	assert.doesNotMatch(compendiumSource, /createElement\(["']style["']\)|style\.textContent|weapon-compendium-style/);
+	assert.doesNotMatch(compendiumSource, /createElement\(["']style["']\)|style\.textContent/);
 	assert.match(cssSource, /\.weapon-compendium-group-grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(auto-fill,\s*minmax\(min\(200px,\s*100%\),\s*1fr\)\)/);
 	assert.match(cssSource, /\.weapon-compendium-grid\s*\{[^}]*overflow-x:\s*hidden;[^}]*overflow-y:\s*auto/);
 	assert.match(cssSource, /@media \(max-width: 700px\)[\s\S]*?\.weapon-compendium-group-header\s*\{\s*flex-wrap:\s*wrap;\s*\}[\s\S]*?\.weapon-compendium-group-progress\s*\{\s*white-space:\s*normal;\s*\}/);
@@ -380,8 +383,8 @@ test("主加载表、插件安装器与 50 层战后事件均已接入图鉴", (
 	assert.match(compendiumSource, /\["unlocked", "只看已解锁"\][\s\S]*?\["locked", "只看未解锁"\][\s\S]*?\["cleared", "只看已通关"\][\s\S]*?\["uncleared", "只看未通关"\]/);
 	assert.match(compendiumSource, /collectionStatus:\s*collectionStatus\.value/);
 	assert.match(compendiumSource, /groupProgress\.innerHTML = "已收集 <b>" \+ group\.unlockedCount \+ "<\/b> \/ " \+ group\.totalCount[\s\S]*?"　已通关 <b>" \+ group\.clearedCount \+ "<\/b> \/ " \+ group\.totalCount/);
-	assert.match(compendiumSource, /summary\.textContent = "已收集 " \+ profile\.unlockedWeaponIds\.length/);
-	assert.match(compendiumSource, /"　已通关 " \+ profile\.clearedWeaponIds\.length \+ " \/ " \+ definitionKeys\.length/);
+	assert.match(compendiumSource, /\["兵装收集", profile\.unlockedWeaponIds\.length/);
+	assert.match(compendiumSource, /\["通关印记", profile\.clearedWeaponIds\.length/);
 	assert.match(compendiumSource, /has-cleared-run/);
 	assert.match(cssSource, /\.weapon-card\.has-cleared-run,[\s\S]*?box-shadow:[\s\S]*?rgba\(55, 211, 181, \.56\)/);
 	assert.match(cssSource, /@media \(max-width: 700px\)[\s\S]*?\.weapon-card-mobile-list[\s\S]*?\.weapon-card-mobile-list\.is-mobile-expanded\s*>\s*\.weapon-card-details\s*\{[^}]*display:\s*block/);

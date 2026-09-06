@@ -447,218 +447,6 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			cardRenderer = installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c(core, plugin);
 			return cardRenderer;
 		};
-		let particleHostSequence = 0;
-		let activeParticleScenes = [];
-		const SHOP_PARTICLE_PROFILES = {
-			2: { count: 18, colors: ["#7fd88f", "#d2ffd8"], size: 2.4, speed: 0.95, opacity: 0.76 },
-			3: { count: 34, colors: ["#5cb7f5", "#cfefff"], size: 3.1, speed: 1.25, opacity: 0.86 },
-			4: { count: 56, colors: ["#b87ef5", "#efd5ff", "#d9a8ff"], size: 4, speed: 1.55, opacity: 0.94 },
-			5: { count: 84, colors: ["#ffc138", "#fff7b7", "#ffd96a"], size: 5, speed: 1.9, opacity: 1 }
-		};
-		/** particles.js 只负责稳定的逐帧绘制；这里把粒子的出生点和速度约束为卡牌边缘向外。 */
-		const makeShopParticleConfig = function (profile, rarity) {
-			return {
-				particles: {
-					number: { value: profile.count, density: { enable: false, value_area: 800 } },
-					color: { value: profile.colors },
-					shape: {
-						type: rarity >= 5 ? ["circle", "star"] : "circle",
-						stroke: { width: 0, color: "#ffffff" },
-						polygon: { nb_sides: 5 }
-					},
-					opacity: {
-						value: profile.opacity,
-						random: true,
-						anim: { enable: false, speed: 1, opacity_min: 0.05, sync: false }
-					},
-					size: {
-						value: profile.size,
-						random: true,
-						anim: { enable: false, speed: 1, size_min: 0.4, sync: false }
-					},
-					line_linked: { enable: false, distance: 0, color: "#ffffff", opacity: 0, width: 0 },
-					move: {
-						enable: true,
-						speed: profile.speed,
-						direction: "none",
-						random: false,
-						straight: true,
-						out_mode: "out",
-						bounce: false,
-						attract: { enable: false, rotateX: 3000, rotateY: 3000 }
-					}
-				},
-				interactivity: {
-					detect_on: "canvas",
-					events: {
-						onhover: { enable: false, mode: "repulse" },
-						onclick: { enable: false, mode: "push" },
-						resize: false
-					}
-				},
-				retina_detect: true
-			};
-		};
-
-		const refreshShopParticleBounds = function (scene) {
-			const hostRect = scene.host.getBoundingClientRect();
-			const cardRect = scene.card.getBoundingClientRect();
-			const ratio = scene.state.canvas.pxratio || 1;
-			scene.bounds = {
-				left: (cardRect.left - hostRect.left) * ratio,
-				top: (cardRect.top - hostRect.top) * ratio,
-				right: (cardRect.right - hostRect.left) * ratio,
-				bottom: (cardRect.bottom - hostRect.top) * ratio
-			};
-		};
-
-		const getParticleOutwardDistance = function (particle, bounds) {
-			switch (particle.__shopEdgeSide) {
-				case "left": return bounds.left - particle.x;
-				case "right": return particle.x - bounds.right;
-				case "top": return bounds.top - particle.y;
-				default: return particle.y - bounds.bottom;
-			}
-		};
-
-		const getParticleTravelLimit = function (scene, particle) {
-			const state = scene.state;
-			const bounds = scene.bounds;
-			switch (particle.__shopEdgeSide) {
-				case "left": return bounds.left + particle.radius;
-				case "right": return state.canvas.w - bounds.right + particle.radius;
-				case "top": return bounds.top + particle.radius;
-				default: return state.canvas.h - bounds.bottom + particle.radius;
-			}
-		};
-
-		const resetShopParticle = function (scene, particle, distributeAlongPath) {
-			const bounds = scene.bounds;
-			if (!bounds) return;
-			const width = Math.max(1, bounds.right - bounds.left);
-			const height = Math.max(1, bounds.bottom - bounds.top);
-			// 商店通常横排五张窄卡牌，左右夹缝很小；上下边各占 36%，确保外放粒子不会大多被邻卡遮住。
-			const sidePick = Math.random();
-			let side;
-			let x;
-			let y;
-			let angle;
-			const jitter = (Math.random() - 0.5) * 0.56;
-			const insetX = Math.min(width * 0.12, 12 * (scene.state.canvas.pxratio || 1));
-			const insetY = Math.min(height * 0.05, 12 * (scene.state.canvas.pxratio || 1));
-			if (sidePick < 0.36) {
-				side = "top";
-				x = bounds.left + insetX + Math.random() * Math.max(1, width - insetX * 2);
-				y = bounds.top;
-				angle = -Math.PI / 2 + jitter;
-			} else if (sidePick < 0.5) {
-				side = "right";
-				x = bounds.right;
-				y = bounds.top + insetY + Math.random() * Math.max(1, height - insetY * 2);
-				angle = jitter;
-			} else if (sidePick < 0.86) {
-				side = "bottom";
-				x = bounds.left + insetX + Math.random() * Math.max(1, width - insetX * 2);
-				y = bounds.bottom;
-				angle = Math.PI / 2 + jitter;
-			} else {
-				side = "left";
-				x = bounds.left;
-				y = bounds.top + insetY + Math.random() * Math.max(1, height - insetY * 2);
-				angle = Math.PI + jitter;
-			}
-			particle.__shopEdgeSide = side;
-			particle.__shopBaseOpacity = scene.profile.opacity * (0.58 + Math.random() * 0.42);
-			const velocity = 0.72 + Math.random() * 0.62;
-			particle.vx = Math.cos(angle) * velocity;
-			particle.vy = Math.sin(angle) * velocity;
-			particle.x = x;
-			particle.y = y;
-			if (distributeAlongPath) {
-				const limit = Math.max(1, getParticleTravelLimit(scene, particle));
-				const initialDistance = Math.random() * limit * 0.9;
-				particle.x += Math.cos(angle) * initialDistance;
-				particle.y += Math.sin(angle) * initialDistance;
-			}
-		};
-
-		const updateShopParticle = function (scene, particle) {
-			if (!particle.__shopEdgeSide) resetShopParticle(scene, particle, true);
-			let distance = getParticleOutwardDistance(particle, scene.bounds);
-			let limit = Math.max(1, getParticleTravelLimit(scene, particle));
-			if (!isFinite(distance) || distance < -particle.radius || distance >= limit) {
-				resetShopParticle(scene, particle, false);
-				distance = 0;
-				limit = Math.max(1, getParticleTravelLimit(scene, particle));
-			}
-			const progress = Math.max(0, Math.min(1, distance / limit));
-			// 正弦包络让粒子在边框处柔和出现、外缘处自然消失，重置时不会出现跳帧。
-			particle.opacity = particle.__shopBaseOpacity * Math.sin(Math.PI * (0.16 + progress * 0.84));
-		};
-
-		const destroyShopParticleScenes = function () {
-			activeParticleScenes.forEach(function (scene) {
-				if (scene.resizeObserver) scene.resizeObserver.disconnect();
-				if (scene.resizeFrame) cancelAnimationFrame(scene.resizeFrame);
-				if (scene.state && scene.state.fn) {
-					cancelAnimationFrame(scene.state.fn.drawAnimFrame);
-					cancelAnimationFrame(scene.state.fn.checkAnimFrame);
-					if (scene.state.fn.canvasClear) scene.state.fn.canvasClear();
-				}
-				if (Array.isArray(window.pJSDom)) {
-					const index = window.pJSDom.indexOf(scene.instance);
-					if (index >= 0) window.pJSDom.splice(index, 1);
-				}
-			});
-			activeParticleScenes = [];
-		};
-
-		const mountShopParticleScene = function (shell) {
-			const rarity = Number(shell.dataset.rarity) || 1;
-			const profile = SHOP_PARTICLE_PROFILES[rarity];
-			const host = shell.querySelector(".backpack-shop-particle-layer");
-			if (!profile || !host || typeof window.particlesJS !== "function") return;
-			if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-			window.particlesJS(host.id, makeShopParticleConfig(profile, rarity));
-			const instance = Array.isArray(window.pJSDom) ? window.pJSDom[window.pJSDom.length - 1] : null;
-			if (!instance || !instance.pJS) return;
-			const scene = { shell: shell, host: host, card: shell.querySelector(".weapon-card"), profile: profile, instance: instance, state: instance.pJS };
-			refreshShopParticleBounds(scene);
-			const originalUpdate = scene.state.fn.particlesUpdate;
-			scene.state.fn.particlesUpdate = function () {
-				originalUpdate();
-				scene.state.particles.array.forEach(function (particle) {
-					updateShopParticle(scene, particle);
-				});
-			};
-			scene.state.particles.array.forEach(function (particle) {
-				resetShopParticle(scene, particle, true);
-			});
-			if (typeof ResizeObserver === "function") {
-				scene.resizeObserver = new ResizeObserver(function () {
-					if (scene.resizeFrame) cancelAnimationFrame(scene.resizeFrame);
-					scene.resizeFrame = requestAnimationFrame(function () {
-						if (!scene.host.isConnected) return;
-						const ratio = scene.state.canvas.pxratio || 1;
-						scene.state.canvas.w = scene.state.canvas.el.offsetWidth * ratio;
-						scene.state.canvas.h = scene.state.canvas.el.offsetHeight * ratio;
-						scene.state.canvas.el.width = scene.state.canvas.w;
-						scene.state.canvas.el.height = scene.state.canvas.h;
-						refreshShopParticleBounds(scene);
-						scene.state.particles.array.forEach(function (particle) {
-							resetShopParticle(scene, particle, true);
-						});
-					});
-				});
-				scene.resizeObserver.observe(host);
-			}
-			activeParticleScenes.push(scene);
-		};
-
-		const mountShopParticleScenes = function (container) {
-			Array.prototype.forEach.call(container.querySelectorAll(".backpack-shop-card-shell"), mountShopParticleScene);
-		};
-
 		const buildCard = function (item, onPick, choiceIndex) {
 			const def = weaponDefs[item.id];
 			const rarityValue = String(def.rarity == null ? 1 : def.rarity);
@@ -666,16 +454,13 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			const shell = document.createElement("div");
 			shell.className = "backpack-shop-card-shell";
 			shell.dataset.rarity = rarityValue;
-			const particleLayer = document.createElement("div");
-			particleLayer.className = "backpack-shop-particle-layer";
-			particleLayer.id = "backpack-shop-particles-" + (++particleHostSequence);
-			particleLayer.dataset.rarity = rarityValue;
-			shell.appendChild(particleLayer);
 			const card = getCardRenderer().createCard(def, {
 				lock: false,
+				rarityParticles: true,
 				showCraftHammer: true,
 				tagName: "div",
 				mobileListMode: true,
+				actionPlacement: "footer",
 				actionButton: {
 					label: onPick ? "获取" : null,
 					className: "backpack-shop-buy",
@@ -695,15 +480,18 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 		const render = function () {
 			if (!root) return;
 			root.querySelector(".backpack-shop-money").textContent = "金币：" + getMoney();
-			root.querySelector(".backpack-shop-refresh").textContent =
-				"刷新（" + refreshCost() + " 金币）";
+			uiCommon.setWeaponButtonLabel(root.querySelector(".backpack-shop-refresh"),
+				"刷新（" + refreshCost() + " 金币）");
 			const grid = root.querySelector(".backpack-shop-grid");
-			destroyShopParticleScenes();
+			const scrollTop = grid.scrollTop;
+
+			uiCommon.releaseWeaponUI(grid);
 			grid.innerHTML = "";
 			currentOffer.forEach(function (item, index) {
 				grid.appendChild(buildCard(item, null, index + 1));
 			});
-			mountShopParticleScenes(grid);
+			grid.scrollTop = scrollTop;
+
 		};
 		/** 打开界面期间的持续锁定定时器（防止事件流程在打开后被误解锁导致仍可操作）。 */
 		let shopLockTimer = null;
@@ -724,8 +512,9 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 		};
 		const closeShop = function () {
 			if (shopLockTimer) { clearInterval(shopLockTimer); shopLockTimer = null; }
-			destroyShopParticleScenes();
+
 			if (uiCommon) uiCommon.unregisterModal(root);
+			if (uiCommon) uiCommon.releaseWeaponUI(root);
 			if (root && root.parentNode) root.parentNode.removeChild(root);
 			root = null;
 			if (core.clearMap && core.clearMap("data")) core.clearMap("data");
@@ -768,7 +557,8 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			const close = document.createElement("button");
 			close.type = "button";
 			close.className = "backpack-shop-close";
-			close.textContent = "×";
+			close.textContent = "返回";
+			close.setAttribute("aria-label", "关闭武器商店");
 			close.addEventListener("click", closeShop);
 			header.appendChild(title);
 			header.appendChild(money);
@@ -807,6 +597,9 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 				if (event.target === root) closeShop();
 			});
 			document.body.appendChild(root);
+			uiCommon.decorateWeaponSurface(panel, { radius: 25, ornate: true, crest: true });
+			uiCommon.decorateWeaponSurface(close, { button: true });
+			uiCommon.decorateWeaponSurface(refresh, { button: true });
 			if (uiCommon) uiCommon.registerModal(root, closeShop, { name: "backpack-shop" });
 			close.focus();
 			if (core.insertAction) core.insertAction([]);
@@ -845,7 +638,8 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			const close = document.createElement("button");
 			close.type = "button";
 			close.className = "backpack-shop-close";
-			close.textContent = "×";
+			close.textContent = "返回";
+			close.setAttribute("aria-label", "关闭武器选择");
 			close.addEventListener("click", closeShop);
 			header.appendChild(title);
 			header.appendChild(close);
@@ -880,9 +674,11 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 			root.appendChild(panel);
 			// 拾取道具界面：点击界面外不关闭（避免误触导致免费拾取的道具消失）；只能通过选择武器或 × 关闭。
 			document.body.appendChild(root);
+			uiCommon.decorateWeaponSurface(panel, { radius: 25, ornate: true, crest: true });
+			uiCommon.decorateWeaponSurface(close, { button: true });
 			if (uiCommon) uiCommon.registerModal(root, closeShop, { name: "backpack-reward-picker" });
 			close.focus();
-			mountShopParticleScenes(grid);
+
 			if (core.insertAction) core.insertAction([]);
 		};
 

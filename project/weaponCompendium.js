@@ -43,6 +43,21 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 	var openedWhilePlaying = false;
 	var modalKeyDown = null;
 	var modalKeyUp = null;
+	var returnFocus = null;
+	var theme = fantasyUI_6f31b8ea_7c4d_4b67_a215_03b247f8e903;
+	var releaseWeaponUI = function (element) {
+		if (typeof backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 !== "undefined") {
+			backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61.releaseWeaponUI(element);
+		} else theme.releaseTree(element);
+	};
+	var installStyles = function () {
+		if (document.getElementById("weapon-compendium-style")) return;
+		var style = document.createElement("link");
+		style.id = "weapon-compendium-style";
+		style.rel = "stylesheet";
+		style.href = "project/weaponCompendium.css?v=" + main.version;
+		document.head.appendChild(style);
+	};
 	var cardRenderer = plugin.weaponCardRenderer
 		|| (typeof installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c === "function"
 			? installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c(core, plugin) : null);
@@ -598,10 +613,16 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 			lock: !entry.unlocked,
 			showCraftHammer: false,
 			mobileListMode: true,
+			previewOnClick: true,
+			highlighted: entry.cleared,
 			className: "weapon-compendium-entry" + (entry.cleared ? " has-cleared-run" : "")
 		});
 		card.dataset.weaponId = entry.weaponId;
 		card.dataset.cleared = entry.cleared ? "true" : "false";
+		var status = document.createElement("span");
+		status.className = "weapon-compendium-entry-status";
+		status.textContent = entry.cleared ? "◆ 通关印记" : (entry.unlocked ? "已收集" : "未解锁");
+		card.querySelector(".weapon-card-summary").appendChild(status);
 		if (entry.cleared) {
 			card.title = "已使用该武器通关";
 			card.setAttribute("aria-label", (card.getAttribute("aria-label") || "") + "，已使用该武器通关");
@@ -619,8 +640,11 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 		if (cardRenderer) cardRenderer.closePreviewModal(false);
 		document.removeEventListener("keydown", modalKeyDown, true);
 		document.removeEventListener("keyup", modalKeyUp, true);
+		releaseWeaponUI(root);
 		root.remove();
 		root = null;
+		if (returnFocus && returnFocus.isConnected) returnFocus.focus({ preventScroll: true });
+		returnFocus = null;
 		if (openedWhilePlaying && core.status && core.status.event && core.status.event.id === CONFIG.eventId) {
 			core.status.event.id = null;
 			core.status.event.data = null;
@@ -634,6 +658,7 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 
 	var openCompendium = function () {
 		if (root) return true;
+		returnFocus = document.activeElement;
 		var gameGroup = document.getElementById("gameGroup") || document.body;
 		openedWhilePlaying = !!(core.isPlaying && core.isPlaying());
 		if (openedWhilePlaying) {
@@ -646,6 +671,7 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 
 		root = document.createElement("div");
 		root.id = "weapon-compendium-root";
+		root.className = "weapon-compendium-skin";
 		root.setAttribute("role", "dialog");
 		root.setAttribute("aria-modal", "true");
 		root.setAttribute("aria-label", "武器图鉴");
@@ -654,11 +680,16 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 		panel.className = "weapon-compendium-panel";
 		var header = document.createElement("header");
 		header.className = "weapon-compendium-header";
-		var title = document.createElement("div");
+		var eyebrow = document.createElement("span");
+		eyebrow.className = "weapon-compendium-eyebrow";
+		eyebrow.textContent = "兵装 · 收藏录";
+		header.appendChild(eyebrow);
+		var title = document.createElement("h1");
 		title.className = "weapon-compendium-title";
 		title.textContent = "武器图鉴";
 		var summary = document.createElement("div");
 		summary.className = "weapon-compendium-summary";
+		summary.setAttribute("aria-label", "图鉴收藏进度");
 		var search = document.createElement("input");
 		search.className = "weapon-compendium-search";
 		search.type = "search";
@@ -680,18 +711,29 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 		var close = document.createElement("button");
 		close.className = "weapon-compendium-close";
 		close.type = "button";
-		close.title = "关闭";
+		close.title = "返回";
 		close.setAttribute("aria-label", "关闭武器图鉴");
-		close.textContent = "×";
+		close.textContent = "返回";
 		header.appendChild(title);
-		header.appendChild(summary);
-		header.appendChild(search);
-		header.appendChild(filter);
+		var subtitle = document.createElement("p");
+		subtitle.textContent = "铭记旅途中的每一件兵装";
+		header.appendChild(subtitle);
 		header.appendChild(close);
 		panel.appendChild(header);
+		panel.appendChild(summary);
 
 		var toolbar = document.createElement("div");
 		toolbar.className = "weapon-compendium-toolbar";
+		var searchLabel = document.createElement("label");
+		searchLabel.className = "weapon-compendium-control weapon-compendium-search-control";
+		searchLabel.innerHTML = "<span>名称搜索</span>";
+		searchLabel.appendChild(search);
+		toolbar.appendChild(searchLabel);
+		var typeLabel = document.createElement("label");
+		typeLabel.className = "weapon-compendium-control";
+		typeLabel.innerHTML = "<span>武器类型</span>";
+		typeLabel.appendChild(filter);
+		toolbar.appendChild(typeLabel);
 		var createControl = function (labelText, ariaLabel, options) {
 			var label = document.createElement("label");
 			label.className = "weapon-compendium-control";
@@ -742,6 +784,8 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 		panel.appendChild(grid);
 		root.appendChild(panel);
 		gameGroup.appendChild(root);
+		theme.decorate(panel, { radius: 25, ornate: true, crest: true });
+		theme.decorate(close, { button: true, gold: false });
 
 		var render = function () {
 			if (cardRenderer) cardRenderer.closePreviewModal(false);
@@ -753,10 +797,23 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 				groupMode: groupMode.value,
 				sortMode: sortMode.value
 			});
-			summary.textContent = "已收集 " + profile.unlockedWeaponIds.length + " / " + definitionKeys.length
-				+ "　已通关 " + profile.clearedWeaponIds.length + " / " + definitionKeys.length
-				+ (rewardConfigs.length ? "　奖励 " + profile.claimedRewardIds.length + " / " + rewardConfigs.length : "");
+			releaseWeaponUI(summary);
+			summary.innerHTML = "";
+			[["兵装收集", profile.unlockedWeaponIds.length, definitionKeys.length],
+				["通关印记", profile.clearedWeaponIds.length, definitionKeys.length]]
+				.concat(rewardConfigs.length ? [["收藏奖励", profile.claimedRewardIds.length, rewardConfigs.length]] : [])
+				.forEach(function (stat, index) {
+					var item = document.createElement("div");
+					item.className = "weapon-compendium-stat";
+					item.innerHTML = "<span>" + stat[0] + "</span><strong>" + stat[1]
+						+ " <small>/ " + stat[2] + "</small></strong><div class='weapon-compendium-progress'><i></i></div>";
+					item.querySelector("i").style.width = (stat[2] ? stat[1] / stat[2] * 100 : 0) + "%";
+					summary.appendChild(item);
+					theme.decorate(item, { radius: 11, fill: index ? "pearl" : "gold" });
+				});
+			releaseWeaponUI(grid);
 			grid.innerHTML = "";
+			grid.scrollTop = 0;
 			if (!groups.length) {
 				var empty = document.createElement("div");
 				empty.className = "weapon-compendium-empty";
@@ -807,7 +864,15 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 		});
 		modalKeyDown = function (event) {
 			if (!root) return;
-			event.stopImmediatePropagation();
+			// 保留控件自身的键盘交互，只阻止事件继续传给游戏引擎。
+			if (event.key === "Tab") {
+				var scope = document.querySelector(".weapon-card-preview-modal-root") || root;
+				var focusable = Array.prototype.filter.call(scope.querySelectorAll("button,input,select,[tabindex='0']"),
+					function (element) { return !element.disabled && element.getClientRects().length; });
+				var first = focusable[0], last = focusable[focusable.length - 1];
+				if (event.shiftKey && document.activeElement === first && last) { event.preventDefault(); last.focus(); }
+				else if (!event.shiftKey && document.activeElement === last && first) { event.preventDefault(); first.focus(); }
+			}
 			if (event.key === "Escape" || event.keyCode === 27) event.preventDefault();
 		};
 		modalKeyUp = function (event) {
@@ -819,6 +884,7 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 			}
 		};
 		document.addEventListener("keydown", modalKeyDown, true);
+		root.addEventListener("keydown", function (event) { event.stopPropagation(); });
 		document.addEventListener("keyup", modalKeyUp, true);
 		render();
 		setTimeout(function () { if (root) search.focus(); }, 0);
@@ -921,6 +987,7 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 	plugin.completeWeaponCompendiumRun = completeRun;
 	plugin.unlockRunWeaponCompendium = completeRun;
 	wrapBackpackAcquisitionApis();
+	installStyles();
 	installStartButton();
 	return api;
 };

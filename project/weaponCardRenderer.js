@@ -18,6 +18,8 @@ var installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c = function (c
 	var previewModalRoot = null;
 	var previewReturnFocus = null;
 	var mobileDetailsSequence = 0;
+	var fantasyTheme = typeof fantasyUI_6f31b8ea_7c4d_4b67_a215_03b247f8e903 !== "undefined"
+		? fantasyUI_6f31b8ea_7c4d_4b67_a215_03b247f8e903 : null;
 
 	var rarityText = function (rarity) {
 		var rarityNum = Number(rarity);
@@ -268,6 +270,7 @@ var installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c = function (c
 		if (!previewModalRoot) return false;
 		var returnFocus = previewReturnFocus;
 		if (uiCommon && typeof uiCommon.unregisterModal === "function") uiCommon.unregisterModal(previewModalRoot);
+		if (fantasyTheme) fantasyTheme.releaseTree(previewModalRoot);
 		previewModalRoot.remove();
 		previewModalRoot = null;
 		previewReturnFocus = null;
@@ -282,18 +285,19 @@ var installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c = function (c
 		if (typeof document === "undefined" || (!options.force && !isMobileListLayout())) return false;
 		closePreviewModal(false);
 		var locked = options.lock === true || (definition && definition.lock === true);
+		var themed = !!fantasyTheme;
 		var overlay = document.createElement("div");
-		overlay.className = "weapon-card-preview-modal-root";
+		overlay.className = "weapon-card-preview-modal-root" + (themed ? " weapon-ui-skin" : "");
 		var panel = document.createElement("section");
 		panel.className = "weapon-card-preview-modal-panel";
 		panel.setAttribute("role", "dialog");
 		panel.setAttribute("aria-modal", "true");
-		panel.setAttribute("aria-label", locked ? "未解锁武器的占格预览"
+		panel.setAttribute("aria-label", themed ? (locked ? "未解锁武器详情" : definition.name + "详情") : locked ? "未解锁武器的占格预览"
 			: String((definition && definition.name) || "武器") + "的占格与联动区域");
 		var close = document.createElement("button");
 		close.type = "button";
 		close.className = "weapon-card-preview-modal-close";
-		close.textContent = "×";
+		close.textContent = themed ? "返回" : "×";
 		close.setAttribute("aria-label", "关闭武器预览");
 		var preview = buildWeaponPreview(definition || {}, { lock: locked });
 		preview.classList.add("is-synergy-visible");
@@ -302,10 +306,29 @@ var installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c = function (c
 			var hint = preview.querySelector(".weapon-card-preview-meta em");
 			if (hint && preview.classList.contains("has-synergy")) hint.textContent = "联动区域";
 		}
-		panel.appendChild(preview);
+		if (themed) {
+			var heading = document.createElement("header");
+			heading.className = "weapon-ui-detail-heading";
+			var eyebrow = document.createElement("span");
+			eyebrow.textContent = "兵装档案";
+			var title = document.createElement("h2");
+			title.textContent = locked ? "???" : (definition.name || "未命名武器");
+			heading.appendChild(eyebrow);
+			heading.appendChild(title);
+			panel.appendChild(heading);
+			var body = document.createElement("div");
+			body.className = "weapon-ui-detail-body";
+			body.appendChild(preview);
+			body.appendChild(buildWeaponDetails(definition, { lock: locked }));
+			panel.appendChild(body);
+		} else panel.appendChild(preview);
 		panel.appendChild(close);
 		overlay.appendChild(panel);
 		document.body.appendChild(overlay);
+		if (themed) {
+			fantasyTheme.decorate(panel, { radius: 23, ornate: true, crest: true });
+			fantasyTheme.decorate(close, { button: true, gold: false });
+		}
 		previewModalRoot = overlay;
 		previewReturnFocus = options.trigger || null;
 		close.addEventListener("click", function (event) {
@@ -400,7 +423,10 @@ var installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c = function (c
 	/**
 	 * 渲染完整武器卡片。
 	 * options.lock: 未解锁脱敏模式；options.showCraftHammer: 是否显示可合成锤子；
-	 * options.mobileListMode: 手机端使用图鉴式列表；options.actionButton: 摘要行右侧操作按钮。
+	 * options.mobileListMode: 手机端使用图鉴式列表；options.actionButton: 操作按钮。
+	 * options.actionPlacement: 默认 summary；footer 将操作区放在特殊效果之后，独立于详情滚动。
+	 * options.rarityParticles: 默认关闭，仅商店及盲盒的候选卡片开启高星粒子。
+	 * 所有入口默认复用蓝白金框；previewOnClick 仅控制桌面点击大图打开详情。
 	 */
 	var createCard = function (definition, options) {
 		definition = definition || {};
@@ -410,7 +436,7 @@ var installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c = function (c
 		var renderOptions = Object.assign({}, options, { lock: locked });
 		var mobileListMode = options.mobileListMode === true;
 		var card = document.createElement(options.tagName || "article");
-		card.className = "weapon-card" + (locked ? " is-locked" : "")
+		card.className = "weapon-card weapon-ui-skin" + (locked ? " is-locked" : "")
 			+ (mobileListMode ? " weapon-card-mobile-list" : "")
 			+ (options.className ? " " + options.className : "");
 		card.tabIndex = options.tabIndex == null ? 0 : Number(options.tabIndex);
@@ -420,7 +446,22 @@ var installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c = function (c
 		if (definition.id != null) card.dataset.weaponId = String(definition.id);
 		card.setAttribute("aria-label", locked ? "未解锁武器，资料未知" : String(definition.name || "未命名武器"));
 
-		card.appendChild(buildWeaponPreview(definition, renderOptions));
+		var desktopPreview = buildWeaponPreview(definition, renderOptions);
+		card.appendChild(desktopPreview);
+		if (options.previewOnClick) {
+			desktopPreview.tabIndex = 0;
+			desktopPreview.setAttribute("role", "button");
+			desktopPreview.setAttribute("aria-label", locked ? "查看未解锁武器档案" : "查看" + definition.name + "的武器档案");
+			var openArchive = function () {
+				openPreviewModal(definition, { lock: locked, force: true, trigger: desktopPreview });
+			};
+			desktopPreview.addEventListener("click", openArchive);
+			desktopPreview.addEventListener("keydown", function (event) {
+				if (event.key === "Enter" || event.key === " ") {
+					event.preventDefault(); event.stopPropagation(); openArchive();
+				}
+			});
+		}
 		var mobilePreview = null;
 		if (options.mobileCompactPreview === true || mobileListMode) {
 			var mobilePreviewOptions = Object.assign({}, renderOptions, {
@@ -461,7 +502,7 @@ var installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c = function (c
 			&& typeof uiCommon.appendCraftHammer === "function") uiCommon.appendCraftHammer(meta, definition);
 		summary.appendChild(meta);
 		var actionButton = buildActionButton(options.actionButton);
-		if (actionButton) summary.appendChild(actionButton);
+		if (actionButton && options.actionPlacement !== "footer") summary.appendChild(actionButton);
 		var mobileToggle = document.createElement("span");
 		mobileToggle.className = "weapon-card-mobile-toggle";
 		mobileToggle.innerHTML = "<svg viewBox='0 0 16 16' focusable='false' aria-hidden='true'>"
@@ -472,7 +513,21 @@ var installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c = function (c
 		card.appendChild(summary);
 		var details = buildWeaponDetails(definition, renderOptions);
 		card.appendChild(details);
+		if (actionButton && options.actionPlacement === "footer") {
+			var footer = document.createElement("div");
+			footer.className = "weapon-card-footer";
+			footer.appendChild(actionButton);
+			card.appendChild(footer);
+		}
 		if (mobileListMode) bindMobileListInteractions(card, definition, renderOptions, mobilePreview, summary, details);
+		if (uiCommon && uiCommon.decorateWeaponSurface) {
+			uiCommon.decorateWeaponSurface(card, { radius: options.frameRadius || 15, interactive: true,
+				fill: options.highlighted ? "gold" : "pearl" });
+			if (actionButton) uiCommon.decorateWeaponSurface(actionButton, { button: true, gold: true });
+		}
+		if (options.rarityParticles === true && !locked && uiCommon && uiCommon.decorateWeaponParticles) {
+			uiCommon.decorateWeaponParticles(card, definition.rarity);
+		}
 		return card;
 	};
 

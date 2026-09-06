@@ -186,7 +186,6 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 			Math.round(centerX - frameWidth * scale / 2), Math.round(feetY - frameHeight * scale),
 			Math.round(frameWidth * scale), Math.round(frameHeight * scale));
 		ctx.restore();
-		drawText("行走形象", centerX, feetY + 12, 8.5, "#69818b", "center");
 	};
 
 	var drawPortraitCard = function (career, index, box) {

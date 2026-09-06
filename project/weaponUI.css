@@ -1,0 +1,318 @@
+/* 全局武器视觉：背包、商店、奖励、图鉴、合成及战斗详情共同使用。 */
+:root {
+  --weapon-ink: #214b70; --weapon-muted: #58778b; --weapon-gold: #c7af73;
+  --weapon-serif: 'Noto Serif SC','Songti SC','SimSun',serif;
+  --weapon-number: Arial,'Microsoft YaHei',sans-serif;
+}
+/* 凹角与按钮由 fantasyUI 绘制。绝对定位的装饰层不占卡片/按钮布局。 */
+.weapon-ui-surface > .fantasy-ui-art { position: absolute; z-index: 0; }
+.weapon-card.weapon-ui-skin[data-rarity],
+:is(.backpack-shop-root,.backpack-craft-root,.bui-recipe-preview-root,.bui-recipe-weapon-detail-root) .weapon-ui-surface.fantasy-ui-surface:not(.fantasy-ui-button) {
+  border: 0; border-radius: 0; background: transparent; box-shadow: none; color: var(--weapon-ink); outline: 0;
+}
+.weapon-card.weapon-ui-skin {
+  height: 540px; min-height: 0; max-height: none; padding: 18px; overflow: visible;
+}
+/* 星尘只沿边缘分布，保留金属框与正文的清晰度；位移不参与卡片排版。 */
+.weapon-card.weapon-ui-skin > .weapon-card-particles {
+  position: absolute; inset: -5px; z-index: 3; pointer-events: none; contain: paint; overflow: clip;
+  --mote-color: #167bce; --mote-glow: #158ee9cc;
+}
+.weapon-card[data-rarity='4'] > .weapon-card-particles { --mote-color: #9146c7; --mote-glow: #a056e6dd; }
+.weapon-card[data-rarity='5'] > .weapon-card-particles { --mote-color: #c98208; --mote-glow: #f2b326ee; }
+.weapon-card.weapon-ui-skin > :is(.weapon-card-summary,.weapon-card-details,.weapon-card-footer) { z-index: 4; }
+.weapon-card-mote {
+  position: absolute; width: calc(var(--mote-size) * var(--mote-scale,1)); height: calc(var(--mote-size) * var(--mote-scale,1)); border-radius: 50%;
+  color: var(--mote-color); background: currentColor; opacity: .75;
+  box-shadow: inset 0 0 2px #fffdea, 0 0 4px 1px currentColor, 0 0 12px 3px var(--mote-glow);
+  animation: weapon-edge-stardust var(--mote-duration) var(--mote-delay) ease-in-out infinite both paused;
+}
+.weapon-card-mote.is-star { border-radius: 0; background: transparent; box-shadow: none; filter: drop-shadow(0 1px 1px currentColor) drop-shadow(0 0 5px var(--mote-glow)); }
+.weapon-card-mote.is-star::before, .weapon-card-mote.is-star::after {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle,#fffef1 0 10%,currentColor 28% 100%);
+  clip-path: polygon(50% 0,61% 38%,100% 50%,61% 62%,50% 100%,39% 62%,0 50%,39% 38%);
+}
+.weapon-card-mote.is-star::after { transform: scale(.55) rotate(45deg); opacity: .9; }
+.weapon-card-mote.is-warm { color: #c38a25; --mote-glow: #f2c349cc; }
+.weapon-card-particles.is-running > .weapon-card-mote { animation-play-state: running; }
+@keyframes weapon-edge-stardust {
+  0% { opacity: 0; transform: translate(-50%,12px) scale(.45) rotate(-25deg); }
+  12% { opacity: 1; }
+  38% { opacity: 1; transform: translate(calc(-50% + var(--mote-dx) * .35),calc(var(--mote-dy) * .3)) scale(1.15) rotate(5deg); }
+  78% { opacity: .9; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--mote-dx)),var(--mote-dy)) scale(.6) rotate(65deg); }
+}
+@media (max-width:700px) { .weapon-card-particles > .weapon-card-mote:nth-child(n+25) { display: none; } }
+@media (prefers-reduced-motion:reduce) {
+  .weapon-card-particles > .weapon-card-mote { animation: none; opacity: .65; }
+}
+.weapon-ui-skin .weapon-card-summary { flex: none; }
+.weapon-ui-skin .weapon-card-mobile-toggle { color: #aa8744; }
+.weapon-ui-skin .weapon-card-action.fantasy-ui-button,
+.weapon-ui-surface.fantasy-ui-button {
+  border: 0; border-radius: 0; background: transparent; box-shadow: none;
+  height: 42px; padding: 5px 22px; overflow: visible; color: #fff5cf;
+  font: bold 17px/1.25 var(--weapon-serif); cursor: pointer;
+}
+.weapon-ui-surface.fantasy-ui-button[data-gold='true'] { color: #70471f; }
+.weapon-ui-surface.fantasy-ui-button:disabled { opacity: .5; cursor: not-allowed; }
+.weapon-ui-surface.fantasy-ui-button > span { pointer-events: none; white-space: nowrap; }
+.weapon-ui-skin .bui-craft-hammer, .bui-weapon-tip .bui-craft-hammer,
+.bui-recipe-preview-root .bui-craft-hammer, .backpack-craft-root .bui-craft-hammer {
+  border-color: #c7bd96; background: #f9f6e7; border-radius: 2px; box-shadow: none;
+}
+.weapon-ui-skin .bui-craft-hammer:hover, .bui-weapon-tip .bui-craft-hammer:hover,
+.bui-recipe-preview-root .bui-craft-hammer:hover, .backpack-craft-root .bui-craft-hammer:hover {
+  background: #fff1bc; border-color: #d3ad50; box-shadow: 0 0 7px #edce80;
+}
+/* 商店/奖励：面板固定，卡片区域滚动，返回与刷新按钮的辉光有独立留白。 */
+.backpack-shop-root, .backpack-craft-root, .bui-recipe-preview-root, .bui-recipe-weapon-detail-root {
+  background: rgba(70,111,137,.42); backdrop-filter: blur(5px);
+  color: var(--weapon-ink); font-family: 'Microsoft YaHei',sans-serif;
+}
+.backpack-shop-root .backpack-shop-panel {
+  display: flex; flex-direction: column; width: min(1240px,calc(100vw - 28px));
+  height: min(760px,calc(100dvh - 28px)); max-height: calc(100dvh - 28px); padding: 27px 22px 22px; overflow: visible;
+  filter: drop-shadow(0 15px 28px rgba(26,64,88,.3));
+}
+.backpack-shop-header { flex: none; padding: 6px 12px 18px; margin: 0; border-bottom: 1px solid #d8c998; }
+.backpack-shop-root .backpack-shop-title { color: var(--weapon-ink); font: bold 28px/1.25 var(--weapon-serif); letter-spacing: .1em; }
+.backpack-shop-root .backpack-shop-money { color: #937038; font: bold 15px var(--weapon-number); font-variant-numeric: lining-nums tabular-nums; }
+.backpack-shop-root .backpack-shop-close { flex: none; width: 94px; }
+.backpack-shop-root .backpack-shop-grid {
+  flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; touch-action: pan-y; align-content: start;
+  grid-template-columns: repeat(5,minmax(0,1fr)); grid-auto-rows: max-content; gap: 12px; padding: 14px 7px 16px; margin: 0;
+  scrollbar-width: thin; scrollbar-color: #c3ad72 #dbe9ea;
+}
+.backpack-shop-root .backpack-shop-card-shell { height: clamp(480px,calc(100dvh - 232px),540px); min-height: 0; max-height: none; min-width: 0; display: block; }
+.backpack-shop-root .weapon-card { height: 100%; min-height: 0; padding: 17px 15px 22px; }
+.backpack-shop-root .weapon-card > .weapon-card-preview:not(.weapon-card-mobile-preview) { max-width: 160px; }
+.backpack-shop-root .weapon-card.weapon-ui-skin > .weapon-card-summary {
+  position: static; display: flex; flex-direction: column; align-items: center; width: 100%;
+}
+.backpack-shop-root .weapon-card-footer {
+  display: flex; flex: none; justify-content: center; align-items: center; width: 100%; padding-top: 12px;
+}
+.backpack-shop-root .weapon-card-footer > .backpack-shop-buy {
+  position: relative; left: auto; bottom: auto; transform: none;
+  width: 160px; max-width: 100%; height: 42px; margin: 0; padding: 5px 17px;
+}
+.backpack-shop-root .weapon-card-name { min-width: 0; width: 100%; font-size: 19px; }
+.backpack-shop-root .backpack-shop-footer { flex: none; padding: 12px 12px 0; gap: 16px; margin: 0; border-top: 1px solid #d8c998; }
+.backpack-shop-root .backpack-shop-refresh { min-width: 192px; flex: none; }
+.backpack-shop-root .backpack-shop-ratio { color: var(--weapon-muted); font: 11px/1.6 var(--weapon-number); }
+/* 共用详情、配方表与合成窗口。 */
+.bui-recipe-preview-root .bui-recipe-preview-panel,
+.bui-recipe-weapon-detail-root .bui-recipe-weapon-detail-panel {
+  padding: 28px 24px 22px; overflow: visible; max-height: calc(100dvh - 28px);
+  filter: drop-shadow(0 15px 28px rgba(26,64,88,.3));
+}
+.bui-recipe-preview-root .bui-recipe-preview-panel { display: flex; flex-direction: column; }
+.bui-recipe-preview-root .bui-recipe-preview-panel > header { flex: none; align-items: center; padding: 0 8px 16px; border-color: #d8c998; }
+.bui-recipe-preview-panel > header b { color: var(--weapon-ink); font: bold 23px/1.4 var(--weapon-serif); }
+.bui-recipe-preview-panel > header small { color: var(--weapon-muted); }
+.bui-recipe-preview-root .bui-recipe-preview-close,
+.bui-recipe-weapon-detail-root .bui-recipe-weapon-detail-close { width: 92px; flex: none; }
+.bui-recipe-preview-root .bui-recipe-preview-content { min-height: 0; overflow: auto; padding: 4px; gap: 14px; }
+.bui-recipe-preview-root .bui-recipe-preview-card { padding: 18px 20px; }
+.bui-recipe-preview-root .bui-recipe-preview-list { padding: 2px 4px; gap: 10px; }
+.bui-recipe-preview-root .bui-recipe-preview-weapon { color: var(--weapon-ink); }
+.bui-recipe-preview-root .bui-recipe-preview-weapon.is-current,
+.bui-recipe-preview-root .bui-recipe-preview-weapon.has-details:is(:hover,:focus,.is-selected) .bui-weapon-name-text {
+  color: #967033; text-decoration-color: #c3a467;
+}
+.bui-recipe-preview-root .bui-recipe-preview-arrow { color: #b28d45; }
+.bui-recipe-weapon-detail-root .bui-recipe-weapon-detail-panel { display: flex; flex-direction: column; gap: 10px; }
+.bui-recipe-weapon-detail-root .bui-recipe-weapon-detail-close { position: relative; top: auto; right: auto; align-self: flex-end; }
+.bui-recipe-weapon-detail-root .bui-recipe-weapon-detail-card { min-height: 0; overflow: auto; flex: 0 1 auto; }
+.backpack-craft-root .backpack-craft-dialog { height: min(690px,calc(100dvh - 28px)); gap: 12px; }
+@media (min-width:1121px) { .backpack-craft-root .backpack-craft-dialog { grid-template-rows: minmax(0,1fr); } }
+.backpack-craft-root :is(.backpack-craft-panel,.backpack-craft-recipes) {
+  padding: 28px 22px 20px; min-height: 0; overflow: visible; filter: drop-shadow(0 12px 22px rgba(26,64,88,.22));
+}
+.backpack-craft-root :is(.backpack-craft-header,.backpack-craft-recipes-header) { flex: none; padding: 4px 6px 14px; border-bottom: 1px solid #d8c998; margin-bottom: 12px; }
+.backpack-craft-root :is(.backpack-craft-title,.backpack-craft-recipes-title) { color: var(--weapon-ink); font: bold 24px/1.3 var(--weapon-serif); }
+.backpack-craft-root .backpack-craft-title small { display: inline-block; margin-left: 8px; color: #967033; font: 11px/1.4 'Microsoft YaHei',sans-serif; vertical-align: middle; }
+.backpack-craft-root .backpack-craft-close { flex: none; width: 92px; }
+.backpack-craft-root .backpack-craft-go { width: 180px; height: 46px; margin: 12px auto 0; font-size: 20px; }
+.backpack-craft-root .backpack-craft-main { padding: 2px 4px; overflow: auto; touch-action: pan-y; }
+.backpack-craft-root :is(.backpack-craft-slot,.backpack-craft-result) { min-width: 0; padding: 16px 8px; min-height: 216px; }
+.backpack-craft-root .backpack-craft-preview { padding: 4px; }
+.backpack-craft-root .backpack-craft-name { color: var(--weapon-ink); font: bold 16px/1.4 var(--weapon-serif); }
+.backpack-craft-root :is(.backpack-craft-rarity,.backpack-craft-arrow) { color: #ae8743; }
+.backpack-craft-root :is(.backpack-craft-types i) { color: var(--weapon-muted); background: #f8f5e6; border-color: #d2c69c; border-radius: 2px; }
+.backpack-craft-root :is(.backpack-craft-slot-hint,.backpack-craft-hint,.backpack-craft-list-empty,.backpack-craft-recipe-summary) { color: var(--weapon-muted); }
+.backpack-craft-root .backpack-craft-norecipe { color: #a36344; }
+.backpack-craft-root .backpack-craft-slot > .backpack-craft-slot-clear { position: absolute; right: 9px; top: 9px; background: #487c99; color: #fff5cf; border: 1px solid #c7af73; border-radius: 2px; }
+.backpack-craft-root .backpack-craft-slot-clear:hover { background: #6798ac; box-shadow: 0 0 8px #e5cd8c; }
+.backpack-craft-root .backpack-craft-list { display: grid; grid-template-columns: repeat(auto-fill,minmax(min(185px,100%),1fr)); background: rgba(188,217,227,.22); border: 1px solid #d2c69c; border-radius: 2px; padding: 8px; align-content: start; align-items: start; grid-auto-rows: max-content; }
+.backpack-craft-root .backpack-craft-list-item { padding: 12px; gap: 10px; min-width: 0; }
+.backpack-craft-root .backpack-craft-recipe-list { padding: 2px 4px 8px; gap: 10px; touch-action: pan-y; overflow-x: hidden; box-sizing: border-box; scrollbar-width: thin; scrollbar-color: #c3ad72 #dbe9ea; }
+.backpack-craft-root .backpack-craft-recipe-card { padding: 16px 19px; }
+.backpack-craft-root .backpack-craft-recipe-card .bui-weapon-name-text,
+.bui-recipe-preview-root .bui-weapon-name-text { white-space: normal; overflow-wrap: anywhere; overflow: visible; }
+.backpack-craft-root .backpack-craft-recipe-card.is-locked { opacity: .72; }
+.backpack-craft-root .backpack-craft-recipe-result { color: var(--weapon-ink); }
+.backpack-craft-root .backpack-craft-recipe-state { color: var(--weapon-muted); }
+.backpack-craft-root .backpack-craft-recipe-card.is-craftable .backpack-craft-recipe-state { color: #967033; }
+.backpack-craft-root .backpack-craft-recipe-card.uses-selected { filter: drop-shadow(0 0 3px #e4c46d); }
+.backpack-craft-root .backpack-craft-recipe-weapon.has-tooltip:hover { color: #967033; text-shadow: 0 0 5px #e7cc80; }
+.backpack-craft-root .backpack-craft-grid-preview, .bui-weapon-grid-preview {
+  border-color: #b8cbd0; border-radius: 2px; background: #e1edf0; box-shadow: inset 0 0 16px #afd0db44;
+}
+.backpack-craft-root .backpack-craft-grid-cell, .bui-weapon-grid-cell { background: #d9e8ec; border-color: #b8cbd0; }
+.backpack-craft-root .backpack-craft-grid-cell:nth-child(even), .bui-weapon-grid-cell:nth-child(even) { background: #e2edf0; }
+.backpack-craft-root .backpack-craft-footprint-cell { background: #f7e8b638; border-color: #b7a770; }
+/* 武器悬浮详情也走相同凹角路径；内容滚动时保留完整框线。 */
+.bui-tooltip.weapon-ui-tooltip {
+  border: 0; border-radius: 0; padding: 0; background: transparent; color: var(--weapon-ink);
+  box-shadow: none; contain: layout; filter: drop-shadow(0 10px 16px rgba(26,64,88,.25));
+  scrollbar-width: thin; scrollbar-color: #c3ad72 #dbe9ea;
+}
+.bui-tooltip.weapon-ui-tooltip .bui-weapon-tip { padding: 20px; box-sizing: border-box; min-height: 100%; }
+.bui-weapon-tip header b { color: var(--weapon-ink); font: bold 21px/1.3 var(--weapon-serif); }
+.bui-weapon-tip :is(header small,dt,dd small) { color: var(--weapon-muted); }
+.bui-weapon-tip :is(.bui-rarity,h4) { color: #a47e3e; }
+.bui-weapon-tip .bui-type-row i { color: var(--weapon-muted); border-color: #c7bd96; border-radius: 2px; background: #faf7e9; }
+.bui-weapon-tip :is(dd,dd strong) { color: var(--weapon-ink); font-family: var(--weapon-number); font-variant-numeric: lining-nums tabular-nums; }
+.bui-weapon-tip :is(section,header) { border-color: #d8c998; }
+.bui-weapon-tip section { background: rgba(188,217,227,.22); border-radius: 2px; }
+.bui-weapon-tip :is(p,ul) { color: #456879; }
+/* 背包保留原有拖拽尺寸，卡片和武器网格使用同一组蓝金色。 */
+#backpack-system-root .weapon-card.weapon-ui-skin[data-rarity] { border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+#backpack-system-root .weapon-card.weapon-ui-skin > .fantasy-ui-art { position: absolute; z-index: 0; }
+#backpack-system-root .backpack-inventory-card .weapon-card-name { color: var(--weapon-ink); }
+#backpack-system-root .backpack-inventory-card .weapon-card-meta { flex-wrap: wrap; }
+#backpack-system-root .backpack-inventory-card .weapon-card-types { flex-wrap: wrap; }
+.backpack-cell-outline { border-color: rgba(176,144,78,.6); }
+.backpack-inventory { background: rgba(218,236,240,.82); border-color: #c7af73; border-radius: 2px; }
+.backpack-inventory :is(.backpack-inventory-count,.backpack-empty) { color: var(--weapon-muted); }
+.backpack-inventory .backpack-inventory-header { border-color: #c7af73; }
+.backpack-inventory .backpack-inventory-filter { color: var(--weapon-ink); border-color: #c7af73; border-radius: 2px; background: #f9f8ed; }
+.backpack-inventory .backpack-inventory-list { scrollbar-color: #c3ad72 #dbe9ea; }
+.backpack-inventory-list::-webkit-scrollbar-track { background: #dbe9ea; border: 0; box-shadow: none; }
+.backpack-inventory-list::-webkit-scrollbar-thumb { background: #c3ad72; box-shadow: none; }
+.backpack-toolbar { background: linear-gradient(#e3f1f5,#faf8e9); border-color: #c7af73; box-shadow: 0 2px 8px #50728622; }
+.backpack-toolbar :is(.backpack-toolbar-title,.backpack-expansion-count,.backpack-battle-speed-control) { color: var(--weapon-ink); }
+.backpack-toolbar .backpack-button.weapon-ui-surface { height: 32px; padding: 4px 17px; font-size: 13px; }
+#backpack-system-root .backpack-toolbar .backpack-close-button { min-width: 68px; }
+#backpack-system-root .backpack-secondary-actions-toggle { min-width: 72px; }
+#backpack-system-root .backpack-secondary-actions-toggle > span { display: flex; align-items: center; gap: 4px; }
+.backpack-toolbar .backpack-battle-speed-select { color: var(--weapon-ink); background: #f9f8ed; border-color: #c7af73; }
+.backpack-toolbar .backpack-secondary-actions-menu { background: #ecf4ef; border-color: #c7af73; }
+.backpack-drag-zone { color: var(--weapon-ink); background: #e6f0ee; border-color: #c7af73; }
+.backpack-drag-zone :is(.backpack-drag-title,.backpack-drag-hint) { color: var(--weapon-muted); }
+.backpack-expansion-slot { color: #a88445; background: #edf4eb; border-color: #c7af73; }
+.backpack-expansion-slot:hover { background: #fff0bd; color: #805c2c; border-color: #d9b457; }
+.backpack-sell-zone { background: #edf4eb; border-color: #c7af73; }
+.backpack-sell-zone :is(.backpack-sell-title,.backpack-sell-hint) { color: var(--weapon-muted); }
+.backpack-placed.bui-hover { filter: drop-shadow(0 0 5px #e6bf57); }
+.bb-arsenal { background: linear-gradient(150deg,#e8f5f8,#faf6e3); border-color: #c7af73; border-radius: 2px; }
+.bb-arsenal.weapon-ui-surface { background: transparent; border: 0; box-shadow: none; overflow: visible; }
+.bb-arsenal.weapon-ui-surface > :is(.bb-arsenal-title,.bb-weapon-board) { position: absolute; }
+.bb-arsenal .bb-arsenal-title { text-shadow: none; }
+.bb-arsenal .bb-arsenal-title { color: var(--weapon-ink); border-color: #d8c998; }
+.bb-arsenal .bb-arsenal-title small, .bb-arsenal .bb-weapon-empty { color: var(--weapon-muted); }
+.bb-arsenal .bb-weapon-board { background: #dbe9ec; border-color: #c7af73; border-radius: 2px; }
+.bb-arsenal .bb-weapon-stage { background-color: #dfedf0; background-image: linear-gradient(#b2c7cf66 1px,transparent 1px),linear-gradient(90deg,#b2c7cf66 1px,transparent 1px); box-shadow: 0 0 0 1px #b9ad80; }
+.bb-arsenal .bb-weapon-cd-text { color: var(--weapon-ink); background: #f6f8ebed; border-color: #c7af73; text-shadow: none; font-family: var(--weapon-number); }
+@media (max-width: 1000px) and (min-width: 701px) {
+  .backpack-shop-root .backpack-shop-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+}
+@media (max-width: 1120px) {
+  .backpack-craft-root .backpack-craft-dialog { overflow-x: hidden; padding: 0 4px 10px; box-sizing: border-box; scrollbar-width: thin; scrollbar-color: #c3ad72 transparent; }
+  .backpack-craft-root .backpack-craft-panel { min-height: 450px; }
+  .backpack-craft-root .backpack-craft-recipes { min-height: 400px; }
+}
+@media (max-width: 700px) {
+  .backpack-shop-root .backpack-shop-panel { width: calc(100vw - 12px); height: calc(100dvh - 12px); max-height: calc(100dvh - 12px); padding: 22px 12px 16px; }
+  .backpack-shop-root .backpack-shop-header { flex-wrap: wrap; gap: 6px 10px; padding: 4px 6px 12px; }
+  .backpack-shop-root .backpack-shop-title { font-size: 23px; }
+  .backpack-shop-root .backpack-shop-money { order: 3; flex: 1 0 100%; font-size: 13px; }
+  .backpack-shop-root .backpack-shop-grid { grid-template-columns: minmax(0,1fr); padding: 12px 2px; gap: 10px; }
+  .weapon-card.weapon-ui-skin.weapon-card-mobile-list { height: auto; grid-template-columns: 66px minmax(0,1fr); padding: 15px; gap: 8px 10px; }
+  .backpack-shop-root .backpack-shop-card-shell { height: auto; }
+  .backpack-shop-root .weapon-card.weapon-card-mobile-list { height: 158px; grid-template-rows: 76px 44px; }
+  .backpack-shop-root .weapon-card.weapon-card-mobile-list.is-mobile-expanded { height: 360px; grid-template-rows: 76px minmax(0,1fr) 44px; }
+  .weapon-card.weapon-ui-skin.weapon-card-mobile-list > .weapon-card-mobile-preview { width: 66px; height: 76px; }
+  .weapon-card.weapon-ui-skin.weapon-card-mobile-list > .weapon-card-summary { display: grid; grid-template-columns: minmax(0,1fr) 18px; min-height: 76px; gap: 4px; }
+  .weapon-card.weapon-ui-skin.weapon-card-mobile-list .weapon-card-name { grid-column: 1; font-size: 18px; }
+  .weapon-card.weapon-ui-skin.weapon-card-mobile-list .weapon-card-meta { grid-column: 1; flex-wrap: wrap; }
+  .weapon-card.weapon-ui-skin.weapon-card-mobile-list .weapon-card-types { flex-wrap: wrap; }
+  .weapon-card.weapon-ui-skin.weapon-card-mobile-list .weapon-card-mobile-toggle { grid-column: 2; grid-row: 1/4; width: 18px; }
+  .weapon-card.weapon-ui-skin.weapon-card-mobile-list .weapon-card-details { grid-column: 1/-1; }
+  .backpack-shop-root .weapon-card-footer { grid-column: 1/-1; grid-row: 2; padding-top: 8px; }
+  .backpack-shop-root .is-mobile-expanded > .weapon-card-footer { grid-row: 3; }
+  .backpack-shop-root .weapon-card-footer > .backpack-shop-buy { width: 160px; height: 36px; font-size: 14px; }
+  .backpack-shop-root .weapon-card.weapon-ui-skin > .weapon-card-summary { display: grid; align-items: center; }
+  .backpack-shop-root .backpack-shop-footer { flex-wrap: wrap; gap: 9px; padding: 10px 7px 0; }
+  .backpack-shop-root .backpack-shop-ratio { font-size: 10px; }
+  #backpack-system-root[data-compact='true'] .weapon-card.weapon-ui-skin.weapon-card-mobile-list { grid-template-columns: 40px minmax(0,1fr); padding: 4px; gap: 4px; }
+  #backpack-system-root[data-compact='true'] .weapon-card.weapon-ui-skin.weapon-card-mobile-list > .weapon-card-summary { display: flex; min-height: 40px; }
+  #backpack-system-root[data-compact='true'] .weapon-card.weapon-ui-skin.weapon-card-mobile-list .weapon-card-name { font-size: 12px; }
+  .bui-recipe-preview-root .bui-recipe-preview-panel { padding: 24px 14px 16px; }
+  .bui-recipe-preview-panel > header b { font-size: 19px; }
+  .backpack-craft-root .backpack-craft-dialog { width: calc(100vw - 12px); height: calc(100dvh - 12px); gap: 10px; }
+  .backpack-craft-root :is(.backpack-craft-panel,.backpack-craft-recipes) { padding: 22px 12px 14px; }
+  .backpack-craft-root :is(.backpack-craft-title,.backpack-craft-recipes-title) { font-size: 21px; }
+  .backpack-craft-root :is(.backpack-craft-slot,.backpack-craft-result) { padding: 16px 5px 10px; min-height: 170px; }
+  .backpack-craft-root .backpack-craft-name { font-size: 13px; }
+}
+.weapon-ui-skin { font-family: 'Microsoft YaHei',sans-serif; color: #214b70; }
+.weapon-ui-skin .weapon-card-preview {
+  flex-shrink: 0; max-width: 200px; border: 1px solid #b8cbd0; border-radius: 2px;
+  background: radial-gradient(ellipse at 50% 35%,#f9ffff,#d6e8ee); box-shadow: inset 0 0 24px rgba(105,164,188,.15);
+}
+.weapon-ui-skin .weapon-card-preview:focus-visible { outline: 2px solid #dcb858; outline-offset: 3px; }
+.weapon-ui-skin .weapon-card-preview-grid-cell { border-color: rgba(133,165,177,.32); background: #e2edf0; }
+.weapon-ui-skin .weapon-card-preview-grid-cell:nth-child(even) { background: #d9e8ec; }
+.weapon-ui-skin .weapon-card-footprint-cell { border-color: #b7a770; background: rgba(251,228,152,.18); }
+.weapon-ui-skin .weapon-card-preview-image-frame { filter: drop-shadow(0 3px 4px rgba(49,79,93,.27)); }
+.weapon-ui-skin .weapon-card-preview-meta { border-radius: 0; background: rgba(244,249,244,.93); color: #58778b; padding: 4px 5px; }
+.weapon-ui-skin .weapon-card-preview-meta b { color: #214b70; }
+.weapon-ui-skin .weapon-card-preview-meta span { color: #6d8895; }
+.weapon-ui-skin .weapon-card-preview-meta em { color: #94733a; font-size: 9px; }
+.weapon-ui-skin .weapon-card-name { margin: 4px 0; color: #214b70; font: bold 20px/1.35 'Noto Serif SC','Songti SC','SimSun',serif; white-space: normal; overflow-wrap: anywhere; }
+.weapon-ui-skin .weapon-card-name .bui-weapon-name-text { min-width: 0; white-space: normal; overflow: visible; }
+#backpack-system-root .weapon-card-name .bui-weapon-name-text { white-space: nowrap; overflow: hidden; }
+.weapon-ui-skin .weapon-card-types { height: auto; justify-content: center; }
+.weapon-ui-skin .weapon-card-types i { border-color: #c7bd96; border-radius: 2px; color: #58798b; background: rgba(255,253,229,.6); }
+.weapon-ui-skin .weapon-card-meta { flex-wrap: wrap; min-height: 22px; }
+.weapon-ui-skin .weapon-card-rarity { color: #b58a3d; text-shadow: 0 1px #fff4ce; }
+.weapon-ui-skin .weapon-card-details { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; margin: 4px 0 0; scrollbar-color: #c3ad72 transparent; }
+.backpack-shop-root .weapon-card > .weapon-card-details { min-height: 0; max-height: 100%; overflow: auto; }
+.weapon-ui-skin .weapon-card-detail-stats { gap: 6px; }
+.weapon-ui-skin .weapon-card-detail-stats > div { border: 0; border-bottom: 1px solid rgba(180,171,124,.35); border-radius: 0; background: rgba(188,217,227,.22); padding: 7px 8px; }
+.weapon-ui-skin .weapon-card-detail-stats dt { color: #68828e; font-size: 11px; }
+.weapon-ui-skin .weapon-card-detail-stats dd { color: #214b70; font: bold 14px/1.5 Arial,'Microsoft YaHei',sans-serif; font-variant-numeric: lining-nums tabular-nums; }
+.weapon-ui-skin .weapon-card-detail-effect { margin-top: 10px; padding: 8px 2px 0; border-radius: 0; background: transparent; }
+.weapon-ui-skin .weapon-card-detail-effect b { color: #94733a; font-size: 12px; }
+.weapon-ui-skin .weapon-card-detail-effect p { color: #456879; font-size: 12px; line-height: 1.65; }
+.weapon-card.weapon-ui-skin.is-locked .weapon-card-preview-image-frame img { filter: brightness(0); opacity: .45; }
+.weapon-card.weapon-ui-skin.is-locked .weapon-card-name,
+.weapon-card.weapon-ui-skin.is-locked .weapon-card-rarity,
+.weapon-card.weapon-ui-skin.is-locked .weapon-card-types i,
+.weapon-card.weapon-ui-skin.is-locked .weapon-card-detail-stats dd,
+.weapon-card.weapon-ui-skin.is-locked .weapon-card-detail-effect p { color: #8498a1; }
+.weapon-card-preview-modal-root.weapon-ui-skin { background: rgba(80,118,139,.5); backdrop-filter: blur(5px); }
+.weapon-ui-skin .weapon-card-preview-modal-panel {
+  display: flex; flex-direction: column; align-items: center; width: min(680px,100%); max-height: calc(100dvh - 36px);
+  padding: 28px 26px 24px; overflow: visible; border: 0; border-radius: 0; background: transparent;
+  box-shadow: none; filter: drop-shadow(0 18px 28px rgba(32,67,88,.28));
+}
+.weapon-ui-detail-heading { flex: none; text-align: center; margin-bottom: 20px; }
+.weapon-ui-detail-heading span { color: #9b7d43; font-size: 11px; letter-spacing: .25em; }
+.weapon-ui-detail-heading h2 { margin: 6px 0 0; font: bold 28px/1.3 'Noto Serif SC','Songti SC','SimSun',serif; }
+.weapon-ui-detail-body { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; width: 100%; min-height: 0; overflow: auto; scrollbar-width: thin; scrollbar-color: #c3ad72 transparent; }
+.weapon-ui-detail-body > .weapon-card-preview { max-width: none; margin: 0; align-self: start; }
+.weapon-ui-skin .weapon-card-preview-modal-close {
+  position: relative; right: auto; top: auto; flex: none; width: 112px; height: 44px; margin-top: 22px;
+  padding: 6px 22px; border: 0; border-radius: 0; background: transparent; color: #fff5cf; font-size: 18px;
+}
+@media (max-width:700px) { .weapon-ui-detail-body { grid-template-columns: minmax(0,1fr); gap: 16px; } }
+@media (max-width:700px) { .weapon-ui-detail-body > .weapon-card-preview { width: min(230px,100%); margin: auto; } }
+@media (max-width:700px) { .weapon-ui-skin .weapon-card-preview-modal-panel { padding: 26px 22px 21px; } }
+@media (max-width:700px) { .weapon-ui-detail-heading { margin-bottom: 16px; } }
+@media (max-width:700px) { .weapon-ui-detail-heading h2 { font-size: 25px; } }
+@media (max-height:550px) and (min-width:701px) { .weapon-ui-detail-heading { margin-bottom: 12px; } }

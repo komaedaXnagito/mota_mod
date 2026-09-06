@@ -22,6 +22,85 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	var weaponImageCache = Object.create(null);
 	var weaponImageCore = null;
 
+	// 所有武器入口共用这一层；读取主题放在调用时，兼容纯数据脚本并行加载。
+	var weaponTheme = function () {
+		return typeof fantasyUI_6f31b8ea_7c4d_4b67_a215_03b247f8e903 === "undefined"
+			? null : fantasyUI_6f31b8ea_7c4d_4b67_a215_03b247f8e903;
+	};
+	var decorateWeaponSurface = function (element, options) {
+		var theme = weaponTheme();
+		if (!element || !theme) return;
+		element.classList.add("weapon-ui-surface");
+		theme.decorate(element, options || { radius: 15, interactive: true });
+	};
+	// 仅装饰使用固定序列，不消耗游戏/商店随机数。离屏、后台与关闭时停止动画。
+	var particleHosts = new Map();
+	var particleObserver = null;
+	var syncParticleVisibility = function () {
+		particleHosts.forEach(function (record) {
+			record.layer.classList.toggle("is-running", record.visible && !document.hidden);
+		});
+	};
+	var decorateWeaponParticles = function (element, rarity) {
+		var counts = { 3: 18, 4: 26, 5: 38 };
+		var count = counts[rarity];
+		if (!element || !count || particleHosts.has(element) || !element.style.setProperty) return;
+		var layer = document.createElement("span");
+		layer.className = "weapon-card-particles";
+		layer.setAttribute("aria-hidden", "true");
+		var seed = 0;
+		var identity = String(element.dataset && element.dataset.weaponId || rarity);
+		for (var j = 0; j < identity.length; j++) seed = (seed * 31 + identity.charCodeAt(j)) % 997;
+		for (var i = 0; i < count; i++) {
+			var mote = document.createElement("i");
+			var side = i % 4;
+			var along = 12 + ((Math.floor(i / 4) * 29 + side * 17 + seed) % 76);
+			mote.className = "weapon-card-mote" + (i % 3 !== 1 ? " is-star" : "") + (i % 5 === 1 ? " is-warm" : "");
+			mote.style.left = side === 0 ? "17px" : side === 1 ? "calc(100% - 17px)" : along + "%";
+			mote.style.top = (side === 2 ? 5 : side === 3 ? 96 : along) + "%";
+			mote.style.setProperty("--mote-size", (i % 3 !== 1 ? 12 + Number(rarity) * 2 + i % 3 : 4 + i % 3) + "px");
+			mote.style.setProperty("--mote-dx", (side === 0 ? -8 : side === 1 ? 8 : (i % 5 - 2) * 8) + "px");
+			mote.style.setProperty("--mote-dy", (side === 3 ? -38 : -46 - i % 29) + "px");
+			mote.style.setProperty("--mote-duration", (2.8 + (i % 7) * .24) + "s");
+			mote.style.setProperty("--mote-delay", (-i * .73 - Number(rarity) * .31 - (seed % 97) * .037) + "s");
+			layer.appendChild(mote);
+		}
+		element.appendChild(layer);
+		if (!particleHosts.size) document.addEventListener("visibilitychange", syncParticleVisibility);
+		particleHosts.set(element, { layer: layer, visible: false });
+		if (typeof IntersectionObserver !== "undefined") {
+			if (!particleObserver) particleObserver = new IntersectionObserver(function (entries) {
+				entries.forEach(function (entry) {
+					var record = particleHosts.get(entry.target);
+					if (record) record.visible = entry.isIntersecting;
+				});
+				syncParticleVisibility();
+			});
+			particleObserver.observe(element);
+		}
+		// 不支持观察器时保留静态星光，避免整本图鉴持续运行动画。
+	};
+	var releaseWeaponUI = function (root) {
+		if (!root) return;
+		particleHosts.forEach(function (record, element) {
+			if (root !== element && !(root.contains && root.contains(element))) return;
+			if (particleObserver) particleObserver.unobserve(element);
+			record.layer.remove();
+			particleHosts.delete(element);
+		});
+		if (!particleHosts.size) {
+			if (particleObserver) { particleObserver.disconnect(); particleObserver = null; }
+			if (typeof document !== "undefined") document.removeEventListener("visibilitychange", syncParticleVisibility);
+		}
+		var theme = weaponTheme();
+		if (theme) theme.releaseTree(root);
+	};
+	var setWeaponButtonLabel = function (button, text) {
+		if (!button) return;
+		var label = button.classList.contains("fantasy-ui-button") ? button.querySelector("span") : null;
+		(label || button).textContent = text;
+	};
+
 	var normalizeImagePath = function (source) {
 		return String(source || "").replace(/\\/g, "/");
 	};
@@ -616,6 +695,7 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		if (!recipeWeaponDetailRoot) return false;
 		var returnFocus = recipeWeaponDetailReturnFocus;
 		unregisterModal(recipeWeaponDetailRoot);
+		releaseWeaponUI(recipeWeaponDetailRoot);
 		recipeWeaponDetailRoot.remove();
 		recipeWeaponDetailRoot = null;
 		recipeWeaponDetailReturnFocus = null;
@@ -638,7 +718,7 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		var close = document.createElement("button");
 		close.type = "button";
 		close.className = "bui-recipe-preview-close bui-recipe-weapon-detail-close";
-		close.textContent = "×";
+		close.textContent = "返回";
 		close.setAttribute("aria-label", "关闭武器详情");
 		var card = weaponCardRenderer.createCard(definition, {
 			showCraftHammer: false,
@@ -655,6 +735,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		panel.appendChild(card);
 		root.appendChild(panel);
 		document.body.appendChild(root);
+		decorateWeaponSurface(panel, { radius: 23, ornate: true, crest: true });
+		decorateWeaponSurface(close, { button: true });
 		recipeWeaponDetailRoot = root;
 		recipeWeaponDetailReturnFocus = trigger || null;
 		close.addEventListener("click", function (event) {
@@ -673,6 +755,7 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	var closeWeaponRecipePreview = function () {
 		closeRecipeWeaponDetail(false);
 		unregisterModal(recipePreviewRoot);
+		releaseWeaponUI(recipePreviewRoot);
 		if (recipePreviewRoot && recipePreviewRoot.parentNode) recipePreviewRoot.parentNode.removeChild(recipePreviewRoot);
 		recipePreviewRoot = null;
 	};
@@ -757,7 +840,7 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		var close = document.createElement("button");
 		close.type = "button";
 		close.className = "bui-recipe-preview-close";
-		close.textContent = "×";
+		close.textContent = "返回";
 		close.setAttribute("aria-label", "关闭合成表预览");
 		close.addEventListener("click", closeWeaponRecipePreview);
 		header.appendChild(heading);
@@ -773,6 +856,7 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		var showWeaponDetails = function (selectedKey, definition, trigger) {
 			if (!definition || !weaponCardRenderer) return false;
 			if (isMobileRecipeLayout()) return openRecipeWeaponDetail(definition, trigger);
+			releaseWeaponUI(detailHost);
 			detailHost.textContent = "";
 			detailHost.appendChild(weaponCardRenderer.createCard(definition, {
 				showCraftHammer: false,
@@ -791,7 +875,10 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 			var card = document.createElement("div");
 			card.className = "bui-recipe-preview-card";
 			appendRecipeWeaponName(card, recipe.a, key, showWeaponDetails);
-			card.appendChild(document.createTextNode(" + "));
+			var plus = document.createElement("span");
+			plus.className = "bui-recipe-preview-plus";
+			plus.textContent = "+";
+			card.appendChild(plus);
 			appendRecipeWeaponName(card, recipe.b, key, showWeaponDetails);
 			var arrow = document.createElement("b");
 			arrow.className = "bui-recipe-preview-arrow";
@@ -799,6 +886,7 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 			card.appendChild(arrow);
 			appendRecipeWeaponName(card, recipe.result, key, showWeaponDetails);
 			list.appendChild(card);
+			decorateWeaponSurface(card, { radius: 11, interactive: true });
 		});
 		content.appendChild(detailHost);
 		content.appendChild(list);
@@ -808,6 +896,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 			if (event.target === root) closeWeaponRecipePreview();
 		});
 		document.body.appendChild(root);
+		decorateWeaponSurface(panel, { radius: 23, ornate: true, crest: true });
+		decorateWeaponSurface(close, { button: true });
 		recipePreviewRoot = root;
 		registerModal(root, closeWeaponRecipePreview, { name: "weapon-recipe-preview" });
 		if (!isMobileRecipeLayout()) showWeaponDetails(key, getWeaponDefinitions()[key], null);
@@ -904,7 +994,11 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		activeAnchor = anchor;
 		anchor.classList.add("bui-hover");
 		if (lastTooltipHtml !== html) {
+			releaseWeaponUI(tooltip);
 			tooltip.innerHTML = html;
+			var weaponTip = tooltip.querySelector(".bui-weapon-tip");
+			tooltip.classList.toggle("weapon-ui-tooltip", !!weaponTip);
+			if (weaponTip) decorateWeaponSurface(weaponTip, { radius: 16, ornate: true });
 			lastTooltipHtml = html;
 		}
 		tooltip.classList.add("show");
@@ -1014,6 +1108,10 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	};
 
 	return {
+		decorateWeaponSurface: decorateWeaponSurface,
+		decorateWeaponParticles: decorateWeaponParticles,
+		releaseWeaponUI: releaseWeaponUI,
+		setWeaponButtonLabel: setWeaponButtonLabel,
 		escapeHtml: escapeHtml,
 		registerWeaponImages: registerWeaponImages,
 		preloadWeaponImages: preloadWeaponImages,

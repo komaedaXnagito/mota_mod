@@ -1,0 +1,191 @@
+/* 背包工作台布局。沿用 fantasyUI 的金框及 32px 六边形按钮，不重定义主题。 */
+html.backpack-workspace-open, body.backpack-workspace-open { overflow: hidden; }
+#backpack-system-root[data-layout='atelier'] {
+  position: absolute; inset: auto; z-index: 10020; box-sizing: border-box; transform-origin: top left;
+  overflow-x: hidden; overflow-y: auto; touch-action: pan-y;
+  background: url('images/backpack_background.png') center center / cover;
+  color: #214b70; font-family: 'Microsoft YaHei',sans-serif;
+  scrollbar-width: thin; scrollbar-color: #c3ad72 #e3eff3;
+}
+#backpack-system-root[data-layout='atelier'] .backpack-grid-canvas { z-index: 2; }
+#backpack-system-root[data-layout='atelier'] .backpack-board-panel,
+#backpack-system-root[data-layout='atelier'] .backpack-details {
+  position: absolute; box-sizing: border-box; border: 0; background: transparent;
+  filter: drop-shadow(0 7px 12px #33576b33);
+}
+#backpack-system-root[data-layout='atelier'] .backpack-board-panel { z-index: 1; }
+#backpack-system-root[data-layout='atelier'] .backpack-board-heading {
+  display: flex; align-items: center; gap: 14px; padding: 16px 34px 0;
+}
+#backpack-system-root[data-layout='atelier'] .backpack-board-heading h1 { margin: 0; font: bold 22px/1.2 var(--weapon-serif); white-space: nowrap; }
+#backpack-system-root[data-layout='atelier'] .backpack-board-heading > span { color: #688795; font-size: 11px; }
+#backpack-system-root[data-layout='atelier'] .backpack-board-heading > span:first-of-type { margin-left: auto; }
+#backpack-system-root[data-layout='atelier'] .backpack-expansion-count { display: inline; font-size: 11px; }
+#backpack-system-root[data-layout='atelier'] .backpack-expansion-layer { z-index: 3; }
+#backpack-system-root[data-layout='atelier'] .backpack-placed-layer { z-index: 4; }
+#backpack-system-root[data-layout='atelier'] .backpack-synergy-layer { z-index: 3; }
+/* 武器内部从下到上：占格高亮、武器图片、透明交互热区。 */
+#backpack-system-root[data-layout='atelier'] .backpack-cell-outline { z-index: 0; }
+#backpack-system-root[data-layout='atelier'] .backpack-image-frame { z-index: 1; }
+#backpack-system-root[data-layout='atelier'] .backpack-cell-hit { z-index: 2; }
+#backpack-system-root[data-layout='atelier'] .backpack-board-controls {
+  position: absolute; z-index: 5; text-align: center; display: flex; flex-direction: column; align-items: center;
+}
+#backpack-system-root[data-layout='atelier'] .backpack-board-controls p { color: #668699; font-size: 12px; line-height: 1.8; }
+#backpack-system-root[data-layout='atelier'] .backpack-board-controls p span { color: #c1a76a; font-size: 22px; line-height: 1; }
+#backpack-system-root[data-layout='atelier'] .backpack-button.weapon-ui-surface {
+  height: 32px; min-height: 32px; padding: 4px 16px; font-size: 13px; line-height: 1.2; flex: none;
+}
+#backpack-system-root[data-layout='atelier'] .backpack-rotate-drag-button { display: block; width: 80px; }
+#backpack-system-root[data-layout='atelier'] > .backpack-close-button { position: absolute; z-index: 7; width: 76px; }
+#backpack-system-root[data-layout='atelier'] .backpack-expansion-slot {
+  border: 1px dashed #8eabc2; border-radius: 2px; background: #e5eff6d9; color: #809bb6;
+}
+#backpack-system-root[data-layout='atelier'] .backpack-expansion-slot:hover { background: #fff2c6; color: #956a2e; border-color: #c59f48; }
+#backpack-system-root[data-layout='atelier'] .backpack-placed.is-selected .backpack-cell-outline {
+  border-color: #e6bc53; box-shadow: inset 0 0 0 1px #fff6c8, 0 0 6px #eac975aa; background: #a4dbed1c;
+}
+/* 物品栏始终横向排列。拖拽与已装备物品使用同一套实例和占格坐标。 */
+#backpack-system-root[data-layout='atelier'] .backpack-inventory {
+  position: absolute; z-index: 5; display: flex; flex-direction: column; padding: 14px 26px;
+  gap: 8px; border: 0; background: transparent; overflow: visible; box-sizing: border-box;
+}
+#backpack-system-root[data-layout='atelier'] .backpack-inventory-header { display: flex; flex: none; justify-content: space-between; align-items: center; gap: 6px; padding: 0; border: 0; min-height: 21px; }
+#backpack-system-root[data-layout='atelier'] .backpack-inventory-count { color: #315775; font: bold 12px var(--weapon-serif); }
+#backpack-system-root[data-layout='atelier'] .backpack-inventory-filters { display: flex; gap: 5px; min-width: 0; }
+#backpack-system-root[data-layout='atelier'] .backpack-inventory-filter { min-width: 0; width: 78px; height: 22px; padding: 1px 3px; font-size: 10px; }
+#backpack-system-root[data-layout='atelier'] .backpack-inventory-filter-rarity { width: 66px; }
+#backpack-system-root[data-layout='atelier'] .backpack-inventory-list {
+  display: flex; flex: 1; flex-direction: row; align-items: flex-start; gap: 6px; min-height: 0;
+  overflow-x: auto; overflow-y: hidden; padding: 2px 3px 4px; touch-action: pan-x; scrollbar-width: thin;
+  grid-template-columns: none; grid-auto-flow: initial; box-sizing: border-box;
+}
+#backpack-system-root[data-layout='atelier'] .backpack-inventory-list::-webkit-scrollbar { height: 4px; }
+#backpack-system-root[data-layout='atelier'] .backpack-inventory-tile.weapon-card {
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 2px;
+  flex: 0 0 72px; width: 72px; min-width: 72px; max-width: 72px; height: 72px; min-height: 72px; max-height: 72px;
+  padding: 6px 7px; box-sizing: border-box; overflow: visible; cursor: grab;
+}
+#backpack-system-root[data-layout='atelier'] .backpack-inventory-tile > .weapon-card-preview:not(.weapon-card-mobile-preview),
+#backpack-system-root[data-layout='atelier'] .backpack-inventory-tile :is(.weapon-card-details,.weapon-card-meta,.weapon-card-mobile-toggle) { display: none; }
+#backpack-system-root[data-layout='atelier'] .backpack-inventory-tile > .weapon-card-mobile-preview {
+  display: flex; position: relative; width: 42px; height: 42px; max-width: 42px; flex: none;
+  padding: 2px; margin: 0; border: 0; background: transparent; box-shadow: none; touch-action: none;
+}
+#backpack-system-root[data-layout='atelier'] .backpack-inventory-tile .weapon-card-mobile-preview :is(.weapon-card-preview-grid-cell,.weapon-card-footprint-cell,.weapon-card-preview-meta) { display: none; }
+#backpack-system-root[data-layout='atelier'] .backpack-inventory-tile > .weapon-card-summary { display: block; width: 100%; min-height: 0; padding: 0; margin: 0; }
+#backpack-system-root[data-layout='atelier'] .backpack-inventory-tile .weapon-card-name { display: block; font: 11px/14px 'Microsoft YaHei',sans-serif; width: 100%; margin: 0; }
+#backpack-system-root[data-layout='atelier'] .backpack-inventory-tile .bui-weapon-name-text { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#backpack-system-root[data-layout='atelier'] .backpack-inventory-tile.is-selected { filter: drop-shadow(0 0 3px #dbb657); }
+#backpack-system-root[data-layout='atelier'] .backpack-empty { color: #678491; font-size: 12px; margin: auto; }
+/* 详情：横屏常驻右栏，竖屏点击后浮动覆盖物品栏。长文本在详情中滚动。 */
+#backpack-system-root[data-layout='atelier'] .backpack-details { z-index: 5; padding: 22px; }
+#backpack-system-root[data-layout='atelier'] .backpack-detail-heading { display: none; }
+#backpack-system-root[data-layout='atelier'] .backpack-detail-content { height: 100%; overflow-y: auto; overflow-x: hidden; padding: 1px 4px 6px; box-sizing: border-box; touch-action: pan-y; scrollbar-width: thin; scrollbar-color: #c3ad72 transparent; }
+#backpack-system-root[data-layout='atelier'] .backpack-detail-overview { display: grid; grid-template-columns: 118px minmax(0,1fr); grid-template-rows: auto auto 1fr; gap: 10px 16px; }
+#backpack-system-root[data-layout='atelier'] .backpack-detail-portrait { grid-column: 1; grid-row: 1/4; text-align: center; }
+#backpack-system-root[data-layout='atelier'] .backpack-detail-portrait > .weapon-card-preview { width: 100%; height: 162px; max-width: 100%; margin: 0 0 14px; padding: 8px; border: 1px solid #c5d7dc; background: linear-gradient(#ecf8fc,#cde4eb); }
+#backpack-system-root[data-layout='atelier'] .backpack-detail-portrait .weapon-card-preview-meta { display: none; }
+#backpack-system-root[data-layout='atelier'] .backpack-detail-portrait .backpack-button { width: 98px; }
+#backpack-system-root[data-layout='atelier'] .backpack-detail-overview > header { display: flex; flex-direction: column; gap: 5px; grid-column: 2; border: 0; padding: 0; }
+#backpack-system-root[data-layout='atelier'] .bui-tip-title-row b { font: bold 24px/1.3 var(--weapon-serif); overflow-wrap: anywhere; }
+#backpack-system-root[data-layout='atelier'] .bui-weapon-tip .bui-rarity { color: #b68b39; font: bold 17px/1.2 Arial,sans-serif; letter-spacing: 2px; }
+#backpack-system-root[data-layout='atelier'] .backpack-detail-overview > .bui-type-row { grid-column: 2; margin: 0; display: flex; flex-wrap: wrap; gap: 4px; }
+#backpack-system-root[data-layout='atelier'] .bui-type-row i { background: #f1f7f2; border: 1px solid #c4d2cb; border-radius: 2px; color: #577b8d; padding: 2px 5px; font-size: 11px; }
+#backpack-system-root[data-layout='atelier'] .backpack-detail-overview > .bui-weapon-tip-main { grid-column: 2; margin: 0; display: block; }
+#backpack-system-root[data-layout='atelier'] .bui-weapon-tip dl { display: grid; grid-template-columns: max-content minmax(0,1fr); gap: 6px 10px; margin: 0; padding: 8px; background: #d5e9ee55; border: 0; }
+#backpack-system-root[data-layout='atelier'] .bui-weapon-tip dt { color: #58798b; font-size: 12px; white-space: nowrap; }
+#backpack-system-root[data-layout='atelier'] .bui-weapon-tip :is(dt,dd) { padding: 3px 2px; }
+#backpack-system-root[data-layout='atelier'] .bui-weapon-tip dd { display: block; margin: 0; font: 13px/1.4 var(--weapon-number); color: #244e70; text-align: right; }
+#backpack-system-root[data-layout='atelier'] .bui-weapon-tip dd small { display: block; font-size: 10px; color: #79919b; }
+#backpack-system-root[data-layout='atelier'] .bui-weapon-tip section { margin-top: 16px; padding: 12px 0 0; border: 0; border-top: 1px solid #d3c79e; border-radius: 0; background: transparent; }
+#backpack-system-root[data-layout='atelier'] .bui-weapon-tip h4 { margin: 0 0 8px; color: #305d7b; font: bold 17px var(--weapon-serif); }
+#backpack-system-root[data-layout='atelier'] .bui-weapon-tip :is(p,ul) { margin: 0; color: #527386; font-size: 13px; line-height: 1.7; }
+#backpack-system-root[data-layout='atelier'] .backpack-detail-recipe { display: flex; align-items: center; gap: 8px; margin: 8px 0 12px; }
+#backpack-system-root[data-layout='atelier'] .backpack-detail-recipe-item { width: 48px; height: 48px; flex: none; }
+#backpack-system-root[data-layout='atelier'] .backpack-detail-recipe-item .bui-weapon-grid-preview { width: 100%; height: 100%; box-sizing: border-box; }
+#backpack-system-root[data-layout='atelier'] .backpack-detail-recipe-item > .weapon-card-preview { width: 100%; height: 100%; padding: 4px; margin: 0; }
+#backpack-system-root[data-layout='atelier'] .backpack-detail-recipe-item .weapon-card-preview-meta { display: none; }
+#backpack-system-root[data-layout='atelier'] .backpack-detail-recipe-item :is(.bui-weapon-grid-cell,.bui-weapon-footprint-cell) { display: none; }
+#backpack-system-root[data-layout='atelier'] .backpack-detail-recipe-symbol { color: #b2975e; font: bold 20px var(--weapon-serif); }
+#backpack-system-root[data-layout='atelier'] .backpack-detail-crafting > .backpack-button { width: 106px; }
+#backpack-system-root[data-layout='atelier'] .backpack-detail-empty { height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 12px; color: #658493; }
+#backpack-system-root[data-layout='atelier'] .backpack-detail-empty > span { font-size: 46px; color: #c8ad65; }
+#backpack-system-root[data-layout='atelier'] .backpack-detail-empty h2 { margin: 0; color: #315976; font: bold 24px var(--weapon-serif); }
+#backpack-system-root[data-layout='atelier'] .backpack-detail-empty p { margin: 0; font-size: 13px; }
+/* 操作尺寸沿用现有背包按钮，保持普通长六边形。 */
+#backpack-system-root[data-layout='atelier'] .backpack-toolbar { position: absolute; z-index: 6; right: auto; padding: 10px; gap: 10px; background: transparent; box-shadow: none; border: 0; display: flex; flex-wrap: nowrap; justify-content: center; }
+#backpack-system-root[data-layout='atelier'] .backpack-toolbar > .backpack-button { height: 44px; min-height: 44px; padding: 6px 10px; font-size: 15px; }
+#backpack-system-root[data-layout='atelier'] .backpack-toolbar > .backpack-action-craft { width: 84px; flex: 0.8 1 84px; }
+#backpack-system-root[data-layout='atelier'] .backpack-toolbar > .backpack-action-collect-all { width: 114px; flex: 1.1 1 114px; }
+#backpack-system-root[data-layout='atelier'] .backpack-battle-speed-control { display: flex; flex: 1.4 1 146px; min-width: 116px; width: 146px; height: 44px; padding: 6px 14px; box-sizing: border-box; font: 15px/1.2 var(--weapon-serif); color: #fff5cf; }
+#backpack-system-root[data-layout='atelier'] .backpack-battle-speed-control > span { display: flex; gap: 4px; align-items: center; pointer-events: auto; }
+#backpack-system-root[data-layout='atelier'] .backpack-battle-speed-control > span > span { display: inline; }
+#backpack-system-root[data-layout='atelier'] .backpack-battle-speed-select { min-width: 52px; width: 62px; height: 28px; padding: 0; color: #fff5cf; border: 0; background: transparent; font: 14px Arial,sans-serif; pointer-events: auto; }
+#backpack-system-root[data-layout='atelier'] .backpack-battle-speed-select option { color: #214b70; background: #f0f7f5; }
+#backpack-system-root[data-layout='atelier'] .backpack-sell-zone { position: absolute; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; padding: 12px; box-sizing: border-box; border: 0; background: transparent; pointer-events: none; }
+#backpack-system-root[data-layout='atelier'] .backpack-sell-zone::after { content: ''; position: absolute; inset: 8px; background: linear-gradient(120deg,#f1ae9c44,#fae3d64a); z-index: 0; }
+#backpack-system-root[data-layout='atelier'] .backpack-sell-title { color: #9d5f4e; font: bold 19px var(--weapon-serif); }
+#backpack-system-root[data-layout='atelier'] .backpack-sell-hint { color: #b5806b; font-size: 11px; }
+#backpack-system-root[data-layout='atelier'] .backpack-drag-actions { position: absolute; display: none; inset: 0; z-index: 8; pointer-events: none; }
+#backpack-system-root[data-layout='atelier'] .backpack-drag-zone { position: absolute; border: 2px dashed #c9ad65; border-radius: 2px; color: #315976; background: #f6f5e5e8; }
+#backpack-system-root[data-layout='atelier'] .backpack-drag-zone.is-active { background: #fff0bde8; box-shadow: 0 0 12px #e3bd55; transform: none; }
+#backpack-system-root[data-layout='atelier'] .backpack-drag-zone-sell { color: #9d5f4e; border-color: #cc8974; background: #fae1d8ed; }
+#backpack-system-root[data-layout='atelier'] .backpack-drag-zone-sell.is-active { box-shadow: 0 0 12px #d99673; background: #f6ccbced; }
+#backpack-system-root[data-layout='atelier'][data-dragging='true'] .backpack-drag-actions,
+#backpack-system-root[data-layout='atelier'].backpack-guide-show-drag-actions .backpack-drag-actions { display: block; }
+#backpack-system-root[data-layout='atelier'][data-dragging='true'] .backpack-inventory { visibility: visible; opacity: .12; pointer-events: none; }
+#backpack-system-root[data-layout='atelier'] .backpack-drag-layer { z-index: 9; }
+  #backpack-system-root[data-layout='atelier'][data-compact='false'][data-narrow='true'] .backpack-board-heading > span:first-of-type { display: none; }
+  #backpack-system-root[data-layout='atelier'][data-compact='false'][data-narrow='true'] .backpack-detail-overview { grid-template-columns: 92px minmax(0,1fr); gap: 8px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='false'][data-narrow='true'] .bui-tip-title-row b { font-size: 20px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='false'][data-narrow='true'] .backpack-toolbar { gap: 7px; padding: 5px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='false'][data-narrow='true'] .backpack-battle-speed-control { width: 120px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] { padding-top: max(28px,env(safe-area-inset-top)); padding-bottom: max(32px,env(safe-area-inset-bottom)); scrollbar-width: none; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true']::-webkit-scrollbar { display: none; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'][data-inventory-expanded='true'] .backpack-inventory-list { flex-direction: row; overflow-x: auto; overflow-y: hidden; max-height: none; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-board-heading { height: 52px; box-sizing: border-box; padding: 0 104px 0 26px; gap: 8px; align-items: center; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-board-heading h1 { font-size: 18px; line-height: 32px; flex: none; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-board-heading > span:first-of-type { display: none; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-expansion-count { display: inline-flex; align-items: center; height: 32px; padding: 0; line-height: 1; font-size: 10px; white-space: nowrap; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-board-controls p { font-size: 10px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-rotate-drag-button { width: 66px; padding: 4px 10px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-board-controls p span { font-size: 18px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-details { display: none; z-index: 10; padding: 42px 14px 14px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'][data-detail-open='true']:not([data-dragging='true']) .backpack-details { display: block; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-detail-heading { position: absolute; top: 8px; left: 24px; right: 20px; display: flex; align-items: center; justify-content: space-between; height: 30px; font: bold 16px var(--weapon-serif); }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-detail-heading .backpack-button { width: 66px; height: 28px; min-height: 28px; font-size: 12px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-detail-content { padding: 2px 3px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-detail-content > article { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 12px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-detail-overview { grid-template-columns: 50px minmax(0,1fr); grid-template-rows: auto auto auto auto; gap: 5px; align-content: start; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-detail-portrait { display: contents; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-detail-portrait > .weapon-card-preview { grid-column: 1; grid-row: 1/3; width: 50px; height: 82px; padding: 3px; margin: 0; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-detail-portrait > .backpack-button { grid-column: 1/-1; grid-row: 4; width: 96px; margin: 6px auto 0; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-detail-overview > header { grid-column: 2; grid-row: 1; gap: 3px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .bui-tip-title-row b { font-size: 16px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .bui-weapon-tip .bui-rarity { font-size: 11px; letter-spacing: 0; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .bui-rarity-row { flex-wrap: wrap; gap: 3px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-detail-overview > .bui-type-row { grid-row: 2; gap: 2px; align-self: start; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .bui-type-row i { padding: 1px 2px; font-size: 9px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-detail-overview > .bui-weapon-tip-main { grid-column: 1/-1; grid-row: 3; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .bui-weapon-tip dl { padding: 5px; gap: 4px 5px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .bui-weapon-tip :is(dt,dd) { font-size: 11px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-detail-effects { border-left: 1px solid #d8cbab; padding-left: 10px; min-width: 0; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .bui-weapon-tip section { margin-top: 12px; padding-top: 9px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-detail-effects > section:first-child { margin: 0; padding: 0; border: 0; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .bui-weapon-tip h4 { font-size: 14px; margin-bottom: 5px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .bui-weapon-tip :is(p,ul) { font-size: 11px; line-height: 1.6; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-detail-recipe { gap: 3px; margin: 7px 0 9px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-detail-recipe-item { width: 29px; height: 32px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-detail-recipe-symbol { font-size: 14px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-detail-crafting > .backpack-button { width: 98px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-toolbar { padding: 6px 8px; gap: 8px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-battle-speed-control { width: 128px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-action-craft { width: 64px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-action-collect-all { width: 88px; }
+  #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-sell-title { font-size: 18px; }
+/* 手机出售区只存在于拖拽操作层，与放回区域一起覆盖物品栏。 */
+#backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-sell-zone { display: none; }
+#backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-drag-zone { box-sizing: border-box; padding: 12px 8px; }
+#backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-drag-title { font-size: 18px; }
+#backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-drag-hint { font-size: 11px; line-height: 1.5; }

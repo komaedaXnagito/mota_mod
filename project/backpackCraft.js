@@ -19,6 +19,7 @@ var installBackpackCraft_9c4e7b2a_6f1d_4a8c_9e3b_5d7f2c1a8e64 = function (core, 
 		const FLAG_STATE = "__backpack_state__"; // 背包状态 flag（与背包系统一致）。
 		let root = null;   // 合成面板根节点。
 		let slots = [null, null]; // 两个原料槽：[{ instanceId, weapon }]。
+		let activeSlotIndex = 0;
 		const EMPTY_ENTRY = { version: 6, placed: [], inventory: [], unlockedCells: [] };
 
 		// ---- 背包访问 ----
@@ -519,7 +520,9 @@ var installBackpackCraft_9c4e7b2a_6f1d_4a8c_9e3b_5d7f2c1a8e64 = function (core, 
 		const fillSlot = function (index) {
 			const slot = slots[index];
 			const target = root.querySelector(".backpack-craft-slot-" + index);
+			uiCommon.releaseWeaponUI(target);
 			target.innerHTML = "";
+			uiCommon.decorateWeaponSurface(target, { radius: 14, interactive: true });
 			if (!slot) {
 				const hint = document.createElement("div");
 				hint.className = "backpack-craft-slot-hint";
@@ -543,7 +546,9 @@ var installBackpackCraft_9c4e7b2a_6f1d_4a8c_9e3b_5d7f2c1a8e64 = function (core, 
 		const renderResult = function () {
 		const a = slots[0], b = slots[1];
 		const resultBox = root.querySelector(".backpack-craft-result");
+		uiCommon.releaseWeaponUI(resultBox);
 		resultBox.innerHTML = "";
+		uiCommon.decorateWeaponSurface(resultBox, { radius: 14, fill: "gold", interactive: true });
 		resultBox._buiWeapon = null;
 		resultBox.classList.remove("has-result");
 		resultBox.tabIndex = -1;
@@ -589,6 +594,7 @@ var installBackpackCraft_9c4e7b2a_6f1d_4a8c_9e3b_5d7f2c1a8e64 = function (core, 
 			const craftableCount = catalog.filter(function (item) { return item.craftable; }).length;
 			summary.textContent = "可合成 " + craftableCount + " / 共 " + catalog.length;
 			if (uiCommon) uiCommon.hideTooltip();
+			uiCommon.releaseWeaponUI(list);
 			list.innerHTML = "";
 			const makeRecipeWeaponName = function (label, weaponId) {
 				const element = document.createElement("span");
@@ -665,6 +671,8 @@ var installBackpackCraft_9c4e7b2a_6f1d_4a8c_9e3b_5d7f2c1a8e64 = function (core, 
 					});
 				}
 				list.appendChild(card);
+				uiCommon.decorateWeaponSurface(card, { radius: 11, interactive: true,
+					fill: item.selectedMatch ? "gold" : "pearl" });
 			});
 		};
 		const render = function () {
@@ -676,10 +684,13 @@ var installBackpackCraft_9c4e7b2a_6f1d_4a8c_9e3b_5d7f2c1a8e64 = function (core, 
 			const go = root.querySelector(".backpack-craft-go");
 			const a = slots[0], b = slots[1];
 			go.style.display = (a && b && findRecipe(a.weapon, b.weapon)) ? "" : "none";
+			pickWeapon(activeSlotIndex);
 		};
 		const pickWeapon = function (slotIndex) {
+			activeSlotIndex = slotIndex;
 			// 展开背包武器选择列表。
 			const list = root.querySelector(".backpack-craft-list");
+			uiCommon.releaseWeaponUI(list);
 			list.innerHTML = "";
 			const entries = readEntries();
 			if (!entries.length) {
@@ -711,11 +722,13 @@ var installBackpackCraft_9c4e7b2a_6f1d_4a8c_9e3b_5d7f2c1a8e64 = function (core, 
 					render();
 				});
 				list.appendChild(item);
+				uiCommon.decorateWeaponSurface(item, { radius: 10, interactive: true });
 			});
 		};
 		const closeCraft = function () {
 			if (uiCommon) uiCommon.hideTooltip();
 			if (uiCommon) uiCommon.unregisterModal(root);
+			if (uiCommon) uiCommon.releaseWeaponUI(root);
 			if (root && root.parentNode) root.parentNode.removeChild(root);
 			root = null;
 		};
@@ -723,6 +736,7 @@ var installBackpackCraft_9c4e7b2a_6f1d_4a8c_9e3b_5d7f2c1a8e64 = function (core, 
 			if (root) { render(); return; }
 			root = document.createElement("div");
 			root.className = "backpack-craft-root";
+			activeSlotIndex = 0;
 			const dialog = document.createElement("div");
 			dialog.className = "backpack-craft-dialog";
 			const panel = document.createElement("div");
@@ -731,11 +745,15 @@ var installBackpackCraft_9c4e7b2a_6f1d_4a8c_9e3b_5d7f2c1a8e64 = function (core, 
 			header.className = "backpack-craft-header";
 			const title = document.createElement("div");
 			title.className = "backpack-craft-title";
-			title.textContent = "武器合成（免费）";
+			title.textContent = "武器合成";
+			const freeLabel = document.createElement("small");
+			freeLabel.textContent = "免费";
+			title.appendChild(freeLabel);
 			const close = document.createElement("button");
 			close.type = "button";
 			close.className = "backpack-craft-close";
-			close.textContent = "×";
+			close.textContent = "返回";
+			close.setAttribute("aria-label", "关闭武器合成");
 			close.addEventListener("click", closeCraft);
 			header.appendChild(title);
 			header.appendChild(close);
@@ -793,6 +811,10 @@ var installBackpackCraft_9c4e7b2a_6f1d_4a8c_9e3b_5d7f2c1a8e64 = function (core, 
 				if (event.target === root) closeCraft();
 			});
 			document.body.appendChild(root);
+			uiCommon.decorateWeaponSurface(panel, { radius: 23, ornate: true, crest: true });
+			uiCommon.decorateWeaponSurface(recipes, { radius: 23, ornate: true, crest: true });
+			uiCommon.decorateWeaponSurface(close, { button: true });
+			uiCommon.decorateWeaponSurface(go, { button: true, gold: true });
 			if (uiCommon) uiCommon.registerModal(root, closeCraft, { name: "backpack-craft" });
 			close.focus();
 			render();

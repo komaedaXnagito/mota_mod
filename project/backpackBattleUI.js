@@ -140,6 +140,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 			"</aside></div></section>"
 		].join("");
 		document.body.appendChild(root);
+		common.decorateWeaponSurface(root.querySelector(".bb-arsenal"), { radius: 18, ornate: true });
 		nodes.weaponBoard = root.querySelector(".bb-weapon-board");
 		nodes.weaponStage = root.querySelector(".bb-weapon-stage");
 		nodes.synergyLayer = root.querySelector(".bb-synergy-layer");
@@ -750,7 +751,10 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		if (resizeHandler) window.removeEventListener("resize", resizeHandler);
 		resizeHandler = null;
 		if (common.unregisterModal) common.unregisterModal(root);
-		if (root) root.remove();
+		if (root) {
+			common.releaseWeaponUI(root);
+			root.remove();
+		}
 		root = null;
 		nodes = {};
 		weaponNodes = {};

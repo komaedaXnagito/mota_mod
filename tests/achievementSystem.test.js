@@ -50,6 +50,8 @@ function readPngSize(file) {
 function createHarness() {
 	const storage = {};
 	const visited = {};
+	const flags = {};
+	let pendingFloorEntry = null;
 	const document = {
 		head: makeElement(),
 		body: makeElement(),
@@ -68,9 +70,13 @@ function createHarness() {
 		getLocalStorage(key, fallback) { return key in storage ? storage[key] : fallback; },
 		setLocalStorage(key, value) { storage[key] = JSON.parse(JSON.stringify(value)); return true; },
 		isReplaying() { return false; },
-		hasFlag() { return false; },
+		hasFlag(name) { return !!flags[name]; },
 		hasVisitedFloor(floorId) { return !!visited[floorId]; },
 		musicStatus: { soundStatus: false },
+		ui: { closePanel() {} },
+		firstData: { floorId: "MT1", hero: { loc: { x: 6, y: 11, direction: "up" } } },
+		changeFloor(floorId, stair, loc, time, callback) { pendingFloorEntry = callback; },
+		insertAction() {},
 		status: { floorId: "MT1", hero: { hp: 1000 }, event: {} },
 		events: {
 			startGame() {},
@@ -88,7 +94,12 @@ function createHarness() {
 		setTimeout() { return 0; },
 		clearTimeout() {}
 	};
+	// 行为测试不绘制 Canvas；主题由浏览器预览验证。
+	context.fantasyUI_6f31b8ea_7c4d_4b67_a215_03b247f8e903 = { decorate() {}, releaseTree() {} };
 	vm.createContext(context);
+	vm.runInContext(fs.readFileSync(path.join(root, "libs/events.js"), "utf8"), context);
+	core.events._startGame_afterStart = context.events.prototype._startGame_afterStart;
+	core.events._startGame_upload = function () {};
 	vm.runInContext(
 		fs.readFileSync(path.join(root, "project/achievementSystem.js"), "utf8"),
 		context,
@@ -96,8 +107,52 @@ function createHarness() {
 	);
 	const plugin = {};
 	context.installAchievementSystem_d38bb038_c4fa_43be_927c_168680046baa(core, plugin);
-	return { api: plugin.achievementSystem, core, document };
+	return { api: plugin.achievementSystem, core, document, flags, main: context.main,
+		finishFloorEntry() {
+			assert.equal(typeof pendingFloorEntry, "function");
+			const callback = pendingFloorEntry;
+			pendingFloorEntry = null;
+			callback();
+		}
+	};
 }
+
+test("冒险启程等待确认职业并实际进入首层，只解锁一次且保留开局回调", () => {
+	const { api, core, flags, finishFloorEntry } = createHarness();
+	let callbacks = 0, unlocks = 0;
+	api.onUnlock((entry) => { if (entry.id === "begin_journey") unlocks++; });
+	core.events.startGame("");
+	assert.equal(api.isUnlocked("begin_journey"), false, "打开职业选择不能解锁");
+	core.events.startGame("");
+	assert.equal(api.isUnlocked("begin_journey"), false, "返回后重新打开仍不能解锁");
+	flags.kaiju = "剑";
+	core.events._startGame_afterStart(() => callbacks++);
+	assert.equal(api.isUnlocked("begin_journey"), false, "等待地图进入完成时不能提前解锁");
+	finishFloorEntry();
+	assert.equal(api.isUnlocked("begin_journey"), true);
+	assert.equal(callbacks, 1);
+	core.events._startGame_afterStart(() => callbacks++);
+	finishFloorEntry();
+	assert.equal(unlocks, 1);
+	assert.equal(callbacks, 2);
+});
+
+test("未选择职业、录像回放、编辑器以及普通读档换层不会解锁冒险启程", () => {
+	for (const scenario of ["noCareer", "replay", "editor", "replayBeforeEntry"]) {
+		const { api, core, flags, main, finishFloorEntry } = createHarness();
+		if (scenario !== "noCareer") flags.kaiju = "琴";
+		if (scenario === "replay") core.isReplaying = () => true;
+		if (scenario === "editor") main.mode = "editor";
+		core.events._startGame_afterStart();
+		if (scenario === "replayBeforeEntry") core.isReplaying = () => true;
+		finishFloorEntry();
+		assert.equal(api.isUnlocked("begin_journey"), false, scenario);
+	}
+	const { api, core, flags } = createHarness();
+	flags.kaiju = "杖";
+	core.events.afterChangeFloor("MT1");
+	assert.equal(api.isUnlocked("begin_journey"), false, "读档换层不是新冒险入口");
+});
 
 test("成就难度仅包含青铜、白金、钻石", () => {
 	const { api } = createHarness();
