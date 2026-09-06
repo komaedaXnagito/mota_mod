@@ -296,6 +296,10 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		var damage = fixed(remainingRawDamage);
 		target.hp = fixed(target.hp - damage);
 		target.damageTaken = fixed((target.damageTaken || 0) + damage);
+		// 仅累计展示数据，不参与伤害、触发器、随机流或战斗结算。
+		if (targetKey === "enemy" && options.sourceWeapon) {
+			options.sourceWeapon.damageDealt = fixed((options.sourceWeapon.damageDealt || 0) + damage);
+		}
 		// 累计 HP 损失：统计所有来源（被攻击、持续伤害、武器自伤等）实际扣减的血量，供 hpLost 条件使用。
 		if (damage > 0) target.totalHpLost = fixed((target.totalHpLost || 0) + damage);
 		if (damage > 0 && !options.silent) {
@@ -985,7 +989,7 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 			}
 			else if (effect.type === "dealMpConsumedDamage") {
 				// 奥义发动时：额外造成 本次战斗中累计消耗 MP 值 × multiplier 的直接伤害（无视格挡）。
-				applyDamage(state, "enemy", fixed((state.mpConsumedTotal || 0) * toNumber(effect.multiplier, 1)), { direct: true });
+				applyDamage(state, "enemy", fixed((state.mpConsumedTotal || 0) * toNumber(effect.multiplier, 1)), { direct: true, sourceWeapon: context.sourceSide === "player" ? weapon : null });
 			}
 			else if (effect.type === "setInvincible") {
 				// 设置无敌：durationTicks 内（默认 5 秒 = 500 Tick）本武器受到的伤害降至 0（格挡也不消耗）。
@@ -1005,7 +1009,7 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 			else if (effect.type === "dispelBuffPercent") {
 				dispelBuffPercent(state, targetKey, effect.percent == null ? effect.value : effect.percent);
 			}
-			else if (effect.type === "dealDamage") applyDamage(state, targetKey, amount, { direct: effect.direct === true });
+			else if (effect.type === "dealDamage") applyDamage(state, targetKey, amount, { direct: effect.direct === true, sourceWeapon: context.sourceSide === "player" ? weapon : null });
 			else if (effect.type === "heal") heal(state, targetKey, amount, handlers);
 			else if (effect.type === "modifyBattleMaxHp") {
 				// 自身最大生命值增加 value（如"攻击命中时：自身最大HP+10"）。
@@ -1504,6 +1508,7 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 			weapon.cooldownTicks = Math.max(0, Math.floor(toNumber(weapon.cooldownTicks, 0)));
 			weapon.lastAttackTick = -1;
 			weapon.attackSequence = 0;
+			weapon.damageDealt = 0;
 			weapon.expectationAccumulator = 0;
 			return weapon;
 		});

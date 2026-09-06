@@ -452,6 +452,7 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 				});
 				var result = rules.applyDamage(state, "enemy", rawDamage, {
 					silent: true,
+					sourceWeapon: weapon,
 					ignoreBlock: attackContext.ignoreBlock === true || weapon.ignoreBlockAlways === true
 				});
 				logBattlePhase("武器伤害结算", getWeaponPhaseDetails(weapon, options, {

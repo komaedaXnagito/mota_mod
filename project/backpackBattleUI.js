@@ -1,4 +1,4 @@
-/** 背包乱斗战斗面板。武器展示约占70%，人物、HUD和日志约占30%。 */
+/** 背包战斗：上方双方对战，下方兵装、操作、日志与实际伤害统计。 */
 var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core, runtime) {
 	"use strict";
 
@@ -12,6 +12,10 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 	var latestSnapshot = null;
 	var unsubscribe = null;
 	var resizeHandler = null;
+	var boardObserver = null;
+	var damageNodes = {};
+	var logSignature = "";
+	var portraitSignature = "";
 	var delayedOpenTimer = null;
 	var guideTour = null;
 	var guideStarted = false;
@@ -22,6 +26,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 	var INSTANT_OPEN_DELAY = 100;
 	var GRID_COLS = 10;
 	var GRID_ROWS = 10;
+	var gridMeasured = false;
 	var SVG_NS = "http://www.w3.org/2000/svg";
 	var XLINK_NS = "http://www.w3.org/1999/xlink";
 
@@ -119,28 +124,41 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 	var build = function () {
 		if (root) return;
 		root = document.createElement("div");
-		root.className = "bb-overlay";
+		root.className = "bb-overlay bb-sky-battle weapon-ui-skin";
 		root.dataset.mobile = core.domStyle && core.domStyle.isVertical ? "true" : "false";
 		root.innerHTML = [
 			"<section class='bb-panel' role='dialog' aria-label='背包乱斗战斗'>",
-			"<header class='bb-topbar'><div class='bb-brand'>背包战斗</div><div class='bb-controls'>",
-			"<button class='bb-button bb-pause'>暂停</button><div class='bb-guide-speed'><span class='bb-speed-label'>速度</span>",
+			"<header class='bb-topbar'><div class='bb-location'><button class='bb-button bb-exit' aria-label='退出本场战斗'>返回</button><div><strong class='bb-floor-name'>背包战斗</strong><small>背包兵装 · 自动战斗</small></div></div><div class='bb-battle-heading'><strong class='bb-battle-state'>战斗中</strong><time class='bb-elapsed'>00:00</time></div><span class='bb-top-note'>武器冷却完毕后自动攻击</span></header>",
+			"<section class='bb-arena' aria-label='双方战况'>",
+			"<div class='bb-combatant-art player'><img class='bb-player-art' alt='' hidden><canvas class='bb-portrait bb-player-portrait' width='384' height='384' aria-label='当前勇士'></canvas></div>",
+			"<div class='bb-combatant-art enemy'><canvas class='bb-portrait bb-enemy-portrait' width='384' height='384' aria-label='当前敌人'></canvas></div>",
+			"<article class='bb-side player'><header class='bb-side-heading'><span class='bb-faction'>我方</span><div class='bb-side-name bb-player-name'></div></header><div class='bb-guide-player-stats'><div class='bb-hp-line'><span>生命</span><strong class='bb-player-hp-text'></strong></div><div class='bb-bar bb-player-hp'><i></i></div><div class='bb-side-meta bb-player-meta'></div></div><div class='bb-status-row'><span>状态</span><div class='bb-statuses bb-player-statuses'></div></div><div class='bb-guide-ultimates'><div class='bb-resource-row'><span>奥义</span><strong class='bb-ultimate-text'></strong></div><div class='bb-bar bb-ultimate-bar'><i></i></div></div></article>",
+			"<article class='bb-side enemy'><header class='bb-side-heading'><span class='bb-faction'>敌方</span><div class='bb-side-name bb-enemy-name'></div></header><div class='bb-guide-enemy-data'><div class='bb-hp-line'><span>生命</span><strong class='bb-enemy-hp-text'></strong></div><div class='bb-bar bb-enemy-hp'><i></i></div><div class='bb-side-meta bb-enemy-meta'></div><div class='bb-status-row'><span>状态</span><div class='bb-statuses bb-enemy-statuses'></div></div></div><div class='bb-enemy-ultimate'><div class='bb-resource-row'><span>奥义</span><strong class='bb-enemy-ultimate-text'></strong></div><div class='bb-bar bb-enemy-ultimate-bar'><i></i></div></div></article>",
+			"<div class='bb-enemy-action'><svg class='bb-action-ring' viewBox='0 0 120 120' aria-hidden='true'><circle class='bb-action-track' cx='60' cy='60' r='54'/><circle class='bb-action-progress' cx='60' cy='60' r='54' pathLength='100'/></svg><span>敌方下次攻击</span><strong class='bb-enemy-action-text'></strong><div class='bb-bar bb-enemy-action-bar'><i></i></div></div>",
+			"</section><div class='bb-workspace'>",
+			"<section class='bb-arsenal'><div class='bb-arsenal-title'>当前背包兵装 <small class='bb-weapon-count'></small></div><div class='bb-weapon-board'><div class='bb-weapon-stage'><div class='bb-synergy-layer'></div></div><div class='bb-weapon-empty'>尚未摆放武器</div></div></section>",
+			"<section class='bb-operations'><h2>战斗操作</h2><div class='bb-controls'><div class='bb-guide-speed'><span class='bb-speed-label'>战速</span>",
 			"<button class='bb-button bb-speed' data-speed='0.25'>0.25×</button><button class='bb-button bb-speed' data-speed='0.5'>0.5×</button><button class='bb-button bb-speed' data-speed='1'>1×</button><button class='bb-button bb-speed' data-speed='2'>2×</button><button class='bb-button bb-speed' data-speed='3'>3×</button><button class='bb-button bb-speed' data-speed='10'>10×</button>",
 			"<select class='bb-speed-select' aria-label='战斗速度'><option value='0.25'>0.25×</option><option value='0.5'>0.5×</option><option value='1'>1×</option><option value='2'>2×</option><option value='3'>3×</option><option value='10'>10×</option></select>",
-			"<button class='bb-button bb-fast'>立即</button></div></div></header>",
-			"<div class='bb-content'>",
-			"<section class='bb-arsenal'><div class='bb-arsenal-title'>武器阵列 <small class='bb-weapon-count'></small></div><div class='bb-weapon-board'><div class='bb-weapon-stage'><div class='bb-synergy-layer'></div></div><div class='bb-weapon-empty'>尚未摆放武器</div></div></section>",
-			"<aside class='bb-sidebar'>",
-			"<div class='bb-duel'>",
-			"<article class='bb-side player'><div class='bb-portrait-wrap'><span class='bb-side-tag'>勇士</span><canvas class='bb-portrait bb-player-portrait' width='128' height='128'></canvas></div><div class='bb-side-name bb-player-name'></div><div class='bb-guide-player-stats'><div class='bb-hp-line'><span>HP</span><strong class='bb-player-hp-text'></strong></div><div class='bb-bar bb-player-hp'><i></i></div><div class='bb-side-meta bb-player-meta'></div></div><div class='bb-statuses bb-player-statuses'></div></article>",
-			"<article class='bb-side enemy'><div class='bb-portrait-wrap'><span class='bb-side-tag'>敌人</span><canvas class='bb-portrait bb-enemy-portrait' width='128' height='128'></canvas></div><div class='bb-side-name bb-enemy-name'></div><div class='bb-guide-enemy-data'><div class='bb-hp-line'><span>HP</span><strong class='bb-enemy-hp-text'></strong></div><div class='bb-bar bb-enemy-hp'><i></i></div><div class='bb-side-meta bb-enemy-meta'></div><div class='bb-statuses bb-enemy-statuses'></div></div></article>",
-			"</div>",
-			"<section class='bb-resource'><div class='bb-guide-ultimates'><div class='bb-resource-row'><span>奥义</span><strong class='bb-ultimate-text'></strong></div><div class='bb-bar bb-ultimate-bar'><i></i></div><div class='bb-enemy-ultimate'><div class='bb-resource-row'><span>敌方奥义</span><strong class='bb-enemy-ultimate-text'></strong></div><div class='bb-bar bb-enemy-ultimate-bar'><i></i></div></div></div><div class='bb-enemy-action'><div class='bb-resource-row'><span>敌方攻击准备</span><strong class='bb-enemy-action-text'></strong></div><div class='bb-bar bb-enemy-action-bar'><i></i></div></div></section>",
-			"<section class='bb-log'><button type='button' class='bb-log-toggle' aria-expanded='true'>战斗日志 ▾</button><div class='bb-log-list'></div></section>",
-			"</aside></div></section>"
+			"</div><button class='bb-button bb-pause'>暂停战斗</button><button class='bb-button bb-fast'>立即</button></div></section>",
+			"<section class='bb-log'><div class='bb-log-heading'><button type='button' class='bb-log-toggle' aria-expanded='true'>战斗日志 ▾</button><select class='bb-log-filter' aria-label='筛选战斗日志'><option value='all'>全部</option><option value='damage'>伤害</option><option value='heal'>治疗</option><option value='status'>状态</option><option value='ultimate'>奥义</option></select></div><div class='bb-log-list'></div></section>",
+			"<section class='bb-damage'><header class='bb-damage-heading'><h2>DPS 统计</h2><span>总 DPS <strong class='bb-total-dps'>0</strong></span></header><div class='bb-damage-list'></div><small class='bb-damage-note'>累计伤害 / 战斗秒数 · 右侧为伤害占比</small></section>",
+			"</div></section>"
 		].join("");
 		document.body.appendChild(root);
-		common.decorateWeaponSurface(root.querySelector(".bb-arsenal"), { radius: 18, ornate: true });
+		root.querySelectorAll(".bb-arsenal,.bb-side,.bb-operations,.bb-log,.bb-damage").forEach(function (panel) {
+			common.decorateWeaponSurface(panel, { radius: 18, ornate: true });
+		});
+		root.querySelectorAll(".bb-button").forEach(function (button) {
+			common.decorateWeaponSurface(button, { button: true, gold: button.classList.contains("bb-fast") });
+		});
+		nodes.damageList = root.querySelector(".bb-damage-list");
+		nodes.totalDps = root.querySelector(".bb-total-dps");
+		nodes.elapsed = root.querySelector(".bb-elapsed");
+		nodes.battleState = root.querySelector(".bb-battle-state");
+		nodes.logFilter = root.querySelector(".bb-log-filter");
+		nodes.actionRing = root.querySelector(".bb-action-progress");
+		nodes.playerArt = root.querySelector(".bb-player-art");
 		nodes.weaponBoard = root.querySelector(".bb-weapon-board");
 		nodes.weaponStage = root.querySelector(".bb-weapon-stage");
 		nodes.synergyLayer = root.querySelector(".bb-synergy-layer");
@@ -170,6 +188,22 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		nodes.pause = root.querySelector(".bb-pause");
 		nodes.speedSelect = root.querySelector(".bb-speed-select");
 		nodes.fast = root.querySelector(".bb-fast");
+		var exitBattle = function () {
+			if (!runtime.stop || runtime.stop("用户退出战斗弹层") === false) close();
+		};
+		root.querySelector(".bb-exit").onclick = exitBattle;
+		nodes.logFilter.onchange = function () { if (latestSnapshot) renderLog(latestSnapshot, true); };
+		var careerSelect = core.plugin && core.plugin.careerSelect;
+		var careerId = core.getFlag && core.getFlag("kaiju");
+		var career = careerSelect && careerSelect.getCareers().find(function (item) { return item.id === careerId; });
+		if (career && career.portrait) {
+			var playerArt = nodes.playerArt;
+			playerArt.onload = function () {
+				if (nodes.playerArt !== playerArt) return;
+				playerArt.hidden = false; nodes.playerPortrait.hidden = true;
+			};
+			common.setWeaponImageSource(nodes.playerArt, "project/images/" + career.portrait);
+		}
 		if (common.registerModal) {
 			common.registerModal(root, function () {
 				if (!runtime.stop || runtime.stop("用户按 Esc 关闭战斗弹层") === false) close();
@@ -212,6 +246,10 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 			syncGuideTargets();
 		};
 		window.addEventListener("resize", resizeHandler);
+		if (typeof ResizeObserver !== "undefined") {
+			boardObserver = new ResizeObserver(function () { if (root && latestSnapshot) renderWeapons(latestSnapshot, true); });
+			boardObserver.observe(nodes.weaponBoard);
+		}
 		if (nodes.pause && nodes.pause.focus) nodes.pause.focus();
 	};
 
@@ -378,7 +416,19 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		if (forceRebuild) clearWeaponSynergy();
 		var boardWidth = nodes.weaponBoard.clientWidth;
 		var boardHeight = nodes.weaponBoard.clientHeight;
-		var cellSize = Math.max(18, Math.floor(Math.min((boardWidth - 18) / GRID_COLS, (boardHeight - 18) / GRID_ROWS)));
+		// 战斗期间占格不会改变；每场只读取一次背包，避免每帧克隆整个背包状态。
+		if (!gridMeasured) {
+			var gridState = core.plugin && core.plugin.getBackpackGridState && core.plugin.getBackpackGridState();
+			GRID_COLS = Number(gridState && gridState.config && gridState.config.maxCols) || 10;
+			GRID_ROWS = Number(gridState && gridState.config && gridState.config.maxRows) || 10;
+			snapshot.weapons.forEach(function (weapon) {
+				var bounds = getBounds(rotateCells(weapon.baseCells || weapon.cells, weapon.rotation));
+				GRID_COLS = Math.max(GRID_COLS, (Number(weapon.col) || 0) + bounds.cols);
+				GRID_ROWS = Math.max(GRID_ROWS, (Number(weapon.row) || 0) + bounds.rows);
+			});
+			gridMeasured = true;
+		}
+		var cellSize = Math.max(6, Math.floor(Math.min((boardWidth - 4) / GRID_COLS, (boardHeight - 4) / GRID_ROWS)));
 		var stageWidth = cellSize * GRID_COLS;
 		var stageHeight = cellSize * GRID_ROWS;
 		nodes.weaponStage.style.width = stageWidth + "px";
@@ -469,30 +519,39 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 
 	var drawContain = function (ctx, image, sx, sy, sw, sh) {
 		if (!image || !sw || !sh) return;
-		var maxSize = 104;
+		var size = ctx.canvas.width;
+		var maxSize = size * .94;
 		var scale = Math.min(maxSize / sw, maxSize / sh);
 		var width = sw * scale;
 		var height = sh * scale;
-		ctx.drawImage(image, sx, sy, sw, sh, (128 - width) / 2, 128 - height - 5, width, height);
+		ctx.drawImage(image, sx, sy, sw, sh, (size - width) / 2, size - height - 4, width, height);
 	};
 
 	var drawPortraits = function (snapshot) {
+		var heroImage = core.material && core.material.images && core.material.images.hero;
+		var info = core.getBlockInfo ? core.getBlockInfo(snapshot.enemy.id) : null;
+		var enemyImage = info && (info.bigImage || info.image);
+		var signature = [heroImage && heroImage.src, heroImage && heroImage.width, snapshot.enemy.id,
+			enemyImage && enemyImage.src, enemyImage && enemyImage.width, info && info.posX, info && info.posY].join("|");
+		if (signature === portraitSignature) return;
+		portraitSignature = signature;
 		var playerContext = nodes.playerPortrait.getContext("2d");
 		var enemyContext = nodes.enemyPortrait.getContext("2d");
 		[playerContext, enemyContext].forEach(function (ctx) {
-			ctx.clearRect(0, 0, 128, 128);
+			ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 			ctx.imageSmoothingEnabled = false;
 		});
-		var heroImage = core.material && core.material.images && core.material.images.hero;
 		if (heroImage && heroImage.width && heroImage.height) {
 			var heroWidth = heroImage.width / 4;
 			var heroHeight = heroImage.height / 4;
 			drawContain(playerContext, heroImage, 0, 0, heroWidth, heroHeight);
 		}
-		var info = core.getBlockInfo ? core.getBlockInfo(snapshot.enemy.id) : null;
 		if (info) {
 			if (info.bigImage && info.bigImage.width && info.bigImage.height) {
-				drawContain(enemyContext, info.bigImage, 0, 0, info.bigImage.width, info.bigImage.height);
+				// 大图同样沿用引擎的朝向与单帧裁剪，不把整张四方向图集铺进战斗区。
+				var frame = core.maps && core.maps._getBigImageInfo && core.maps._getBigImageInfo(info.bigImage, info.face, 0);
+				if (frame) drawContain(enemyContext, info.bigImage, frame.sx, frame.sy, frame.per_width, frame.per_height);
+				else drawContain(enemyContext, info.bigImage, 0, 0, info.bigImage.width, info.bigImage.height);
 			} else if (info.image) {
 				drawContain(enemyContext, info.image, 32 * (info.posX || 0), info.height * info.posY, 32, info.height);
 			}
@@ -521,16 +580,88 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		});
 	};
 
-	var renderLog = function (snapshot) {
-		var lines = snapshot.battleLog.slice(-120);
+	var formatTime = function (ticks) {
+		var seconds = Math.max(0, Math.floor((Number(ticks) || 0) / rules.TICKS_PER_SECOND));
+		return String(Math.floor(seconds / 60)).padStart(2, "0") + ":" + String(seconds % 60).padStart(2, "0");
+	};
+
+	var getDamageSummary = function (snapshot) {
+		var total = Math.max(0, Number(snapshot.enemy.damageTaken) || 0);
+		var attributed = 0;
+		var seconds = Math.max(0, (Number(snapshot.tick) || 0) / rules.TICKS_PER_SECOND);
+		var rows = snapshot.weapons.map(function (weapon, index) {
+			var damage = Math.max(0, Number(weapon.damageDealt) || 0);
+			attributed += damage;
+			return { id: weapon.instanceId, name: weapon.name, weapon: weapon, damage: damage, index: index };
+		});
+		var other = Math.max(0, Math.round((total - attributed) * 1000) / 1000);
+		if (other > 0) rows.push({ id: "__other__", name: "其他效果", damage: other, index: rows.length });
+		rows.sort(function (a, b) { return b.damage - a.damage || a.index - b.index; });
+		rows.forEach(function (row) { row.share = total > 0 ? row.damage / total * 100 : 0; });
+		return { total: total, dps: seconds > 0 ? total / seconds : 0, rows: rows };
+	};
+
+	var formatDamage = function (value) {
+		return value >= 100000000 ? format(value / 100000000, 1) + "亿"
+			: value >= 10000 ? format(value / 10000, 1) + "万" : format(value, 1);
+	};
+
+	var renderDamage = function (snapshot) {
+		var summary = getDamageSummary(snapshot);
+		nodes.totalDps.textContent = formatDamage(summary.dps);
+		nodes.totalDps.title = "累计伤害 " + format(summary.total, 1) + " / 战斗时间 " + format(snapshot.tick / rules.TICKS_PER_SECOND, 2) + " 秒";
+		var active = {};
+		summary.rows.forEach(function (row, index) {
+			active[row.id] = true;
+			var node = damageNodes[row.id];
+			if (!node) {
+				var element = document.createElement("div");
+				element.className = "bb-damage-row";
+				element.dataset.instanceId = row.id;
+				element.innerHTML = "<div class='bb-damage-icon'></div><div class='bb-damage-info'><span class='bb-damage-name'></span><span class='bb-damage-values'><span class='bb-damage-value'></span><span class='bb-damage-share'></span></span></div><div class='bb-damage-bar'><i></i></div>";
+				var icon = element.querySelector(".bb-damage-icon");
+				if (row.weapon) {
+					var bounds = getBounds(rotateCells(row.weapon.baseCells || row.weapon.cells, row.weapon.rotation));
+					var cellSize = Math.min(34 / bounds.cols, 34 / bounds.rows);
+					var art = createArt(row.weapon, cellSize, "stats").element;
+					art.style.width = bounds.cols * cellSize + "px"; art.style.height = bounds.rows * cellSize + "px";
+					icon.appendChild(art);
+				} else icon.textContent = "◇";
+				element.querySelector(".bb-damage-name").textContent = row.name;
+				node = damageNodes[row.id] = { root: element, value: element.querySelector(".bb-damage-value"), share: element.querySelector(".bb-damage-share"), bar: element.querySelector(".bb-damage-bar i") };
+			}
+			node.value.textContent = formatDamage(row.damage);
+			node.share.textContent = format(row.share, 1) + "%";
+			node.bar.style.width = Math.min(100, row.share) + "%";
+			node.root.title = row.name + " · 累计伤害 " + format(row.damage, 1) + " · 占比 " + format(row.share, 1) + "%";
+			if (nodes.damageList.children[index] !== node.root) nodes.damageList.insertBefore(node.root, nodes.damageList.children[index] || null);
+		});
+		Object.keys(damageNodes).forEach(function (id) { if (!active[id]) { damageNodes[id].root.remove(); delete damageNodes[id]; } });
+	};
+
+	var renderLog = function (snapshot, force) {
+		var filter = nodes.logFilter.value;
+		var source = snapshot.battleLog || [];
+		var last = source[source.length - 1];
+		var signature = [filter, source.length, last && last.tick, last && last.kind, last && last.text].join("|");
+		if (!force && signature === logSignature) return;
+		logSignature = signature;
+		var follow = force || nodes.log.scrollHeight - nodes.log.scrollTop - nodes.log.clientHeight < 24;
+		var oldScroll = nodes.log.scrollTop;
+		var lines = source.filter(function (line) {
+			return filter === "all" || line.kind === filter || (filter === "damage" && line.kind === "attack");
+		}).slice(-120);
 		nodes.log.innerHTML = "";
 		lines.forEach(function (line) {
 			var element = document.createElement("div");
 			element.className = "bb-log-line " + line.kind;
-			element.textContent = line.text;
+			var time = document.createElement("time"); time.textContent = formatTime(line.tick);
+			var text = document.createElement("span"); text.textContent = line.text;
+			element.appendChild(time); element.appendChild(text);
 			nodes.log.appendChild(element);
 		});
-		nodes.log.scrollTop = nodes.log.scrollHeight;
+		if (!lines.length) nodes.log.textContent = "暂无此类战斗记录";
+		nodes.log.scrollTop = follow ? nodes.log.scrollHeight : oldScroll;
 	};
 
 	var cancelDelayedOpen = function () {
@@ -617,8 +748,8 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 			[".bb-player-statuses", "这里会展示你的Buff和Debuff，点击或悬浮查看详细数据"],
 			[".bb-guide-enemy-data", "怪物的数据在这里"],
 			[".bb-guide-ultimates", "这里是奥义条，攻击命中会获得奥义，奥义满后会触发奥义效果"],
-			[".bb-enemy-action", "这是怪物的攻击进度条，满了后怪物会发起攻击"],
-			[".bb-arsenal", "每把放置在背包内的武器都会自动进行攻击，武器有不同的攻击频率，武器下方的倒计时可以看到还有多长时间该武器会发动一次攻击"],
+			[".bb-enemy-action", "这是怪物的攻击倒计时，圆环蓄满后怪物会发起攻击"],
+			[".bb-arsenal", "背包中的武器会按各自频率自动攻击，填色表示冷却进度。悬停或点击武器可查看详情与剩余冷却时间"],
 			[".bb-log", "这里可以看到详细的战斗日志"],
 			[".bb-guide-speed", "这里可以调节战斗动画播放的速率，初次战斗就让我们完整的看完吧"],
 			[".bb-pause", "接下来点击继续开始战斗吧！", true]
@@ -707,6 +838,11 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		}
 		cancelDelayedOpen();
 		build();
+		var floorId = snapshot.meta && snapshot.meta.floorId;
+		var floor = core.status && core.status.maps && core.status.maps[floorId];
+		root.querySelector(".bb-floor-name").textContent = floor && floor.title || "背包战斗";
+		nodes.elapsed.textContent = formatTime(snapshot.tick);
+		nodes.battleState.textContent = snapshot.fastForwarding ? "结算中" : snapshot.paused ? "已暂停" : "战斗中";
 		nodes.playerName.textContent = snapshot.player.name;
 		nodes.playerHpText.textContent = format(snapshot.player.hp, 1) + " / " + format(snapshot.player.maxHp, 1);
 		nodes.playerHp.style.width = Math.max(0, Math.min(100, snapshot.player.hp / Math.max(1, snapshot.player.maxHp) * 100)) + "%";
@@ -721,14 +857,16 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		renderStatuses("enemy", snapshot.enemy, snapshot);
 		renderWeapons(snapshot, false);
 		renderLog(snapshot);
+		renderDamage(snapshot);
 		drawPortraits(snapshot);
-		nodes.pause.textContent = snapshot.paused ? "继续" : "暂停";
+		common.setWeaponButtonLabel(nodes.pause, snapshot.paused ? "继续战斗" : "暂停战斗");
 		nodes.fast.disabled = !!snapshot.fastForwarding;
-		nodes.fast.textContent = snapshot.fastForwarding ? "结算中…" : "立即";
+		common.setWeaponButtonLabel(nodes.fast, snapshot.fastForwarding ? "结算中…" : "立即结算");
 		nodes.fast.classList.toggle("active", preferredSpeed === "instant");
 		root.querySelectorAll(".bb-speed").forEach(function (button) {
 			button.classList.toggle("active", preferredSpeed !== "instant"
 				&& Number(button.dataset.speed) === Number(preferredSpeed));
+			button.setAttribute("aria-pressed", String(preferredSpeed !== "instant" && Number(button.dataset.speed) === Number(preferredSpeed)));
 		});
 		if (nodes.speedSelect && preferredSpeed !== "instant") {
 			nodes.speedSelect.value = String(Number(preferredSpeed));
@@ -740,6 +878,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		nodes.enemyUltimateBar.style.width = Math.min(100, snapshot.enemy.ultimate) + "%";
 		var enemyProgress = Math.max(0, Math.min(1, snapshot.enemy.cooldownProgress || 0));
 		nodes.enemyActionBar.style.width = (enemyProgress * 100) + "%";
+		nodes.actionRing.style.strokeDashoffset = String((1 - enemyProgress) * 100);
 		nodes.enemyActionText.textContent = enemyProgress >= 0.999 ? "就绪" : format((1 - enemyProgress) * snapshot.enemy.effectiveIntervalTicks / 100, 1) + "s";
 		if (snapshot.paused) queueBattleGuide();
 	};
@@ -750,6 +889,8 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		common.hideTooltip();
 		if (resizeHandler) window.removeEventListener("resize", resizeHandler);
 		resizeHandler = null;
+		if (boardObserver) boardObserver.disconnect();
+		boardObserver = null;
 		if (common.unregisterModal) common.unregisterModal(root);
 		if (root) {
 			common.releaseWeaponUI(root);
@@ -759,6 +900,10 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		nodes = {};
 		weaponNodes = {};
 		statusIconNodes = {};
+		damageNodes = {};
+		logSignature = "";
+		portraitSignature = "";
+		gridMeasured = false;
 		latestSnapshot = null;
 		guideStarted = false;
 	};

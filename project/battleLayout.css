@@ -1,0 +1,197 @@
+/* 战斗布局复用 fantasyUI 金框、珍珠面板和六边形按钮；素材来自当前游戏。 */
+.bb-overlay.bb-sky-battle {
+  background: url('images/backpack_background.png') center / cover;
+  color: var(--weapon-ink, #214b70); touch-action: pan-y; overflow-x: hidden;
+}
+.bb-sky-battle .bb-panel {
+  width: min(1640px,100%); height: 100%; max-height: 1040px; padding: 20px 28px 28px;
+  display: grid; grid-template-rows: 52px minmax(230px,1fr) minmax(300px,1.06fr); gap: 14px;
+  border: 0; border-radius: 0; background: transparent; box-shadow: none; overflow: visible;
+}
+.bb-sky-battle .bb-topbar { padding: 0 12px; min-height: 0; position: relative; }
+.bb-sky-battle .bb-location { display: flex; align-items: center; gap: 14px; }
+.bb-sky-battle .bb-location > div { display: flex; flex-direction: column; gap: 3px; }
+.bb-sky-battle .bb-floor-name { font: bold 24px var(--weapon-serif); }
+.bb-sky-battle .bb-location small, .bb-sky-battle .bb-top-note { color: #4c728b; font-size: 12px; }
+.bb-sky-battle .bb-battle-heading { position: absolute; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.bb-sky-battle .bb-battle-state { font: bold 25px var(--weapon-serif); letter-spacing: 4px; }
+.bb-sky-battle .bb-elapsed { font: 14px var(--weapon-number); color: #456c89; }
+.bb-sky-battle .bb-arena { position: relative; min-height: 0; isolation: isolate; }
+.bb-sky-battle .bb-combatant-art { position: absolute; top: 0; bottom: -15px; width: 34%; pointer-events: none; z-index: 1; }
+.bb-sky-battle .bb-combatant-art.player { left: 18%; }
+.bb-sky-battle .bb-combatant-art.enemy { right: 18%; }
+.bb-sky-battle .bb-combatant-art::after { content: ''; position: absolute; bottom: 9px; left: 24%; width: 52%; height: 7%; border-radius: 50%; background: #225a7744; filter: blur(9px); z-index: -1; }
+.bb-sky-battle .bb-portrait, .bb-sky-battle .bb-player-art { display: block; width: 100%; height: 100%; object-fit: contain; object-position: center bottom; filter: drop-shadow(0 8px 5px #204b7338); }
+.bb-sky-battle .bb-portrait[hidden], .bb-sky-battle .bb-player-art[hidden] { display: none; }
+.bb-sky-battle .bb-side { position: absolute; top: 12%; width: 23%; z-index: 2; padding: 22px 26px 24px; box-sizing: border-box; border: 0; border-radius: 0; background: transparent; overflow: visible; }
+.bb-sky-battle .bb-side.player { left: 0; }
+.bb-sky-battle .bb-side.enemy { right: 0; background: transparent; }
+.bb-sky-battle .bb-side-heading { display: flex; flex-direction: column; gap: 4px; margin-bottom: 9px; }
+.bb-sky-battle .bb-faction { font: bold 24px var(--weapon-serif); }
+.bb-sky-battle .enemy .bb-faction { color: #964e51; }
+.bb-sky-battle .bb-side-name { font: bold 15px var(--weapon-serif); text-align: left; color: #315777; }
+.bb-sky-battle :is(.bb-hp-line,.bb-resource-row) { color: #38617f; font-size: 12px; margin-top: 0; gap: 6px; }
+.bb-sky-battle .bb-hp-line strong { font: 13px var(--weapon-number); color: #224d71; }
+.bb-sky-battle .bb-bar { height: 9px; margin-top: 4px; border: 1px solid #95b9bf; background: #c6dbe2; border-radius: 2px; }
+.bb-sky-battle .bb-player-hp > i { background: linear-gradient(#96e7ab,#42b47c); }
+.bb-sky-battle .bb-enemy-hp > i { background: linear-gradient(#efaf94,#d76266); }
+.bb-sky-battle .bb-ultimate-bar > i { background: linear-gradient(#83dbf8,#338dc1); }
+.bb-sky-battle .bb-side.enemy .bb-enemy-ultimate-bar > i { background: linear-gradient(#d3a6df,#9664b5); }
+.bb-sky-battle .bb-side-meta { text-align: left; color: #6a8495; font-size: 11px; margin-top: 6px; }
+.bb-sky-battle .bb-status-row { display: flex; align-items: center; gap: 8px; margin: 9px 0; color: #38617f; font-size: 12px; }
+.bb-sky-battle .bb-statuses { min-width: 0; min-height: 28px; max-height: 66px; flex: 1; margin: 0; justify-content: flex-start; gap: 4px; overflow: auto; padding: 1px 4px 5px 1px; }
+.bb-sky-battle .bb-statuses:not(:has(.bb-status:not([hidden])))::after { content: '暂无'; align-self: center; color: #7894a2; font-size: 11px; }
+.bb-sky-battle .bb-status { width: 26px; height: 26px; flex: none; background: #e7f2f4; border-radius: 3px; }
+.bb-sky-battle .bb-status-svg { width: 25px; height: 25px; }
+.bb-sky-battle .bb-status-count { color: #234f6b; text-shadow: 0 1px #fff; font-size: 10px; left: auto; right: -3px; top: auto; bottom: -4px; }
+.bb-sky-battle .bb-enemy-ultimate { margin-top: 0; }
+.bb-sky-battle .bb-enemy-action { position: absolute; z-index: 3; width: 110px; height: 110px; bottom: 2%; left: 58%; border-radius: 50%; border: 1px solid #e6c687; box-shadow: 0 3px 12px #493e6055,inset 0 0 18px #eb916c66; background: radial-gradient(circle,#254669eb,#29415af5); padding: 0; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; color: #fff0d5; }
+.bb-sky-battle .bb-enemy-action > span { font-size: 11px; }
+.bb-sky-battle .bb-enemy-action-text { font: 29px var(--weapon-number); color: #ffe2ba; }
+.bb-sky-battle .bb-enemy-action .bb-bar { display: none; }
+.bb-sky-battle .bb-action-ring { position: absolute; inset: -5px; width: calc(100% + 10px); height: calc(100% + 10px); fill: none; stroke-width: 2; pointer-events: none; transform: rotate(-90deg); }
+.bb-sky-battle .bb-action-track { stroke: #bc8a6488; }
+.bb-sky-battle .bb-action-progress { stroke: #ffbf88; stroke-width: 4; stroke-dasharray: 100; stroke-dashoffset: 100; stroke-linecap: round; }
+.bb-sky-battle .bb-workspace { display: grid; min-height: 0; grid-template-columns: minmax(0,.9fr) minmax(0,1.3fr) minmax(0,.88fr); grid-template-rows: 98px minmax(0,1fr); gap: 10px; }
+.bb-sky-battle :is(.bb-arsenal,.bb-operations,.bb-log,.bb-damage) { position: relative; min-width: 0; min-height: 0; box-sizing: border-box; border: 0; border-radius: 0; background: transparent; box-shadow: none; overflow: visible; }
+.bb-sky-battle .bb-arsenal { grid-column: 1; grid-row: 1/3; }
+.bb-sky-battle .bb-arsenal-title { top: 14px; left: 24px; right: 24px; justify-content: space-between; color: #214b70; text-shadow: none; font: bold 20px var(--weapon-serif); }
+.bb-sky-battle .bb-arsenal-title small { padding: 0; border: 0; border-radius: 0; color: #6b8996; font: 12px var(--weapon-number); }
+.bb-sky-battle .bb-weapon-board { position: absolute; inset: 49px 18px 18px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.bb-sky-battle .bb-weapon-stage { background-color: #dbeaf0aa; background-image: linear-gradient(#b0b9a780 1px,transparent 1px),linear-gradient(90deg,#b0b9a780 1px,transparent 1px); box-shadow: 0 0 0 1px #c5c7ad; }
+.bb-sky-battle .bb-art.muted { filter: grayscale(.8) brightness(1.08); opacity: .55; }
+.bb-sky-battle .bb-art-cell { z-index: 0; border-color: #c6b883; background: #e8e1b429; }
+.bb-sky-battle .bb-art-frame { z-index: 1; }
+.bb-sky-battle .bb-art.color .bb-art-cell { border-color: #d4b767; }
+.bb-sky-battle .bb-weapon-cd-text { color: #254f70; background: #f4f8efde; text-shadow: none; border: 1px solid #c6b77b; border-radius: 2px; font: 11px var(--weapon-number); }
+.bb-sky-battle .bb-weapon-unit.ready .bb-weapon-cd-text { color: #906327; }
+.bb-sky-battle .bb-weapon-empty { color: #6a8492; font-size: 13px; }
+.bb-sky-battle .bb-operations { grid-column: 2; grid-row: 1; padding: 12px 16px; display: flex; flex-direction: column; justify-content: center; gap: 7px; }
+.bb-sky-battle :is(.bb-operations h2,.bb-damage h2) { margin: 0; font: bold 19px var(--weapon-serif); color: #214b70; }
+.bb-sky-battle .bb-operations h2 { margin-left: 8px; }
+.bb-sky-battle .bb-controls { width: 100%; display: flex; justify-content: center; flex-wrap: nowrap; gap: 7px; }
+.bb-sky-battle .bb-guide-speed { display: flex; flex-wrap: nowrap; gap: 3px; }
+.bb-sky-battle .bb-speed-label { display: none; }
+.bb-sky-battle .bb-button { position: relative; height: 38px; min-height: 38px; min-width: 0; padding: 5px 15px; border: 0; border-radius: 0; background: transparent; color: #fff5cf; font: bold 14px var(--weapon-serif); flex: none; white-space: nowrap; box-sizing: border-box; box-shadow: none; }
+.bb-sky-battle .bb-button:hover { filter: none; }
+.bb-sky-battle .bb-speed { width: 45px; padding: 5px 6px; font: 12px var(--weapon-number); }
+.bb-sky-battle .bb-speed.active { color: #fff8d3; background: transparent; filter: drop-shadow(0 0 5px #ffe8a2); }
+.bb-sky-battle .bb-speed.active > span { text-decoration: underline; text-underline-offset: 4px; }
+.bb-sky-battle .bb-pause { width: 96px; }
+.bb-sky-battle .bb-fast { width: 98px; color: #70471f; }
+.bb-sky-battle .bb-exit { width: 80px; }
+.bb-sky-battle .bb-speed-select { display: none; width: 86px; min-width: 0; height: 36px; padding: 3px 6px; border: 1px solid #c6aa68; border-radius: 0; background: #f4f8ef; color: #305b7c; font: 13px var(--weapon-number); }
+.bb-sky-battle .bb-log { grid-column: 2; grid-row: 2; padding: 13px 18px 16px; display: flex; flex-direction: column; }
+.bb-sky-battle .bb-log-heading { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex: none; margin-bottom: 8px; padding: 0 6px; }
+.bb-sky-battle .bb-log-toggle { width: auto; padding: 0; border: 0; color: #214b70; background: transparent; font: bold 19px var(--weapon-serif); }
+.bb-sky-battle .bb-log-filter { width: 78px; padding: 3px 5px; border: 1px solid #c3b477; color: #315d7b; background: #f6faf4; font-size: 12px; }
+.bb-sky-battle .bb-log-list { flex: 1; padding: 0 6px; font-size: 12px; line-height: 1.6; touch-action: pan-y; overscroll-behavior: contain; }
+.bb-sky-battle .bb-log-line { display: flex; gap: 9px; padding: 4px 0; border-bottom: 1px solid #c8dde466; color: #456e8a; }
+.bb-sky-battle .bb-log-line time { flex: none; color: #758d9f; font: 11px/1.8 var(--weapon-number); }
+.bb-sky-battle .bb-log-line :last-child { min-width: 0; overflow-wrap: anywhere; }
+.bb-sky-battle .bb-log-line.attack, .bb-sky-battle .bb-log-line.damage { color: #af604a; }
+.bb-sky-battle .bb-log-line.heal { color: #35805f; }
+.bb-sky-battle .bb-log-line.status { color: #7564a2; }
+.bb-sky-battle .bb-log-line.ultimate { color: #996a2d; }
+.bb-sky-battle .bb-log.collapsed { align-self: stretch; }
+.bb-sky-battle .bb-damage { grid-column: 3; grid-row: 1/3; padding: 15px 20px 13px; display: flex; flex-direction: column; }
+.bb-sky-battle .bb-damage-heading { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 0 5px 9px; border-bottom: 1px solid #cbbf8c; flex-wrap: wrap; }
+.bb-sky-battle .bb-damage-heading > span { color: #607e93; font-size: 11px; }
+.bb-sky-battle .bb-total-dps { margin-left: 4px; color: #387db7; font: bold 22px var(--weapon-number); }
+.bb-sky-battle .bb-damage-list { min-height: 0; flex: 1; overflow-y: auto; padding: 4px 2px; touch-action: pan-y; overscroll-behavior: contain; }
+.bb-sky-battle .bb-damage-list:empty::after { content: '尚未造成伤害'; display: block; margin: 28px 0; color: #7894a2; font-size: 12px; text-align: center; }
+.bb-sky-battle .bb-damage-row { display: grid; grid-template-columns: 38px minmax(0,1fr); column-gap: 8px; padding: 6px 0; }
+.bb-sky-battle .bb-damage-icon { grid-column: 1; grid-row: 1/3; width: 38px; height: 38px; position: relative; border: 1px solid #bed5da; background: #cde2eb88; box-sizing: border-box; display: grid; place-items: center; color: #7a9cad; font-size: 22px; }
+.bb-sky-battle .bb-damage-icon .bb-art { inset: auto; }
+.bb-sky-battle .bb-damage-icon .bb-art-cell { display: none; }
+.bb-sky-battle .bb-damage-info { display: flex; align-items: center; justify-content: space-between; gap: 4px; min-width: 0; font: 12px var(--weapon-number); }
+.bb-sky-battle .bb-damage-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: bold 13px var(--weapon-serif); color: #315777; }
+.bb-sky-battle .bb-damage-values { white-space: nowrap; color: #456a85; }
+.bb-sky-battle .bb-damage-share { display: inline-block; min-width: 42px; margin-left: 6px; text-align: right; font-weight: bold; }
+.bb-sky-battle .bb-damage-bar { height: 6px; background: #cee0e9; margin-top: 4px; overflow: hidden; border-radius: 4px; }
+.bb-sky-battle .bb-damage-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg,#4e9bc9,#8ed8e9); }
+.bb-sky-battle .bb-damage-note { flex: none; margin-top: 5px; color: #6b8595; font-size: 10px; text-align: center; }
+.bb-sky-battle .bb-log-list, .bb-sky-battle .bb-damage-list, .bb-sky-battle .bb-statuses { scrollbar-width: thin; scrollbar-color: #c3ad72 #e5eff0; }
+@media (max-width: 1280px) {
+  .bb-sky-battle .bb-guide-speed .bb-speed { display: none; }
+  .bb-sky-battle .bb-speed-select { display: block; }
+  .bb-sky-battle .bb-side { width: 25%; padding: 18px 21px; }
+  .bb-sky-battle .bb-top-note { display: none; }
+  .bb-sky-battle .bb-panel { padding: 12px 18px 18px; grid-template-rows: 44px minmax(215px,1fr) minmax(258px,1.06fr); gap: 10px; }
+  .bb-sky-battle .bb-damage-info { flex-wrap: wrap; }
+}
+@media (orientation: portrait), (max-width: 700px) {
+  .bb-overlay.bb-sky-battle { overflow-y: auto; align-items: flex-start; }
+  .bb-sky-battle .bb-panel { width: 100%; height: 100%; min-height: 700px; max-height: none; padding: max(12px,env(safe-area-inset-top)) 10px max(14px,env(safe-area-inset-bottom)); grid-template-columns: minmax(0,1fr) minmax(0,1fr); grid-template-rows: 36px minmax(260px,1.45fr) minmax(176px,.8fr) 54px minmax(105px,.62fr); gap: 8px; }
+  .bb-sky-battle .bb-topbar { grid-column: 1/-1; grid-row: 1; padding: 0 4px; }
+  .bb-sky-battle .bb-location { gap: 8px; }
+  .bb-sky-battle .bb-location small { display: none; }
+  .bb-sky-battle .bb-floor-name { font-size: 16px; max-width: 170px; }
+  .bb-sky-battle .bb-battle-heading { position: static; transform: none; }
+  .bb-sky-battle .bb-battle-state { font-size: 18px; letter-spacing: 2px; }
+  .bb-sky-battle .bb-elapsed { font-size: 11px; }
+  .bb-sky-battle .bb-exit { width: 58px; height: 32px; min-height: 32px; font-size: 12px; }
+  .bb-sky-battle .bb-arena { grid-column: 1/-1; grid-row: 2; }
+  .bb-sky-battle .bb-combatant-art { width: 52%; top: 0; bottom: 126px; }
+  .bb-sky-battle .bb-combatant-art.player { left: 0; }
+  .bb-sky-battle .bb-combatant-art.enemy { right: 0; }
+  .bb-sky-battle .bb-side { top: auto; bottom: 0; width: calc(50% - 4px); padding: 12px 16px 15px; }
+  .bb-sky-battle .bb-side-heading { flex-direction: row; align-items: center; gap: 7px; margin-bottom: 5px; min-width: 0; }
+  .bb-sky-battle .bb-faction { font-size: 17px; line-height: 24px; flex: none; }
+  .bb-sky-battle .bb-side-name { font-size: 12px; line-height: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bb-sky-battle :is(.bb-hp-line,.bb-resource-row) { font-size: 10px; }
+  .bb-sky-battle .bb-hp-line strong { font-size: 10px; }
+  .bb-sky-battle .bb-bar { height: 6px; margin-top: 3px; }
+  .bb-sky-battle .bb-side-meta { font-size: 9px; margin-top: 4px; }
+  .bb-sky-battle .bb-status-row { gap: 5px; margin: 5px 0; font-size: 10px; }
+  .bb-sky-battle .bb-statuses { min-height: 22px; max-height: 28px; padding-bottom: 4px; flex-wrap: nowrap; }
+  .bb-sky-battle .bb-status { width: 21px; height: 21px; }
+  .bb-sky-battle .bb-status-svg { width: 20px; height: 20px; }
+  .bb-sky-battle .bb-status-count { font-size: 9px; }
+  .bb-sky-battle .bb-enemy-action { width: 68px; height: 68px; left: calc(50% - 35px); bottom: 157px; gap: 3px; }
+  .bb-sky-battle .bb-enemy-action > span { font-size: 8px; }
+  .bb-sky-battle .bb-enemy-action-text { font-size: 22px; }
+  .bb-sky-battle .bb-workspace { display: contents; }
+  .bb-sky-battle .bb-arsenal { grid-column: 1; grid-row: 3; }
+  .bb-sky-battle .bb-arsenal-title { top: 12px; left: 16px; right: 15px; font-size: 14px; gap: 4px; }
+  .bb-sky-battle .bb-arsenal-title small { font-size: 9px; }
+  .bb-sky-battle .bb-weapon-board { inset: 35px 12px 12px; }
+  .bb-sky-battle .bb-weapon-cd-text { display: none; font-size: 9px; padding: 0 2px; bottom: 0; }
+  .bb-sky-battle .bb-weapon-unit:is(:hover,:focus-within) .bb-weapon-cd-text { display: block; }
+  .bb-sky-battle .bb-damage { grid-column: 2; grid-row: 3; padding: 12px 13px; }
+  .bb-sky-battle .bb-damage-heading { padding: 0 2px 4px; gap: 3px; }
+  .bb-sky-battle .bb-damage h2 { font-size: 14px; }
+  .bb-sky-battle .bb-damage-heading > span { font-size: 9px; }
+  .bb-sky-battle .bb-total-dps { font-size: 15px; }
+  .bb-sky-battle .bb-damage-row { grid-template-columns: 27px minmax(0,1fr); column-gap: 5px; padding: 4px 0; }
+  .bb-sky-battle .bb-damage-icon { width: 27px; height: 32px; overflow: hidden; }
+  .bb-sky-battle .bb-damage-icon > .bb-art { transform: scale(.72); }
+  .bb-sky-battle .bb-damage-info { flex-wrap: wrap; gap: 1px; }
+  .bb-sky-battle .bb-damage-name { font-size: 11px; width: 100%; }
+  .bb-sky-battle .bb-damage-values { font-size: 9px; }
+  .bb-sky-battle .bb-damage-share { min-width: 33px; margin-left: 3px; }
+  .bb-sky-battle .bb-damage-bar { height: 4px; margin-top: 3px; }
+  .bb-sky-battle .bb-damage-note { display: none; }
+  .bb-sky-battle .bb-operations { grid-column: 1/-1; grid-row: 4; flex-direction: row; align-items: center; gap: 4px; padding: 8px 13px; }
+  .bb-sky-battle .bb-operations h2 { font-size: 13px; width: 28px; flex: none; margin: 0 4px 0 0; }
+  .bb-sky-battle .bb-controls { gap: 4px; min-width: 0; }
+  .bb-sky-battle .bb-guide-speed { min-width: 0; flex: .85; }
+  .bb-sky-battle .bb-guide-speed .bb-speed { display: none; }
+  .bb-sky-battle .bb-speed-select { display: block; width: 100%; height: 32px; font-size: 12px; }
+  .bb-sky-battle :is(.bb-pause,.bb-fast) { width: 90px; height: 36px; min-height: 36px; font-size: 12px; padding: 4px 10px; flex: 1; }
+  .bb-sky-battle .bb-log { grid-column: 1/-1; grid-row: 5; padding: 11px 16px 14px; }
+  .bb-sky-battle .bb-log-heading { padding: 0 3px; margin-bottom: 4px; }
+  .bb-sky-battle .bb-log-toggle { font-size: 15px; }
+  .bb-sky-battle .bb-log-filter { width: 68px; font-size: 10px; padding: 2px 4px; }
+  .bb-sky-battle .bb-log-list { font-size: 11px; padding: 0 3px; }
+  .bb-sky-battle .bb-log-line { gap: 6px; padding: 3px 0; }
+  .bb-sky-battle .bb-log-line time { font-size: 10px; }
+}
+@media (orientation: landscape) and (min-width: 701px) and (max-height: 620px) {
+  .bb-overlay.bb-sky-battle { overflow-y: auto; align-items: flex-start; }
+  .bb-sky-battle .bb-panel { min-height: 600px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bb-sky-battle .bb-weapon-unit.firing { animation: none; }
+  .bb-sky-battle .bb-bar > i { transition: none; }
+}
