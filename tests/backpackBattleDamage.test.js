@@ -119,3 +119,37 @@ test("奥义消耗 MP 的额外伤害归属触发武器", () => {
 	assert.equal(w.damageDealt, 30);
 	assert.equal(state.enemy.damageTaken, 30);
 });
+
+test("浮字记录当次多段攻击的格挡后伤害，持续伤害与旧累计不混入", () => {
+	const { runtime, rules } = setup();
+	const w = weapon("a", 10); w.extraAttackCount = 2;
+	const data = input([w]); data.enemy.buffs = [{ id: "block", stacks: 2 }];
+	data.enemy.debuffs = [{ id: "burn", stacks: 1 }];
+	runtime.start(data);
+	let snapshot = runtime.stepTicks(100);
+	assert.deepEqual(JSON.parse(JSON.stringify(snapshot.weapons[0].lastAttackResult)), { sequence: 1, hit: true, damage: 24 });
+	snapshot = runtime.stepTicks(100);
+	assert.equal(snapshot.weapons[0].lastAttackResult.damage, 30);
+	assert.equal(snapshot.weapons[0].lastAttackResult.sequence, 2);
+	assert.equal(rules.createBattleState(snapshot).weapons[0].lastAttackResult, null);
+	runtime.destroy();
+});
+
+test("嵌套奥义保留最新出手结果，未命中与全格挡的零伤害分开记录", () => {
+	const { runtime } = setup();
+	const w = weapon("a", 10); w.attributes.ultimateGain = 100;
+	const data = input([w]); data.enemy.buffs = [{ id: "block", stacks: 2 }];
+	runtime.start(data);
+	const snapshot = runtime.stepTicks(100);
+	assert.equal(snapshot.weapons[0].attackSequence, 2);
+	assert.deepEqual(JSON.parse(JSON.stringify(snapshot.weapons[0].lastAttackResult)), { sequence: 2, hit: true, damage: 10 });
+	runtime.destroy();
+	for (const hit of [true, false]) {
+		const r = setup().runtime, missWeapon = weapon("a", 1);
+		missWeapon.attributes.hitRate = hit ? 1 : 0;
+		const next = input([missWeapon]); next.enemy.buffs = [{ id: "block", stacks: 2 }];
+		r.start(next);
+		assert.deepEqual(JSON.parse(JSON.stringify(r.stepTicks(100).weapons[0].lastAttackResult)), { sequence: 1, hit, damage: 0 });
+		r.destroy();
+	}
+});

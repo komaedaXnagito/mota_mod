@@ -1510,6 +1510,7 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 			weapon.cooldownTicks = Math.max(0, Math.floor(toNumber(weapon.cooldownTicks, 0)));
 			weapon.lastAttackTick = -1;
 			weapon.attackSequence = 0;
+			weapon.lastAttackResult = null;
 			weapon.damageDealt = 0;
 			weapon.expectationAccumulator = 0;
 			return weapon;

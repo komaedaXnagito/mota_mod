@@ -1074,7 +1074,8 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		});
 	};
 
-	const clearPlacedDragGesture = function () {
+	const clearPlacedDragGesture = function (event) {
+		if (event && placedDragGesture && event.pointerId !== placedDragGesture.pointerId) return;
 		placedDragGesture = null;
 	};
 
@@ -1098,6 +1099,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		});
 		element.addEventListener("pointerdown", function (event) {
 			if (event.pointerType === "mouse" && event.button !== 0) return;
+			if (dragState || event.isPrimary === false) return;
 			clearPlacedDragGesture();
 			clearSynergyHighlights();
 			event.stopPropagation();
@@ -1108,6 +1110,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 				startX: event.clientX,
 				startY: event.clientY,
 				startEvent: {
+					pointerId: event.pointerId,
 					pointerType: event.pointerType,
 					button: 0,
 					clientX: event.clientX,
@@ -1158,7 +1161,8 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		}, true);
 	};
 
-	const clearInventoryDragGesture = function () {
+	const clearInventoryDragGesture = function (event) {
+		if (event && inventoryDragGesture && event.pointerId !== inventoryDragGesture.pointerId) return;
 		inventoryDragGesture = null;
 	};
 
@@ -1185,6 +1189,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		preview.setAttribute("aria-label", (entry.weapon.name || "武器") + "，点击查看，拖动到背包");
 		preview.addEventListener("pointerdown", function (event) {
 			if (event.pointerType === "mouse" && event.button !== 0) return;
+			if (dragState || event.isPrimary === false) return;
 			clearInventoryDragGesture();
 			event.stopPropagation();
 			inventoryDragGesture = {
@@ -1194,6 +1199,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 				startX: event.clientX,
 				startY: event.clientY,
 				startEvent: {
+					pointerId: event.pointerId,
 					pointerType: event.pointerType,
 					button: 0,
 					clientX: event.clientX,
@@ -1237,6 +1243,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		card.addEventListener("pointerdown", function (event) {
 			if (event.pointerType === "mouse" && event.button !== 0) return;
 			if (event.target && event.target.closest && event.target.closest("button")) return;
+			if (dragState || event.isPrimary === false) return;
 			clearInventoryDragGesture();
 			event.stopPropagation();
 			inventoryDragGesture = {
@@ -1246,6 +1253,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 				startX: event.clientX,
 				startY: event.clientY,
 				startEvent: {
+					pointerId: event.pointerId,
 					pointerType: event.pointerType,
 					button: 0,
 					clientX: event.clientX,
@@ -1586,6 +1594,11 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	 */
 	const startPointerDrag = function (event, instanceId, source, sourceElement) {
 		if (event.pointerType === "mouse" && event.button !== 0) return;
+		if (dragState || event.isPrimary === false) return;
+		// 收起详情和重绘会删除源武器节点，先把触摸捕获转交给稳定的背包根节点。
+		if (root && root.setPointerCapture && event.pointerId != null) {
+			try { root.setPointerCapture(event.pointerId); } catch (_) {}
+		}
 		uiCommon.hideTooltip();
 		if (layout && layout.compact) clearWeaponSelection();
 		if (root) root.dataset.tooltipPinned = "false";
@@ -1594,6 +1607,8 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		const rect = sourceElement.getBoundingClientRect();
 		const point = pointToLocal(event.clientX, event.clientY);
 		dragState = {
+			pointerId: event.pointerId,
+			clientPoint: { x: event.clientX, y: event.clientY },
 			instanceId: instanceId,
 			source: source,
 			rotation: findEntry(instanceId).rotation,
@@ -1608,6 +1623,15 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		setDragSelectionLocked(true);
 		createDragElement();
 		drawBag();
+	};
+
+	/** 结束指针所有权；先清状态，避免 lostpointercapture 再次取消已完成的落点。 */
+	const releaseDragPointer = function () {
+		const pointerId = dragState && dragState.pointerId;
+		dragState = null;
+		if (root && root.releasePointerCapture && pointerId != null) {
+			try { root.releasePointerCapture(pointerId); } catch (_) {}
+		}
 	};
 
 	/** 把正在拖拽的武器顺时针旋转 90 度并立即刷新预览。 */
@@ -1680,7 +1704,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		if (entry && isInSellZone(event.clientX, event.clientY)) {
 			const soldName = (entry.weapon && entry.weapon.name) || "武器";
 			const instanceId = entry.instanceId;
-			dragState = null;
+			releaseDragPointer();
 			setDragSelectionLocked(false);
 			if (dragLayer) dragLayer.innerHTML = "";
 			if (sellZone) sellZone.classList.remove("backpack-sell-zone-active");
@@ -1724,7 +1748,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 			core.drawTip("这里放不下，物品已回到原位");
 		}
 
-		dragState = null;
+		releaseDragPointer();
 		setDragSelectionLocked(false);
 		if (dragLayer) dragLayer.innerHTML = "";
 		clearDragAction();
@@ -1741,7 +1765,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 
 	/** 取消当前拖拽并清除视觉副本，不修改实例位置。 */
 	const cancelDrag = function () {
-		dragState = null;
+		releaseDragPointer();
 		setDragSelectionLocked(false);
 		stopDragScroll();
 		if (dragLayer) dragLayer.innerHTML = "";
@@ -2498,6 +2522,10 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 			viewportObserver = new ResizeObserver(function () { if (root) renderAll(); });
 			viewportObserver.observe(document.getElementById("outerUI") || gameGroup);
 		}
+		root.addEventListener("lostpointercapture", function (event) {
+			// 源节点在移交捕获后也会冒泡此事件，只有根节点自身丢失捕获才取消。
+			if (event.target === root) onPointerCancel(event);
+		});
 		document.addEventListener("pointermove", onPointerMove, true);
 		document.addEventListener("pointerup", onPointerUp, true);
 		document.addEventListener("pointercancel", onPointerCancel, true);
@@ -2537,7 +2565,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 
 	/** 全局指针移动处理：更新拖拽物位置、目标格颜色和售卖区高亮。 */
 	const onPointerMove = function (event) {
-		if (!dragState || !root) return;
+		if (!dragState || !root || event.pointerId !== dragState.pointerId) return;
 		event.preventDefault();
 		dragState.clientPoint = { x: event.clientX, y: event.clientY };
 		if (dragScrollFrame == null) dragScrollFrame = requestAnimationFrame(scrollDuringDrag);
@@ -2550,17 +2578,17 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 
 	/** 全局指针释放处理：提交当前拖拽结果。 */
 	const onPointerUp = function (event) {
-		if (!dragState || !root) return;
+		if (!dragState || !root || event.pointerId !== dragState.pointerId) return;
 		event.preventDefault();
 		event.stopPropagation();
 		finishDrag(event);
 	};
 
 	/** 浏览器取消指针序列时恢复安全的非拖拽状态。 */
-	const onPointerCancel = function () {
-		clearInventoryDragGesture();
-		clearPlacedDragGesture();
-		if (dragState) cancelDrag();
+	const onPointerCancel = function (event) {
+		if (inventoryDragGesture && inventoryDragGesture.pointerId === event.pointerId) clearInventoryDragGesture();
+		if (placedDragGesture && placedDragGesture.pointerId === event.pointerId) clearPlacedDragGesture();
+		if (dragState && dragState.pointerId === event.pointerId) cancelDrag();
 	};
 
 	/** 判断键盘事件是否为背包关闭键，同时兼容 key 与旧式 keyCode。 */

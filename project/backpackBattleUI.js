@@ -19,6 +19,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 	var playerPortraitSignature = "";
 	var enemyPortraitSignature = "";
 	var attackFeedback = null;
+	var weaponFlightFeedback = null;
 	var portraitAttackAge = -1;
 	var delayedOpenTimer = null;
 	var guideTour = null;
@@ -153,6 +154,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 			"<section class='bb-panel' role='dialog' aria-label='背包乱斗战斗'>",
 			"<header class='bb-topbar'><div class='bb-location'><button class='bb-button bb-exit' aria-label='退出本场战斗'>返回</button><div><strong class='bb-floor-name'>背包战斗</strong><small>背包兵装 · 自动战斗</small></div></div><div class='bb-battle-heading'><strong class='bb-battle-state'>战斗中</strong><time class='bb-elapsed'>00:00</time></div><span class='bb-top-note'>武器冷却完毕后自动攻击</span></header>",
 			"<section class='bb-arena' aria-label='双方战况'>",
+			"<div class='bb-weapon-flight-layer' aria-hidden='true'></div>",
 			"<div class='bb-combatant-art player'><img class='bb-player-art' alt='' hidden><canvas class='bb-portrait bb-player-portrait' width='384' height='384' aria-label='当前勇士'></canvas><canvas class='bb-player-impact' width='384' height='384' aria-hidden='true' hidden></canvas></div>",
 			"<div class='bb-combatant-art enemy'><canvas class='bb-portrait bb-enemy-portrait' width='384' height='384' aria-label='当前敌人'></canvas></div>",
 			"<article class='bb-side player'><header class='bb-side-heading'><span class='bb-faction'>我方</span><div class='bb-side-name bb-player-name'></div></header><div class='bb-guide-player-stats'><div class='bb-hp-line'><span>生命</span><strong class='bb-player-hp-text'></strong></div><div class='bb-bar bb-player-hp'><i></i></div><div class='bb-side-meta bb-player-meta'></div></div><div class='bb-status-row'><span>状态</span><div class='bb-statuses bb-player-statuses'></div></div><div class='bb-guide-ultimates bb-ultimate-meter'><span>奥义</span><div class='bb-bar bb-ultimate-bar'><i></i></div><strong class='bb-ultimate-text'></strong></div></article>",
@@ -210,6 +212,24 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		nodes.weaponCount = root.querySelector(".bb-weapon-count");
 		nodes.playerPortrait = root.querySelector(".bb-player-portrait");
 		nodes.enemyPortrait = root.querySelector(".bb-enemy-portrait");
+		nodes.weaponFlightLayer = root.querySelector(".bb-weapon-flight-layer");
+		weaponFlightFeedback = createBackpackWeaponFlightFeedback(nodes.weaponFlightLayer, getWeaponFlightLayout, function (weapon, size) {
+			// 复用武器的透明裁剪和等比缩放，飞行时不携带棋盘底格、倒计时。
+			var flyingWeapon = Object.assign({}, weapon, { rotation: 0 });
+			var bounds = getBounds(normalizeCells(weapon.baseCells || weapon.cells));
+			var cellSize = size / Math.max(bounds.cols, bounds.rows);
+			var art = createArt(flyingWeapon, cellSize, "bb-weapon-flight").element;
+			art.style.width = bounds.cols * cellSize + "px";
+			art.style.height = bounds.rows * cellSize + "px";
+			art.dataset.weaponId = weapon.instanceId;
+			return art;
+		}, function (damage, weaponId) {
+			var number = document.createElement("span");
+			number.className = "bb-hit-damage";
+			number.dataset.weaponId = weaponId;
+			number.textContent = format(damage, 3);
+			return number;
+		});
 		nodes.playerName = root.querySelector(".bb-player-name");
 		nodes.playerHpText = root.querySelector(".bb-player-hp-text");
 		nodes.playerHp = root.querySelector(".bb-player-hp i");
@@ -287,6 +307,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		resizeHandler = function () {
 			syncBattleViewport();
 			if (latestSnapshot && root) renderWeapons(latestSnapshot, true);
+			if (weaponFlightFeedback) weaponFlightFeedback.refresh();
 			syncGuideTargets();
 		};
 		window.addEventListener("resize", resizeHandler);
@@ -598,6 +619,35 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 			weaponNodes[instanceId].root.remove();
 			delete weaponNodes[instanceId];
 		});
+	};
+
+	var getWeaponFlightLayout = function () {
+		var layer = nodes.weaponFlightLayer;
+		if (!layer || !layer.clientWidth || !layer.clientHeight) return null;
+		var rect = layer.getBoundingClientRect();
+		if (!rect.width || !rect.height) return null;
+		var scaleX = rect.width / layer.clientWidth, scaleY = rect.height / layer.clientHeight;
+		var player = nodes.playerArt.hidden ? nodes.playerPortrait : nodes.playerArt;
+		var playerRect = player.getBoundingClientRect(), enemyRect = nodes.enemyPortrait.getBoundingClientRect();
+		var aspect = player.naturalWidth && player.naturalHeight ? player.naturalWidth / player.naturalHeight : 1;
+		var playerHeight = Math.min(playerRect.height, playerRect.width / aspect);
+		var enemySize = Math.min(enemyRect.width, enemyRect.height);
+		var info = core.getBlockInfo && latestSnapshot ? core.getBlockInfo(latestSnapshot.enemy.id) : null;
+		var frame = getEnemyPortraitFrame(info, 0);
+		var enemyHeight = enemySize * .94 * (frame ? Math.min(1, frame.sh / frame.sw) : 1);
+		var mobile = root.dataset.mobile === "true", size = mobile ? 52 : 84;
+		return {
+			start: { x: (playerRect.left + playerRect.width / 2 - rect.left) / scaleX,
+				y: (playerRect.bottom - playerHeight * .52 - rect.top) / scaleY },
+			spread: { x: Math.min(130, playerRect.width * .46 / scaleX), y: Math.min(110, playerHeight * .42 / scaleY) },
+			// 横屏从左侧状态卡右边开始散开；竖屏不落到人物下方的状态卡中。
+			spawnBounds: { minX: mobile ? 0 : (playerRect.left + playerRect.width * .15 - rect.left) / scaleX + size * .65,
+				maxY: (playerRect.bottom - rect.top) / scaleY - size * .4 },
+			width: layer.clientWidth, height: layer.clientHeight,
+			end: { x: (enemyRect.left + enemyRect.width / 2 - rect.left) / scaleX,
+				y: (enemyRect.bottom - enemySize * 4 / 384 - enemyHeight * .5 - rect.top) / scaleY },
+			size: size
+		};
 	};
 
 	var drawContain = function (ctx, image, sx, sy, sw, sh) {
@@ -980,6 +1030,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		renderDamage(snapshot);
 		drawPortraits(snapshot);
 		attackFeedback.update(snapshot);
+		weaponFlightFeedback.update(snapshot);
 		common.setWeaponButtonLabel(nodes.pause, snapshot.paused ? "继续战斗" : "暂停战斗");
 		nodes.fast.disabled = !!snapshot.fastForwarding;
 		common.setWeaponButtonLabel(nodes.fast, snapshot.fastForwarding ? "结算中…" : "立即结算");
@@ -1009,6 +1060,8 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		cancelDelayedOpen();
 		if (attackFeedback) attackFeedback.destroy();
 		attackFeedback = null;
+		if (weaponFlightFeedback) weaponFlightFeedback.destroy();
+		weaponFlightFeedback = null;
 		portraitAttackAge = -1;
 		endBattleGuide();
 		common.hideTooltip();

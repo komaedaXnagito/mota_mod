@@ -27,7 +27,8 @@ html.backpack-workspace-open, body.backpack-workspace-open { overflow: hidden; }
 /* 武器内部从下到上：占格高亮、武器图片、透明交互热区。 */
 #backpack-system-root[data-layout='atelier'] .backpack-cell-outline { z-index: 0; }
 #backpack-system-root[data-layout='atelier'] .backpack-image-frame { z-index: 1; }
-#backpack-system-root[data-layout='atelier'] .backpack-cell-hit { z-index: 2; }
+/* 必须在手指按下前禁用热区的原生滑动；进入拖拽后再设置会错过手势判定。 */
+#backpack-system-root[data-layout='atelier'] .backpack-cell-hit { z-index: 2; touch-action: none; }
 #backpack-system-root[data-layout='atelier'] .backpack-board-controls {
   position: absolute; z-index: 5; text-align: center; display: flex; flex-direction: column; align-items: center;
 }

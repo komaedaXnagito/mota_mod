@@ -383,6 +383,7 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 		}
 		weapon.lastAttackTick = state.tick;
 		weapon.attackSequence = (weapon.attackSequence || 0) + 1;
+		var attackResult = { sequence: weapon.attackSequence, hit: false, damage: 0 };
 		var attackContext = {
 			sourceSide: "player",
 			hitWeapon: weapon,
@@ -431,6 +432,7 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 			hit: isHit
 		}));
 		weapon.runtimeCounters.attacks = (weapon.runtimeCounters.attacks || 0) + 1;
+		attackResult.hit = isHit;
 
 		if (isHit) {
 			// 发动次数：1 + 固定属性修正 + 标记的额外发动次数（addExtraAttack）+ 状态/附近武器驱动的额外次数。
@@ -455,6 +457,7 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 					sourceWeapon: weapon,
 					ignoreBlock: attackContext.ignoreBlock === true || weapon.ignoreBlockAlways === true
 				});
+				attackResult.damage = rules.fixed(attackResult.damage + result.damage);
 				logBattlePhase("武器伤害结算", getWeaponPhaseDetails(weapon, options, {
 					hitIndex: extraHitIndex + 1,
 					hitCount: extraAttackCount + 1,
@@ -517,6 +520,11 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 			hit: isHit,
 			damage: isHit && result && result.damage ? result.damage : 0
 		}));
+		// 仅保存这次出手各段的实际伤害，不能从含持续/联动效果的累计 DPS 反推。
+		// 奥义或联动可能嵌套触发更新的攻击，外层结束时不得覆盖更新的序号。
+		if (!weapon.lastAttackResult || attackResult.sequence > weapon.lastAttackResult.sequence) {
+			weapon.lastAttackResult = attackResult;
+		}
 		return { attacked: true, hit: isHit };
 	};
 

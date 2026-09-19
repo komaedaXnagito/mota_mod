@@ -23,6 +23,11 @@
 .bb-sky-battle .bb-battle-state { font: 500 25px var(--weapon-serif); letter-spacing: .5px; }
 .bb-sky-battle .bb-elapsed { font: 14px var(--weapon-number); color: #456c89; }
 .bb-sky-battle .bb-arena { position: relative; min-height: 0; isolation: isolate; }
+.bb-sky-battle .bb-weapon-flight-layer { position: absolute; inset: 0; z-index: 4; overflow: hidden; pointer-events: none; }
+.bb-sky-battle .bb-weapon-flight { inset: auto; top: 0; left: 0; opacity: 0; transform-origin: center; will-change: transform,opacity; filter: drop-shadow(0 0 3px #e5fcffcc) drop-shadow(0 2px 2px #17456199); }
+.bb-sky-battle .bb-weapon-flight .bb-art-cell { display: none; }
+.bb-sky-battle .bb-hit-damage { position: absolute; left: 0; top: 0; z-index: 1; pointer-events: none; white-space: nowrap; font: 600 28px/1 var(--weapon-number); color: #fff1bc; -webkit-text-stroke: 1px #783c30; paint-order: stroke fill; text-shadow: 0 2px 2px #402837b3,0 0 5px #ffdc8f80; will-change: transform,opacity; }
+.bb-sky-battle[data-mobile='true'] .bb-hit-damage { font-size: 18px; -webkit-text-stroke-width: .75px; }
 .bb-sky-battle .bb-combatant-art { position: absolute; top: 0; bottom: -15px; width: 34%; pointer-events: none; z-index: 1; }
 .bb-sky-battle .bb-combatant-art.player { left: 18%; transform: translateX(var(--bb-player-recoil,0px)); }
 .bb-sky-battle .player :is(.bb-player-art,.bb-player-portrait) { filter: brightness(var(--bb-player-brightness,1)) drop-shadow(0 8px 5px #204b7338); }
