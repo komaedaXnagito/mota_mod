@@ -2,8 +2,8 @@
 .bui-tooltip {
 	position: fixed;
 	z-index: 10130;
-	width: min(370px, calc(100vw - 24px));
-	max-height: min(520px, calc(100vh - 24px));
+	width: min(370px, calc(var(--game-ui-width, 100vw) - 24px));
+	max-height: min(520px, calc(var(--game-ui-height, 100vh) - 24px));
 	overflow: auto;
 	box-sizing: border-box;
 	padding: 13px 14px;
@@ -343,8 +343,8 @@ body.backpack-drag-selection-locked * {
 }
 
 .bui-recipe-preview-panel {
-	width: min(1040px, calc(100vw - 24px));
-	max-height: min(650px, calc(100vh - 24px));
+	width: min(1040px, calc(var(--game-ui-width, 100vw) - 24px));
+	max-height: min(650px, calc(var(--game-ui-height, 100vh) - 24px));
 	display: flex;
 	flex-direction: column;
 	padding: 16px;
@@ -367,7 +367,7 @@ body.backpack-drag-selection-locked * {
 
 .bui-recipe-preview-detail {
 	min-width: 0;
-	height: min(540px, calc(100vh - 110px));
+	height: min(540px, calc(var(--game-ui-height, 100vh) - 110px));
 }
 
 .bui-recipe-preview-detail-card.weapon-card {
@@ -488,8 +488,8 @@ body.backpack-drag-selection-locked * {
 
 .bui-recipe-weapon-detail-panel {
 	position: relative;
-	width: min(520px, calc(100vw - 24px));
-	max-height: calc(100vh - 24px);
+	width: min(520px, calc(var(--game-ui-width, 100vw) - 24px));
+	max-height: calc(var(--game-ui-height, 100vh) - 24px);
 	padding: 10px;
 	overflow: auto;
 	box-sizing: border-box;
@@ -512,9 +512,9 @@ body.backpack-drag-selection-locked * {
 	max-height: none;
 }
 
-@media (max-width: 700px) {
+@container game-modal (max-width: 700px) {
 	.bui-recipe-preview-panel {
-		width: calc(100vw - 24px);
+		width: calc(var(--game-ui-width, 100vw) - 24px);
 	}
 
 	.bui-recipe-preview-content {
@@ -526,7 +526,7 @@ body.backpack-drag-selection-locked * {
 	}
 
 	.bui-recipe-weapon-detail-panel {
-		width: calc(100vw - 24px);
+		width: calc(var(--game-ui-width, 100vw) - 24px);
 	}
 }
 
@@ -1413,8 +1413,8 @@ body.backpack-drag-selection-locked * {
 }
 
 .bb-panel {
-	width: min(1220px, 98vw);
-	height: min(780px, 96vh);
+	width: min(1220px, calc(var(--game-ui-width, 100vw) * 0.98));
+	height: min(780px, calc(var(--game-ui-height, 100vh) * 0.96));
 	display: grid;
 	grid-template-rows: auto minmax(0, 1fr);
 	gap: 9px;
@@ -2072,7 +2072,7 @@ body.backpack-guide-active .guides-fade-in {
 }
 
 .guides-guide.bb-battle-guide>span {
-	max-width: min(390px, calc(100vw - 32px));
+	max-width: min(390px, calc(var(--game-ui-width, 100vw) - 32px));
 	box-sizing: border-box;
 	padding: 13px 15px;
 	border: 1px solid #d0a96a;
@@ -2151,8 +2151,8 @@ body.backpack-guide-interactive .guides-canvas {
 
 @media (max-width: 900px) {
 	.bb-panel {
-		width: 99vw;
-		height: 98vh;
+		width: calc(var(--game-ui-width, 100vw) * 0.99);
+		height: calc(var(--game-ui-height, 100vh) * 0.98);
 		padding: 7px;
 	}
 
@@ -2187,7 +2187,7 @@ body.backpack-guide-interactive .guides-canvas {
 		bottom: 8px !important;
 		top: auto !important;
 		width: auto;
-		max-height: 48vh;
+		max-height: calc(var(--game-ui-height, 100vh) * 0.48);
 	}
 
 	.bb-panel {
@@ -2295,8 +2295,8 @@ body.backpack-guide-interactive .guides-canvas {
 }
 
 .backpack-shop-panel {
-	width: min(1180px, calc(100vw - 24px));
-	max-height: 90vh;
+	width: min(1180px, calc(var(--game-ui-width, 100vw) - 24px));
+	max-height: calc(var(--game-ui-height, 100vh) * 0.9);
 	overflow-y: auto;
 	overflow-x: hidden;
 	box-sizing: border-box;
@@ -2311,8 +2311,8 @@ body.backpack-guide-interactive .guides-canvas {
 
 /* 免费武器选择器没有商店操作区，额外留出少量纵向空间容纳卡牌外放粒子，避免出现无意义滚动条。 */
 .backpack-shop-reward-panel {
-	height: min(670px, calc(100vh - 12px));
-	max-height: calc(100vh - 12px);
+	height: min(670px, calc(var(--game-ui-height, 100vh) - 12px));
+	max-height: calc(var(--game-ui-height, 100vh) - 12px);
 }
 
 .backpack-shop-header {
@@ -2356,19 +2356,19 @@ body.backpack-guide-interactive .guides-canvas {
 	margin-bottom: 14px;
 }
 
-@media (max-width: 1000px) {
+@container game-modal (max-width: 1000px) {
 	.backpack-shop-grid {
 		grid-template-columns: repeat(3, minmax(160px, 1fr));
 	}
 }
 
-@media (max-width: 720px) {
+@container game-modal (max-width: 720px) {
 	.backpack-shop-grid {
 		grid-template-columns: repeat(2, minmax(160px, 1fr));
 	}
 }
 
-@media (max-width: 480px) {
+@container game-modal (max-width: 480px) {
 	.backpack-shop-grid {
 		grid-template-columns: 1fr;
 	}
@@ -3065,7 +3065,7 @@ body.backpack-guide-interactive .guides-canvas {
 	box-shadow: inset 0 0 8px rgba(255, 210, 125, .08);
 }
 
-@media (min-width: 701px) {
+@container game-modal (min-width: 701px) {
 	.backpack-shop-card-shell .weapon-card {
 		padding-bottom: 52px;
 	}
@@ -3102,7 +3102,7 @@ body.backpack-guide-interactive .guides-canvas {
 
 .weapon-card-preview-modal-panel {
 	position: relative;
-	width: min(300px, 86vw);
+	width: min(300px, calc(var(--game-ui-width, 100vw) * 0.86));
 	padding: 8px;
 	box-sizing: border-box;
 	border: 1px solid #b9955d;
@@ -3140,7 +3140,7 @@ body.backpack-guide-interactive .guides-canvas {
 	outline: none;
 }
 
-@media (max-width: 700px) {
+@container game-modal (max-width: 700px) {
 
 	.weapon-card-summary {
 		-webkit-tap-highlight-color: transparent;
@@ -3191,9 +3191,9 @@ body.backpack-guide-interactive .guides-canvas {
 
 	.backpack-shop-panel,
 	.backpack-shop-reward-panel {
-		width: calc(100vw - 12px);
-		/* height: calc(100vh - 12px); */
-		max-height: calc(100vh - 12px);
+		width: calc(var(--game-ui-width, 100vw) - 12px);
+		/* height: calc(var(--game-ui-height, 100vh) - 12px); */
+		max-height: calc(var(--game-ui-height, 100vh) - 12px);
 		padding: 10px;
 	}
 
@@ -3362,7 +3362,7 @@ body.backpack-guide-interactive .guides-canvas {
 	}
 
 	.weapon-card-preview-modal-panel {
-		width: min(280px, 82vw);
+		width: min(280px, calc(var(--game-ui-width, 100vw) * 0.82));
 	}
 }
 
@@ -3474,8 +3474,8 @@ body.backpack-guide-interactive .guides-canvas {
 }
 
 .backpack-craft-panel {
-	width: min(760px, calc(100vw - 24px));
-	max-height: 90vh;
+	width: min(760px, calc(var(--game-ui-width, 100vw) - 24px));
+	max-height: calc(var(--game-ui-height, 100vh) * 0.9);
 	overflow-y: auto;
 	box-sizing: border-box;
 	padding: 16px 18px;
@@ -3732,8 +3732,8 @@ body.backpack-guide-interactive .guides-canvas {
 }
 
 .backpack-craft-panel {
-	width: min(760px, calc(100vw - 24px));
-	max-height: 90vh;
+	width: min(760px, calc(var(--game-ui-width, 100vw) - 24px));
+	max-height: calc(var(--game-ui-height, 100vh) * 0.9);
 	overflow-y: auto;
 	box-sizing: border-box;
 	padding: 16px 18px;
@@ -4042,8 +4042,8 @@ body.backpack-guide-interactive .guides-canvas {
 
 /* 合成窗口与配方图鉴并排：组合区域居中后，原合成窗口自然向左让出图鉴位置。 */
 .backpack-craft-dialog {
-	width: min(1260px, calc(100vw - 32px));
-	height: min(580px, calc(100vh - 32px));
+	width: min(1260px, calc(var(--game-ui-width, 100vw) - 32px));
+	height: min(580px, calc(var(--game-ui-height, 100vh) - 32px));
 	display: grid;
 	grid-template-columns: minmax(0, 760px) minmax(360px, 1fr);
 	gap: 14px;
@@ -4214,9 +4214,9 @@ body.backpack-guide-interactive .guides-canvas {
 	color: #f0c760;
 }
 
-@media (max-width: 1120px) {
+@container game-modal (max-width: 900px) {
 	.backpack-craft-dialog {
-		height: min(92vh, 980px);
+		height: min(calc(var(--game-ui-height, 100vh) * 0.92), 980px);
 		grid-template-columns: minmax(0, 1fr);
 		grid-template-rows: auto minmax(320px, 1fr);
 		overflow-y: auto;
@@ -4232,9 +4232,9 @@ body.backpack-guide-interactive .guides-canvas {
 	}
 }
 
-@media (max-width: 680px) {
+@container game-modal (max-width: 680px) {
 	.backpack-craft-dialog {
-		width: calc(100vw - 16px);
+		width: calc(var(--game-ui-width, 100vw) - 16px);
 	}
 
 	.backpack-craft-dialog .backpack-craft-panel {

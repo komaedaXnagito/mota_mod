@@ -10,7 +10,7 @@ html.achievement-preview-open, html.achievement-preview-open body { overflow: hi
   backdrop-filter: blur(6px);
 }
 .achievement-panel {
-  width: min(1056px,100%); height: min(860px,calc(100vh - 28px)); height: min(860px,calc(100dvh - 28px));
+  width: min(1056px,100%); height: min(860px,calc(var(--game-ui-height, 100vh) - 28px)); height: min(860px,calc(var(--game-ui-height, 100dvh) - 28px));
   display: grid; grid-template-rows: auto auto minmax(0,1fr); padding: 20px 18px 18px; box-sizing: border-box;
   filter: drop-shadow(0 18px 30px rgba(32,67,88,.22));
 }
@@ -69,7 +69,7 @@ html.achievement-preview-open, html.achievement-preview-open body { overflow: hi
 .achievement-details p { margin: 5px 0 0; color: #6f704e; font-size: 11px; }
 #achievement-icon-viewer { z-index: 13000; padding: 14px; background: rgba(112,155,181,.52); backdrop-filter: blur(9px); cursor: zoom-out; }
 .achievement-icon-viewer-card {
-  width: min(600px,100%); max-height: calc(100vh - 28px); max-height: calc(100dvh - 28px);
+  width: min(600px,100%); max-height: calc(var(--game-ui-height, 100vh) - 28px); max-height: calc(var(--game-ui-height, 100dvh) - 28px);
   display: flex; flex-direction: column; align-items: center; box-sizing: border-box; padding: 28px;
   filter: drop-shadow(0 20px 36px rgba(30,62,82,.3)); cursor: default;
 }
@@ -77,7 +77,7 @@ html.achievement-preview-open, html.achievement-preview-open body { overflow: hi
 .achievement-icon-viewer-heading strong { font: bold 24px 'Noto Serif SC','Songti SC','SimSun',serif; color: #fff5d0; text-shadow: 0 1px 2px #46779c; }
 .achievement-icon-viewer-image {
   display: flex; align-items: center; justify-content: center; flex-shrink: 1; min-height: 0;
-  width: min(100%,52vh); width: min(100%,52dvh); aspect-ratio: 1; box-sizing: border-box; overflow: hidden;
+  width: min(100%,calc(var(--game-ui-height, 100vh) * 0.52)); width: min(100%,calc(var(--game-ui-height, 100dvh) * 0.52)); aspect-ratio: 1; box-sizing: border-box; overflow: hidden;
   border: 2px solid #e2cb91; box-shadow: 0 0 0 3px #fff9de,0 0 0 4px #c4a870; background: #d9eaf0;
 }
 .achievement-icon-viewer-image img { display: block; width: 100%; height: 100%; object-fit: contain; }
@@ -86,7 +86,7 @@ html.achievement-preview-open, html.achievement-preview-open body { overflow: hi
 .achievement-icon-viewer-caption span { color: var(--achievement-level-color); font-size: 12px; }
 #achievement-toast-host { position: fixed; z-index: 15000; right: max(14px,env(safe-area-inset-right)); bottom: max(18px,env(safe-area-inset-bottom)); pointer-events: none; font-family: 'Microsoft YaHei',sans-serif; }
 .achievement-toast {
-  width: min(376px,calc(100vw - 28px)); min-height: 116px; display: grid; grid-template-columns: 66px minmax(0,1fr); gap: 15px; align-items: center;
+  width: min(376px,calc(var(--game-ui-width, 100vw) - 28px)); min-height: 116px; display: grid; grid-template-columns: 66px minmax(0,1fr); gap: 15px; align-items: center;
   box-sizing: border-box; padding: 23px 24px; filter: drop-shadow(0 10px 22px rgba(36,65,81,.3));
   opacity: 0; transform: translateX(calc(100% + 34px)); transition: opacity .38s,transform .5s cubic-bezier(.2,.8,.2,1);
 }
@@ -100,9 +100,9 @@ html.achievement-preview-open, html.achievement-preview-open body { overflow: hi
 .achievement-toast-level { margin-top: 6px; }
 .achievement-toast:after { content: ''; position: absolute; z-index: 2; height: 1px; bottom: 12px; left: 18%; width: 64%; background: linear-gradient(90deg,transparent,#d6ad52,transparent); animation: achievement-toast-shine 2.2s ease-in-out infinite; }
 @keyframes achievement-toast-shine { 0%,100% { opacity: .3; } 50% { opacity: 1; } }
-@media (max-width: 820px) {
-  #achievement-system-root { padding: 7px; }
-  .achievement-panel { height: calc(100vh - 14px); height: calc(100dvh - 14px); padding: 20px 12px 13px; }
+@container game-modal (max-width: 820px) {
+
+  .achievement-panel { height: calc(var(--game-ui-height, 100vh) - 14px); height: calc(var(--game-ui-height, 100dvh) - 14px); padding: 20px 12px 13px; }
   .achievement-header { padding: 8px 100px 17px 12px; text-align: left; }
   .achievement-header h1 { font-size: 28px; }
   .achievement-header p { font-size: 10px; }
@@ -124,7 +124,7 @@ html.achievement-preview-open, html.achievement-preview-open body { overflow: hi
   .achievement-toast-icon { width: 56px; height: 56px; }
   .achievement-toast-copy strong { font-size: 20px; }
 }
-@media (max-height: 500px) and (min-width: 650px) {
+@container game-modal (max-height: 500px) and (min-width: 650px) {
   .achievement-panel { padding-top: 13px; }
   .achievement-header { padding-top: 5px; padding-bottom: 10px; }
   .achievement-header p, .achievement-eyebrow { display: none !important; }
@@ -142,3 +142,5 @@ html.achievement-preview-open, html.achievement-preview-open body { overflow: hi
   .achievement-toast, .achievement-icon-button { transition: none !important; }
   .achievement-toast:after { animation: none; }
 }
+
+#achievement-system-root[data-game-mobile="true"] { padding: 7px; }

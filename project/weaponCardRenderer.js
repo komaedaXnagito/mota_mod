@@ -261,6 +261,8 @@ var installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c = function (c
 	};
 
 	var isMobileListLayout = function () {
+		var viewport = uiCommon && uiCommon.getGameViewport && uiCommon.getGameViewport(core);
+		if (viewport) return viewport.width <= 700;
 		if (typeof window === "undefined") return false;
 		if (typeof window.matchMedia === "function") return window.matchMedia("(max-width: 700px)").matches;
 		return Number(window.innerWidth) <= 700;
@@ -368,8 +370,18 @@ var installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c = function (c
 		summary.setAttribute("aria-controls", details.id);
 		summary.setAttribute("aria-expanded", "false");
 		summary.setAttribute("aria-label", "展开武器属性与特殊效果");
+		if (renderOptions.mobileDetailsInModal) {
+			summary.removeAttribute("aria-controls");
+			summary.removeAttribute("aria-expanded");
+			summary.setAttribute("aria-haspopup", "dialog");
+			summary.setAttribute("aria-label", "查看武器属性与特殊效果");
+		}
 		var toggleDetails = function () {
 			if (!isMobileListLayout()) return;
+			if (renderOptions.mobileDetailsInModal) {
+				openPreviewModal(definition, { lock: renderOptions.lock, trigger: summary });
+				return;
+			}
 			var expanded = card.classList.toggle("is-mobile-expanded");
 			summary.setAttribute("aria-expanded", expanded ? "true" : "false");
 			summary.setAttribute("aria-label", expanded
@@ -424,6 +436,7 @@ var installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c = function (c
 	 * 渲染完整武器卡片。
 	 * options.lock: 未解锁脱敏模式；options.showCraftHammer: 是否显示可合成锤子；
 	 * options.mobileListMode: 手机端使用图鉴式列表；options.actionButton: 操作按钮。
+	 * options.mobileDetailsInModal: 紧凑列表通过弹窗查看详情，保持候选列表的高度不变。
 	 * options.actionPlacement: 默认 summary；footer 将操作区放在特殊效果之后，独立于详情滚动。
 	 * options.rarityParticles: 默认关闭，仅商店及盲盒的候选卡片开启高星粒子。
 	 * 所有入口默认复用蓝白金框；previewOnClick 仅控制桌面点击大图打开详情。

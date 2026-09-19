@@ -370,8 +370,8 @@ test("主加载表、插件安装器与 50 层战后事件均已接入图鉴", (
 	assert.doesNotMatch(compendiumSource, /createElement\(["']style["']\)|style\.textContent/);
 	assert.match(cssSource, /\.weapon-compendium-group-grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(auto-fill,\s*minmax\(min\(200px,\s*100%\),\s*1fr\)\)/);
 	assert.match(cssSource, /\.weapon-compendium-grid\s*\{[^}]*overflow-x:\s*hidden;[^}]*overflow-y:\s*auto/);
-	assert.match(cssSource, /@media \(max-width: 700px\)[\s\S]*?\.weapon-compendium-group-header\s*\{\s*flex-wrap:\s*wrap;\s*\}[\s\S]*?\.weapon-compendium-group-progress\s*\{\s*white-space:\s*normal;\s*\}/);
-	assert.match(cssSource, /@media \(max-width: 700px\)[\s\S]*?\.weapon-compendium-group-grid\s*\{\s*grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+	assert.match(cssSource, /@container game-modal \(max-width: 700px\)[\s\S]*?\.weapon-compendium-group-header\s*\{\s*flex-wrap:\s*wrap;\s*\}[\s\S]*?\.weapon-compendium-group-progress\s*\{\s*white-space:\s*normal;\s*\}/);
+	assert.match(cssSource, /@container game-modal \(max-width: 700px\)[\s\S]*?\.weapon-compendium-group-grid\s*\{\s*grid-template-columns:\s*minmax\(0,\s*1fr\)/);
 	assert.match(compendiumSource, /mobileListMode:\s*true/);
 	assert.match(rendererSource, /var bindMobileListInteractions = function/);
 	assert.match(rendererSource, /openPreviewModal\(definition, \{ lock: renderOptions\.lock, trigger: mobilePreview \}\)/);
@@ -387,5 +387,5 @@ test("主加载表、插件安装器与 50 层战后事件均已接入图鉴", (
 	assert.match(compendiumSource, /\["通关印记", profile\.clearedWeaponIds\.length/);
 	assert.match(compendiumSource, /has-cleared-run/);
 	assert.match(cssSource, /\.weapon-card\.has-cleared-run,[\s\S]*?box-shadow:[\s\S]*?rgba\(55, 211, 181, \.56\)/);
-	assert.match(cssSource, /@media \(max-width: 700px\)[\s\S]*?\.weapon-card-mobile-list[\s\S]*?\.weapon-card-mobile-list\.is-mobile-expanded\s*>\s*\.weapon-card-details\s*\{[^}]*display:\s*block/);
+	assert.match(cssSource, /@container game-modal \(max-width: 700px\)[\s\S]*?\.weapon-card-mobile-list[\s\S]*?\.weapon-card-mobile-list\.is-mobile-expanded\s*>\s*\.weapon-card-details\s*\{[^}]*display:\s*block/);
 });

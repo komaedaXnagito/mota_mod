@@ -13,20 +13,24 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 	var unsubscribe = null;
 	var resizeHandler = null;
 	var boardObserver = null;
+	var viewportObserver = null;
 	var damageNodes = {};
 	var logSignature = "";
-	var portraitSignature = "";
+	var playerPortraitSignature = "";
+	var enemyPortraitSignature = "";
+	var attackFeedback = null;
+	var portraitAttackAge = -1;
 	var delayedOpenTimer = null;
 	var guideTour = null;
+	var releaseGuideViewport = null;
 	var guideStarted = false;
 	var guideStartFrame = null;
 	var guideLayoutFrame = null;
 	var guideTargets = [];
 	var guideResumeHandler = null;
 	var INSTANT_OPEN_DELAY = 100;
-	var GRID_COLS = 10;
-	var GRID_ROWS = 10;
-	var gridMeasured = false;
+	var gridLayout = null;
+	var gridCellSize = 0;
 	var SVG_NS = "http://www.w3.org/2000/svg";
 	var XLINK_NS = "http://www.w3.org/1999/xlink";
 
@@ -121,6 +125,25 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		});
 	};
 
+	// 与背包使用相同的逻辑密度，显示边界始终贴合游戏画布。
+	// 保留 body 下的独立弹层，保证教程解除 inert 后能点击“继续”。
+	var syncBattleViewport = function () {
+		if (!root) return;
+		var outer = document.getElementById("outerUI") || document.getElementById("gameGroup");
+		var rect = outer ? outer.getBoundingClientRect() : { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
+		var domStyle = core.domStyle || {};
+		var vertical = typeof domStyle.isVertical === "boolean" ? domStyle.isVertical : rect.height > rect.width;
+		var globalScale = Number(domStyle.scale) || 1;
+		var scale = outer && domStyle.scale ? globalScale / (vertical ? 1 : 1.5) : 1;
+		root.style.left = rect.left + "px";
+		root.style.top = rect.top + "px";
+		root.style.width = rect.width / scale + "px";
+		root.style.height = rect.height / scale + "px";
+		root.style.transform = "scale(" + scale + ")";
+		root.dataset.mobile = vertical ? "true" : "false";
+		root.dataset.narrow = rect.width / scale <= 1280 ? "true" : "false";
+	};
+
 	var build = function () {
 		if (root) return;
 		root = document.createElement("div");
@@ -130,11 +153,18 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 			"<section class='bb-panel' role='dialog' aria-label='背包乱斗战斗'>",
 			"<header class='bb-topbar'><div class='bb-location'><button class='bb-button bb-exit' aria-label='退出本场战斗'>返回</button><div><strong class='bb-floor-name'>背包战斗</strong><small>背包兵装 · 自动战斗</small></div></div><div class='bb-battle-heading'><strong class='bb-battle-state'>战斗中</strong><time class='bb-elapsed'>00:00</time></div><span class='bb-top-note'>武器冷却完毕后自动攻击</span></header>",
 			"<section class='bb-arena' aria-label='双方战况'>",
-			"<div class='bb-combatant-art player'><img class='bb-player-art' alt='' hidden><canvas class='bb-portrait bb-player-portrait' width='384' height='384' aria-label='当前勇士'></canvas></div>",
+			"<div class='bb-combatant-art player'><img class='bb-player-art' alt='' hidden><canvas class='bb-portrait bb-player-portrait' width='384' height='384' aria-label='当前勇士'></canvas><canvas class='bb-player-impact' width='384' height='384' aria-hidden='true' hidden></canvas></div>",
 			"<div class='bb-combatant-art enemy'><canvas class='bb-portrait bb-enemy-portrait' width='384' height='384' aria-label='当前敌人'></canvas></div>",
-			"<article class='bb-side player'><header class='bb-side-heading'><span class='bb-faction'>我方</span><div class='bb-side-name bb-player-name'></div></header><div class='bb-guide-player-stats'><div class='bb-hp-line'><span>生命</span><strong class='bb-player-hp-text'></strong></div><div class='bb-bar bb-player-hp'><i></i></div><div class='bb-side-meta bb-player-meta'></div></div><div class='bb-status-row'><span>状态</span><div class='bb-statuses bb-player-statuses'></div></div><div class='bb-guide-ultimates'><div class='bb-resource-row'><span>奥义</span><strong class='bb-ultimate-text'></strong></div><div class='bb-bar bb-ultimate-bar'><i></i></div></div></article>",
-			"<article class='bb-side enemy'><header class='bb-side-heading'><span class='bb-faction'>敌方</span><div class='bb-side-name bb-enemy-name'></div></header><div class='bb-guide-enemy-data'><div class='bb-hp-line'><span>生命</span><strong class='bb-enemy-hp-text'></strong></div><div class='bb-bar bb-enemy-hp'><i></i></div><div class='bb-side-meta bb-enemy-meta'></div><div class='bb-status-row'><span>状态</span><div class='bb-statuses bb-enemy-statuses'></div></div></div><div class='bb-enemy-ultimate'><div class='bb-resource-row'><span>奥义</span><strong class='bb-enemy-ultimate-text'></strong></div><div class='bb-bar bb-enemy-ultimate-bar'><i></i></div></div></article>",
-			"<div class='bb-enemy-action'><svg class='bb-action-ring' viewBox='0 0 120 120' aria-hidden='true'><circle class='bb-action-track' cx='60' cy='60' r='54'/><circle class='bb-action-progress' cx='60' cy='60' r='54' pathLength='100'/></svg><span>敌方下次攻击</span><strong class='bb-enemy-action-text'></strong><div class='bb-bar bb-enemy-action-bar'><i></i></div></div>",
+			"<article class='bb-side player'><header class='bb-side-heading'><span class='bb-faction'>我方</span><div class='bb-side-name bb-player-name'></div></header><div class='bb-guide-player-stats'><div class='bb-hp-line'><span>生命</span><strong class='bb-player-hp-text'></strong></div><div class='bb-bar bb-player-hp'><i></i></div><div class='bb-side-meta bb-player-meta'></div></div><div class='bb-status-row'><span>状态</span><div class='bb-statuses bb-player-statuses'></div></div><div class='bb-guide-ultimates bb-ultimate-meter'><span>奥义</span><div class='bb-bar bb-ultimate-bar'><i></i></div><strong class='bb-ultimate-text'></strong></div></article>",
+			"<article class='bb-side enemy'><header class='bb-side-heading'><span class='bb-faction'>敌方</span><div class='bb-side-name bb-enemy-name'></div></header><div class='bb-guide-enemy-data'><div class='bb-hp-line'><span>生命</span><strong class='bb-enemy-hp-text'></strong></div><div class='bb-bar bb-enemy-hp'><i></i></div><div class='bb-side-meta bb-enemy-meta'></div><div class='bb-status-row'><span>状态</span><div class='bb-statuses bb-enemy-statuses'></div></div></div><div class='bb-enemy-ultimate bb-ultimate-meter'><span>奥义</span><div class='bb-bar bb-enemy-ultimate-bar'><i></i></div><strong class='bb-enemy-ultimate-text'></strong></div></article>",
+			"<div class='bb-enemy-action'>",
+			"<svg class='bb-action-ring' viewBox='0 0 160 160' aria-hidden='true' focusable='false'>",
+			"<defs><linearGradient id='bb-dial-metal' x1='0' y1='0' x2='1' y2='1'><stop stop-color='#fff0bb'/><stop offset='.22' stop-color='#d48264'/><stop offset='.5' stop-color='#773d43'/><stop offset='.76' stop-color='#ec9a75'/><stop offset='1' stop-color='#9b4f4d'/></linearGradient><linearGradient id='bb-dial-charge' x1='0' y1='1' x2='1' y2='0'><stop stop-color='#ffe3a1'/><stop offset='.45' stop-color='#ffb578'/><stop offset='1' stop-color='#e9685d'/></linearGradient><radialGradient id='bb-dial-face' cx='.36' cy='.28' r='.8'><stop stop-color='#36445b' stop-opacity='.95'/><stop offset='1' stop-color='#18283e' stop-opacity='.98'/></radialGradient></defs>",
+			"<circle class='bb-action-rim-shadow' cx='80' cy='80' r='73'/><circle class='bb-action-face' cx='80' cy='80' r='70'/><circle class='bb-action-rim' cx='80' cy='80' r='73'/><circle class='bb-action-rim-inner' cx='80' cy='80' r='69'/><circle class='bb-action-ticks' cx='80' cy='80' r='71' pathLength='100'/>",
+			"<circle class='bb-action-track' cx='80' cy='80' r='62'/><circle class='bb-action-progress' cx='80' cy='80' r='62' pathLength='100' transform='rotate(90 80 80)'/><circle class='bb-action-inner-line' cx='80' cy='80' r='57'/>",
+			"<path class='bb-action-accents' d='M9 80h14m114 0h14M80 137v14M29 29l5 5m92 92 5 5M29 131l5-5m92-92 5-5'/><path class='bb-action-crest' d='M66 9 80 3 94 9 90 22 80 35 70 22Z'/><path class='bb-action-crest-facet' d='m80 8 5 12-5 9-5-9Z'/><path class='bb-action-crest-light' d='m80 8-5 12 5 9'/>",
+			"<g class='bb-action-pointer'><path class='bb-action-pointer-tail' d='M80 134v18'/><path class='bb-action-pointer-gem' d='m80 136 4 8-4 9-4-9Z'/><circle class='bb-action-pointer-light' cx='80' cy='142' r='1.7'/></g></svg>",
+			"<span class='bb-enemy-action-label'>敌方下次攻击</span><strong class='bb-enemy-action-text'></strong><span class='bb-enemy-action-caption' aria-hidden='true'>倒计时</span><div class='bb-bar bb-enemy-action-bar'><i></i></div></div>",
 			"</section><div class='bb-workspace'>",
 			"<section class='bb-arsenal'><div class='bb-arsenal-title'>当前背包兵装 <small class='bb-weapon-count'></small></div><div class='bb-weapon-board'><div class='bb-weapon-stage'><div class='bb-synergy-layer'></div></div><div class='bb-weapon-empty'>尚未摆放武器</div></div></section>",
 			"<section class='bb-operations'><h2>战斗操作</h2><div class='bb-controls'><div class='bb-guide-speed'><span class='bb-speed-label'>战速</span>",
@@ -146,6 +176,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 			"</div></section>"
 		].join("");
 		document.body.appendChild(root);
+		syncBattleViewport();
 		root.querySelectorAll(".bb-arsenal,.bb-side,.bb-operations,.bb-log,.bb-damage").forEach(function (panel) {
 			common.decorateWeaponSurface(panel, { radius: 18, ornate: true });
 		});
@@ -158,9 +189,22 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		nodes.battleState = root.querySelector(".bb-battle-state");
 		nodes.logFilter = root.querySelector(".bb-log-filter");
 		nodes.actionRing = root.querySelector(".bb-action-progress");
+		nodes.actionPointer = root.querySelector(".bb-action-pointer");
 		nodes.playerArt = root.querySelector(".bb-player-art");
+		nodes.playerFigure = root.querySelector(".bb-combatant-art.player");
+		nodes.playerImpact = root.querySelector(".bb-player-impact");
+		attackFeedback = createBackpackBattleFeedback_245cd186_8d73_4ad6_8e23_114d7eaf0d89(core, nodes.playerImpact, function (age, recoil) {
+			portraitAttackAge = age;
+			nodes.playerFigure.style.setProperty("--bb-player-recoil", (recoil * 3).toFixed(2) + "px");
+			nodes.playerFigure.style.setProperty("--bb-player-brightness", (1 + recoil * .35).toFixed(3));
+			if (latestSnapshot && nodes.enemyPortrait) drawPortraits(latestSnapshot);
+		});
 		nodes.weaponBoard = root.querySelector(".bb-weapon-board");
 		nodes.weaponStage = root.querySelector(".bb-weapon-stage");
+		nodes.gridLayer = document.createElement("div");
+		nodes.gridLayer.className = "bb-grid-layer";
+		nodes.gridLayer.setAttribute("aria-hidden", "true");
+		nodes.weaponStage.insertBefore(nodes.gridLayer, nodes.weaponStage.firstChild);
 		nodes.synergyLayer = root.querySelector(".bb-synergy-layer");
 		nodes.weaponEmpty = root.querySelector(".bb-weapon-empty");
 		nodes.weaponCount = root.querySelector(".bb-weapon-count");
@@ -207,7 +251,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		if (common.registerModal) {
 			common.registerModal(root, function () {
 				if (!runtime.stop || runtime.stop("用户按 Esc 关闭战斗弹层") === false) close();
-			}, { name: "backpack-battle" });
+			}, { name: "backpack-battle", viewport: false });
 		}
 		buildStatusSprite();
 		buildStatusNodes(nodes.playerStatuses, "player");
@@ -241,14 +285,20 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		};
 		root.addEventListener("contextmenu", function (event) { event.preventDefault(); });
 		resizeHandler = function () {
-			if (root) root.dataset.mobile = core.domStyle && core.domStyle.isVertical ? "true" : "false";
+			syncBattleViewport();
 			if (latestSnapshot && root) renderWeapons(latestSnapshot, true);
 			syncGuideTargets();
 		};
 		window.addEventListener("resize", resizeHandler);
+		if (core.registerResize) core.registerResize("backpackBattleViewport", resizeHandler);
 		if (typeof ResizeObserver !== "undefined") {
 			boardObserver = new ResizeObserver(function () { if (root && latestSnapshot) renderWeapons(latestSnapshot, true); });
 			boardObserver.observe(nodes.weaponBoard);
+			var viewport = document.getElementById("outerUI") || document.getElementById("gameGroup");
+			if (viewport) {
+				viewportObserver = new ResizeObserver(resizeHandler);
+				viewportObserver.observe(viewport);
+			}
 		}
 		if (nodes.pause && nodes.pause.focus) nodes.pause.focus();
 	};
@@ -278,6 +328,36 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 			cells: cells,
 			cols: Math.max.apply(null, cells.map(function (cell) { return cell[0]; })) + 1,
 			rows: Math.max.apply(null, cells.map(function (cell) { return cell[1]; })) + 1
+		};
+	};
+
+	// 只裁去未解锁的外圈；不规则扩容中的空洞也不绘制格子。
+	var getBattleGridLayout = function (gridState, weapons) {
+		var cells = [];
+		var unlocked = Object.create(null);
+		var addCell = function (col, row) {
+			col = Number(col); row = Number(row);
+			if (!Number.isInteger(col) || !Number.isInteger(row) || col < 0 || row < 0) return;
+			var key = col + "," + row;
+			if (unlocked[key]) return;
+			unlocked[key] = true;
+			cells.push([col, row]);
+		};
+		(gridState && gridState.unlockedCells || []).forEach(function (cell) {
+			if (Array.isArray(cell)) addCell(cell[0], cell[1]);
+		});
+		// 独立战斗预览没有背包存档时，以武器实际占格作为显示范围。
+		if (!cells.length) (weapons || []).forEach(function (weapon) {
+			rotateCells(weapon.baseCells || weapon.cells, weapon.rotation).forEach(function (cell) {
+				addCell((Number(weapon.col) || 0) + cell[0], (Number(weapon.row) || 0) + cell[1]);
+			});
+		});
+		var minCol = cells.length ? Math.min.apply(null, cells.map(function (cell) { return cell[0]; })) : 0;
+		var minRow = cells.length ? Math.min.apply(null, cells.map(function (cell) { return cell[1]; })) : 0;
+		return {
+			cells: cells, unlocked: unlocked, minCol: minCol, minRow: minRow,
+			cols: cells.length ? Math.max.apply(null, cells.map(function (cell) { return cell[0]; })) - minCol + 1 : 1,
+			rows: cells.length ? Math.max.apply(null, cells.map(function (cell) { return cell[1]; })) - minRow + 1 : 1
 		};
 	};
 
@@ -391,12 +471,11 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		(weapon.synergyCells || []).forEach(function (affectedCell) {
 			var col = Math.floor(Number(affectedCell.col));
 			var row = Math.floor(Number(affectedCell.row));
-			if (!Number.isFinite(col) || !Number.isFinite(row)
-				|| col < 0 || row < 0 || col >= GRID_COLS || row >= GRID_ROWS) return;
+			if (!gridLayout || !gridLayout.unlocked[col + "," + row]) return;
 			var cell = document.createElement("span");
 			cell.className = "bb-synergy-cell";
-			cell.style.left = (col * weaponNode.cellSize) + "px";
-			cell.style.top = (row * weaponNode.cellSize) + "px";
+			cell.style.left = ((col - gridLayout.minCol) * weaponNode.cellSize) + "px";
+			cell.style.top = ((row - gridLayout.minRow) * weaponNode.cellSize) + "px";
 			cell.style.width = weaponNode.cellSize + "px";
 			cell.style.height = weaponNode.cellSize + "px";
 			cell.setAttribute("aria-hidden", "true");
@@ -417,25 +496,29 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		var boardWidth = nodes.weaponBoard.clientWidth;
 		var boardHeight = nodes.weaponBoard.clientHeight;
 		// 战斗期间占格不会改变；每场只读取一次背包，避免每帧克隆整个背包状态。
-		if (!gridMeasured) {
+		if (!gridLayout) {
 			var gridState = core.plugin && core.plugin.getBackpackGridState && core.plugin.getBackpackGridState();
-			GRID_COLS = Number(gridState && gridState.config && gridState.config.maxCols) || 10;
-			GRID_ROWS = Number(gridState && gridState.config && gridState.config.maxRows) || 10;
-			snapshot.weapons.forEach(function (weapon) {
-				var bounds = getBounds(rotateCells(weapon.baseCells || weapon.cells, weapon.rotation));
-				GRID_COLS = Math.max(GRID_COLS, (Number(weapon.col) || 0) + bounds.cols);
-				GRID_ROWS = Math.max(GRID_ROWS, (Number(weapon.row) || 0) + bounds.rows);
-			});
-			gridMeasured = true;
+			gridLayout = getBattleGridLayout(gridState, snapshot.weapons);
 		}
-		var cellSize = Math.max(6, Math.floor(Math.min((boardWidth - 4) / GRID_COLS, (boardHeight - 4) / GRID_ROWS)));
-		var stageWidth = cellSize * GRID_COLS;
-		var stageHeight = cellSize * GRID_ROWS;
+		var cellSize = Math.max(6, Math.floor(Math.min((boardWidth - 4) / gridLayout.cols, (boardHeight - 4) / gridLayout.rows)));
+		var stageWidth = cellSize * gridLayout.cols;
+		var stageHeight = cellSize * gridLayout.rows;
 		nodes.weaponStage.style.width = stageWidth + "px";
 		nodes.weaponStage.style.height = stageHeight + "px";
 		nodes.weaponStage.style.left = Math.max(0, Math.floor((boardWidth - stageWidth) / 2)) + "px";
 		nodes.weaponStage.style.top = Math.max(0, Math.floor((boardHeight - stageHeight) / 2)) + "px";
-		nodes.weaponStage.style.backgroundSize = cellSize + "px " + cellSize + "px";
+		if (gridCellSize !== cellSize) {
+			nodes.gridLayer.innerHTML = "";
+			gridLayout.cells.forEach(function (cell) {
+				var tile = document.createElement("span");
+				tile.className = "bb-grid-cell";
+				tile.style.left = ((cell[0] - gridLayout.minCol) * cellSize) + "px";
+				tile.style.top = ((cell[1] - gridLayout.minRow) * cellSize) + "px";
+				tile.style.width = tile.style.height = (cellSize + 1) + "px";
+				nodes.gridLayer.appendChild(tile);
+			});
+			gridCellSize = cellSize;
+		}
 		nodes.weaponCount.textContent = snapshot.weapons.length + " 件";
 		nodes.weaponEmpty.style.display = snapshot.weapons.length ? "none" : "grid";
 
@@ -485,8 +568,8 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 					});
 				})(weapon.instanceId);
 			}
-			node.root.style.left = (Math.max(0, Number(weapon.col) || 0) * cellSize) + "px";
-			node.root.style.top = (Math.max(0, Number(weapon.row) || 0) * cellSize) + "px";
+			node.root.style.left = (((Number(weapon.col) || 0) - gridLayout.minCol) * cellSize) + "px";
+			node.root.style.top = (((Number(weapon.row) || 0) - gridLayout.minRow) * cellSize) + "px";
 			var canAttack = Number(weapon.effectiveIntervalTicks) > 0;
 			var progress = Math.max(0, Math.min(1, Number(weapon.cooldownProgress) || 0));
 			// 无法攻击的武器（间隔为 null）：彩色层完整显示（图案不灰暗）、常亮、且不显示 0s 倒计时。
@@ -527,35 +610,69 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		ctx.drawImage(image, sx, sy, sw, sh, (size - width) / 2, size - height - 4, width, height);
 	};
 
+	/** 帧索引只读取战斗 Tick；暂停不推进，普通素材只切横向帧，大图保留朝向。 */
+	var getEnemyPortraitFrame = function (info, tick) {
+		if (!info) return null;
+		var image = info.bigImage || info.image;
+		if (!image || !image.width || !image.height) return null;
+		var frameCount = Math.max(1, Math.floor(Number(info.animate) || (info.bigImage ? 4 : 1)));
+		frameCount = Math.min(frameCount, info.bigImage ? 4 : Math.max(1, Math.floor(image.width / 32)));
+		var frameMilliseconds = Math.max(80, Number(core.values && core.values.animateSpeed) || 300);
+		var index = Math.floor(Math.max(0, tick) * 10 / frameMilliseconds) % frameCount;
+		if (info.bigImage) {
+			var frame = core.maps && core.maps._getBigImageInfo && core.maps._getBigImageInfo(image, info.face, index);
+			if (!frame) {
+				// 预览环境缺少引擎方法时，仍按引擎的 1×4 / 4×4 图集约定切单帧。
+				var width = image.width / 4, height = image.height / 4;
+				var directions = { down: 0, left: 1, right: 2, up: 3 };
+				var row = directions[info.face] || 0;
+				if (height <= width / 2) { height = image.height; row = 0; }
+				frame = { sx: index * width, sy: row * height, per_width: width, per_height: height };
+			}
+			return { image: image, sx: frame.sx, sy: frame.sy, sw: frame.per_width, sh: frame.per_height };
+		}
+		var column = frameCount > 1 && info.cls !== "tileset" ? index : info.posX || 0;
+		var spriteHeight = info.height || 32;
+		return { image: image, sx: 32 * column, sy: spriteHeight * (info.posY || 0), sw: 32, sh: spriteHeight };
+	};
+
+	var getEnemyPortraitTransform = function (tick, lastAttackTick, visualAttackAge) {
+		var breath = (1 - Math.cos(tick * Math.PI / 120)) / 2;
+		var attackAge = Number.isFinite(lastAttackTick) && lastAttackTick >= 0 ? tick - lastAttackTick : -1;
+		if (visualAttackAge != null) attackAge = visualAttackAge;
+		var lunge = attackAge >= 0 && attackAge < 3 ? attackAge / 3
+			: attackAge >= 3 && attackAge < 15 ? Math.pow(1 - (attackAge - 3) / 12, 2) : 0;
+		return "translate(calc(var(--bb-enemy-lunge) * " + (-lunge).toFixed(4) + "), "
+			+ (-breath * 2 - lunge).toFixed(3) + "px) scale("
+			+ (1 + breath * .008 + lunge * .01).toFixed(4) + ", " + (1 + breath * .018).toFixed(4) + ")";
+	};
+
 	var drawPortraits = function (snapshot) {
 		var heroImage = core.material && core.material.images && core.material.images.hero;
-		var info = core.getBlockInfo ? core.getBlockInfo(snapshot.enemy.id) : null;
-		var enemyImage = info && (info.bigImage || info.image);
-		var signature = [heroImage && heroImage.src, heroImage && heroImage.width, snapshot.enemy.id,
-			enemyImage && enemyImage.src, enemyImage && enemyImage.width, info && info.posX, info && info.posY].join("|");
-		if (signature === portraitSignature) return;
-		portraitSignature = signature;
-		var playerContext = nodes.playerPortrait.getContext("2d");
-		var enemyContext = nodes.enemyPortrait.getContext("2d");
-		[playerContext, enemyContext].forEach(function (ctx) {
-			ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-			ctx.imageSmoothingEnabled = false;
-		});
-		if (heroImage && heroImage.width && heroImage.height) {
-			var heroWidth = heroImage.width / 4;
-			var heroHeight = heroImage.height / 4;
-			drawContain(playerContext, heroImage, 0, 0, heroWidth, heroHeight);
-		}
-		if (info) {
-			if (info.bigImage && info.bigImage.width && info.bigImage.height) {
-				// 大图同样沿用引擎的朝向与单帧裁剪，不把整张四方向图集铺进战斗区。
-				var frame = core.maps && core.maps._getBigImageInfo && core.maps._getBigImageInfo(info.bigImage, info.face, 0);
-				if (frame) drawContain(enemyContext, info.bigImage, frame.sx, frame.sy, frame.per_width, frame.per_height);
-				else drawContain(enemyContext, info.bigImage, 0, 0, info.bigImage.width, info.bigImage.height);
-			} else if (info.image) {
-				drawContain(enemyContext, info.image, 32 * (info.posX || 0), info.height * info.posY, 32, info.height);
+		var heroSignature = [heroImage && heroImage.src, heroImage && heroImage.width, heroImage && heroImage.height].join("|");
+		if (heroSignature !== playerPortraitSignature) {
+			playerPortraitSignature = heroSignature;
+			var playerContext = nodes.playerPortrait.getContext("2d");
+			playerContext.clearRect(0, 0, playerContext.canvas.width, playerContext.canvas.height);
+			playerContext.imageSmoothingEnabled = false;
+			if (heroImage && heroImage.width && heroImage.height) {
+				drawContain(playerContext, heroImage, 0, 0, heroImage.width / 4, heroImage.height / 4);
 			}
 		}
+		var reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+		var tick = reducedMotion || snapshot.fastForwarding ? 0 : snapshot.tick;
+		nodes.enemyPortrait.style.transform = reducedMotion || snapshot.fastForwarding ? "none"
+			: getEnemyPortraitTransform(tick, null, portraitAttackAge);
+		var info = core.getBlockInfo ? core.getBlockInfo(snapshot.enemy.id) : null;
+		var frame = getEnemyPortraitFrame(info, tick);
+		var signature = frame ? [snapshot.enemy.id, frame.image.src, frame.image.width, frame.image.height,
+			frame.sx, frame.sy, frame.sw, frame.sh].join("|") : "empty";
+		if (signature === enemyPortraitSignature) return;
+		enemyPortraitSignature = signature;
+		var enemyContext = nodes.enemyPortrait.getContext("2d");
+		enemyContext.clearRect(0, 0, enemyContext.canvas.width, enemyContext.canvas.height);
+		enemyContext.imageSmoothingEnabled = false;
+		if (frame) drawContain(enemyContext, frame.image, frame.sx, frame.sy, frame.sw, frame.sh);
 	};
 
 	var renderStatuses = function (sideKey, side, snapshot) {
@@ -711,6 +828,8 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 	};
 
 	var cleanupBattleGuide = function () {
+		if (releaseGuideViewport) releaseGuideViewport();
+		releaseGuideViewport = null;
 		removeGuideResumeMode();
 		document.body.classList.remove("bb-battle-guide-active");
 		guideTargets.forEach(function (entry) {
@@ -795,6 +914,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 				}
 			});
 			guideTour.start();
+			if (common.bindGuideViewport) releaseGuideViewport = common.bindGuideViewport(guideTour.canvas);
 		} catch (error) {
 			guideTour = null;
 			cleanupBattleGuide();
@@ -859,6 +979,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		renderLog(snapshot);
 		renderDamage(snapshot);
 		drawPortraits(snapshot);
+		attackFeedback.update(snapshot);
 		common.setWeaponButtonLabel(nodes.pause, snapshot.paused ? "继续战斗" : "暂停战斗");
 		nodes.fast.disabled = !!snapshot.fastForwarding;
 		common.setWeaponButtonLabel(nodes.fast, snapshot.fastForwarding ? "结算中…" : "立即结算");
@@ -871,26 +992,33 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		if (nodes.speedSelect && preferredSpeed !== "instant") {
 			nodes.speedSelect.value = String(Number(preferredSpeed));
 		}
-		nodes.ultimateText.textContent = format(snapshot.player.ultimate, 1) + " / 100";
+		nodes.ultimateText.textContent = format(snapshot.player.ultimate, 1) + "%";
 		nodes.ultimateBar.style.width = Math.min(100, snapshot.player.ultimate) + "%";
 		// 怪物奥义条（有 ultimateGain 词条的怪物才会累计；颜色与玩家奥义条区分）。
-		nodes.enemyUltimateText.textContent = format(snapshot.enemy.ultimate, 1) + " / 100";
+		nodes.enemyUltimateText.textContent = format(snapshot.enemy.ultimate, 1) + "%";
 		nodes.enemyUltimateBar.style.width = Math.min(100, snapshot.enemy.ultimate) + "%";
 		var enemyProgress = Math.max(0, Math.min(1, snapshot.enemy.cooldownProgress || 0));
 		nodes.enemyActionBar.style.width = (enemyProgress * 100) + "%";
 		nodes.actionRing.style.strokeDashoffset = String((1 - enemyProgress) * 100);
+		nodes.actionPointer.setAttribute("transform", "rotate(" + (enemyProgress * 360) + " 80 80)");
 		nodes.enemyActionText.textContent = enemyProgress >= 0.999 ? "就绪" : format((1 - enemyProgress) * snapshot.enemy.effectiveIntervalTicks / 100, 1) + "s";
 		if (snapshot.paused) queueBattleGuide();
 	};
 
 	var close = function () {
 		cancelDelayedOpen();
+		if (attackFeedback) attackFeedback.destroy();
+		attackFeedback = null;
+		portraitAttackAge = -1;
 		endBattleGuide();
 		common.hideTooltip();
 		if (resizeHandler) window.removeEventListener("resize", resizeHandler);
+		if (resizeHandler && core.unregisterResize) core.unregisterResize("backpackBattleViewport");
 		resizeHandler = null;
 		if (boardObserver) boardObserver.disconnect();
 		boardObserver = null;
+		if (viewportObserver) viewportObserver.disconnect();
+		viewportObserver = null;
 		if (common.unregisterModal) common.unregisterModal(root);
 		if (root) {
 			common.releaseWeaponUI(root);
@@ -902,8 +1030,10 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		statusIconNodes = {};
 		damageNodes = {};
 		logSignature = "";
-		portraitSignature = "";
-		gridMeasured = false;
+		playerPortraitSignature = "";
+		enemyPortraitSignature = "";
+		gridLayout = null;
+		gridCellSize = 0;
 		latestSnapshot = null;
 		guideStarted = false;
 	};

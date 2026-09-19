@@ -258,7 +258,7 @@ test("商店、图鉴和背包共用武器卡片与特殊效果渲染", () => {
 	assert.match(shopSource, /mobileListMode:\s*true/);
 	assert.match(shopSource, /actionButton:\s*\{[\s\S]*?label: onPick \? "获取" : null[\s\S]*?price:\s*price/);
 	assert.match(rendererSource, /button\.textContent = price > 0 \? price \+ " 金币" : "免费"/);
-	assert.match(cssSource, /@media \(min-width: 701px\)[\s\S]*?\.backpack-shop-card-shell \.weapon-card-summary>\.backpack-shop-buy\s*\{[^}]*position:\s*absolute[^}]*bottom:\s*10px[^}]*max-width:\s*180px/);
+	assert.match(cssSource, /@container game-modal \(min-width: 701px\)[\s\S]*?\.backpack-shop-card-shell \.weapon-card-summary>\.backpack-shop-buy\s*\{[^}]*position:\s*absolute[^}]*bottom:\s*10px[^}]*max-width:\s*180px/);
 	assert.doesNotMatch(shopSource, /"购买 " \+ buyCost\(\)/);
 	assert.match(compendiumSource, /cardRenderer\.createCard\(DEFINITIONS\[entry\.weaponId\] \|\| \{}, \{/);
 	assert.match(compendiumSource, /lock: !entry\.unlocked/);
@@ -271,14 +271,14 @@ test("商店、图鉴和背包共用武器卡片与特殊效果渲染", () => {
 	assert.match(cssSource, /\.weapon-card-details\s*\{[^}]*flex:\s*1 1 auto[^}]*min-height:\s*0[^}]*overflow-y:\s*auto/);
 	assert.match(cssSource, /\.weapon-card\.is-locked \.weapon-card-preview-image-frame img,[\s\S]*?\.weapon-card-preview\.is-locked \.weapon-card-preview-image-frame img\s*\{[^}]*filter:\s*brightness\(0\)/);
 	assert.match(cssSource, /\.weapon-card-action\s*\{[^}]*flex:\s*0 0 auto[^}]*min-width:\s*42px/);
-	assert.match(cssSource, /@media \(max-width: 700px\)[\s\S]*?\.backpack-shop-grid\s*\{\s*grid-template-columns:\s*minmax\(0, 1fr\)[\s\S]*?\.weapon-card-mobile-list/);
+	assert.match(cssSource, /@container game-modal \(max-width: 700px\)[\s\S]*?\.backpack-shop-grid\s*\{\s*grid-template-columns:\s*minmax\(0, 1fr\)[\s\S]*?\.weapon-card-mobile-list/);
 	assert.match(htmlSource, /<script src='libs\/thirdparty\/particles\.min\.js\?v=2\.0\.0'><\/script>/);
 	assert.doesNotMatch(shopSource, /SHOP_PARTICLE_PROFILES|window\.particlesJS/);
 	assert.match(shopSource, /uiCommon\.releaseWeaponUI\(grid\);\s*grid\.innerHTML = ""/);
 	assert.match(rendererSource, /decorateWeaponSurface\(actionButton, \{ button: true, gold: true \}\)/);
 	assert.match(cssSource, /\.backpack-shop-panel\s*\{[^}]*overflow-y:\s*auto[^}]*overflow-x:\s*hidden/);
 	assert.match(shopSource, /panel\.className = "backpack-shop-panel backpack-shop-reward-panel"/);
-	assert.match(cssSource, /\.backpack-shop-reward-panel\s*\{[^}]*height:\s*min\(670px, calc\(100vh - 12px\)\)[^}]*max-height:\s*calc\(100vh - 12px\)/);
+	assert.match(cssSource, /\.backpack-shop-reward-panel\s*\{[^}]*height:\s*min\(670px, calc\(var\(--game-ui-height, 100vh\) - 12px\)\)[^}]*max-height:\s*calc\(var\(--game-ui-height, 100vh\) - 12px\)/);
 	assert.match(cssSource, /\.backpack-shop-particle-layer\s*\{[^}]*inset:\s*-52px[^}]*overflow:\s*hidden[^}]*pointer-events:\s*none/);
 	assert.match(cssSource, /\.weapon-card\s*\{[^}]*z-index:\s*2[^}]*background:\s*linear-gradient/);
 	assert.doesNotMatch(cssSource, /backpack-shop-rarity-(?:particles|glints)-rise/);

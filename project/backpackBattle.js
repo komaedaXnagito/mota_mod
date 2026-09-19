@@ -454,6 +454,7 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 		return {
 			id: enemyId,
 			name: info.name || source.name || enemyId,
+			battleAttackEffect: core.getEnemyValue(source, "battleAttackEffect", x, y, floorId),
 			hp: Math.max(0, Number(info.hp) || 0),
 			maxHp: Math.max(0, Number(info.hp) || 0),
 			atk: Math.max(0, Number(info.atk) || 0),

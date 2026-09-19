@@ -70,7 +70,8 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	let tooltipPlacementAnchor = null; // 待放置 Tooltip 当前对齐的武器卡片。
 	let gameGroup = null; // 魔塔引擎提供的游戏容器 DOM 节点。
 	let layout = null; // 最近一次计算出的自适应尺寸和坐标结果。
-	let backpackGuideTour = null; // 当前背包 Guides.js 教程实例。
+	let backpackGuideTour = null;
+	let releaseGuideViewport = null; // 当前背包 Guides.js 教程实例。
 	let backpackGuideStarted = false;
 	let backpackGuideStartFrame = null;
 	let backpackGuideLayoutFrame = null;
@@ -2068,6 +2069,8 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	};
 
 	const cleanupBackpackGuide = function () {
+		if (releaseGuideViewport) releaseGuideViewport();
+		releaseGuideViewport = null;
 		disableBackpackGuideInteraction();
 		document.body.classList.remove("backpack-guide-active");
 		if (root) root.classList.remove("backpack-guide-show-drag-actions");
@@ -2246,6 +2249,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 				}
 			});
 			backpackGuideTour.start();
+			if (uiCommon.bindGuideViewport) releaseGuideViewport = uiCommon.bindGuideViewport(backpackGuideTour.canvas);
 		} catch (error) {
 			backpackGuideTour = null;
 			cleanupBackpackGuide();
@@ -2488,7 +2492,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		document.body.classList.add("backpack-workspace-open");
 		gameGroup.appendChild(root);
 		[boardPanel, detailPanel, sellZone].forEach(function (panel) { uiCommon.decorateWeaponSurface(panel, { radius: 22, ornate: true }); });
-		uiCommon.registerModal(root, closeBackpack, { name: "backpack" });
+		uiCommon.registerModal(root, closeBackpack, { name: "backpack", viewport: false });
 		window.addEventListener("resize", renderAll);
 		if (typeof ResizeObserver !== "undefined") {
 			viewportObserver = new ResizeObserver(function () { if (root) renderAll(); });

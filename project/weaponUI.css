@@ -1,4 +1,15 @@
 /* 全局武器视觉：背包、商店、奖励、图鉴、合成及战斗详情共同使用。 */
+/* 商店和战斗共用本地字体，打开商店时即可加载，无需先进入战斗。 */
+@font-face {
+  font-family: 'Tower Battle Serif';
+  src: url('fonts/TowerBattleSerif.woff2') format('woff2');
+  font-style: normal; font-weight: 250 900; font-display: swap;
+}
+@font-face {
+  font-family: 'Battle Noto Numbers';
+  src: url('fonts/NotoSansSC-Numbers.woff2') format('woff2');
+  font-style: normal; font-weight: 100 900; font-display: swap;
+}
 :root {
   --weapon-ink: #214b70; --weapon-muted: #58778b; --weapon-gold: #c7af73;
   --weapon-serif: 'Noto Serif SC','Songti SC','SimSun',serif;
@@ -43,7 +54,7 @@
   78% { opacity: .9; }
   100% { opacity: 0; transform: translate(calc(-50% + var(--mote-dx)),var(--mote-dy)) scale(.6) rotate(65deg); }
 }
-@media (max-width:700px) { .weapon-card-particles > .weapon-card-mote:nth-child(n+25) { display: none; } }
+@container game-modal (max-width:700px) { .weapon-card-particles > .weapon-card-mote:nth-child(n+25) { display: none; } }
 @media (prefers-reduced-motion:reduce) {
   .weapon-card-particles > .weapon-card-mote { animation: none; opacity: .65; }
 }
@@ -66,46 +77,62 @@
 .bui-recipe-preview-root .bui-craft-hammer:hover, .backpack-craft-root .bui-craft-hammer:hover {
   background: #fff1bc; border-color: #d3ad50; box-shadow: 0 0 7px #edce80;
 }
-/* 商店/奖励：面板固定，卡片区域滚动，返回与刷新按钮的辉光有独立留白。 */
+/* 商店/奖励：五个候选和购买按钮始终在一屏内，卡片随可用高度收缩。 */
 .backpack-shop-root, .backpack-craft-root, .bui-recipe-preview-root, .bui-recipe-weapon-detail-root {
   background: rgba(70,111,137,.42); backdrop-filter: blur(5px);
   color: var(--weapon-ink); font-family: 'Microsoft YaHei',sans-serif;
 }
 .backpack-shop-root .backpack-shop-panel {
-  display: flex; flex-direction: column; width: min(1240px,calc(100vw - 28px));
-  height: min(760px,calc(100dvh - 28px)); max-height: calc(100dvh - 28px); padding: 27px 22px 22px; overflow: visible;
+  display: flex; flex-direction: column; width: min(1240px,calc(var(--game-ui-width, 100vw) - 28px));
+  height: min(760px,calc(var(--game-ui-height, 100dvh) - 28px)); max-height: calc(var(--game-ui-height, 100dvh) - 28px); padding: 22px 16px 18px; overflow: visible;
   filter: drop-shadow(0 15px 28px rgba(26,64,88,.3));
 }
-.backpack-shop-header { flex: none; padding: 6px 12px 18px; margin: 0; border-bottom: 1px solid #d8c998; }
-.backpack-shop-root .backpack-shop-title { color: var(--weapon-ink); font: bold 28px/1.25 var(--weapon-serif); letter-spacing: .1em; }
+.backpack-shop-header { flex: none; padding: 4px 8px 12px; margin: 0; border-bottom: 1px solid #d8c998; }
+.backpack-shop-root .backpack-shop-title { color: var(--weapon-ink); font: bold 24px/1.25 var(--weapon-serif); letter-spacing: .1em; }
 .backpack-shop-root .backpack-shop-money { color: #937038; font: bold 15px var(--weapon-number); font-variant-numeric: lining-nums tabular-nums; }
 .backpack-shop-root .backpack-shop-close { flex: none; width: 94px; }
 .backpack-shop-root .backpack-shop-grid {
-  flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; touch-action: pan-y; align-content: start;
-  grid-template-columns: repeat(5,minmax(0,1fr)); grid-auto-rows: max-content; gap: 12px; padding: 14px 7px 16px; margin: 0;
-  scrollbar-width: thin; scrollbar-color: #c3ad72 #dbe9ea;
+  flex: 1; min-height: 0; overflow: hidden; align-content: stretch;
+  grid-template-columns: repeat(5,minmax(0,1fr)); grid-template-rows: minmax(0,1fr);
+  gap: 8px; padding: 12px 6px; margin: 0;
 }
-.backpack-shop-root .backpack-shop-card-shell { height: clamp(480px,calc(100dvh - 232px),540px); min-height: 0; max-height: none; min-width: 0; display: block; }
-.backpack-shop-root .weapon-card { height: 100%; min-height: 0; padding: 17px 15px 22px; }
-.backpack-shop-root .weapon-card > .weapon-card-preview:not(.weapon-card-mobile-preview) { max-width: 160px; }
+.backpack-shop-root .backpack-shop-card-shell { height: 100%; min-height: 0; max-height: none; min-width: 0; display: block; container: shop-card / size; }
+.backpack-shop-root .weapon-card { height: 100%; min-height: 0; padding: 13px 10px; }
+.backpack-shop-root .weapon-card > .weapon-card-preview:not(.weapon-card-mobile-preview) {
+  width: min(100%,clamp(80px,27cqh,140px)); height: clamp(80px,27cqh,140px);
+  max-width: 140px; padding: 7px; margin-bottom: 5px;
+}
 .backpack-shop-root .weapon-card.weapon-ui-skin > .weapon-card-summary {
   position: static; display: flex; flex-direction: column; align-items: center; width: 100%;
 }
 .backpack-shop-root .weapon-card-footer {
-  display: flex; flex: none; justify-content: center; align-items: center; width: 100%; padding-top: 12px;
+  display: flex; flex: none; justify-content: center; align-items: center; width: 100%; padding-top: 7px;
 }
 .backpack-shop-root .weapon-card-footer > .backpack-shop-buy {
   position: relative; left: auto; bottom: auto; transform: none;
-  width: 160px; max-width: 100%; height: 42px; margin: 0; padding: 5px 17px;
+  width: 136px; max-width: 100%; height: 32px; margin: 0; padding: 4px 10px; font-size: 14px;
 }
-.backpack-shop-root .weapon-card-name { min-width: 0; width: 100%; font-size: 19px; }
-.backpack-shop-root .backpack-shop-footer { flex: none; padding: 12px 12px 0; gap: 16px; margin: 0; border-top: 1px solid #d8c998; }
+.backpack-shop-root .weapon-card .weapon-card-name { min-width: 0; width: 100%; font-size: 15px; line-height: 1.3; margin: 3px 0; }
+.backpack-shop-root .weapon-card .weapon-card-meta { min-height: 18px; margin: 0; gap: 4px; }
+.backpack-shop-root .weapon-card .weapon-card-rarity { font-size: 11px; letter-spacing: 0; }
+.backpack-shop-root .weapon-card .weapon-card-types i { font-size: 10px; padding: 0 4px; }
+.backpack-shop-root .weapon-card .weapon-card-preview-meta { left: 3px; right: 3px; bottom: 3px; gap: 3px; padding: 2px 3px; font-size: 8px; flex-wrap: wrap; }
+.backpack-shop-root .weapon-card .weapon-card-preview-meta b { font-size: 9px; }
+.backpack-shop-root .weapon-card .weapon-card-preview-meta em { font-size: 8px; }
+.backpack-shop-root .weapon-card .weapon-card-detail-stats { gap: 4px; }
+.backpack-shop-root .weapon-card .weapon-card-detail-stats > div { padding: 4px 5px; }
+.backpack-shop-root .weapon-card .weapon-card-detail-stats dt { font-size: 10px; }
+.backpack-shop-root .weapon-card .weapon-card-detail-stats dd { font-size: 12px; line-height: 1.4; }
+.backpack-shop-root .weapon-card .weapon-card-detail-effect { margin-top: 6px; padding-top: 5px; }
+.backpack-shop-root .weapon-card .weapon-card-detail-effect b { font-size: 11px; }
+.backpack-shop-root .weapon-card .weapon-card-detail-effect p { font-size: 11px; line-height: 1.5; }
+.backpack-shop-root .backpack-shop-footer { flex: none; padding: 8px 8px 0; gap: 12px; margin: 0; border-top: 1px solid #d8c998; }
 .backpack-shop-root .backpack-shop-refresh { min-width: 192px; flex: none; }
 .backpack-shop-root .backpack-shop-ratio { color: var(--weapon-muted); font: 11px/1.6 var(--weapon-number); }
 /* 共用详情、配方表与合成窗口。 */
 .bui-recipe-preview-root .bui-recipe-preview-panel,
 .bui-recipe-weapon-detail-root .bui-recipe-weapon-detail-panel {
-  padding: 28px 24px 22px; overflow: visible; max-height: calc(100dvh - 28px);
+  padding: 28px 24px 22px; overflow: visible; max-height: calc(var(--game-ui-height, 100dvh) - 28px);
   filter: drop-shadow(0 15px 28px rgba(26,64,88,.3));
 }
 .bui-recipe-preview-root .bui-recipe-preview-panel { display: flex; flex-direction: column; }
@@ -126,8 +153,8 @@
 .bui-recipe-weapon-detail-root .bui-recipe-weapon-detail-panel { display: flex; flex-direction: column; gap: 10px; }
 .bui-recipe-weapon-detail-root .bui-recipe-weapon-detail-close { position: relative; top: auto; right: auto; align-self: flex-end; }
 .bui-recipe-weapon-detail-root .bui-recipe-weapon-detail-card { min-height: 0; overflow: auto; flex: 0 1 auto; }
-.backpack-craft-root .backpack-craft-dialog { height: min(690px,calc(100dvh - 28px)); gap: 12px; }
-@media (min-width:1121px) { .backpack-craft-root .backpack-craft-dialog { grid-template-rows: minmax(0,1fr); } }
+.backpack-craft-root .backpack-craft-dialog { height: min(690px,calc(var(--game-ui-height, 100dvh) - 28px)); gap: 12px; }
+@container game-modal (min-width:901px) { .backpack-craft-root .backpack-craft-dialog { grid-template-rows: minmax(0,1fr); } }
 .backpack-craft-root :is(.backpack-craft-panel,.backpack-craft-recipes) {
   padding: 28px 22px 20px; min-height: 0; overflow: visible; filter: drop-shadow(0 12px 22px rgba(26,64,88,.22));
 }
@@ -217,24 +244,19 @@
 .bb-arsenal .bb-weapon-board { background: #dbe9ec; border-color: #c7af73; border-radius: 2px; }
 .bb-arsenal .bb-weapon-stage { background-color: #dfedf0; background-image: linear-gradient(#b2c7cf66 1px,transparent 1px),linear-gradient(90deg,#b2c7cf66 1px,transparent 1px); box-shadow: 0 0 0 1px #b9ad80; }
 .bb-arsenal .bb-weapon-cd-text { color: var(--weapon-ink); background: #f6f8ebed; border-color: #c7af73; text-shadow: none; font-family: var(--weapon-number); }
-@media (max-width: 1000px) and (min-width: 701px) {
-  .backpack-shop-root .backpack-shop-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
-}
-@media (max-width: 1120px) {
+@container game-modal (max-width: 900px) {
   .backpack-craft-root .backpack-craft-dialog { overflow-x: hidden; padding: 0 4px 10px; box-sizing: border-box; scrollbar-width: thin; scrollbar-color: #c3ad72 transparent; }
   .backpack-craft-root .backpack-craft-panel { min-height: 450px; }
   .backpack-craft-root .backpack-craft-recipes { min-height: 400px; }
 }
-@media (max-width: 700px) {
-  .backpack-shop-root .backpack-shop-panel { width: calc(100vw - 12px); height: calc(100dvh - 12px); max-height: calc(100dvh - 12px); padding: 22px 12px 16px; }
-  .backpack-shop-root .backpack-shop-header { flex-wrap: wrap; gap: 6px 10px; padding: 4px 6px 12px; }
-  .backpack-shop-root .backpack-shop-title { font-size: 23px; }
-  .backpack-shop-root .backpack-shop-money { order: 3; flex: 1 0 100%; font-size: 13px; }
-  .backpack-shop-root .backpack-shop-grid { grid-template-columns: minmax(0,1fr); padding: 12px 2px; gap: 10px; }
+@container game-modal (max-width: 700px) {
+  .backpack-shop-root .backpack-shop-panel { width: calc(var(--game-ui-width, 100vw) - 12px); height: calc(var(--game-ui-height, 100dvh) - 12px); max-height: calc(var(--game-ui-height, 100dvh) - 12px); padding: 20px 10px 14px; }
+  .backpack-shop-root .backpack-shop-header { flex-wrap: wrap; gap: 4px 10px; padding: 2px 6px 8px; }
+  .backpack-shop-root .backpack-shop-title { font-size: 20px; }
+  .backpack-shop-root .backpack-shop-money { order: 3; flex: 1 0 100%; font-size: 12px; }
+  .backpack-shop-root .backpack-shop-grid { grid-template-columns: minmax(0,1fr); grid-template-rows: repeat(5,minmax(0,1fr)); padding: 9px 2px; gap: 6px; }
   .weapon-card.weapon-ui-skin.weapon-card-mobile-list { height: auto; grid-template-columns: 66px minmax(0,1fr); padding: 15px; gap: 8px 10px; }
-  .backpack-shop-root .backpack-shop-card-shell { height: auto; }
-  .backpack-shop-root .weapon-card.weapon-card-mobile-list { height: 158px; grid-template-rows: 76px 44px; }
-  .backpack-shop-root .weapon-card.weapon-card-mobile-list.is-mobile-expanded { height: 360px; grid-template-rows: 76px minmax(0,1fr) 44px; }
+  .backpack-shop-root .weapon-card.weapon-card-mobile-list { height: 100%; min-height: 0; grid-template-columns: 44px minmax(0,1fr) 72px; grid-template-rows: minmax(0,1fr); padding: 9px 10px; gap: 7px; align-items: center; }
   .weapon-card.weapon-ui-skin.weapon-card-mobile-list > .weapon-card-mobile-preview { width: 66px; height: 76px; }
   .weapon-card.weapon-ui-skin.weapon-card-mobile-list > .weapon-card-summary { display: grid; grid-template-columns: minmax(0,1fr) 18px; min-height: 76px; gap: 4px; }
   .weapon-card.weapon-ui-skin.weapon-card-mobile-list .weapon-card-name { grid-column: 1; font-size: 18px; }
@@ -242,18 +264,22 @@
   .weapon-card.weapon-ui-skin.weapon-card-mobile-list .weapon-card-types { flex-wrap: wrap; }
   .weapon-card.weapon-ui-skin.weapon-card-mobile-list .weapon-card-mobile-toggle { grid-column: 2; grid-row: 1/4; width: 18px; }
   .weapon-card.weapon-ui-skin.weapon-card-mobile-list .weapon-card-details { grid-column: 1/-1; }
-  .backpack-shop-root .weapon-card-footer { grid-column: 1/-1; grid-row: 2; padding-top: 8px; }
-  .backpack-shop-root .is-mobile-expanded > .weapon-card-footer { grid-row: 3; }
-  .backpack-shop-root .weapon-card-footer > .backpack-shop-buy { width: 160px; height: 36px; font-size: 14px; }
-  .backpack-shop-root .weapon-card.weapon-ui-skin > .weapon-card-summary { display: grid; align-items: center; }
-  .backpack-shop-root .backpack-shop-footer { flex-wrap: wrap; gap: 9px; padding: 10px 7px 0; }
-  .backpack-shop-root .backpack-shop-ratio { font-size: 10px; }
+  .backpack-shop-root .weapon-card.weapon-ui-skin > .weapon-card-mobile-preview { width: 44px; height: 48px; padding: 3px; }
+  .backpack-shop-root .weapon-card-footer { grid-column: 3; grid-row: 1; padding: 0; }
+  .backpack-shop-root .weapon-card-footer > .backpack-shop-buy { width: 72px; height: 30px; padding: 3px 7px; font-size: 11px; }
+  .backpack-shop-root .weapon-card.weapon-ui-skin > .weapon-card-summary { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; min-height: 0; gap: 3px; }
+  .backpack-shop-root .weapon-card.weapon-ui-skin .weapon-card-name { font-size: 14px; }
+  .backpack-shop-root .weapon-card .weapon-card-mobile-toggle { display: none; }
+  .backpack-shop-root .weapon-card.weapon-ui-skin .weapon-card-meta { flex-wrap: wrap; gap: 2px 4px; }
+  .backpack-shop-root .backpack-shop-footer { flex-wrap: wrap; gap: 5px; padding: 6px 6px 0; }
+  .backpack-shop-root .backpack-shop-refresh { height: 34px; min-width: 150px; font-size: 14px; }
+  .backpack-shop-root .backpack-shop-ratio { font-size: 9px; }
   #backpack-system-root[data-compact='true'] .weapon-card.weapon-ui-skin.weapon-card-mobile-list { grid-template-columns: 40px minmax(0,1fr); padding: 4px; gap: 4px; }
   #backpack-system-root[data-compact='true'] .weapon-card.weapon-ui-skin.weapon-card-mobile-list > .weapon-card-summary { display: flex; min-height: 40px; }
   #backpack-system-root[data-compact='true'] .weapon-card.weapon-ui-skin.weapon-card-mobile-list .weapon-card-name { font-size: 12px; }
   .bui-recipe-preview-root .bui-recipe-preview-panel { padding: 24px 14px 16px; }
   .bui-recipe-preview-panel > header b { font-size: 19px; }
-  .backpack-craft-root .backpack-craft-dialog { width: calc(100vw - 12px); height: calc(100dvh - 12px); gap: 10px; }
+  .backpack-craft-root .backpack-craft-dialog { width: calc(var(--game-ui-width, 100vw) - 12px); height: calc(var(--game-ui-height, 100dvh) - 12px); gap: 10px; }
   .backpack-craft-root :is(.backpack-craft-panel,.backpack-craft-recipes) { padding: 22px 12px 14px; }
   .backpack-craft-root :is(.backpack-craft-title,.backpack-craft-recipes-title) { font-size: 21px; }
   .backpack-craft-root :is(.backpack-craft-slot,.backpack-craft-result) { padding: 16px 5px 10px; min-height: 170px; }
@@ -297,7 +323,7 @@
 .weapon-card.weapon-ui-skin.is-locked .weapon-card-detail-effect p { color: #8498a1; }
 .weapon-card-preview-modal-root.weapon-ui-skin { background: rgba(80,118,139,.5); backdrop-filter: blur(5px); }
 .weapon-ui-skin .weapon-card-preview-modal-panel {
-  display: flex; flex-direction: column; align-items: center; width: min(680px,100%); max-height: calc(100dvh - 36px);
+  display: flex; flex-direction: column; align-items: center; width: min(680px,100%); max-height: calc(var(--game-ui-height, 100dvh) - 36px);
   padding: 28px 26px 24px; overflow: visible; border: 0; border-radius: 0; background: transparent;
   box-shadow: none; filter: drop-shadow(0 18px 28px rgba(32,67,88,.28));
 }
@@ -310,9 +336,48 @@
   position: relative; right: auto; top: auto; flex: none; width: 112px; height: 44px; margin-top: 22px;
   padding: 6px 22px; border: 0; border-radius: 0; background: transparent; color: #fff5cf; font-size: 18px;
 }
-@media (max-width:700px) { .weapon-ui-detail-body { grid-template-columns: minmax(0,1fr); gap: 16px; } }
-@media (max-width:700px) { .weapon-ui-detail-body > .weapon-card-preview { width: min(230px,100%); margin: auto; } }
-@media (max-width:700px) { .weapon-ui-skin .weapon-card-preview-modal-panel { padding: 26px 22px 21px; } }
-@media (max-width:700px) { .weapon-ui-detail-heading { margin-bottom: 16px; } }
-@media (max-width:700px) { .weapon-ui-detail-heading h2 { font-size: 25px; } }
-@media (max-height:550px) and (min-width:701px) { .weapon-ui-detail-heading { margin-bottom: 12px; } }
+@container game-modal (max-width:700px) { .weapon-ui-detail-body { grid-template-columns: minmax(0,1fr); gap: 16px; } }
+@container game-modal (max-width:700px) { .weapon-ui-detail-body > .weapon-card-preview { width: min(230px,100%); margin: auto; } }
+@container game-modal (max-width:700px) { .weapon-ui-skin .weapon-card-preview-modal-panel { padding: 26px 22px 21px; } }
+@container game-modal (max-width:700px) { .weapon-ui-detail-heading { margin-bottom: 16px; } }
+@container game-modal (max-width:700px) { .weapon-ui-detail-heading h2 { font-size: 25px; } }
+@container game-modal (max-height:550px) and (min-width:701px) { .weapon-ui-detail-heading { margin-bottom: 12px; } }
+.game-viewport-bound.game-viewport-bound {
+  position: fixed; inset: auto; margin: 0; box-sizing: border-box;
+  transform-origin: top left; overflow: hidden;
+  container: game-modal / size;
+}
+/* 背包已有自己的定位与缩放，只共用卡片的容器断点。 */
+#backpack-system-root { container: game-modal / size; }
+.bui-tooltip:not(.backpack-panel-tooltip) {
+  left: var(--game-tip-left, 8px) !important; top: var(--game-tip-top, 8px) !important;
+  right: auto !important; bottom: auto !important;
+  width: var(--game-tip-width, 370px); max-height: var(--game-tip-height, 520px);
+  transform-origin: top left; transform: scale(var(--game-tip-scale, 1));
+  transition: opacity .08s ease, visibility 0s linear .08s;
+}
+#achievement-toast-host.game-viewport-bound {
+  display: flex; align-items: flex-end; justify-content: flex-end; padding: 18px 14px;
+}
+#achievement-system-root.game-viewport-bound #achievement-icon-viewer { position: absolute; }
+#inputDiv.game-viewport-bound #inputDialog {
+  position: absolute; max-width: calc(100% - 24px); max-height: calc(100% - 24px); overflow: auto;
+}
+/* 商店、奖励与完整档案：中文沿用战斗思源宋体，数字使用同一份本地数字子集。 */
+:is(.backpack-shop-root,.weapon-card-preview-modal-root.weapon-ui-skin) {
+  --weapon-serif: 'Tower Battle Serif','Noto Serif SC','Songti SC',serif;
+  --weapon-number: 'Battle Noto Numbers',Arial,var(--weapon-serif);
+  font-family: var(--weapon-serif); font-weight: 400; font-synthesis: none;
+}
+:is(.backpack-shop-root,.weapon-card-preview-modal-root.weapon-ui-skin)
+  :is(.weapon-card,.weapon-card-name,.weapon-card-types i,.weapon-card-detail-effect p,.weapon-ui-detail-heading h2) {
+  font-family: var(--weapon-serif);
+}
+:is(.backpack-shop-root,.weapon-card-preview-modal-root.weapon-ui-skin)
+  :is(.weapon-card-detail-stats dd,.weapon-card-preview-meta,.weapon-card-rarity,.fantasy-ui-button) {
+  font-family: var(--weapon-number); font-variant-numeric: lining-nums tabular-nums;
+}
+:is(.backpack-shop-root,.weapon-card-preview-modal-root.weapon-ui-skin)
+  :is(.backpack-shop-title,.weapon-ui-detail-heading h2,.weapon-card-detail-stats dd) { font-weight: 600; }
+:is(.backpack-shop-root,.weapon-card-preview-modal-root.weapon-ui-skin)
+  :is(.weapon-card-name,.fantasy-ui-button) { font-weight: 500; }

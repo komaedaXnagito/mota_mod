@@ -497,6 +497,12 @@ var installAchievementSystem_d38bb038_c4fa_43be_927c_168680046baa = function (co
 		return true;
 	};
 
+	var bindViewport = function (element) {
+		var common = typeof backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 !== "undefined"
+			? backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 : null;
+		return common && common.bindGameViewport ? common.bindGameViewport(element, core) : function () {};
+	};
+
 	var ensureToastHost = function () {
 		var host = document.getElementById("achievement-toast-host");
 		if (host) return host;
@@ -514,6 +520,7 @@ var installAchievementSystem_d38bb038_c4fa_43be_927c_168680046baa = function (co
 		var definition = toastQueue.shift();
 		var level = LEVELS[definition.level];
 		var host = ensureToastHost();
+		var releaseToastViewport = bindViewport(host);
 		var toast = document.createElement("div");
 		toast.className = "achievement-toast level-" + definition.level;
 		toast.style.setProperty("--achievement-level-color", level.color);
@@ -546,6 +553,7 @@ var installAchievementSystem_d38bb038_c4fa_43be_927c_168680046baa = function (co
 			setTimeout(function () {
 				theme.releaseTree(toast);
 				toast.remove();
+				releaseToastViewport();
 				toastActive = false;
 				showNextToast();
 			}, 520);
@@ -808,6 +816,8 @@ var installAchievementSystem_d38bb038_c4fa_43be_927c_168680046baa = function (co
 
 	var closePreview = function () {
 		if (!root) return false;
+		if (releaseViewport) releaseViewport();
+		releaseViewport = null;
 		closeIconViewer(false);
 		document.removeEventListener("keydown", modalKeyDown, true);
 		document.removeEventListener("keyup", modalKeyUp, true);
@@ -830,6 +840,7 @@ var installAchievementSystem_d38bb038_c4fa_43be_927c_168680046baa = function (co
 		return true;
 	};
 
+	var releaseViewport = null;
 	var openPreview = function () {
 		if (root) return true;
 		activeLevelFilter = null;
@@ -883,6 +894,7 @@ var installAchievementSystem_d38bb038_c4fa_43be_927c_168680046baa = function (co
 		panel.appendChild(listRoot);
 		root.appendChild(panel);
 		document.body.appendChild(root);
+		releaseViewport = bindViewport(root);
 		theme.decorate(panel, { radius: 24, ornate: true, crest: true });
 		theme.decorate(close, { button: true });
 		document.documentElement.classList.add("achievement-preview-open");

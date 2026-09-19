@@ -40,6 +40,7 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 	var definitionKeys = Object.keys(DEFINITIONS);
 	var runtimeIdToKey = {};
 	var root = null;
+	var releaseViewport = null;
 	var openedWhilePlaying = false;
 	var modalKeyDown = null;
 	var modalKeyUp = null;
@@ -637,6 +638,8 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 
 	var closeCompendium = function () {
 		if (!root) return false;
+		if (releaseViewport) releaseViewport();
+		releaseViewport = null;
 		if (cardRenderer) cardRenderer.closePreviewModal(false);
 		document.removeEventListener("keydown", modalKeyDown, true);
 		document.removeEventListener("keyup", modalKeyUp, true);
@@ -659,7 +662,6 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 	var openCompendium = function () {
 		if (root) return true;
 		returnFocus = document.activeElement;
-		var gameGroup = document.getElementById("gameGroup") || document.body;
 		openedWhilePlaying = !!(core.isPlaying && core.isPlaying());
 		if (openedWhilePlaying) {
 			if (core.status && core.status.event && core.status.event.id && core.status.event.id !== CONFIG.eventId
@@ -783,7 +785,8 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 		grid.className = "weapon-compendium-grid";
 		panel.appendChild(grid);
 		root.appendChild(panel);
-		gameGroup.appendChild(root);
+		document.body.appendChild(root);
+		releaseViewport = backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61.bindGameViewport(root, core);
 		theme.decorate(panel, { radius: 25, ornate: true, crest: true });
 		theme.decorate(close, { button: true, gold: false });
 

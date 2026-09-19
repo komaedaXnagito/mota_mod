@@ -111,6 +111,8 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 =
 		? weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 : {};
 	// 自动注册所有武器图，新增武器时无需再手工维护 data.js 的 images 列表。
 	if (weaponImageCommon) weaponImageCommon.registerWeaponImages(core, weaponImageDefinitions);
+	// 引擎的文字输入/确认框也是 DOM 弹窗，和项目弹窗共用游戏窗口边界。
+	if (weaponImageCommon) weaponImageCommon.bindGameViewport(document.getElementById("inputDiv"), core);
 	this._afterLoadResources = function () {
 		// 本函数将在所有资源加载完毕后，游戏开启前被执行
 		core.ui.statusBar.init();

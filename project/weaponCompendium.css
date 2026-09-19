@@ -5,7 +5,7 @@
   backdrop-filter: blur(6px); color: #214b70;
 }
 #weapon-compendium-root .weapon-compendium-panel {
-  width: min(1160px,100%); height: min(920px,calc(100vh - 28px)); height: min(920px,calc(100dvh - 28px));
+  width: min(1160px,100%); height: min(920px,calc(var(--game-ui-height, 100vh) - 28px)); height: min(920px,calc(var(--game-ui-height, 100dvh) - 28px));
   padding: 20px 22px 20px; box-sizing: border-box; overflow: visible;
   border: 0; border-radius: 0; background: transparent; box-shadow: none;
   filter: drop-shadow(0 18px 30px rgba(32,67,88,.22));
@@ -82,14 +82,14 @@
 #weapon-compendium-root .weapon-compendium-rewards { margin: 0 8px 10px; padding: 5px 0; background: transparent; border-color: #d5c898; }
 #weapon-compendium-root .weapon-compendium-reward { color: #718c99; border-color: #c7bd96; border-radius: 2px; }
 #weapon-compendium-root .weapon-compendium-reward.claimed { color: #946d30; background: #fff4ce; }
-@media (max-width: 960px) {
+@container game-modal (max-width: 960px) {
   #weapon-compendium-root .weapon-compendium-toolbar { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; }
   #weapon-compendium-root .weapon-compendium-search-control { grid-column: 1/-1; flex-direction: row; align-items: center; }
   #weapon-compendium-root .weapon-compendium-search-control > span { flex: 0 0 60px; }
 }
-@media (max-width: 700px) {
-  #weapon-compendium-root { padding: 6px; }
-  #weapon-compendium-root .weapon-compendium-panel { padding: 19px 12px 13px; height: calc(100dvh - 12px); }
+@container game-modal (max-width: 700px) {
+
+  #weapon-compendium-root .weapon-compendium-panel { padding: 19px 12px 13px; height: calc(var(--game-ui-height, 100dvh) - 12px); }
   #weapon-compendium-root .weapon-compendium-header { padding: 7px 94px 15px 10px; text-align: left; }
   #weapon-compendium-root .weapon-compendium-title { font-size: 27px; }
   .weapon-compendium-header p { font-size: 10px; }
@@ -115,7 +115,7 @@
   #weapon-compendium-root .weapon-compendium-entry-status { grid-column: 1; justify-self: start; margin: 0; }
   #weapon-compendium-root .weapon-card-details { grid-column: 1/-1; margin: 0; }
 }
-@media (max-height: 550px) and (min-width: 701px) {
+@container game-modal (max-height: 550px) and (min-width: 701px) {
   #weapon-compendium-root .weapon-compendium-panel { padding-top: 14px; padding-bottom: 12px; }
   .weapon-compendium-eyebrow, .weapon-compendium-header p { display: none; }
   #weapon-compendium-root .weapon-compendium-header { padding-top: 4px; padding-bottom: 12px; }
@@ -130,3 +130,5 @@
 @media (prefers-reduced-motion: reduce) {
   #weapon-compendium-root input, #weapon-compendium-root select { transition: none; }
 }
+
+#weapon-compendium-root[data-game-mobile="true"] { padding: 6px; }

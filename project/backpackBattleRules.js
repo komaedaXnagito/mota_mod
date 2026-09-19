@@ -1478,6 +1478,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		return {
 			id: source.id || null,
 			name: String(source.name || defaultName),
+			battleAttackEffect: source.battleAttackEffect === "sword" || source.battleAttackEffect === "thunder"
+				? source.battleAttackEffect : "hand",
 			hp: fixed(hp),
 			maxHp: fixed(Math.max(hp, toNumber(source.maxHp, hp))),
 			atk: fixed(Math.max(0, toNumber(source.atk, 0))),

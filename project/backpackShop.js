@@ -460,6 +460,8 @@ var installBackpackShop_d7c3f1a9_5b2e_4a86_9d3f_7c1e2b8a44f6 = function (core, p
 				showCraftHammer: true,
 				tagName: "div",
 				mobileListMode: true,
+				mobileDetailsInModal: true,
+				previewOnClick: true,
 				actionPlacement: "footer",
 				actionButton: {
 					label: onPick ? "获取" : null,

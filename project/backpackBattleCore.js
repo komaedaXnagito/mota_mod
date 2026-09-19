@@ -545,6 +545,9 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 
 	var attackEnemy = function (options) {
 		options = options || {};
+		// 仅供立绘出手反馈使用；未命中及奥义攻击也要播放，不额外消耗随机数。
+		state.enemy.lastAttackTick = state.tick;
+		state.enemy.attackSequence++;
 		logBattlePhase("怪物攻击开始", {
 			attackOrigin: options.origin || "normal",
 			cooldownTicks: state.enemy.cooldownTicks
@@ -566,6 +569,7 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 			return;
 		}
 		state.shieldEffects = {};
+		state.enemy.hitSequence++;
 		// 被攻击前：允许武器规则修改本次受到的伤害（如概率减伤）。
 		var receiveContext = { sourceSide: "player", damage: state.enemy.atk, attackOrigin: options.origin || "normal" };
 		logBattlePhase("全武器 beforeReceiveDamage 开始", {
@@ -818,6 +822,9 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 		if (state && state.active) return false;
 		var savedPreference = getSavedPreference();
 		state = rules.createBattleState(input);
+		state.enemy.lastAttackTick = -1;
+		state.enemy.attackSequence = 0;
+		state.enemy.hitSequence = 0;
 		state.rngCallCount = 0;
 		state.speed = normalizeSpeed(options.speed, savedPreference === instantSpeedValue ? 1 : savedPreference);
 		state.paused = false;

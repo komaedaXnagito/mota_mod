@@ -415,8 +415,10 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		if (!visible || !canvas || !ctx) return;
 		var vertical = !!(core.domStyle && core.domStyle.isVertical);
 		var groupRect = core.dom.gameGroup.getBoundingClientRect();
-		// 职业选择是独立的固定层，竖屏使用完整视口，不继承游戏地图的上下黑边。
-		if (vertical) groupRect = { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
+		// 职业选择与主界面共用边界，竖屏也保留游戏窗口外的留白。
+		canvas.style.left = groupRect.left + "px";
+		canvas.style.top = groupRect.top + "px";
+		canvas.style.transform = "none";
 		canvasLogicalWidth = vertical ? 416 : 676;
 		canvasLogicalHeight = vertical
 			? Math.max(540, Math.round(canvasLogicalWidth * groupRect.height / Math.max(1, groupRect.width)))
@@ -552,7 +554,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		canvas.style.touchAction = "none";
 		canvas.style.cursor = "default";
 		canvas.style.background = "transparent";
-		canvas.style.boxShadow = "0 0 0 9999px #000";
+		canvas.style.boxShadow = "none";
 		canvas.style.outline = "none";
 		canvas.tabIndex = 0;
 		canvas.setAttribute("role", "dialog");
@@ -611,6 +613,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		window.addEventListener("resize", function () {
 			if (visible) window.requestAnimationFrame(render);
 		});
+		core.registerResize("careerSelectionViewport", function () { if (visible) render(); });
 	};
 
 	var prepare = function () {

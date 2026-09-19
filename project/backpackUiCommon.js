@@ -7,6 +7,7 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	var pinnedAnchor = null;
 	var lastPointer = null;
 	var tooltipHideTimer = null;
+	var releaseTooltipViewport = null;
 	var tooltipMoveFrame = null;
 	var pendingTooltipPosition = null;
 	var lastTooltipHtml = null;
@@ -258,14 +259,115 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		return event && (event.key === "Escape" || event.key === "Esc" || event.keyCode === 27);
 	};
 
+	/** DOM 弹层与地图共用 outerUI 的边界和缩放密度，不能使用浏览器视口。 */
+	var getGameViewport = function (coreRef) {
+		coreRef = coreRef || (typeof core !== "undefined" ? core : weaponImageCore);
+		var outer = typeof document !== "undefined" && document.getElementById
+			? document.getElementById("outerUI") || document.getElementById("gameGroup") : null;
+		var rect = outer && outer.getBoundingClientRect();
+		if (rect && (!rect.width || !rect.height)) {
+			outer = document.getElementById("gameGroup");
+			rect = outer && outer.getBoundingClientRect();
+		}
+		if (!rect || !rect.width || !rect.height) return null;
+		var domStyle = coreRef && coreRef.domStyle || {};
+		var vertical = typeof domStyle.isVertical === "boolean" ? domStyle.isVertical : rect.height > rect.width;
+		var scale = Number(domStyle.scale) > 0 ? Number(domStyle.scale) / (vertical ? 1 : 1.5) : 1;
+		return { element: outer, left: rect.left, top: rect.top, width: rect.width / scale,
+			height: rect.height / scale, scale: scale, vertical: vertical };
+	};
+
+	var viewportBindingId = 0;
+	var bindGameViewport = function (root, coreRef, onResize) {
+		if (!root || !root.style || typeof window === "undefined") return function () {};
+		coreRef = coreRef || (typeof core !== "undefined" ? core : weaponImageCore);
+		var resizeName = "gameModalViewport" + (++viewportBindingId);
+		var sync = function () {
+			var viewport = getGameViewport(coreRef);
+			if (!viewport) return;
+			if (onResize) { onResize(viewport); return; }
+			root.classList.add("game-viewport-bound");
+			root.dataset.gameMobile = viewport.width <= 700 ? "true" : "false";
+			root.style.left = viewport.left + "px";
+			root.style.top = viewport.top + "px";
+			root.style.width = viewport.width + "px";
+			root.style.height = viewport.height + "px";
+			root.style.transform = "scale(" + viewport.scale + ")";
+			root.style.setProperty("--game-ui-width", viewport.width + "px");
+			root.style.setProperty("--game-ui-height", viewport.height + "px");
+		};
+		sync();
+		window.addEventListener("resize", sync);
+		window.addEventListener("scroll", sync, true);
+		if (coreRef && coreRef.registerResize) coreRef.registerResize(resizeName, sync);
+		var viewport = getGameViewport(coreRef);
+		var observer = typeof ResizeObserver === "function" && viewport ? new ResizeObserver(sync) : null;
+		if (observer) observer.observe(viewport.element);
+		var outer = document.getElementById("outerUI");
+		if (observer && outer && outer !== viewport.element) observer.observe(outer);
+		// 只移动/居中游戏窗口时尺寸可能不变，仍需同步弹层位置。
+		var positionObserver = typeof MutationObserver === "function" && viewport ? new MutationObserver(sync) : null;
+		if (positionObserver) {
+			positionObserver.observe(viewport.element, { attributes: true, attributeFilter: ["style", "class"] });
+			if (outer && outer !== viewport.element) positionObserver.observe(outer, { attributes: true, attributeFilter: ["style", "class"] });
+			var group = document.getElementById("gameGroup");
+			if (group && group !== viewport.element) positionObserver.observe(group, { attributes: true, attributeFilter: ["style", "class"] });
+		}
+		return function () {
+			window.removeEventListener("resize", sync);
+			window.removeEventListener("scroll", sync, true);
+			if (coreRef && coreRef.unregisterResize) coreRef.unregisterResize(resizeName);
+			if (observer) observer.disconnect();
+			if (positionObserver) positionObserver.disconnect();
+		};
+	};
+
 	var removeModalEntry = function (entry) {
 		if (!entry) return;
+		if (entry.releaseViewport) entry.releaseViewport();
 		if (entry.root && entry.keyGuard && typeof entry.root.removeEventListener === "function") {
 			entry.root.removeEventListener("keydown", entry.keyGuard);
 			entry.root.removeEventListener("keyup", entry.keyGuard);
 		}
 		var index = modalStack.indexOf(entry);
 		if (index >= 0) modalStack.splice(index, 1);
+	};
+
+	/** Guides 使用视口坐标画箭头；保留坐标系，只收拢提示并裁剪遮罩。 */
+	var bindGuideViewport = function (canvas) {
+		if (!canvas) return function () {};
+		var sync = function (viewport) {
+			var scale = viewport.scale, left = viewport.left, top = viewport.top;
+			var right = left + viewport.width * scale, bottom = top + viewport.height * scale;
+			canvas.style.clipPath = "inset(" + top + "px " + Math.max(0, window.innerWidth - right)
+				+ "px " + Math.max(0, window.innerHeight - bottom) + "px " + left + "px)";
+			document.querySelectorAll(".bb-guide-target-proxy,.backpack-guide-target-proxy").forEach(function (proxy) {
+				var rect = proxy.getBoundingClientRect();
+				proxy.style.clipPath = "inset(" + (top - rect.top) + "px " + (rect.right - right)
+					+ "px " + (rect.bottom - bottom) + "px " + (left - rect.left) + "px)";
+			});
+			canvas.querySelectorAll(".guides-guide").forEach(function (guide) {
+				var copy = guide.querySelector("span");
+				if (copy) {
+					copy.style.maxWidth = Math.min(390, viewport.width - 96) + "px";
+					copy.style.maxHeight = Math.max(40, viewport.height - 96) + "px";
+					copy.style.overflow = "auto";
+				}
+				guide.style.transformOrigin = "top left";
+				guide.style.transform = "scale(" + scale + ")";
+				var rect = guide.getBoundingClientRect(), margin = 8 * scale;
+				var x = Math.max(left + margin, Math.min(rect.left, right - rect.width - margin));
+				var y = Math.max(top + margin, Math.min(rect.top, bottom - rect.height - margin));
+				guide.style.transform = "translate(" + (x - rect.left) + "px," + (y - rect.top) + "px) scale(" + scale + ")";
+			});
+		};
+		var release = bindGameViewport(canvas, null, sync);
+		var observer = new MutationObserver(function () {
+			var viewport = getGameViewport();
+			if (viewport) sync(viewport);
+		});
+		observer.observe(canvas, { childList: true, subtree: true });
+		return function () { release(); observer.disconnect(); };
 	};
 
 	/** 丢弃已被外部代码移除的弹层，避免失效节点继续拦截键盘。 */
@@ -330,6 +432,7 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 			previousFocus: typeof document !== "undefined" ? document.activeElement : null,
 			keyGuard: null
 		};
+		if (options.viewport !== false) entry.releaseViewport = bindGameViewport(root);
 		entry.keyGuard = function (event) {
 			if (getTopModal() === entry && event.stopPropagation) event.stopPropagation();
 		};
@@ -935,7 +1038,19 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	};
 
 	var positionTooltip = function (event, anchor) {
-		if (!tooltip || !tooltip.classList.contains("show") || window.innerWidth <= 680) return;
+		if (!tooltip || !tooltip.classList.contains("show") || !anchor) return;
+		// 背包详情有独立的贴边定位，保持其已有的物理像素坐标。
+		if (tooltip.classList.contains("backpack-panel-tooltip")) return;
+		var viewport = getGameViewport() || { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight, scale: 1 };
+		var scale = viewport.scale;
+		var margin = 8 * scale;
+		var left = viewport.left + margin, top = viewport.top + margin;
+		var right = viewport.left + viewport.width * scale - margin;
+		var bottom = viewport.top + viewport.height * scale - margin;
+		var mobile = viewport.width <= 700;
+		tooltip.style.setProperty("--game-tip-scale", scale);
+		tooltip.style.setProperty("--game-tip-width", Math.min(370, viewport.width - 16) + "px");
+		tooltip.style.setProperty("--game-tip-height", Math.min(520, viewport.height * (mobile ? 0.48 : 1) - 16) + "px");
 		var x;
 		var y;
 		if (event && Number.isFinite(event.clientX)) {
@@ -950,11 +1065,11 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 			x = rect.right + 12;
 			y = rect.top;
 		}
-		var tooltipRect = tooltip.getBoundingClientRect();
-		if (x + tooltipRect.width > window.innerWidth - 8) x = Math.max(8, x - tooltipRect.width - 34);
-		if (y + tooltipRect.height > window.innerHeight - 8) y = Math.max(8, window.innerHeight - tooltipRect.height - 8);
-		tooltip.style.left = Math.max(8, x) + "px";
-		tooltip.style.top = Math.max(8, y) + "px";
+		var width = tooltip.offsetWidth * scale, height = tooltip.offsetHeight * scale;
+		if (mobile) { x = left; y = bottom - height; }
+		else if (x + width > right) x -= width + 34 * scale;
+		tooltip.style.setProperty("--game-tip-left", Math.max(left, Math.min(x, right - width)) + "px");
+		tooltip.style.setProperty("--game-tip-top", Math.max(top, Math.min(y, bottom - height)) + "px");
 	};
 
 	var cancelQueuedTooltipPosition = function () {
@@ -1003,6 +1118,9 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		}
 		tooltip.classList.add("show");
 		positionTooltip(event, anchor);
+		if (!releaseTooltipViewport) releaseTooltipViewport = bindGameViewport(tooltip, null, function () {
+			positionTooltip(null, activeAnchor);
+		});
 	};
 
 	/** 点击武器后固定 Tooltip；再次固定其他武器时直接切换内容与锚点。 */
@@ -1018,6 +1136,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		if (anchor && activeAnchor && anchor !== activeAnchor) return;
 		cancelQueuedTooltipPosition();
 		if (activeAnchor) activeAnchor.classList.remove("bui-hover");
+		if (releaseTooltipViewport) releaseTooltipViewport();
+		releaseTooltipViewport = null;
 		if (tooltip) tooltip.classList.remove("show");
 		activeAnchor = null;
 		pinnedAnchor = null;
@@ -1139,6 +1259,9 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		isTopModal: isTopModal,
 		hasOpenModal: hasOpenModal,
 		getModalDepth: getModalDepth,
+		getGameViewport: getGameViewport,
+		bindGameViewport: bindGameViewport,
+		bindGuideViewport: bindGuideViewport,
 		bindTooltip: bindTooltip,
 		showTooltip: showTooltip,
 		pinTooltip: pinTooltip,
