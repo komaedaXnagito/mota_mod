@@ -1127,12 +1127,26 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 			renderTitle();
 		});
 
+		var titleActionKey = null;
+		// 菜单在 keydown 中切换后，keyup 会落到读档画布；只消费本次菜单确认的抬键。
+		document.addEventListener("keyup", function (event) {
+			if (event.key !== titleActionKey) return;
+			titleActionKey = null;
+			event.preventDefault();
+			event.stopPropagation();
+		}, true);
+		window.addEventListener("blur", function () { titleActionKey = null; });
 		titleCanvas.addEventListener("keydown", function (event) {
 			var order = [0, 1, 3, 4, 2];
 			var current = Math.max(0, order.indexOf(titleSelection));
 			if (event.key === "ArrowLeft" || event.key === "ArrowUp") current = (current + order.length - 1) % order.length;
 			else if (event.key === "ArrowRight" || event.key === "ArrowDown") current = (current + 1) % order.length;
-			else if (event.key === "Enter" || event.key === " ") return runTitleAction(titleSelection);
+			else if (event.key === "Enter" || event.key === " ") {
+				titleActionKey = event.key;
+				event.preventDefault();
+				event.stopPropagation();
+				return runTitleAction(titleSelection);
+			}
 			else return;
 			event.preventDefault();
 			titleSelection = order[current];
@@ -1189,6 +1203,19 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	};
 	core.events.startGame = startGameWithCareerSelect;
 	core.startGame = startGameWithCareerSelect;
+
+	// 标题视频是 gameGroup 外的独立节点，引擎隐藏 startPanel 不会隐藏它。
+	// 续关切入读档时同步退出标题层，防止视频盖住已经绘制的读档 Canvas。
+	var originalLoad = core.events.load;
+	var loadWithTitleCleanup = function (fromUserAction) {
+		var fromTitle = !core.isPlaying() && core.dom.startPanel.style.display !== "none";
+		var result = originalLoad.apply(core.events, arguments);
+		// 只有引擎实际接受了切换才关闭；被忽略的读档请求仍保留可操作的标题菜单。
+		if (fromTitle && core.dom.startPanel.style.display === "none") hideTitle();
+		return result;
+	};
+	core.events.load = loadWithTitleCleanup;
+	core.load = loadWithTitleCleanup;
 
 	// 引擎每次进入或返回标题页时都会走这里；旧按钮仍由引擎维护，
 	// 自定义 Canvas 在其完成后接管显示和键鼠操作。

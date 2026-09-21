@@ -22,6 +22,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			]
 		],
 		"image": "project/images/xde.png",
+		"imageCrop": [3, 6, 69, 299, 88, 312],
 		"sourceName": "薛定谔",
 		"rarity": 4,
 		"minAttack": 3,
@@ -11075,6 +11076,9 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		]
 	},
 	"I614": {
+		"shape": [[1], [1]],
+		"image": "project/images/shendun.png",
+		"imageCrop": [7, 15, 68, 125, 312, 312],
 		"name": "神域守护·布洛蒂亚（突破I）",
 		"sourceName": "神域守护·布洛蒂亚（突破I）",
 		"rarity": 5,
@@ -11108,6 +11112,9 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		]
 	},
 	"I615": {
+		"shape": [[1], [1]],
+		"image": "project/images/shendun.png",
+		"imageCrop": [7, 15, 68, 125, 312, 312],
 		"sourceName": "神域守护·布洛蒂亚（突破II）",
 		"rarity": 5,
 		"id": "神域守护·布洛蒂亚（突破II）",
@@ -11141,6 +11148,9 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		]
 	},
 	"I616": {
+		"shape": [[1], [1]],
+		"image": "project/images/shendun.png",
+		"imageCrop": [7, 15, 68, 125, 312, 312],
 		"sourceName": "神域守护·布洛蒂亚（突破III）",
 		"id": "神域守护·布洛蒂亚（突破III）",
 		"name": "神域守护·布洛蒂亚（突破III）",
@@ -11174,6 +11184,9 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		]
 	},
 	"I617": {
+		"shape": [[1], [1]],
+		"image": "project/images/shendun.png",
+		"imageCrop": [7, 15, 68, 125, 312, 312],
 		"id": "神域守护·布洛蒂亚（终突）",
 		"name": "神域守护·布洛蒂亚（终突）",
 		"sourceName": "神域守护·布洛蒂亚（终突）",

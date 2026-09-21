@@ -418,7 +418,9 @@ var installBackpackCraft_9c4e7b2a_6f1d_4a8c_9e3b_5d7f2c1a8e64 = function (core, 
 		/** 与商店相同：完整图片和裁剪区共用 uniformScale，禁止横纵轴分别拉伸。 */
 		const layoutCraftPreviewImage = function (imageFrame, image, geometry) {
 			const bounds = geometry.sourceBounds;
-			const inset = Math.min(PREVIEW_IMAGE_INSET, (bounds.cols - 0.1) / 2, (bounds.rows - 0.1) / 2);
+			const inset = uiCommon && uiCommon.getWeaponImageInset
+				? uiCommon.getWeaponImageInset(geometry.weapon, PREVIEW_IMAGE_INSET)
+				: Math.min(PREVIEW_IMAGE_INSET, (bounds.cols - 0.1) / 2, (bounds.rows - 0.1) / 2);
 			const frameCol = bounds.col + inset;
 			const frameRow = bounds.row + inset;
 			const frameCols = bounds.cols - inset * 2;

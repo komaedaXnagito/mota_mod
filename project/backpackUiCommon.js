@@ -664,6 +664,22 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	var percentStyle = function (left, top, width, height) {
 		return "left:" + left + "%;top:" + top + "%;width:" + width + "%;height:" + height + "%;";
 	};
+	/** 用真实占格校正图片留白：细长武器放开短边，不规则武器避免按整个外接矩形放大。 */
+	var getWeaponImageInset = function (weapon, baseInset) {
+		weapon = weapon || {};
+		var cells = normalizeWeaponCells(weapon.baseCells ? { cells: weapon.baseCells } : weapon);
+		var occupied = Object.create(null);
+		cells.forEach(function (cell) { occupied[cell[0] + "," + cell[1]] = true; });
+		var cols = Math.max.apply(null, cells.map(function (cell) { return cell[0]; }))
+			- Math.min.apply(null, cells.map(function (cell) { return cell[0]; })) + 1;
+		var rows = Math.max.apply(null, cells.map(function (cell) { return cell[1]; }))
+			- Math.min.apply(null, cells.map(function (cell) { return cell[1]; })) + 1;
+		var inset = baseInset == null ? .12 : baseInset;
+		if (Math.max(cols, rows) / Math.min(cols, rows) >= 2) inset = .04;
+		var coverage = Object.keys(occupied).length / (cols * rows);
+		inset += Math.min(.18, Math.max(0, 1 - coverage) * .6);
+		return Math.min(inset, (Math.min(cols, rows) - .1) / 2);
+	};
 
 	/** Tooltip 内使用真实占格与等比裁剪，展示与合成槽一致的武器格子预览。 */
 	var buildWeaponGridPreviewHtml = function (weapon) {
@@ -697,7 +713,7 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 
 		var boundsCols = sourceMaxCol - sourceMinCol + 1;
 		var boundsRows = sourceMaxRow - sourceMinRow + 1;
-		var inset = Math.min(0.12, (boundsCols - 0.1) / 2, (boundsRows - 0.1) / 2);
+		var inset = getWeaponImageInset(weapon);
 		var frameCol = sourceMinCol + inset;
 		var frameRow = sourceMinRow + inset;
 		var frameCols = boundsCols - inset * 2;
@@ -1237,6 +1253,7 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		preloadWeaponImages: preloadWeaponImages,
 		getWeaponImageSource: getWeaponImageSource,
 		setWeaponImageSource: setWeaponImageSource,
+		getWeaponImageInset: getWeaponImageInset,
 		getCachedWeaponImage: getCachedWeaponImage,
 		getWeaponImageCacheStats: getWeaponImageCacheStats,
 		formatNumber: formatNumber,

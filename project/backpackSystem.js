@@ -812,8 +812,9 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		const baseBounds = getBounds(weapon, 0);
 		const baseWidth = spanW(baseBounds.cols);
 		const baseHeight = spanW(baseBounds.rows);
+		const insetCells = uiCommon.getWeaponImageInset(weapon, CONFIG.imageInsetCells);
 		const imageInset = Math.min(
-			cellSize * CONFIG.imageInsetCells,
+			cellSize * insetCells,
 			Math.max(0, (baseWidth - 1) / 2),
 			Math.max(0, (baseHeight - 1) / 2)
 		);
@@ -821,7 +822,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		const frameHeight = baseHeight - imageInset * 2;
 		const imageFrame = document.createElement("div");
 		imageFrame.className = "backpack-image-frame";
-		imageFrame.dataset.insetCells = String(CONFIG.imageInsetCells);
+		imageFrame.dataset.insetCells = String(insetCells);
 		imageFrame.style.width = px(frameWidth);
 		imageFrame.style.height = px(frameHeight);
 		imageFrame.style.transformOrigin = "0 0";

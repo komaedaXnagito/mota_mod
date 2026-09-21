@@ -22,10 +22,23 @@
 .bb-sky-battle .bb-battle-heading { position: absolute; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .bb-sky-battle .bb-battle-state { font: 500 25px var(--weapon-serif); letter-spacing: .5px; }
 .bb-sky-battle .bb-elapsed { font: 14px var(--weapon-number); color: #456c89; }
+/* 天空背景上的文字用八向浅色描边，保留宋体细笔画，不影响字号和布局。 */
+.bb-sky-battle :is(.bb-floor-name,.bb-location small,.bb-battle-state,.bb-elapsed,.bb-top-note) {
+  text-shadow: -1px -1px 0 #f4fcff,0 -1px 0 #f4fcff,1px -1px 0 #f4fcff,
+    -1px 0 0 #f4fcff,1px 0 0 #f4fcff,-1px 1px 0 #f4fcff,0 1px 0 #f4fcff,1px 1px 0 #f4fcff,
+    0 2px 3px #123f6659;
+}
 .bb-sky-battle .bb-arena { position: relative; min-height: 0; isolation: isolate; }
-.bb-sky-battle .bb-weapon-flight-layer { position: absolute; inset: 0; z-index: 4; overflow: hidden; pointer-events: none; }
+.bb-sky-battle .bb-weapon-flight-layer { position: absolute; inset: -64px 0 0; z-index: 4; overflow: hidden; pointer-events: none; }
 .bb-sky-battle .bb-weapon-flight { inset: auto; top: 0; left: 0; opacity: 0; transform-origin: center; will-change: transform,opacity; filter: drop-shadow(0 0 3px #e5fcffcc) drop-shadow(0 2px 2px #17456199); }
 .bb-sky-battle .bb-weapon-flight .bb-art-cell { display: none; }
+.bb-sky-battle .bb-weapon-projectile { position: absolute; left: 0; top: 0; opacity: 0; pointer-events: none; will-change: transform,opacity; }
+.bb-sky-battle .bb-weapon-projectile svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.bb-sky-battle .bb-weapon-laser { height: 1.5px; transform-origin: 0 center; background: #effeff; box-shadow: 0 0 3px 1px #7bdbffb3; }
+.bb-sky-battle .bb-weapon-laser::before, .bb-sky-battle .bb-weapon-laser::after { content: ''; position: absolute; top: 50%; width: 4px; height: 4px; border-radius: 50%; transform: translateY(-50%); background: #fff4c7; box-shadow: 0 0 5px 2px #9eeaffb3; }
+.bb-sky-battle .bb-weapon-laser::before { left: -2px; }
+.bb-sky-battle .bb-weapon-laser::after { right: -2px; }
+.bb-sky-battle .bb-weapon-arrow, .bb-sky-battle .bb-weapon-note { filter: drop-shadow(0 0 2px #edfdffbf) drop-shadow(0 1px 1px #23496199); }
 .bb-sky-battle .bb-hit-damage { position: absolute; left: 0; top: 0; z-index: 1; pointer-events: none; white-space: nowrap; font: 600 28px/1 var(--weapon-number); color: #fff1bc; -webkit-text-stroke: 1px #783c30; paint-order: stroke fill; text-shadow: 0 2px 2px #402837b3,0 0 5px #ffdc8f80; will-change: transform,opacity; }
 .bb-sky-battle[data-mobile='true'] .bb-hit-damage { font-size: 18px; -webkit-text-stroke-width: .75px; }
 .bb-sky-battle .bb-combatant-art { position: absolute; top: 0; bottom: -15px; width: 34%; pointer-events: none; z-index: 1; }
@@ -177,6 +190,7 @@
 .bb-sky-battle[data-mobile='true'] .bb-elapsed { font-size: 11px; }
 .bb-sky-battle[data-mobile='true'] .bb-exit { width: 58px; height: 32px; min-height: 32px; font-size: 12px; }
 .bb-sky-battle[data-mobile='true'] .bb-arena { grid-column: 1/-1; grid-row: 2; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); grid-template-rows: minmax(80px,1fr) auto; gap: 6px; }
+.bb-sky-battle[data-mobile='true'] .bb-weapon-flight-layer { top: -32px; }
 .bb-sky-battle[data-mobile='true'] .bb-combatant-art { position: relative; grid-row: 1; width: calc(100% - 42px); height: 100%; min-height: 0; top: auto; bottom: auto; }
 .bb-sky-battle[data-mobile='true'] .bb-combatant-art.player { grid-column: 1; left: auto; }
 .bb-sky-battle[data-mobile='true'] .bb-combatant-art.enemy { grid-column: 2; justify-self: end; left: auto; right: auto; }

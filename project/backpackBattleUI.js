@@ -213,15 +213,22 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		nodes.playerPortrait = root.querySelector(".bb-player-portrait");
 		nodes.enemyPortrait = root.querySelector(".bb-enemy-portrait");
 		nodes.weaponFlightLayer = root.querySelector(".bb-weapon-flight-layer");
-		weaponFlightFeedback = createBackpackWeaponFlightFeedback(nodes.weaponFlightLayer, getWeaponFlightLayout, function (weapon, size) {
+		weaponFlightFeedback = createBackpackWeaponFlightFeedback(nodes.weaponFlightLayer, getWeaponFlightLayout, function (weapon, size, kind) {
 			// 复用武器的透明裁剪和等比缩放，飞行时不携带棋盘底格、倒计时。
 			var flyingWeapon = Object.assign({}, weapon, { rotation: 0 });
 			var bounds = getBounds(normalizeCells(weapon.baseCells || weapon.cells));
-			var cellSize = size / Math.max(bounds.cols, bounds.rows);
+			var cellSize = size * getWeaponFlightScale(weapon) / Math.max(bounds.cols, bounds.rows);
 			var art = createArt(flyingWeapon, cellSize, "bb-weapon-flight").element;
 			art.style.width = bounds.cols * cellSize + "px";
 			art.style.height = bounds.rows * cellSize + "px";
 			art.dataset.weaponId = weapon.instanceId;
+			if (kind === "gun") {
+				var frame = art.querySelector(".bb-art-frame");
+				var frameWidth = parseFloat(frame.style.width), frameHeight = parseFloat(frame.style.height);
+				var muzzle = getWeaponMuzzle(weapon, frameWidth, frameHeight);
+				art.dataset.muzzleX = String(muzzle.x);
+				art.dataset.muzzleY = String(muzzle.y);
+			}
 			return art;
 		}, function (damage, weaponId) {
 			var number = document.createElement("span");
@@ -229,7 +236,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 			number.dataset.weaponId = weaponId;
 			number.textContent = format(damage, 3);
 			return number;
-		});
+		}, createWeaponProjectiles);
 		nodes.playerName = root.querySelector(".bb-player-name");
 		nodes.playerHpText = root.querySelector(".bb-player-hp-text");
 		nodes.playerHp = root.querySelector(".bb-player-hp i");
@@ -265,6 +272,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 			playerArt.onload = function () {
 				if (nodes.playerArt !== playerArt) return;
 				playerArt.hidden = false; nodes.playerPortrait.hidden = true;
+				if (weaponFlightFeedback) weaponFlightFeedback.refresh();
 			};
 			common.setWeaponImageSource(nodes.playerArt, "project/images/" + career.portrait);
 		}
@@ -391,9 +399,10 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		var bounds = getBounds(rotateCells(baseCells, rotation));
 		var baseWidth = baseBounds.cols * cellSize;
 		var baseHeight = baseBounds.rows * cellSize;
-		// 与背包、商店一致：图片和格子边缘留出固定比例的距离，同时保证图片框始终为正尺寸。
+		// 背包、商店共用按真实形状校正的留白，保留等比缩放及原来的格子热区。
+		var insetCells = common.getWeaponImageInset(weapon, BATTLE_IMAGE_INSET_CELLS);
 		var imageInset = Math.min(
-			cellSize * BATTLE_IMAGE_INSET_CELLS,
+			cellSize * insetCells,
 			Math.max(0, (baseWidth - 1) / 2),
 			Math.max(0, (baseHeight - 1) / 2)
 		);
@@ -403,7 +412,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		art.className = "bb-art " + className;
 		var frame = document.createElement("div");
 		frame.className = "bb-art-frame";
-		frame.dataset.insetCells = String(BATTLE_IMAGE_INSET_CELLS);
+		frame.dataset.insetCells = String(insetCells);
 		frame.style.width = frameWidth + "px";
 		frame.style.height = frameHeight + "px";
 		frame.style.transformOrigin = "0 0";
@@ -621,6 +630,48 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		});
 	};
 
+	var getWeaponMuzzle = function (weapon, frameWidth, frameHeight) {
+		// 素材原始像素中的枪口；贝尼迪的枪口低于刺刀尖，不能直接取图片顶端。
+		var tips = { "windGun.png": [34, 12], "oilGun.png": [39, 10], "rchong.png": [42, 21],
+			"lakamuchong.png": [37, 41], "zongqingzhimu.png": [37, 14] };
+		var crop = weapon.imageCrop, tip = tips[(weapon.image || "").split("/").pop()];
+		if (!Array.isArray(crop) || crop.length < 6 || !(crop[2] > 0 && crop[3] > 0)) return { x: 0, y: -frameHeight / 2 };
+		var scale = Math.min(frameWidth / crop[2], frameHeight / crop[3]);
+		if (!tip) tip = [crop[0] + crop[2] / 2, crop[1]];
+		return { x: (tip[0] - crop[0] - crop[2] / 2) * scale, y: (tip[1] - crop[1] - crop[3] / 2) * scale };
+	};
+
+	var createWeaponProjectiles = function (kind, weapon) {
+		var count = kind === "music" ? 4 : 1, elements = [];
+		for (var index = 0; index < count; index++) {
+			var element = document.createElement("div");
+			element.className = "bb-weapon-projectile bb-weapon-" + (kind === "gun" ? "laser" : kind === "bow" ? "arrow" : "note");
+			element.dataset.weaponId = weapon.instanceId;
+			if (kind === "bow") {
+				element.innerHTML = '<svg viewBox="0 0 100 18" aria-hidden="true"><path d="M6 9H84" stroke="#fff8d5" stroke-width="2"/>'
+					+ '<path d="M100 9L80 3L85 9L80 15Z" fill="#fff9e3" stroke="#a68043" stroke-width="1"/>'
+					+ '<path d="M4 2L19 7L24 9L19 11L4 16L8 9Z" fill="#bdebf3" stroke="#7194a4" stroke-width="1"/></svg>';
+			} else if (kind === "music") {
+				element.style.color = ["#ffdf92", "#b8f2ff", "#edccff", "#ffdf92"][index];
+				element.innerHTML = '<svg viewBox="0 0 28 32" aria-hidden="true" fill="currentColor" stroke="#355674" stroke-width=".8">'
+					+ (index % 2 ? '<path d="M9 7L25 3V23H22V10L12 13V27H9Z"/><ellipse cx="7" cy="27" rx="5" ry="3.5" transform="rotate(-20 7 27)"/><ellipse cx="20" cy="23" rx="5" ry="3.5" transform="rotate(-20 20 23)"/>'
+						: '<path d="M15 3H18V8C27 10 28 15 21 20C23 14 20 14 18 13V26H15Z"/><ellipse cx="11" cy="26" rx="7" ry="4.5" transform="rotate(-20 11 26)"/>') + '</svg>';
+			}
+			elements.push(element);
+		}
+		return elements;
+	};
+
+	var getWeaponFlightScale = function (weapon) {
+		// 宽体兵装按占格收敛体积；细长兵装补偿长度，避免四格杖比两格食物还短。
+		var cells = normalizeCells(weapon.baseCells || weapon.cells), count = cells.length;
+		var cols = Math.max.apply(null, cells.map(function (cell) { return cell[0]; })) + 1;
+		var rows = Math.max.apply(null, cells.map(function (cell) { return cell[1]; })) + 1;
+		var scale = Math.min(1, Math.pow(2 / Math.max(1, count), .3));
+		var lengthBonus = count > 2 ? Math.min(1.36, Math.pow(Math.max(cols, rows) / Math.min(cols, rows), .22)) : 1;
+		return Math.max(.6, Math.min(1.12, scale * lengthBonus));
+	};
+
 	var getWeaponFlightLayout = function () {
 		var layer = nodes.weaponFlightLayer;
 		if (!layer || !layer.clientWidth || !layer.clientHeight) return null;
@@ -631,22 +682,29 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		var playerRect = player.getBoundingClientRect(), enemyRect = nodes.enemyPortrait.getBoundingClientRect();
 		var aspect = player.naturalWidth && player.naturalHeight ? player.naturalWidth / player.naturalHeight : 1;
 		var playerHeight = Math.min(playerRect.height, playerRect.width / aspect);
+		var playerWidth = playerHeight * aspect;
+		var playerLeft = (playerRect.left + (playerRect.width - playerWidth) / 2 - rect.left) / scaleX;
+		var playerTop = (playerRect.bottom - playerHeight - rect.top) / scaleY;
+		var portraitWidth = playerWidth / scaleX, portraitHeight = playerHeight / scaleY;
 		var enemySize = Math.min(enemyRect.width, enemyRect.height);
 		var info = core.getBlockInfo && latestSnapshot ? core.getBlockInfo(latestSnapshot.enemy.id) : null;
 		var frame = getEnemyPortraitFrame(info, 0);
 		var enemyHeight = enemySize * .94 * (frame ? Math.min(1, frame.sh / frame.sw) : 1);
 		var mobile = root.dataset.mobile === "true", size = mobile ? 52 : 84;
+		// 按标注图：头顶三处、双肩与两侧六处、左腰一处。坐标随可见立绘缩放。
+		var anchors = [[.21, 0], [.53, -.04], [.80, .06], [.13, .18], [.36, .17],
+			[.67, .14], [.92, .25], [.12, .35], [.82, .35], [.12, .55]].map(function (point) {
+			return { x: playerLeft + portraitWidth * point[0], y: playerTop + portraitHeight * point[1] };
+		});
 		return {
-			start: { x: (playerRect.left + playerRect.width / 2 - rect.left) / scaleX,
-				y: (playerRect.bottom - playerHeight * .52 - rect.top) / scaleY },
-			spread: { x: Math.min(130, playerRect.width * .46 / scaleX), y: Math.min(110, playerHeight * .42 / scaleY) },
-			// 横屏从左侧状态卡右边开始散开；竖屏不落到人物下方的状态卡中。
-			spawnBounds: { minX: mobile ? 0 : (playerRect.left + playerRect.width * .15 - rect.left) / scaleX + size * .65,
-				maxY: (playerRect.bottom - rect.top) / scaleY - size * .4 },
+			anchors: anchors,
+			jitter: { x: Math.min(6, portraitWidth * .025), y: Math.min(5, portraitHeight * .015) },
 			width: layer.clientWidth, height: layer.clientHeight,
 			end: { x: (enemyRect.left + enemyRect.width / 2 - rect.left) / scaleX,
 				y: (enemyRect.bottom - enemySize * 4 / 384 - enemyHeight * .5 - rect.top) / scaleY },
-			size: size
+			size: size,
+			// 竖屏小立绘同步收小武器，伤害浮字仍保留独立的可读字号和间距。
+			weaponSize: mobile ? Math.min(size, portraitHeight * .3) : size
 		};
 	};
 

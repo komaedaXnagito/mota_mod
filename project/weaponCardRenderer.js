@@ -13,7 +13,7 @@ var installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c = function (c
 		? backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 : null;
 	var synergyHelper = (typeof backpackWeaponSynergy_91f4c21e_7d37_4f12_9cc4_a9606ba62a83 !== "undefined")
 		? backpackWeaponSynergy_91f4c21e_7d37_4f12_9cc4_a9606ba62a83 : null;
-	// 武器图片与占格外缘之间保留 0.12 个格子的距离；横纵方向使用相同格子单位。
+	// 基础留白为 0.12 格，真实占格的细长 / 不规则形状由共用规则校正。
 	var PREVIEW_IMAGE_INSET = 0.12;
 	var previewModalRoot = null;
 	var previewReturnFocus = null;
@@ -162,7 +162,9 @@ var installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c = function (c
 	/** 图片保持等比缩放，imageCrop 的完整图与裁剪区域使用同一个 uniformScale。 */
 	var layoutPreviewImage = function (imageFrame, image, geometry) {
 		var bounds = geometry.sourceBounds;
-		var inset = Math.min(PREVIEW_IMAGE_INSET, (bounds.cols - 0.1) / 2, (bounds.rows - 0.1) / 2);
+		var inset = uiCommon && uiCommon.getWeaponImageInset
+			? uiCommon.getWeaponImageInset(geometry.weapon, PREVIEW_IMAGE_INSET)
+			: Math.min(PREVIEW_IMAGE_INSET, (bounds.cols - 0.1) / 2, (bounds.rows - 0.1) / 2);
 		var frameCol = bounds.col + inset;
 		var frameRow = bounds.row + inset;
 		var frameCols = bounds.cols - inset * 2;

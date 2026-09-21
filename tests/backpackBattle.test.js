@@ -192,7 +192,7 @@ test("背包与战斗武器的 hover 按实际占格触发且背包内部格缝�
 	assert.match(battleUiSource, /bounds\.cells\.forEach[\s\S]*?hitCell\.className = "bb-weapon-hit-cell"/);
 	assert.match(battleUiSource, /hitTargets: unit\.querySelectorAll\("\.bb-weapon-hit-cell"\)/);
 	assert.match(battleUiSource, /var BATTLE_IMAGE_INSET_CELLS = 0\.12/);
-	assert.match(battleUiSource, /cellSize \* BATTLE_IMAGE_INSET_CELLS/);
+	assert.match(battleUiSource, /common\.getWeaponImageInset\(weapon, BATTLE_IMAGE_INSET_CELLS\)/);
 	assert.match(battleUiSource, /var uniformScale = Math\.min\(frameWidth \/ crop\[2\], frameHeight \/ crop\[3\]\)/);
 	assert.match(battleUiSource, /image\.style\.width = \(crop\[4\] \* uniformScale\) \+ "px"/);
 	assert.match(battleUiSource, /image\.style\.height = \(crop\[5\] \* uniformScale\) \+ "px"/);

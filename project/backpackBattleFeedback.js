@@ -126,29 +126,34 @@ var createBackpackBattleFeedback_245cd186_8d73_4ad6_8e23_114d7eaf0d89 = function
 	};
 };
 
-/** 兵装蓄力读取真实冷却，出手后按真实时间飞行；不参与伤害与随机数结算。 */
-var createBackpackWeaponFlightFeedback = function (layer, getLayout, createSprite, createDamageNumber) {
+var getBackpackWeaponAttackKind = function (weapon) {
+	var types = [].concat(weapon.weaponTypes || [], (weapon.attributes || {}).weaponTypes || []);
+	// 斧 / 吉他等复合类型优先演奏；长枪不属于铳。
+	if (types.indexOf("吉他") >= 0 || types.indexOf("乐器") >= 0) return "music";
+	if (types.indexOf("铳") >= 0) return "gun";
+	if (types.indexOf("弓") >= 0) return "bow";
+	if (types.indexOf("剑") >= 0) return "sword";
+	return "flight";
+};
+
+/** 兵装蓄力读取真实冷却，出手后按真实时间演出；不参与伤害与随机数结算。 */
+var createBackpackWeaponFlightFeedback = function (layer, getLayout, createSprite, createDamageNumber, createProjectiles) {
 	"use strict";
 	var latest = null, frameRequest = null, cursor = 0;
 	var seen = Object.create(null), effects = [];
 	var damageNumbers = [];
 	var reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)");
 	var PREPARE_TICKS = 50, FLIGHT_MS = 650, MAX_PREPARING = 10, MAX_FLYING = 10;
-	var DAMAGE_MS = 1100, MAX_DAMAGE_NUMBERS = 10;
+	var DAMAGE_MS = 1100, MAX_DAMAGE_NUMBERS = 24;
+	var DAMAGE_SLOTS = [9, 10, 5, 6, 13, 14, 8, 11, 4, 7, 12, 15, 1, 2, 17, 18, 0, 3, 16, 19, 21, 22, 20, 23];
 
-	var chooseOffset = function () {
-		var preparing = effects.filter(function (effect) { return effect.phase === "preparing"; });
-		var best = null, bestDistance = -1;
-		// 在扩大后的范围内随机挑选较空的位置，避免十件武器碰巧挤到同一小块。
-		for (var attempt = 0; attempt < 8; attempt++) {
-			var candidate = { x: Math.random() * 2 - 1, y: Math.random() * 2 - 1 };
-			var distance = preparing.reduce(function (nearest, effect) {
-				return Math.min(nearest, Math.pow(candidate.x - effect.offsetX, 2) + Math.pow(candidate.y - effect.offsetY, 2));
-			}, Infinity);
-			if (distance > bestDistance) { best = candidate; bestDistance = distance; }
-			if (!preparing.length) break;
-		}
-		return best;
+	var chooseAnchor = function (layout) {
+		var free = layout.anchors.map(function (_, index) { return index; }).filter(function (index) {
+			return !effects.some(function (effect) { return effect.phase === "preparing" && effect.anchorIndex === index; });
+		});
+		// 准备阶段独占点位，飞出后释放；未经过准备的即时攻击也只从这十处出现。
+		if (!free.length) free = layout.anchors.map(function (_, index) { return index; });
+		return free[Math.floor(Math.random() * free.length)];
 	};
 
 	var getPreparation = function (weapon) {
@@ -167,20 +172,9 @@ var createBackpackWeaponFlightFeedback = function (layer, getLayout, createSprit
 		return Math.sin(effect.elapsed / 1000 * Math.PI * 2 + effect.breathPhase) * .045;
 	};
 	var getOrigin = function (effect, layout, breath) {
-		var spread = layout.spread || { x: layout.size * .6, y: layout.size * .5 };
-		var margin = layout.size * .65;
-		var minX = layout.start.x - spread.x, maxX = layout.start.x + spread.x;
-		var minY = layout.start.y - spread.y, maxY = layout.start.y + spread.y;
-		if (layout.spawnBounds) {
-			minX = Math.max(minX, layout.spawnBounds.minX);
-			maxY = Math.min(maxY, layout.spawnBounds.maxY);
-		}
-		if (layout.width) { minX = Math.max(margin, minX); maxX = Math.max(minX, Math.min(layout.width - margin, maxX)); }
-		if (layout.height) { minY = Math.max(margin, minY); maxY = Math.max(minY, Math.min(layout.height - margin, maxY)); }
-		// 先裁定可用范围再映射随机数，不把越界随机点挤在同一条边缘上。
-		var x = minX + (effect.offsetX + 1) / 2 * (maxX - minX);
-		var y = minY + (effect.offsetY + 1) / 2 * (maxY - minY) + breath * layout.size;
-		return { x: x, y: y };
+		var anchor = layout.anchors[effect.anchorIndex];
+		return { x: anchor.x + effect.offsetX * layout.jitter.x,
+			y: anchor.y + effect.offsetY * layout.jitter.y + breath * layout.size };
 	};
 
 	var cancelFrame = function () {
@@ -189,12 +183,101 @@ var createBackpackWeaponFlightFeedback = function (layer, getLayout, createSprit
 		effects.forEach(function (effect) { effect.timestamp = null; });
 		damageNumbers.forEach(function (number) { number.timestamp = null; });
 	};
+	var removeEffect = function (effect) {
+		effect.element.remove();
+		effect.projectiles.forEach(function (element) { element.remove(); });
+	};
 	var clear = function () {
 		cancelFrame();
-		effects.forEach(function (effect) { effect.element.remove(); });
+		effects.forEach(removeEffect);
 		damageNumbers.forEach(function (number) { number.element.remove(); });
 		effects = [];
 		damageNumbers = [];
+	};
+	var place = function (element, x, y, angle, scale, opacity, mirror) {
+		element.style.opacity = String(Math.max(0, Math.min(1, opacity)));
+		element.style.transform = "translate3d(" + x.toFixed(2) + "px," + y.toFixed(2)
+			+ "px,0) translate(-50%,-50%) rotate(" + angle.toFixed(2) + "deg) scale("
+			+ (mirror ? (-scale).toFixed(3) + "," : "") + scale.toFixed(3) + ")";
+	};
+	var paintRanged = function (effect, layout, origin, preparing, reduce) {
+		var size = layout.weaponSize || layout.size, scale = size / effect.size;
+		var time = preparing ? 0 : effect.elapsed;
+		var dx = layout.end.x - origin.x, dy = layout.end.y - origin.y;
+		var distance = Math.max(1, Math.hypot(dx, dy)), ux = dx / distance, uy = dy / distance;
+		var aim = Math.atan2(dy, dx), degrees = 180 / Math.PI;
+		var charge = preparing ? effect.preparation : effect.launchCharge;
+		var opacity = preparing ? charge : 1 - Math.max(0, (time - 180) / 180);
+		// 快速后坐、缓慢复位；与飞行物使用同一个可暂停的真实时间时钟。
+		var kick = reduce || preparing ? 0 : (time < 40 ? time / 40 : Math.max(0, 1 - (time - 40) / 160));
+		var recoil = kick * size * (effect.kind === "gun" ? .13 : .08);
+		var x = origin.x - ux * recoil, y = origin.y - uy * recoil;
+		if (effect.kind === "gun") {
+			var muzzleX = Number(effect.element.dataset.muzzleX || 0) * scale;
+			var muzzleY = Number(effect.element.dataset.muzzleY || -effect.size * .4) * scale;
+			// 枪管素材朝上；补偿偏心枪口，使枪管轴线和激光都穿过怪物中心。
+			var angle = aim + Math.PI / 2 - Math.asin(Math.max(-1, Math.min(1, muzzleX / (distance + recoil))));
+			place(effect.element, x, y, angle * degrees, scale, opacity);
+			var muzzle = { x: x + Math.cos(angle) * muzzleX - Math.sin(angle) * muzzleY,
+				y: y + Math.sin(angle) * muzzleX + Math.cos(angle) * muzzleY };
+			var beam = effect.projectiles[0];
+			if (beam) {
+				var beamX = layout.end.x - muzzle.x, beamY = layout.end.y - muzzle.y;
+				beam.style.width = Math.hypot(beamX, beamY).toFixed(2) + "px";
+				beam.style.opacity = String(preparing ? 0 : Math.max(0, 1 - Math.max(0, (time - 140) / 100)));
+				beam.style.transform = "translate3d(" + muzzle.x.toFixed(2) + "px," + muzzle.y.toFixed(2)
+					+ "px,0) translateY(-50%) rotate(" + (Math.atan2(beamY, beamX) * degrees).toFixed(2)
+					+ "deg) scaleX(" + (reduce ? 1 : Math.min(1, time / 60)).toFixed(3) + ")";
+			}
+		} else if (effect.kind === "bow") {
+			// 弓身原图向左开弓，水平翻转后朝向目标；箭是独立图层，弓不飞出。
+			place(effect.element, x, y, aim * degrees, scale, opacity, true);
+			var arrow = effect.projectiles[0];
+			if (arrow) {
+				var length = size * .86, start = size * (.08 - charge * .18);
+				var travel = preparing ? 0 : reduce ? 1 : Math.pow(Math.min(1, time / FLIGHT_MS), 1.15);
+				var startX = origin.x + ux * start, startY = origin.y + uy * start;
+				arrow.style.width = length.toFixed(2) + "px";
+				arrow.style.height = (size * .16).toFixed(2) + "px";
+				place(arrow, startX + (layout.end.x - ux * length / 2 - startX) * travel,
+					startY + (layout.end.y - uy * length / 2 - startY) * travel, aim * degrees, 1, preparing ? charge : 1);
+			}
+		} else {
+			var playing = preparing || reduce ? 0 : Math.sin(time / 42) * 7 * Math.max(0, 1 - time / 360);
+			place(effect.element, origin.x, origin.y, effect.angle + playing, scale, opacity);
+			effect.projectiles.forEach(function (note, index) {
+				var age = time - index * 60, progress = Math.max(0, Math.min(1, age / 470));
+				var travel = reduce ? 1 : progress;
+				var spread = (index - 1.5) * size * .42;
+				var curve = reduce ? 0 : Math.sin(progress * Math.PI) * spread;
+				var noteSize = Math.max(9, size * (.24 + index % 2 * .05));
+				note.style.width = noteSize.toFixed(2) + "px";
+				note.style.height = noteSize.toFixed(2) + "px";
+				place(note, origin.x + dx * travel - uy * curve, origin.y + dy * travel + ux * curve,
+					reduce ? 0 : Math.sin(progress * Math.PI * 2 + index) * 16, 1,
+					preparing || age < 0 || progress >= 1 ? 0 : Math.min(1, age / 35));
+			});
+		}
+	};
+	var paintSword = function (effect, layout, origin, preparing, reduce) {
+		var size = layout.weaponSize || layout.size;
+		var target = layout.end;
+		if (!preparing) {
+			// 出手锁定两端，避免怪物呼吸 / 冲刺或勇士后仰把直线带弯；布局变化时重新对齐。
+			var path = effect.swordPath;
+			if (!path || path.width !== layout.width || path.height !== layout.height || path.size !== size) {
+				path = effect.swordPath = { origin: origin, end: { x: target.x, y: target.y },
+					width: layout.width, height: layout.height, size: size };
+			}
+			origin = path.origin;
+			target = path.end;
+		}
+		var dx = target.x - origin.x, dy = target.y - origin.y;
+		var travel = preparing ? 0 : reduce ? 1 : Math.pow(Math.min(1, effect.elapsed / FLIGHT_MS), 1.15);
+		// 剑尖原图朝上；准备期间随浮动校正朝向，飞出后保持同一朝向、不再自转。
+		var angle = Math.atan2(dy, dx) * 180 / Math.PI + 90;
+		place(effect.element, origin.x + dx * travel, origin.y + dy * travel, angle,
+			size / effect.size, preparing ? effect.preparation : 1);
 	};
 	var paint = function () {
 		if (!effects.length && !damageNumbers.length) return;
@@ -204,6 +287,8 @@ var createBackpackWeaponFlightFeedback = function (layer, getLayout, createSprit
 			var reduce = reducedMotion && reducedMotion.matches;
 			var preparing = effect.phase === "preparing";
 			var origin = getOrigin(effect, layout, preparing ? getBreath(effect) : effect.launchBreath);
+			if (effect.kind === "sword") { paintSword(effect, layout, origin, preparing, reduce); return; }
+			if (effect.kind !== "flight") { paintRanged(effect, layout, origin, preparing, reduce); return; }
 			var progress = preparing ? 0 : Math.min(1, effect.elapsed / FLIGHT_MS);
 			var travel = Math.pow(progress, 1.15);
 			var arcHeight = Math.max(0, Math.min(layout.size * .6, Math.min(origin.y, layout.end.y) - layout.size * .65));
@@ -211,7 +296,7 @@ var createBackpackWeaponFlightFeedback = function (layer, getLayout, createSprit
 			var x = reduce && !preparing ? layout.end.x : origin.x + (layout.end.x - origin.x) * travel;
 			var y = reduce && !preparing ? layout.end.y : origin.y + (layout.end.y - origin.y) * travel - arc;
 			var angle = reduce ? 0 : effect.angle + progress * 360;
-			var scale = layout.size / effect.size;
+			var scale = (layout.weaponSize || layout.size) / effect.size;
 			effect.element.style.opacity = String(preparing ? effect.preparation : 1);
 			effect.element.style.transform = "translate3d(" + x.toFixed(2) + "px," + y.toFixed(2)
 				+ "px,0) translate(-50%,-50%) rotate(" + angle.toFixed(2) + "deg) scale(" + scale.toFixed(3) + ")";
@@ -219,25 +304,33 @@ var createBackpackWeaponFlightFeedback = function (layer, getLayout, createSprit
 		damageNumbers.forEach(function (number) {
 			var progress = Math.min(1, number.elapsed / DAMAGE_MS);
 			var reduce = reducedMotion && reducedMotion.matches;
-			var stepY = layout.size * .4;
-			var baseY = layout.end.y - stepY * 1.5;
-			if (layout.height) baseY = Math.max(layout.size * .2, Math.min(layout.height - layout.size * .2 - stepY * 3, baseY));
-			var x = layout.end.x + (number.slot % 3 - 1) * layout.size * .75;
-			var y = baseY + Math.floor(number.slot / 3) * stepY;
+			var stepY = layout.size * .34;
+			if (layout.height) stepY = Math.min(stepY, Math.max(0, layout.height - layout.size * 1.05) / 5);
+			var baseY = layout.end.y - stepY * 2.5;
+			if (layout.height) baseY = Math.max(layout.size * .85, Math.min(layout.height - layout.size * .2 - stepY * 5, baseY));
+			var x = layout.end.x + (number.slot % 4 - 1.5) * layout.size * .58;
+			var y = baseY + Math.floor(number.slot / 4) * stepY;
 			if (!reduce) y -= progress * layout.size * .65;
 			number.element.style.opacity = String(1 - Math.max(0, (progress - .35) / .65));
-			number.element.style.transform = "translate3d(" + x.toFixed(2) + "px," + y.toFixed(2) + "px,0) translate(-50%,-50%)";
+			var densityScale = Math.max(.8, 1 - Math.max(0, damageNumbers.length - 10) * .015);
+			number.element.style.transform = "translate3d(" + x.toFixed(2) + "px," + y.toFixed(2)
+				+ "px,0) translate(-50%,-50%) scale(" + densityScale.toFixed(3) + ")";
 		});
 	};
 	var showDamage = function (effect, timestamp) {
 		if (effect.damage == null || !createDamageNumber) return;
 		if (damageNumbers.length >= MAX_DAMAGE_NUMBERS) damageNumbers.shift().element.remove();
-		var slot = [4, 3, 5, 7, 6, 8, 1, 0, 2, 10].find(function (candidate) {
+		var slot = DAMAGE_SLOTS.find(function (candidate) {
 			return !damageNumbers.some(function (number) { return number.slot === candidate; });
 		});
 		var element = createDamageNumber(effect.damage, effect.id);
 		layer.appendChild(element);
 		damageNumbers.push({ element: element, elapsed: 0, timestamp: timestamp, slot: slot });
+	};
+	var getAttackDamage = function (weapon) {
+		var result = weapon.lastAttackResult;
+		return result && result.sequence === weapon.attackSequence && result.hit
+			&& Number.isFinite(result.damage) ? Math.max(0, result.damage) : null;
 	};
 	var runFrame = function (timestamp) {
 		frameRequest = null;
@@ -253,9 +346,13 @@ var createBackpackWeaponFlightFeedback = function (layer, getLayout, createSprit
 		effects = effects.filter(function (effect) {
 			if (effect.timestamp != null) effect.elapsed += Math.max(0, timestamp - effect.timestamp);
 			effect.timestamp = timestamp;
-			if (effect.phase === "preparing" || effect.elapsed < FLIGHT_MS) return true;
-			showDamage(effect, timestamp);
-			effect.element.remove();
+			if (effect.phase === "preparing") return true;
+			if (!effect.damageShown && effect.elapsed >= (effect.kind === "gun" ? 60 : FLIGHT_MS)) {
+				showDamage(effect, timestamp);
+				effect.damageShown = true;
+			}
+			if (effect.elapsed < (effect.kind === "gun" ? 360 : FLIGHT_MS)) return true;
+			removeEffect(effect);
 			return false;
 		});
 		if (effects.length || damageNumbers.length) {
@@ -265,13 +362,13 @@ var createBackpackWeaponFlightFeedback = function (layer, getLayout, createSprit
 	};
 	var launch = function (effect, now, weapon) {
 		effect.launchBreath = getBreath(effect);
+		effect.launchCharge = effect.preparation == null ? 1 : effect.preparation;
 		effect.phase = effect.element.dataset.phase = "flying";
 		effect.elapsed = 0;
 		effect.timestamp = now;
-		var result = weapon.lastAttackResult;
 		// 锁定本次出手的数值；飞行期间发生的新攻击不能改写在途武器的伤害。
-		effect.damage = result && result.sequence === weapon.attackSequence && result.hit
-			&& Number.isFinite(result.damage) ? Math.max(0, result.damage) : null;
+		effect.attackSequence = weapon.attackSequence;
+		effect.damage = getAttackDamage(weapon);
 	};
 	var update = function (snapshot) {
 		latest = snapshot;
@@ -298,7 +395,7 @@ var createBackpackWeaponFlightFeedback = function (layer, getLayout, createSprit
 			}
 			var preparation = weapon && !changed[effect.id] ? getPreparation(weapon) : null;
 			if (preparation != null) { effect.preparation = preparation; return true; }
-			effect.element.remove();
+			removeEffect(effect);
 			return false;
 		});
 		var preparing = countPhase("preparing");
@@ -310,12 +407,18 @@ var createBackpackWeaponFlightFeedback = function (layer, getLayout, createSprit
 			if (isAttack ? flying >= MAX_FLYING : preparation == null || preparing >= MAX_PREPARING) continue;
 			layout = layout || getLayout();
 			if (!layout) break;
-			var element = createSprite(weapon, layout.size);
+			var weaponSize = layout.weaponSize || layout.size;
+			var kind = getBackpackWeaponAttackKind(weapon);
+			var element = createSprite(weapon, weaponSize, kind);
 			layer.appendChild(element);
-			var offsetPosition = chooseOffset();
+			var projectiles = ["gun", "bow", "music"].indexOf(kind) >= 0 && createProjectiles ? createProjectiles(kind, weapon) : [];
+			projectiles.forEach(function (projectile) { layer.appendChild(projectile); });
+			var anchorIndex = chooseAnchor(layout);
+			element.dataset.anchor = String(anchorIndex);
+			element.dataset.attackKind = kind;
 			// 仅使用表现层随机位置，不调用 core.randBattle，也不在每帧重新随机。
-			var effect = { id: id, element: element, elapsed: 0, timestamp: now, size: layout.size,
-				offsetX: offsetPosition.x, offsetY: offsetPosition.y,
+			var effect = { id: id, element: element, kind: kind, projectiles: projectiles, elapsed: 0, timestamp: now, size: weaponSize,
+				anchorIndex: anchorIndex, offsetX: Math.random() * 2 - 1, offsetY: Math.random() * 2 - 1,
 				angle: Math.random() * 28 - 14, breathPhase: Math.random() * Math.PI * 2,
 				phase: "preparing", preparation: preparation };
 			if (isAttack) { launch(effect, now, weapon); flying++; }
@@ -323,6 +426,14 @@ var createBackpackWeaponFlightFeedback = function (layer, getLayout, createSprit
 			effects.push(effect);
 			cursor = index + 1;
 		}
+		weapons.forEach(function (weapon) {
+			if (!changed[weapon.instanceId]) return;
+			// 有对应演出时仍在弹道命中时跳字；连击或超过动画上限时独立显示，不能一起吞掉。
+			var hasFlight = effects.some(function (effect) {
+				return effect.id === weapon.instanceId && effect.phase === "flying" && effect.attackSequence === weapon.attackSequence;
+			});
+			if (!hasFlight) showDamage({ id: weapon.instanceId, damage: getAttackDamage(weapon) }, now);
+		});
 		if (effects.length || damageNumbers.length) {
 			paint();
 			if (frameRequest == null) frameRequest = requestAnimationFrame(runFrame);

@@ -6,48 +6,43 @@
 }
 #weapon-compendium-root .weapon-compendium-panel {
   width: min(1160px,100%); height: min(920px,calc(var(--game-ui-height, 100vh) - 28px)); height: min(920px,calc(var(--game-ui-height, 100dvh) - 28px));
-  padding: 20px 22px 20px; box-sizing: border-box; overflow: visible;
+  padding: 14px 22px 16px; box-sizing: border-box; overflow: visible;
   border: 0; border-radius: 0; background: transparent; box-shadow: none;
   filter: drop-shadow(0 18px 30px rgba(32,67,88,.22));
 }
 #weapon-compendium-root .weapon-compendium-header {
-  display: block; flex: none; padding: 8px 112px 16px; border: 0; background: transparent; text-align: center;
+  display: grid; grid-template-columns: minmax(140px,1fr) minmax(0,2.2fr) 88px; align-items: center;
+  flex: none; gap: 12px; padding: 0 6px 8px; border: 0; background: transparent; text-align: left;
 }
-.weapon-compendium-eyebrow { color: #8a703d; font-size: 10px; letter-spacing: .3em; }
 #weapon-compendium-root .weapon-compendium-title {
-  margin: 3px 0 0; color: #214b70; font: bold 32px/1.2 'Noto Serif SC','Songti SC','SimSun',serif; letter-spacing: .14em;
-}
-.weapon-compendium-header p { margin: 6px 0 0; color: #58778b; font-size: 12px; }
-.weapon-compendium-header:after {
-  content: '◇'; position: absolute; bottom: 0; left: 18%; width: 64%; color: #b49754; font-size: 19px; line-height: 16px;
-  background: linear-gradient(90deg,transparent,#dac58a 43%,transparent 43%,transparent 57%,#dac58a 57%,transparent) center/100% 1px no-repeat;
+  margin: 0; color: #214b70; font: 600 24px/1.2 var(--weapon-serif,'Noto Serif SC','Songti SC',serif); letter-spacing: .1em;
 }
 #weapon-compendium-root .weapon-compendium-close {
-  position: absolute; right: 3px; top: 15px; width: 98px; height: 44px; padding: 6px 19px;
-  border: 0; border-radius: 0; background: transparent; color: #fff5cf; font-size: 18px;
+  position: relative; width: 88px; height: 38px; padding: 4px 16px;
+  border: 0; border-radius: 0; background: transparent; color: #fff5cf; font-size: 16px;
 }
 #weapon-compendium-root .weapon-compendium-summary {
-  display: flex; flex: none; gap: 12px; width: auto; padding: 12px 6px 2px; order: initial;
+  display: flex; gap: 8px; min-width: 0; width: auto; padding: 0; order: initial;
   color: #58778b; white-space: normal;
 }
 .weapon-compendium-stat {
   flex: 1; min-width: 0; display: grid; grid-template-columns: 1fr auto; align-items: baseline;
-  column-gap: 12px; padding: 14px 22px 13px; box-sizing: border-box; font-size: 12px;
+  column-gap: 6px; padding: 8px 14px 7px; box-sizing: border-box; font-size: 11px;
 }
-.weapon-compendium-stat strong { color: #214b70; font: bold 23px/1 Arial,sans-serif; font-variant-numeric: lining-nums tabular-nums; }
-.weapon-compendium-stat strong small { color: #728894; font-size: 13px; font-weight: normal; }
-.weapon-compendium-progress { grid-column: 1/-1; height: 2px; margin-top: 8px; background: rgba(152,175,182,.25); }
+.weapon-compendium-stat strong { color: #214b70; font: bold 17px/1 Arial,sans-serif; font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; }
+.weapon-compendium-stat strong small { color: #728894; font-size: 11px; font-weight: normal; }
+.weapon-compendium-progress { grid-column: 1/-1; height: 2px; margin-top: 4px; background: rgba(152,175,182,.25); }
 .weapon-compendium-progress i { display: block; height: 100%; background: linear-gradient(90deg,#b78e46,#f1d98e); }
 #weapon-compendium-root .weapon-compendium-toolbar {
-  display: grid; flex: none; grid-template-columns: minmax(200px,1.5fr) repeat(4,minmax(0,1fr));
-  gap: 12px; padding: 13px 10px 14px; border: 0; background: transparent;
+  display: grid; flex: none; grid-template-columns: minmax(130px,1.35fr) repeat(4,minmax(0,1fr));
+  gap: 8px; padding: 0 6px 8px; border: 0; background: transparent;
 }
-#weapon-compendium-root .weapon-compendium-control { display: flex; flex-direction: column; align-items: stretch; gap: 5px; min-width: 0; color: #58778b; font-size: 11px; }
+#weapon-compendium-root .weapon-compendium-control { display: flex; flex-direction: column; align-items: stretch; gap: 3px; min-width: 0; color: #58778b; font-size: 11px; }
 #weapon-compendium-root .weapon-compendium-control > span { padding-left: 3px; }
 #weapon-compendium-root .weapon-compendium-control select,
 #weapon-compendium-root .weapon-compendium-search {
-  appearance: auto; width: 100%; min-width: 0; max-width: none; height: 36px; box-sizing: border-box;
-  padding: 6px 9px; border: 1px solid #c7b885; border-radius: 2px;
+  appearance: auto; flex: none; width: 100%; min-width: 0; max-width: none; height: 32px; box-sizing: border-box;
+  padding: 4px 7px; border: 1px solid #c7b885; border-radius: 2px;
   outline: 0; background: rgba(255,255,245,.72); color: #214b70; font: 12px 'Microsoft YaHei',sans-serif;
   box-shadow: inset 0 0 0 2px rgba(255,255,255,.65); transition: border-color .15s,box-shadow .15s;
 }
@@ -59,10 +54,10 @@
 #weapon-compendium-root .weapon-compendium-grid { padding: 0 6px 8px; scrollbar-width: thin; scrollbar-color: #c3ad72 rgba(108,153,173,.12); }
 #weapon-compendium-root .weapon-compendium-group { margin: 0 0 20px; }
 #weapon-compendium-root .weapon-compendium-group-header {
-  padding: 9px 12px 10px; border: 0; border-bottom: 1px solid #cbbb8e;
+  padding: 5px 10px 6px; margin-bottom: 8px; border: 0; border-bottom: 1px solid #cbbb8e;
   background: linear-gradient(90deg,#e6f2f6,#f5f8ef); box-shadow: 0 4px 8px rgba(73,113,135,.06);
 }
-#weapon-compendium-root .weapon-compendium-group-title { color: #214b70; font: bold 20px/1.25 'Noto Serif SC','Songti SC','SimSun',serif; }
+#weapon-compendium-root .weapon-compendium-group-title { color: #214b70; font: 600 18px/1.25 var(--weapon-serif,'Noto Serif SC','Songti SC',serif); }
 .weapon-compendium-group-title:before { content: '◆'; color: #c1a363; font: 11px sans-serif; margin-right: 10px; vertical-align: 2px; }
 #weapon-compendium-root .weapon-compendium-group-progress { color: #68838e; font: 11px/1.5 Arial,'Microsoft YaHei',sans-serif; font-variant-numeric: lining-nums tabular-nums; }
 #weapon-compendium-root .weapon-compendium-group-progress b { color: #997537; font-size: 13px; }
@@ -82,23 +77,21 @@
 #weapon-compendium-root .weapon-compendium-rewards { margin: 0 8px 10px; padding: 5px 0; background: transparent; border-color: #d5c898; }
 #weapon-compendium-root .weapon-compendium-reward { color: #718c99; border-color: #c7bd96; border-radius: 2px; }
 #weapon-compendium-root .weapon-compendium-reward.claimed { color: #946d30; background: #fff4ce; }
-@container game-modal (max-width: 960px) {
-  #weapon-compendium-root .weapon-compendium-toolbar { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; }
-  #weapon-compendium-root .weapon-compendium-search-control { grid-column: 1/-1; flex-direction: row; align-items: center; }
-  #weapon-compendium-root .weapon-compendium-search-control > span { flex: 0 0 60px; }
-}
 @container game-modal (max-width: 700px) {
 
-  #weapon-compendium-root .weapon-compendium-panel { padding: 19px 12px 13px; height: calc(var(--game-ui-height, 100dvh) - 12px); }
-  #weapon-compendium-root .weapon-compendium-header { padding: 7px 94px 15px 10px; text-align: left; }
-  #weapon-compendium-root .weapon-compendium-title { font-size: 27px; }
-  .weapon-compendium-header p { font-size: 10px; }
-  #weapon-compendium-root .weapon-compendium-close { top: 15px; right: 0; width: 86px; }
-  #weapon-compendium-root .weapon-compendium-summary { gap: 6px; padding: 10px 2px 0; }
-  .weapon-compendium-stat { display: block; padding: 12px 16px; font-size: 10px; }
-  .weapon-compendium-stat strong { display: block; margin-top: 5px; font-size: 22px; }
-  #weapon-compendium-root .weapon-compendium-toolbar { grid-template-columns: repeat(2,minmax(0,1fr)); padding: 10px 6px; }
-  #weapon-compendium-root .weapon-compendium-control { gap: 3px; }
+  #weapon-compendium-root .weapon-compendium-panel { padding: 12px 12px 13px; height: calc(var(--game-ui-height, 100dvh) - 12px); }
+  #weapon-compendium-root .weapon-compendium-header { grid-template-columns: minmax(0,1fr) 76px; gap: 6px; padding: 0 4px 8px; }
+  #weapon-compendium-root .weapon-compendium-title { font-size: 22px; }
+  #weapon-compendium-root .weapon-compendium-close { grid-column: 2; grid-row: 1; width: 76px; height: 34px; font-size: 14px; }
+  #weapon-compendium-root .weapon-compendium-summary { grid-column: 1/-1; grid-row: 2; gap: 6px; }
+  .weapon-compendium-stat { padding: 7px 12px 6px; font-size: 10px; }
+  .weapon-compendium-stat strong { font-size: 16px; }
+  .weapon-compendium-stat strong small { font-size: 10px; }
+  #weapon-compendium-root .weapon-compendium-toolbar { grid-template-columns: repeat(2,minmax(0,1fr)); padding: 0 4px 8px; gap: 6px; }
+  #weapon-compendium-root .weapon-compendium-search-control { grid-column: 1/-1; }
+  #weapon-compendium-root .weapon-compendium-control > span { display: none; }
+  #weapon-compendium-root .weapon-compendium-control select,
+  #weapon-compendium-root .weapon-compendium-search { height: 36px; }
   #weapon-compendium-root .weapon-compendium-grid { padding: 0 2px 8px; }
   #weapon-compendium-root .weapon-compendium-group-grid { grid-template-columns: minmax(0,1fr); gap: 8px; }
   #weapon-compendium-root .weapon-compendium-group-header { flex-wrap: wrap; gap: 3px; padding: 8px; }
@@ -116,16 +109,9 @@
   #weapon-compendium-root .weapon-card-details { grid-column: 1/-1; margin: 0; }
 }
 @container game-modal (max-height: 550px) and (min-width: 701px) {
-  #weapon-compendium-root .weapon-compendium-panel { padding-top: 14px; padding-bottom: 12px; }
-  .weapon-compendium-eyebrow, .weapon-compendium-header p { display: none; }
-  #weapon-compendium-root .weapon-compendium-header { padding-top: 4px; padding-bottom: 12px; }
-  #weapon-compendium-root .weapon-compendium-title { font-size: 26px; }
-  #weapon-compendium-root .weapon-compendium-close { top: 0; }
-  #weapon-compendium-root .weapon-compendium-summary { padding-top: 6px; }
-  .weapon-compendium-stat { padding-top: 10px; padding-bottom: 9px; }
-  #weapon-compendium-root .weapon-compendium-toolbar { grid-template-columns: minmax(140px,1.3fr) repeat(4,minmax(0,1fr)); padding-top: 6px; padding-bottom: 8px; }
-  #weapon-compendium-root .weapon-compendium-search-control { grid-column: auto; flex-direction: column; align-items: stretch; }
-  #weapon-compendium-root .weapon-compendium-search-control > span { flex: initial; }
+  #weapon-compendium-root .weapon-compendium-panel { padding-top: 10px; padding-bottom: 12px; }
+  #weapon-compendium-root .weapon-compendium-header { padding-bottom: 6px; }
+  #weapon-compendium-root .weapon-compendium-control > span { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   #weapon-compendium-root input, #weapon-compendium-root select { transition: none; }

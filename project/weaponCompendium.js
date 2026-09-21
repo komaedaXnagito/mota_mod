@@ -682,10 +682,6 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 		panel.className = "weapon-compendium-panel";
 		var header = document.createElement("header");
 		header.className = "weapon-compendium-header";
-		var eyebrow = document.createElement("span");
-		eyebrow.className = "weapon-compendium-eyebrow";
-		eyebrow.textContent = "兵装 · 收藏录";
-		header.appendChild(eyebrow);
 		var title = document.createElement("h1");
 		title.className = "weapon-compendium-title";
 		title.textContent = "武器图鉴";
@@ -717,12 +713,9 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 		close.setAttribute("aria-label", "关闭武器图鉴");
 		close.textContent = "返回";
 		header.appendChild(title);
-		var subtitle = document.createElement("p");
-		subtitle.textContent = "铭记旅途中的每一件兵装";
-		header.appendChild(subtitle);
+		header.appendChild(summary);
 		header.appendChild(close);
 		panel.appendChild(header);
-		panel.appendChild(summary);
 
 		var toolbar = document.createElement("div");
 		toolbar.className = "weapon-compendium-toolbar";
