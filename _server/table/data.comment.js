@@ -31,12 +31,12 @@ var data_comment_c456ea59_6018_45ef_8bcc_211a24c627dc = {
 					"_range": "editor.mode.checkImages(thiseval, './project/images/')",
 					"_directory": "./project/images/",
 					"_transform": (function (one) {
-						if (one.endsWith('.png') || one.endsWith('.jpg') || one.endsWith('.jpeg') || one.endsWith('.gif'))
+						if (fs.isImageFile(one))
 							return one;
 						return null;
 					}).toString(),
 					"_docs": "使用图片",
-					"_data": "在此存放所有可能使用的图片（tilesets除外） \n图片可以被作为背景图（的一部分），也可以直接用自定义事件进行显示。 \n 图片名不能使用中文，不能带空格或特殊字符；可以直接改名拼音就好 \n 建议对于较大的图片，在网上使用在线的“图片压缩工具(http://compresspng.com/zh/)”来进行压缩，以节省流量 \n 依次向后添加",
+					"_data": "在此存放所有可能使用的图片（tilesets除外）。支持png、jpg、jpeg、gif、webp（小写后缀）。\n支持project/images下的多级子文件夹，保存相对路径，例如characters/hero.webp。\n文件名和文件夹名只能使用英文字母、数字、下划线、横线和点，不能使用中文、空格或上级目录。\n图片可以作为背景图，或通过自定义事件显示；大图建议压缩以节省流量。",
 				},
 				"splitImages": {
 					"_leaf": true,
@@ -210,7 +210,7 @@ var data_comment_c456ea59_6018_45ef_8bcc_211a24c627dc = {
 							"_type": "select",
 							"_select": {
 								"values": [null].concat(Object.keys(editor.core.material.images.images).filter(function (name) {
-									return name.endsWith('.png');
+									return /\.(png|webp)$/.test(name);
 								}))
 							},
 							"_data": "行走图"

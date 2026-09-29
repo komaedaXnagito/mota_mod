@@ -2245,7 +2245,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		document.body.addEventListener("keyup", backpackGuideKeyHandler, true);
 		try {
 			backpackGuideTour = new GuidesConstructor({
-				color: "#f2c86f",
+				color: "#dac58a",
 				distance: 36,
 				className: "bb-battle-guide backpack-guide",
 				guides: guides,

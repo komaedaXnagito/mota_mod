@@ -43,6 +43,8 @@ def is_sub(filename):
 		return True
 
 def get_mimetype(path):
+	if path.lower().endswith('.webp'):
+		return 'image/webp'
 	return mimetypes.guess_type(path)[0] or 'application/octet-stream'
 
 def get_file(path):
@@ -175,6 +177,32 @@ def listFile():
 		for f in os.listdir(filename)
 		if os.path.isfile(os.path.join(filename, f))]
 	return "[" + ", ".join(['"'+f+'"' for f in files]) + "]"
+
+@app.route('/listDirectoryRecursive', methods=['POST'])
+def listDirectoryRecursive():
+	filename = process_request().get('name', None)
+	if filename is None or not os.path.isdir(filename):
+		abort(404)
+	if not is_sub(filename):
+		abort(403)
+	files = []
+	visited = set()
+	def visit(directory, prefix):
+		real = os.path.normcase(os.path.realpath(directory))
+		if real in visited or not is_sub(directory):
+			return
+		visited.add(real)
+		for entry in os.listdir(directory):
+			full = os.path.join(directory, entry)
+			if os.path.islink(full) or not is_sub(full):
+				continue
+			name = prefix + entry
+			if os.path.isdir(full):
+				visit(full, name + '/')
+			elif os.path.isfile(full):
+				files.append(name)
+	visit(filename, '')
+	return Response(json.dumps(sorted(files)), mimetype='application/json')
 
 @app.route('/makeDir', methods=['POST'])
 def makeDir():

@@ -265,8 +265,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		root.querySelector(".bb-exit").onclick = exitBattle;
 		nodes.logFilter.onchange = function () { if (latestSnapshot) renderLog(latestSnapshot, true); };
 		var careerSelect = core.plugin && core.plugin.careerSelect;
-		var careerId = core.getFlag && core.getFlag("kaiju");
-		var career = careerSelect && careerSelect.getCareers().find(function (item) { return item.id === careerId; });
+		var career = careerSelect && careerSelect.getCurrentAppearance();
 		if (career && career.portrait) {
 			var playerArt = nodes.playerArt;
 			playerArt.onload = function () {
@@ -1007,7 +1006,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		document.body.classList.add("bb-battle-guide-active");
 		try {
 			guideTour = new GuidesConstructor({
-				color: "#f2c86f",
+				color: "#dac58a",
 				distance: 36,
 				className: "bb-battle-guide",
 				guides: guides,

@@ -2030,14 +2030,15 @@ body.backpack-drag-selection-locked * {
 .backpack-guide-target-proxy {
 	position: fixed;
 	box-sizing: border-box;
-	border-radius: 9px;
+	border-radius: 4px;
 	pointer-events: none;
 }
 
 .bb-guide-target-proxy.guides-current-element,
 .backpack-guide-target-proxy.guides-current-element {
 	position: fixed;
-	box-shadow: 0 0 0 9999px rgba(3, 5, 8, .78), 0 0 0 3px rgba(242, 200, 111, .9);
+	box-shadow: 0 0 0 9999px rgba(33, 65, 91, .48), 0 0 0 2px #dac58a,
+		inset 0 0 0 1px rgba(255, 248, 216, .9), 0 0 14px rgba(255, 225, 138, .55);
 }
 
 body.bb-battle-guide-active .guides-overlay,
@@ -2074,21 +2075,62 @@ body.backpack-guide-active .guides-fade-in {
 .guides-guide.bb-battle-guide>span {
 	max-width: min(390px, calc(var(--game-ui-width, 100vw) - 32px));
 	box-sizing: border-box;
-	padding: 13px 15px;
-	border: 1px solid #d0a96a;
-	border-radius: 10px;
-	background: linear-gradient(145deg, #382d22, #171514);
-	box-shadow: 0 12px 34px rgba(0, 0, 0, .75);
-	color: #fff1d4;
-	font: 600 14px/1.6 'Microsoft YaHei', sans-serif;
+	padding: 24px 22px 18px;
+	border: 1px solid #dac58a;
+	border-radius: 0;
+	background: linear-gradient(180deg, #eef9fd, #e7f5f7 50%, #fffce7);
+	box-shadow: none;
+	filter: drop-shadow(0 6px 12px rgba(33, 75, 112, .22));
+	color: var(--weapon-ink, #214b70);
+	font: 400 14px/1.7 'Tower Battle Serif', 'Noto Serif SC', 'Songti SC', 'SimSun', serif;
+	font-synthesis: none;
 	text-shadow: none;
+	scrollbar-width: none;
+}
+
+.guides-guide.bb-battle-guide>span.fantasy-ui-surface {
+	border: 0;
+	background: transparent;
+}
+
+.bb-guide-content {
+	display: block;
+	padding-bottom: 2px;
+	overflow: auto;
+	overflow-wrap: anywhere;
+	overscroll-behavior: contain;
+	scrollbar-width: none;
+}
+
+/* 覆盖全局滚动条主题；保留触摸/滚轮滚动，避免极矮屏截断正文。 */
+.guides-guide.bb-battle-guide>span::-webkit-scrollbar,
+.guides-guide.bb-battle-guide .bb-guide-content::-webkit-scrollbar {
+	display: none !important;
+	width: 0 !important;
+	height: 0 !important;
+}
+
+.guides-guide.bb-battle-guide>svg {
+	filter: drop-shadow(0 1px 1px #214b70);
+	pointer-events: none;
 }
 
 .bb-guide-progress {
 	display: block;
-	margin-top: 5px;
-	color: #c6a96f;
-	font: 500 11px/1.2 sans-serif;
+	margin-top: 10px;
+	padding-top: 7px;
+	border-top: 1px solid rgba(218, 197, 138, .65);
+	color: var(--weapon-muted, #58778b);
+	font: 500 11px/1.3 'Battle Noto Numbers', Arial, sans-serif;
+	font-variant-numeric: lining-nums tabular-nums;
+	text-align: right;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	body.bb-battle-guide-active .guides-fade-in,
+	body.backpack-guide-active .guides-fade-in {
+		animation: none;
+	}
 }
 
 body.bb-battle-guide-await-resume .guides-canvas {

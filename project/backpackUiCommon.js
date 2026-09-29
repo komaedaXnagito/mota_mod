@@ -336,7 +336,17 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	/** Guides 使用视口坐标画箭头；保留坐标系，只收拢提示并裁剪遮罩。 */
 	var bindGuideViewport = function (canvas) {
 		if (!canvas) return function () {};
+		var theme = weaponTheme();
+		var surfaces = new Map();
+		var releaseSurface = function (surface) {
+			if (theme) theme.releaseTree(surface);
+			surfaces.delete(surface);
+		};
 		var sync = function (viewport) {
+			// Guides 切步和窗口缩放都会替换提示节点，及时释放旧金框的尺寸观察器。
+			surfaces.forEach(function (_, surface) {
+				if (!canvas.contains(surface)) releaseSurface(surface);
+			});
 			var scale = viewport.scale, left = viewport.left, top = viewport.top;
 			var right = left + viewport.width * scale, bottom = top + viewport.height * scale;
 			canvas.style.clipPath = "inset(" + top + "px " + Math.max(0, window.innerWidth - right)
@@ -349,9 +359,18 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 			canvas.querySelectorAll(".guides-guide").forEach(function (guide) {
 				var copy = guide.querySelector("span");
 				if (copy) {
+					var content = surfaces.get(copy);
+					if (!content) {
+						content = document.createElement("span");
+						content.className = "bb-guide-content";
+						while (copy.firstChild) content.appendChild(copy.firstChild);
+						copy.appendChild(content);
+						surfaces.set(copy, content);
+						if (theme) theme.decorate(copy, { radius: 16, crest: true });
+					}
 					copy.style.maxWidth = Math.min(390, viewport.width - 96) + "px";
-					copy.style.maxHeight = Math.max(40, viewport.height - 96) + "px";
-					copy.style.overflow = "auto";
+					// 只滚动正文，凹角金框和顶部徽记保持固定。
+					content.style.maxHeight = Math.max(40, viewport.height - 140) + "px";
 				}
 				guide.style.transformOrigin = "top left";
 				guide.style.transform = "scale(" + scale + ")";
@@ -367,7 +386,11 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 			if (viewport) sync(viewport);
 		});
 		observer.observe(canvas, { childList: true, subtree: true });
-		return function () { release(); observer.disconnect(); };
+		return function () {
+			release();
+			observer.disconnect();
+			surfaces.forEach(function (_, surface) { releaseSurface(surface); });
+		};
 	};
 
 	/** 丢弃已被外部代码移除的弹层，避免失效节点继续拦截键盘。 */

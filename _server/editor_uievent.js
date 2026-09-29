@@ -531,6 +531,11 @@ editor_uievent_wrapper = function (editor) {
 
     // ------ 素材选择框 ------ //
     uievent.selectMaterial = function (value, title, directory, transform, callback) {
+        var recursive = fs.isImagesDirectory(directory);
+        if (typeof value == 'string') {
+            try { value = JSON.parse(value); } catch (e) { /* 单张图片名也可直接传入 */ }
+        }
+        value = Array.isArray(value) ? value : (value ? [value] : []);
         var one = directory.split(':');
         if (one.length > 1) directory = one[0];
         var appendedImages = one[1] == 'images' ? core.material.images.images : {};
@@ -546,6 +551,16 @@ editor_uievent_wrapper = function (editor) {
             }
             value = value || [];
             data = (transform ? data.map(transform) : data).filter(function (one) { return one; }).sort();
+            // 旧服务无法扫描子目录时保留已注册的子目录图片，避免确认选择时丢失配置。
+            if (recursive && fs.supportsRecursive === false) {
+                value.forEach(function (name) {
+                    if (fs.isValidMaterialPath(name, true) && fs.isImageFile(name)
+                        && name.indexOf('/') >= 0 && data.indexOf(name) < 0 && (!transform || transform(name))) {
+                        data.push(name);
+                    }
+                });
+                data.sort();
+            }
             var data2 = Object.keys(appendedImages);
             data2 = (transform ? data2.map(transform) : data2).filter(function (one) {
                 return one && data.indexOf(one) < 0;
@@ -587,7 +602,7 @@ editor_uievent_wrapper = function (editor) {
                 var disabled = _isTileset && value.indexOf(one) >= 0 ? 'disabled' : ''
                 html += `<input type="checkbox" key="${one}" class="materialCheckbox" ${checked} ${disabled}/> ${one}`;
                 // 预览图片
-                if (one.endsWith('.png') || one.endsWith('.jpg') || one.endsWith('.jpeg') || one.endsWith('.gif')) {
+                if (fs.isImageFile(one)) {
                     html += "<button onclick='editor.uievent._previewMaterialImage(this)' style='margin-left: 10px'>预览</button>";
                     html += '<br style="display:none"/><img key="' + directory + one + '" style="display:none; max-width: 100%"/>';
                 }
@@ -611,15 +626,19 @@ editor_uievent_wrapper = function (editor) {
                 var disabled = _isTileset && value.indexOf(one) >= 0 ? 'disabled' : '';
                 html += `<input type="checkbox" key="${one}" class="materialCheckbox" ${checked} ${disabled}/> ${one}`;
                 // 预览图片
-                if (one.endsWith('.png') || one.endsWith('.jpg') || one.endsWith('.jpeg') || one.endsWith('.gif')) {
+                if (fs.isImageFile(one)) {
                     html += "<button onclick='editor.uievent._previewMaterialImage2(this)' style='margin-left: 10px'>预览</button>";
                     html += '<br style="display:none" key="' + one + '"/><br/>';
                 }
             })
             html += "</p>";
-            html += "<p style='margin-left: 10px'><small>如果文件未在此列表显示，请检查文件名是否合法（只能由数字字母下划线横线和点组成），后缀名是否正确。</small></p>";
+            if (recursive && fs.supportsRecursive === false) {
+                html += "<p style='margin-left: 10px; color: #c33'>当前启动服务不支持扫描子文件夹，仅显示根目录及已选的子目录图片。请在项目目录运行 node server.js 或 python server.py，并使用该服务显示的编辑器地址。</p>";
+            }
+            html += "<p style='margin-left: 10px'><small>文件名和文件夹名只能由数字、英文字母、下划线、横线和点组成。" +
+                (recursive ? "图片支持 png、jpg、jpeg、gif、webp（小写后缀）；子文件夹以 / 分隔。" : "请检查后缀名是否正确。") + "</small></p>";
             uievent.elements.extraBody.innerHTML = html;
-        });
+        }, recursive);
     }
 
     uievent._selectAllMaterial = function (checked) {

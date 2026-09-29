@@ -467,7 +467,7 @@ editor_table_wrapper = function (editor) {
 
     editor_table.prototype.selectMaterial = function (input, cobj) {
         editor.uievent.selectMaterial(input.value, cobj._docs || cobj._data || '请选择素材', cobj._directory, function (one) {
-            if (!/^[-A-Za-z0-9_.]+$/.test(one)) return null;
+            if (!fs.isValidMaterialPath(one, fs.isImagesDirectory(cobj._directory))) return null;
             if (cobj._transform) return eval("("+cobj._transform+")(one)");
             return one;
         }, function (data) {

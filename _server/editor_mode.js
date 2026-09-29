@@ -188,20 +188,30 @@ editor_mode = function (editor) {
     editor_mode.prototype.checkImages = function (thiseval, directory) {
         if (!directory) return true;
         if (!editor_mode.checkUnique(thiseval)) return false;
-        fs.readdir(directory, function (err, data) {
-            if (err) {
-                printe(err);
-                throw Error(err);
-            }
-            var notExist = null;
-            thiseval.map(function (v) {
-                var name = v.indexOf('.') < 0 ? (v+'.png') : v;
-                if (data.indexOf(name) < 0) notExist = name;
-                return name;
+        var allowSubfolders = fs.isImagesDirectory(directory);
+        if (!thiseval.every(function (name) { return fs.isValidMaterialPath(name, allowSubfolders); })) {
+            alert('图片路径不合法：只能使用英文字母、数字、下划线、横线和点；子文件夹以 / 分隔，不能使用上级目录。');
+            return false;
+        }
+        // 按所在目录校验，兼容仅支持单层列目录的旧版启动服务。
+        var groups = Object.create(null);
+        thiseval.forEach(function (v) {
+            var name = v.indexOf('.') < 0 ? v + '.png' : v;
+            var slash = name.lastIndexOf('/') + 1;
+            var parent = name.substring(0, slash);
+            (groups[parent] || (groups[parent] = [])).push(name.substring(slash));
+        });
+        Object.keys(groups).forEach(function (parent) {
+            fs.readdir(directory.replace(/\/?$/, '/') + parent, function (err, data) {
+                if (err) {
+                    printe('无法检查图片目录 ' + directory + parent + '：' + err);
+                    return;
+                }
+                var missing = groups[parent].filter(function (name) { return data.indexOf(name) < 0; });
+                if (missing.length) {
+                    alert('警告！图片' + parent + missing[0] + '不存在！保存可能导致工程无法打开，请及时修改！');
+                }
             });
-            if (notExist) {
-                alert('警告！图片' + notExist + '不存在！保存可能导致工程无法打开，请及时修改！');
-            }
         });
         return true;
     }

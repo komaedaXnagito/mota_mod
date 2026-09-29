@@ -6,17 +6,21 @@ var fantasyUI_6f31b8ea_7c4d_4b67_a215_03b247f8e903 = (function () {
 	var UI_SERIF = "'Noto Serif SC', 'Songti SC', 'SimSun', serif";
 	var UI_SANS = "'Microsoft YaHei', sans-serif";
 
-	var drawLabelOn = function (context, text, x, y, size, color, align, weight, serif) {
+	var drawLabelOn = function (context, text, x, y, size, color, align, weight, serif, textBaseline) {
 		context.save();
 		context.font = (weight || "normal") + " " + size + "px " + (serif ? UI_SERIF : UI_SANS);
 		context.fillStyle = color || UI_INK;
 		context.textAlign = align || "left";
-		context.textBaseline = "alphabetic";
+		context.textBaseline = textBaseline || "alphabetic";
 		var value = String(text);
-		var metrics = context.measureText(value);
-		var ascent = metrics.actualBoundingBoxAscent || size * 0.78;
-		var descent = metrics.actualBoundingBoxDescent || size * 0.22;
-		context.fillText(value, x, y + (ascent - descent) / 2);
+		// 动态文字可指定固定基线；未指定时保留标签原有的字形视觉居中。
+		if (!textBaseline) {
+			var metrics = context.measureText(value);
+			var ascent = metrics.actualBoundingBoxAscent || size * 0.78;
+			var descent = metrics.actualBoundingBoxDescent || size * 0.22;
+			y += (ascent - descent) / 2;
+		}
+		context.fillText(value, x, y);
 		context.restore();
 	};
 

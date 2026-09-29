@@ -273,7 +273,7 @@ var comment_c456ea59_6018_45ef_8bcc_211a24c627dc = {
 					"_type": "material",
 					"_directory": "./project/images/:images",
 					"_transform": (function (one) {
-						if (one.endsWith('.png')) return one;
+						if (/\.(png|webp)$/.test(one)) return one;
 						return null;
 					}).toString(),
 					"_onconfirm": (function (previous, current) {
@@ -609,7 +609,7 @@ var comment_c456ea59_6018_45ef_8bcc_211a24c627dc = {
 					"_type": "material",
 					"_directory": "./project/images/:images",
 					"_transform": (function (one) {
-						if (one.endsWith('.png')) return one;
+						if (/\.(png|webp)$/.test(one)) return one;
 						return null;
 					}).toString(),
 					"_onconfirm": (function (previous, current) {

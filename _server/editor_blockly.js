@@ -407,7 +407,10 @@ editor_blockly = function () {
             if (b.type == 'animate_s' || b.type == 'animate_1_s' || b.type == 'nameMapAnimate') {
                 return /^[-A-Za-z0-9_.]+\.animate$/.test(one) ? one.substring(0, one.length - 8) : null;
             }
-            return /^[-A-Za-z0-9_.]+$/.test(one) ? one : null;
+            if (fs.isImagesDirectory(material[0])) {
+                return fs.isValidMaterialPath(one, true) && fs.isImageFile(one) ? one : null;
+            }
+            return fs.isValidMaterialPath(one, false) ? one : null;
         }, function (value) {
             if (value instanceof Array && value.length > 0) {
                 value = value[0];

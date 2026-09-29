@@ -15,7 +15,7 @@ main.floors.MT29=
     [330,  0,  1,  1,  1,  1,  0,  1,  1,  1,  1,  1,330],
     [330,  0,  1,  1,  1,  1,  0,  1,  1,  1,  1,  1,330],
     [330,  0,  1,  1,  1,  1,  0,  1,  1,  1,  1,  1,330],
-    [330,  0,  1,  1,  1,  1,  0,  1,  1,  1,  1,  1,330],
+    [330,447,  1,  1,  1,  1,  0,  1,  1,  1,  1,  1,330],
     [330,  0,  0,  1,  1,  0,  0,  0,  1,  1,  1,  1,330],
     [330, 88,  0,  1,  1,  0, 87,  0,  1,  1,  1,  1,330],
     [330,330,330,330,330,330,330,330,330,330,330,330,330]
@@ -31,7 +31,21 @@ main.floors.MT29=
     "eachArrive": [],
     "parallelDo": "",
     "events": {
-        "6,2": [
+        "1,9": [
+            {
+                "type": "if",
+                "condition": "flag:zhuanzhi",
+                "true": [
+                    {
+                        "type": "hide",
+                        "remove": true
+                    },
+                    {
+                        "type": "exit"
+                    }
+                ]
+            },
+            "\t[艾露达,N447]恭喜你来到29层，现在你可以进行转职了，转职之后会解锁一系列新的武器。",
             {
                 "type": "switch",
                 "condition": "flags.kaiju",
@@ -41,7 +55,7 @@ main.floors.MT29=
                         "action": [
                             {
                                 "type": "choices",
-                                "text": "\t[艾露达,man]你可以转职了",
+                                "text": "\t[艾露达,N447]你可以转职了",
                                 "choices": [
                                     {
                                         "text": "狂战士",
@@ -59,9 +73,13 @@ main.floors.MT29=
                                             },
                                             {
                                                 "type": "function",
+                                                "function": "function(){\ncore.plugin.careerSelect.applyPromotionAppearance();\n}"
+                                            },
+                                            {
+                                                "type": "function",
                                                 "function": "function(){\ncore.push(flags.randomList, ['I559', 'I416', 'I537', 'I548'])\n}"
                                             },
-                                            "\t[小妖精,fairy]现在商店和盲盒可以获取狂战专属的‘斧’类武器了"
+                                            "\t[艾露达,N447]现在商店和盲盒可以获取狂战专属的‘斧’类武器了"
                                         ]
                                     },
                                     {
@@ -77,6 +95,10 @@ main.floors.MT29=
                                                 "type": "setValue",
                                                 "name": "flag:zhuanzhi",
                                                 "value": "'双剑士'"
+                                            },
+                                            {
+                                                "type": "function",
+                                                "function": "function(){\ncore.plugin.careerSelect.applyPromotionAppearance();\n}"
                                             }
                                         ]
                                     },
@@ -93,6 +115,10 @@ main.floors.MT29=
                                                 "type": "setValue",
                                                 "name": "flag:zhuanzhi",
                                                 "value": "'盾誓士'"
+                                            },
+                                            {
+                                                "type": "function",
+                                                "function": "function(){\ncore.plugin.careerSelect.applyPromotionAppearance();\n}"
                                             }
                                         ]
                                     },
@@ -109,6 +135,10 @@ main.floors.MT29=
                                                 "type": "setValue",
                                                 "name": "flag:zhuanzhi",
                                                 "value": "'魔剑士'"
+                                            },
+                                            {
+                                                "type": "function",
+                                                "function": "function(){\ncore.plugin.careerSelect.applyPromotionAppearance();\n}"
                                             }
                                         ]
                                     }
@@ -118,7 +148,7 @@ main.floors.MT29=
                                 "type": "function",
                                 "function": "function(){\ncore.push(flags.randomList, ['I372', 'I421', 'I509', 'I598'])\n}"
                             },
-                            "\t[小妖精,fairy]现在商店和盲盒可以获取‘刀’类武器了"
+                            "\t[艾露达,N447]现在商店和盲盒可以获取‘刀’类武器了"
                         ]
                     },
                     {
@@ -126,7 +156,7 @@ main.floors.MT29=
                         "action": [
                             {
                                 "type": "choices",
-                                "text": "\t[艾露达,man]你可以转职了",
+                                "text": "\t[艾露达,N447]你可以转职了",
                                 "choices": [
                                     {
                                         "text": "黑猫道士",
@@ -144,9 +174,13 @@ main.floors.MT29=
                                             },
                                             {
                                                 "type": "function",
+                                                "function": "function(){\ncore.plugin.careerSelect.applyPromotionAppearance();\n}"
+                                            },
+                                            {
+                                                "type": "function",
                                                 "function": "function(){\ncore.push(flags.randomList, ['I554', 'I574', 'I418', 'I508', 'I593', 'I567'])\n}"
                                             },
-                                            "\t[小妖精,fairy]现在商店和盲盒可以获取黑猫道士特定使用的‘杖’了"
+                                            "\t[艾露达,N447]现在商店和盲盒可以获取黑猫道士特定使用的‘杖’了"
                                         ]
                                     },
                                     {
@@ -165,9 +199,13 @@ main.floors.MT29=
                                             },
                                             {
                                                 "type": "function",
+                                                "function": "function(){\ncore.plugin.careerSelect.applyPromotionAppearance();\n}"
+                                            },
+                                            {
+                                                "type": "function",
                                                 "function": "function(){\ncore.push(flags.randomList, ['I514', 'I544', 'I409', 'I408', 'I389', 'I551', 'I556', 'I540'])\n}"
                                             },
-                                            "\t[小妖精,fairy]现在商店和盲盒可以获取‘精灵’以及相关武器了"
+                                            "\t[艾露达,N447]现在商店和盲盒可以获取‘精灵’以及相关武器了"
                                         ]
                                     }
                                 ]
@@ -179,7 +217,7 @@ main.floors.MT29=
                         "action": [
                             {
                                 "type": "choices",
-                                "text": "\t[艾露达,man]你可以转职了",
+                                "text": "\t[艾露达,N447]你可以转职了",
                                 "choices": [
                                     {
                                         "text": "兽王",
@@ -197,9 +235,13 @@ main.floors.MT29=
                                             },
                                             {
                                                 "type": "function",
+                                                "function": "function(){\ncore.plugin.careerSelect.applyPromotionAppearance();\n}"
+                                            },
+                                            {
+                                                "type": "function",
                                                 "function": "function(){\ncore.push(flags.randomList, ['I588', 'I600', 'I601', 'I558', 'I572', 'I566'])\n}"
                                             },
-                                            "\t[小妖精,fairy]现在商店和盲盒可以获取‘动物’以及相关武器了"
+                                            "\t[艾露达,N447]现在商店和盲盒可以获取‘动物’以及相关武器了"
                                         ]
                                     },
                                     {
@@ -222,7 +264,11 @@ main.floors.MT29=
                                                 "name": "flag:zhuanzhi",
                                                 "value": "'摇滚巨星'"
                                             },
-                                            "\t[小妖精,fairy]现在商店和盲盒可以获取‘吉他’以及甄选吉他拨片了",
+                                            {
+                                                "type": "function",
+                                                "function": "function(){\ncore.plugin.careerSelect.applyPromotionAppearance();\n}"
+                                            },
+                                            "\t[艾露达,N447]现在商店和盲盒可以获取‘吉他’以及甄选吉他拨片了",
                                             {
                                                 "type": "function",
                                                 "function": "function(){\ncore.push(flags.randomList, ['I397', 'I403', 'I404', 'I523', 'I594'])\n}"
@@ -243,7 +289,11 @@ main.floors.MT29=
                                                 "name": "flag:zhuanzhi",
                                                 "value": "'极乐净土'"
                                             },
-                                            "\t[小妖精,fairy]现在商店和盲盒可以获取‘吉他’了",
+                                            {
+                                                "type": "function",
+                                                "function": "function(){\ncore.plugin.careerSelect.applyPromotionAppearance();\n}"
+                                            },
+                                            "\t[艾露达,N447]现在商店和盲盒可以获取‘吉他’了",
                                             {
                                                 "type": "function",
                                                 "function": "function(){\ncore.push(flags.randomList, ['I397', 'I403', 'I404', 'I594'])\n}"
@@ -256,6 +306,19 @@ main.floors.MT29=
                     }
                 ]
             },
+            {
+                "type": "hide",
+                "loc": [
+                    [
+                        1,
+                        9
+                    ]
+                ],
+                "floorId": "MT29",
+                "remove": true
+            }
+        ],
+        "6,2": [
             "\t[小偷,thief]你来的正好 我这边暗道完工了 一起走吧",
             {
                 "type": "openDoor",

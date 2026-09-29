@@ -106,6 +106,8 @@ async function getFile(req, res, path) {
             res.writeHead(200, { 'Content-type': 'text/css' });
         if (path.endsWith('.html'))
             res.writeHead(200, { 'Content-type': 'text/html' });
+        if (path.toLowerCase().endsWith('.webp'))
+            res.writeHead(200, { 'Content-type': 'image/webp' });
         return res.end(req.method === 'HEAD' ? undefined : data), true;
     } catch {
         return false;
@@ -171,6 +173,35 @@ async function readDir(req, res) {
     } catch (e) {
         console.error(e);
         res.end(`error: Read dir ${dir} fail. Does the dir exists?`);
+    }
+}
+
+// 返回相对路径；不跟随符号链接，避免越出工程目录或循环扫描。
+async function readDirRecursive(req, res) {
+    const data = await getPostData(req);
+    const dir = path.resolve(__dirname, data.toString().slice(5));
+    try {
+        const relative = path.relative(__dirname, await fs.realpath(dir));
+        if (relative === '..' || relative.startsWith('..' + path.sep) || path.isAbsolute(relative)) {
+            res.writeHead(403);
+            res.end('error: Directory is outside the project');
+            return;
+        }
+        const files = [];
+        async function visit(current, prefix) {
+            const entries = await fs.readdir(current, { withFileTypes: true });
+            for (const entry of entries) {
+                if (entry.isSymbolicLink()) continue;
+                const name = prefix + entry.name;
+                if (entry.isDirectory()) await visit(path.join(current, entry.name), name + '/');
+                else if (entry.isFile()) files.push(name);
+            }
+        }
+        await visit(dir, '');
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.end(JSON.stringify(files.sort()));
+    } catch (e) {
+        res.end('error: Cannot read directory: ' + e.message);
     }
 }
 
@@ -674,6 +705,7 @@ server.on('request', async (req, res) => {
 
     if (req.method === 'POST') {
         if (p === '/listFile') return await readDir(req, res);
+        if (p === '/listDirectoryRecursive') return await readDirRecursive(req, res);
         if (p === '/makeDir') return await mkdir(req, res);
         if (p === '/readFile') return await readFile(req, res);
         if (p === '/writeFile') return await writeFile(req, res);

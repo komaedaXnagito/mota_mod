@@ -1,7 +1,7 @@
 /**
- * 开局职业选择界面。
+ * 开局职业选择与 29 层转职共用的界面。
  *
- * 只负责展示和提交初始职业；现有 flags.randomList 的共享基础武器池保持不变，
+ * 负责展示和提交职业选择；现有 flags.randomList 的共享基础武器池保持不变，
  * 29 层转职继续由楼层事件负责追加专属武器。
  */
 var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, plugin) {
@@ -13,7 +13,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 			name: "剑士",
 			color: "#ffb45b",
 			accent: "#ff6b4a",
-			portrait: "sword_character.png",
+			portrait: "sword_character.webp",
 			portraitFilter: "none",
 			promotions: ["狂战士", "双剑士", "盾誓士", "魔剑士"],
 			poolTypes: ["剑", "盾", "短", "斧"],
@@ -48,6 +48,40 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 			walk: "witch_walk.png"
 		}
 	];
+
+	var PROMOTION_APPEARANCES = {
+		"狂战士": { portrait: "wolf_character.webp", walk: "wolf_walk.png", portraitFocus: { x: 0.64, y: 0.36, size: 0.3 }, portraitCardOffsetY: -0.12 },
+		"双剑士": { portrait: "double_sword_character.webp", walk: "double_sword.png", portraitFocus: { x: 0.48, y: 0.13, size: 0.28 } },
+		"盾誓士": { portrait: "shield_character.webp", walk: "shield_walk.png", portraitFocus: { x: 0.52, y: 0.25, size: 0.3 } },
+		"魔剑士": { portrait: "magicsword_character.webp", walk: "magicsword_walk.png", portraitFocus: { x: 0.49, y: 0.30, size: 0.28 } }
+	};
+	var getCareerAppearance = function (base, promotion) {
+		return Object.assign({}, base, PROMOTION_APPEARANCES[promotion] || {});
+	};
+	var getCurrentAppearance = function () {
+		var base = CAREERS.filter(function (career) { return career.id === core.getFlag("kaiju"); })[0];
+		return base ? getCareerAppearance(base, core.getFlag("zhuanzhi")) : null;
+	};
+	var applyPromotionAppearance = function () {
+		var appearance = PROMOTION_APPEARANCES[core.getFlag("zhuanzhi")];
+		if (appearance) core.setHeroIcon(appearance.walk);
+	};
+
+	var selectionCareers = CAREERS;
+	var promotionChoices = null;
+	var promotionFocus = null;
+	var selectionActionKey = null;
+	var PROMOTION_UNLOCKS = {
+		"狂战士": "解锁刀类及狂战士专属斧。",
+		"双剑士": "解锁刀类武器。",
+		"盾誓士": "解锁刀类武器。",
+		"魔剑士": "解锁刀类武器。",
+		"黑猫道士": "解锁黑猫道士专用法杖。",
+		"使役者": "解锁精灵及相关武器。",
+		"兽王": "解锁动物及相关武器。",
+		"摇滚巨星": "解锁吉他及甄选吉他拨片。",
+		"极乐净土": "解锁吉他。"
+	};
 
 	var canvas = null;
 	var ctx = null;
@@ -90,7 +124,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	var UI_SANS = theme.tokens.sans;
 	var drawLabelOn = theme.drawLabelOn;
 	var drawText = function (text, x, y, size, color, align, weight, serif) {
-		drawLabelOn(ctx, text, x, y, size, color, align, weight, serif);
+		drawLabelOn(ctx, text, x, y, size, color, align, weight, serif, "middle");
 	};
 
 	var drawWrappedText = function (text, x, y, maxWidth, lineHeight, color, size) {
@@ -156,7 +190,13 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		ctx.imageSmoothingEnabled = true;
 		ctx.imageSmoothingQuality = "high";
 		ctx.filter = career.portraitFilter || "none";
-		ctx.drawImage(image, box.x + (box.w - w) / 2, box.y + (fullFigure ? box.h - h : 4), w, h);
+		var imageX = box.x + (box.w - w) / 2;
+		if (!fullFigure && career.portraitFocus) {
+			imageX = Math.max(box.x + box.w - w, Math.min(box.x, box.x + box.w / 2 - w * career.portraitFocus.x));
+		}
+		// 横屏卡片可单独调整立绘高度，适配前倾姿势；竖屏整幅立绘沿用原位置。
+		var imageY = box.y + (fullFigure ? box.h - h : 4 + box.h * (career.portraitCardOffsetY || 0));
+		ctx.drawImage(image, imageX, imageY, w, h);
 		ctx.restore();
 	};
 
@@ -220,7 +260,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		ctx.fillRect(box.x, box.y + box.h - 65, box.w, 65);
 		ctx.restore();
 		drawArcFrameOn(ctx, box, { radius: 11, selected: selected, hovered: hoveredHit === "career:" + index });
-		var badge = { x: box.x + 9, y: box.y + 17, w: 15, h: 35 };
+		var badge = { x: box.x + 9, y: box.y + 17, w: 15, h: Math.max(35, career.name.length * 11 + 10) };
 		// 窄铭牌只用两道细线，避免把大面板的五层边沿压进小尺寸。
 		arcFramePath(ctx, badge, 0, 4);
 		ctx.fillStyle = "rgba(247,250,231,0.9)";
@@ -235,9 +275,11 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 			drawText(letter, badge.x + 7.5, badge.y + 12 + i * 11, 9, UI_INK, "center", "normal", true);
 		});
 		var nameY = box.y + box.h - 17;
-		drawText(career.name, box.x + box.w / 2, nameY, 20, selected ? "#784c22" : "#48728b", "center", "bold", true);
-		diamondOn(ctx, box.x + 19, nameY, 3, 5, "#fffde5");
-		diamondOn(ctx, box.x + box.w - 19, nameY, 3, 5, "#fffde5");
+		drawText(career.name, box.x + box.w / 2, nameY, Math.min(20, (box.w - 22) / career.name.length), selected ? "#784c22" : "#48728b", "center", "bold", true);
+		if (career.name.length <= 2) {
+			diamondOn(ctx, box.x + 19, nameY, 3, 5, "#fffde5");
+			diamondOn(ctx, box.x + box.w - 19, nameY, 3, 5, "#fffde5");
+		}
 		if (selected) {
 			drawCrestOn(ctx, box.x + box.w / 2, box.y + 1, 7);
 			var selectionBadge = { x: box.x + box.w - 65, y: box.y + 11, w: 54, h: 16 };
@@ -254,8 +296,8 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 
 	var drawCareerTabs = function (box) {
 		drawArcFrameOn(ctx, box, { radius: 10, fill: pearlFill(box), ornate: false });
-		var width = (box.w - 16) / CAREERS.length;
-		CAREERS.forEach(function (career, index) {
+		var width = (box.w - 16) / selectionCareers.length;
+		selectionCareers.forEach(function (career, index) {
 			var x = box.x + 8 + index * width;
 			var centerX = x + width / 2;
 			var selected = selectedIndex === index;
@@ -277,7 +319,13 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 			var image = getPortraitImage(career);
 			if (image && image.width) {
 				var crop = Math.min(image.width, image.height * 0.34);
-				ctx.drawImage(image, (image.width - crop) / 2, image.height * 0.015, crop, crop, centerX - r, cy - r, r * 2, r * 2);
+				var cropX = (image.width - crop) / 2, cropY = image.height * 0.015;
+				if (career.portraitFocus) {
+					crop = Math.min(image.width, image.height) * career.portraitFocus.size;
+					cropX = Math.max(0, Math.min(image.width - crop, image.width * career.portraitFocus.x - crop / 2));
+					cropY = Math.max(0, Math.min(image.height - crop, image.height * career.portraitFocus.y - crop / 2));
+				}
+				ctx.drawImage(image, cropX, cropY, crop, crop, centerX - r, cy - r, r * 2, r * 2);
 			}
 			ctx.restore();
 			[ [r + 1.4, selected || hoveredHit === "career:" + index ? 2.5 : 1.5, selected || hoveredHit === "career:" + index ? "#d2b76e" : "#ded3ad"], [r + 3.8, 0.7, "#bcd3da"] ].forEach(function (ring) {
@@ -287,7 +335,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 				ctx.lineWidth = ring[1];
 				ctx.stroke();
 			});
-			drawText(career.name, centerX, box.y + 54, 17, selected ? "#805a2e" : "#668092", "center", "bold", true);
+			drawText(career.name, centerX, box.y + 54, Math.min(17, (width - 12) / career.name.length), selected ? "#805a2e" : "#668092", "center", "bold", true);
 			if (selected) {
 				diamondOn(ctx, centerX - 30, cy, 4, 7, UI_GOLD);
 				diamondOn(ctx, centerX + 30, cy, 4, 7, UI_GOLD);
@@ -319,6 +367,15 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		var y = box.y + 65;
 		var size = vertical ? 14 : 12;
 		var row = vertical ? 27 : 25;
+		if (promotionChoices) {
+			drawText("职业：" + career.name, x, y, size, UI_INK, "left", "bold");
+			drawText("进阶自：" + career.baseName, x, y + row, size, UI_INK);
+			y = drawWrappedText("赠礼：" + career.rewardText, x, y + row * 2, width, 19, UI_INK, size) + 8;
+			ctx.fillStyle = "rgba(152,182,190,0.32)";
+			ctx.fillRect(x, y - 2, width, 0.6);
+			drawWrappedText("商店与盲盒：" + career.unlockText, x, y + 11, width, 18, "#38617b", vertical ? 12 : 10.5);
+			return;
+		}
 		[
 			["职业", career.name],
 			["武器", career.poolTypes.join(" · ")]
@@ -337,7 +394,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	};
 
 	var drawConfirmButton = function (box) {
-		drawHexButtonOn(ctx, box, "确认选择", true, hoveredHit === "confirm", box.h * 0.43);
+		drawHexButtonOn(ctx, box, promotionChoices ? "确认转职" : "确认选择", true, hoveredHit === "confirm", box.h * 0.43);
 		hitboxes.push({ type: "confirm", x: box.x, y: box.y, w: box.w, h: box.h });
 	};
 
@@ -347,12 +404,13 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	};
 
 	var renderLandscape = function () {
-		var career = CAREERS[selectedIndex];
+		var career = selectionCareers[selectedIndex];
 		drawBackgroundOn(ctx, 676, 416);
 		var panel = { x: 20, y: 64, w: 636, h: 309 };
 		drawArcFrameOn(ctx, panel, { radius: 14, fill: pearlFill(panel), crest: true, ornate: true });
-		CAREERS.forEach(function (one, index) {
-			drawPortraitCard(one, index, { x: 37 + index * 119, y: 80, w: 110, h: 277 });
+		var cardWidth = (348 - (selectionCareers.length - 1) * 9) / selectionCareers.length;
+		selectionCareers.forEach(function (one, index) {
+			drawPortraitCard(one, index, { x: 37 + index * (cardWidth + 9), y: 80, w: cardWidth, h: 277 });
 		});
 		ctx.fillStyle = "rgba(255,255,241,0.8)";
 		ctx.fillRect(397, 80, 1, 277);
@@ -365,7 +423,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	};
 
 	var renderVertical = function (viewHeight) {
-		var career = CAREERS[selectedIndex];
+		var career = selectionCareers[selectedIndex];
 		drawBackgroundOn(ctx, 416, viewHeight);
 		var mist = ctx.createRadialGradient(208, viewHeight * 0.3, 45, 208, viewHeight * 0.3, 350);
 		mist.addColorStop(0, "rgba(224,242,246,0.54)");
@@ -440,7 +498,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 			canvas.height = canvasLogicalHeight;
 		}
 		paintCareer();
-		canvas.setAttribute("aria-label", "选择初始职业，当前" + CAREERS[selectedIndex].name + "。方向键切换，回车确认，Esc返回。");
+		canvas.setAttribute("aria-label", (promotionChoices ? "选择转职职业，当前" : "选择初始职业，当前") + selectionCareers[selectedIndex].name + "。方向键切换，回车确认，Esc返回。");
 	};
 
 	var isInside = function (x, y, box) {
@@ -456,7 +514,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	};
 
 	var chooseCareer = function (index) {
-		selectedIndex = Math.max(0, Math.min(CAREERS.length - 1, index));
+		selectedIndex = Math.max(0, Math.min(selectionCareers.length - 1, index));
 		walkFrame = 0;
 		render();
 	};
@@ -518,12 +576,14 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 
 	var returnToTitle = function () {
 		if (!visible) return;
+		if (promotionChoices) return finishPromotion(promotionChoices.length - 1);
 		hideCareer(titleVideo);
 		core.showStartAnimate(true);
 	};
 
 	var confirm = function () {
 		if (!visible) return;
+		if (promotionChoices) return finishPromotion(selectedIndex);
 		var career = CAREERS[selectedIndex];
 		core.setFlag("kaiju", career.id);
 		if (core.status && Array.isArray(core.status.route) && !(core.isReplaying && core.isReplaying())) {
@@ -538,6 +598,24 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 			var backgroundPlayPromise = backgroundVideo.play();
 			if (backgroundPlayPromise && backgroundPlayPromise.catch) backgroundPlayPromise.catch(function () { });
 		});
+		core.doAction();
+	};
+
+	var finishPromotion = function (index) {
+		var choice = promotionChoices[index];
+		core.status.route.push("choices:" + index);
+		core.setFlag("timeout", 0);
+		var backgroundVideos = getGameBackgroundVideos();
+		hideCareer(backgroundVideos);
+		promotionChoices = null;
+		selectionCareers = CAREERS;
+		selectedIndex = 0;
+		if (main.dom.outerBackground) main.dom.outerBackground.style.display = "block";
+		if (main.dom.outerUI) main.dom.outerUI.style.display = "block";
+		backgroundVideos.forEach(function (video) { video.style.display = "block"; playBackgroundVideo(video); });
+		if (promotionFocus && typeof promotionFocus.focus === "function") promotionFocus.focus();
+		promotionFocus = null;
+		core.insertAction(choice.action);
 		core.doAction();
 	};
 
@@ -595,20 +673,30 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 
 		canvas.addEventListener("keydown", function (event) {
 			if (!visible) return;
+			event.stopPropagation();
 			if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
 				event.preventDefault();
-				chooseCareer((selectedIndex + CAREERS.length - 1) % CAREERS.length);
+				chooseCareer((selectedIndex + selectionCareers.length - 1) % selectionCareers.length);
 			} else if (event.key === "ArrowDown" || event.key === "ArrowRight") {
 				event.preventDefault();
-				chooseCareer((selectedIndex + 1) % CAREERS.length);
+				chooseCareer((selectedIndex + 1) % selectionCareers.length);
 			} else if (event.key === "Enter" || event.key === " ") {
 				event.preventDefault();
+				selectionActionKey = event.key;
 				confirm();
 			} else if (event.key === "Escape") {
 				event.preventDefault();
+				selectionActionKey = event.key;
 				returnToTitle();
 			}
 		});
+		document.addEventListener("keyup", function (event) {
+			if (!visible && event.key !== selectionActionKey) return;
+			selectionActionKey = null;
+			event.preventDefault();
+			event.stopPropagation();
+		}, true);
+		window.addEventListener("blur", function () { selectionActionKey = null; });
 
 		window.addEventListener("resize", function () {
 			if (visible) window.requestAnimationFrame(render);
@@ -617,6 +705,12 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	};
 
 	var prepare = function () {
+		selectionCareers = CAREERS;
+		promotionChoices = null;
+		showSelection();
+	};
+
+	var showSelection = function () {
 		createCanvas();
 		pauseGameBackgroundVideos();
 		selectedIndex = 0;
@@ -639,6 +733,38 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		if (!visible) prepare();
 		canvas.focus();
 		render();
+	};
+
+	var openPromotion = function (choices) {
+		var base = CAREERS.filter(function (career) { return career.id === core.getFlag("kaiju"); })[0];
+		if (!base) return core.doAction();
+		promotionFocus = document.activeElement;
+		promotionChoices = choices.concat([{ text: "返回", action: [{ type: "exit" }] }]);
+		selectionCareers = choices.map(function (choice) {
+			var rewards = choice.action.filter(function (action) {
+				return action.type === "setValue" && action.name.indexOf("item:") === 0;
+			}).map(function (action) {
+				var id = action.name.substring(5);
+				return core.material.items[id].name;
+			});
+			return Object.assign(getCareerAppearance(base, choice.text), {
+				id: choice.text, name: choice.text, baseName: base.name,
+				rewardText: rewards.join("、"), unlockText: PROMOTION_UNLOCKS[choice.text] || ""
+			});
+		});
+		showSelection();
+		canvas.focus();
+	};
+
+	// 保留标准 choices 事件和楼层内的奖励数据，编辑器仍可编辑，录像仍走引擎原有选择流程。
+	var originalChoices = core.events._action_choices;
+	core.events._action_choices = function (data, x, y, prefix) {
+		if ((data.floorId || core.status.floorId) === "MT29" && x === 1 && y === 9) {
+			if (!core.isReplaying()) return openPromotion(data.choices);
+			data = core.clone(data);
+			data.choices.push({ text: "返回", action: [{ type: "exit" }] });
+		}
+		return originalChoices.call(this, data, x, y, prefix);
 	};
 
 	// 标题与职业选择共用参考图的六边形金框。
@@ -1066,7 +1192,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 			titleCompositeCache = {};
 			if (titleCanvas && titleCanvas.style.display !== "none") renderTitle();
 		};
-		titleImage.src = "project/images/title2.png?v=" + main.version;
+		titleImage.src = "project/images/title2.webp?v=" + main.version;
 		titleCharacterMaskImage = new Image();
 		titleCharacterMaskImage.onload = prepareTitleCharacterMask;
 		titleCharacterMaskImage.src = TITLE_CHARACTER_MASK_PATH;
@@ -1177,8 +1303,10 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		returnToTitle: returnToTitle,
 		showTitle: showTitle,
 		hideTitle: hideTitle,
-		getSelectedCareer: function () { return CAREERS[selectedIndex].id; },
+		getSelectedCareer: function () { return selectionCareers[selectedIndex].id; },
 		getCareers: function () { return CAREERS.slice(); },
+		getCurrentAppearance: getCurrentAppearance,
+		applyPromotionAppearance: applyPromotionAppearance,
 		titleButtonLayout: TITLE_BUTTON_LAYOUT,
 		getTitleButtonLayout: getTitleButtonLayout,
 		render: render,

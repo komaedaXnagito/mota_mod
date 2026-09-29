@@ -97,3 +97,58 @@ test("标题页隐藏 outerUI 时使用 gameGroup，不能退回整屏", () => {
   assert.equal(viewport.width, h.groupRect.width);
   assert.notEqual(viewport.width, h.context.window.innerWidth);
 });
+
+test("教程切步、缩放与退出时复用并释放金框，长文案只在正文内滚动", () => {
+  const h = harness(), decorated = [], released = [];
+  h.context.fantasyUI_6f31b8ea_7c4d_4b67_a215_03b247f8e903 = {
+    decorate: element => decorated.push(element), releaseTree: element => released.push(element)
+  };
+  function element() {
+    return {
+      style: {}, children: [], parent: null,
+      get firstChild() { return this.children[0]; },
+      appendChild(child) {
+        if (child.parent) child.parent.children.splice(child.parent.children.indexOf(child), 1);
+        child.parent = this; this.children.push(child);
+      }
+    };
+  }
+  h.context.document.createElement = element;
+  h.context.document.querySelectorAll = () => [];
+  const makeGuide = () => {
+    const copy = element(), text = element(), progress = element();
+    copy.appendChild(text); copy.appendChild(progress);
+    return { copy, text, progress, style: {}, querySelector: () => copy,
+      getBoundingClientRect: () => ({ left: 130, top: 60, width: 250, height: 100 }) };
+  };
+  let guide = makeGuide();
+  const first = guide;
+  const canvas = { style: {}, querySelectorAll: () => [guide], contains: copy => guide.copy === copy };
+  const close = h.common.bindGuideViewport(canvas);
+  const mutation = h.observers.at(-1);
+  assert.equal(decorated.length, 1);
+  assert.equal(first.copy.children.length, 1);
+  assert.deepEqual(first.copy.firstChild.children, [first.text, first.progress]);
+  assert.equal(first.copy.firstChild.className, "bb-guide-content");
+  assert.equal(first.copy.firstChild.style.maxHeight, "520px");
+  assert.equal(first.copy.style.overflow, undefined);
+
+  h.resizes.forEach(fn => fn());
+  mutation.callback();
+  assert.equal(decorated.length, 1, "重排不能重复添加装饰或包裹正文");
+  guide = makeGuide();
+  mutation.callback();
+  assert.deepEqual(released, [first.copy]);
+  assert.equal(decorated.length, 2);
+
+  Object.assign(h.rect, { width: 206, height: 341 });
+  h.context.core.domStyle = { scale: 0.5, isVertical: true };
+  h.resizes.forEach(fn => fn());
+  assert.equal(guide.copy.style.maxWidth, "316px");
+  assert.equal(guide.copy.firstChild.style.maxHeight, "542px");
+  close();
+  assert.deepEqual(released, [first.copy, guide.copy]);
+  assert.equal(h.listeners.size, 0);
+  assert.equal(h.resizes.size, 0);
+  assert.ok(h.observers.every(observer => observer.disconnected));
+});

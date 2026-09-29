@@ -124,7 +124,23 @@
         postsomething('name=' + filenames.join(';') + '&value=' + datastrs.join(';'), '/writeMultiFiles', callback);
     }
 
-    fs.readdir = function (path, callback) {
+    // 图片路径保留相对于 project/images 的目录，禁止绝对路径和上级目录。
+    fs.isImagesDirectory = function (directory) {
+        return /^(\.\/)?project\/images\/?(:images)?$/.test(directory);
+    }
+
+    fs.isImageFile = function (name) {
+        return /\.(png|jpg|jpeg|gif|webp)$/.test(name);
+    }
+
+    fs.isValidMaterialPath = function (name, allowSubfolders) {
+        return typeof name == 'string' && (allowSubfolders || name.indexOf('/') < 0)
+            && name.split('/').every(function (part) {
+                return /^[-A-Za-z0-9_.]+$/.test(part) && part != '.' && part != '..';
+            });
+    }
+
+    fs.readdir = function (path, callback, recursive) {
         //callback:function(err, data)
         //path:支持"/"做分隔符,不以"/"结尾
         //data:[filename1,filename2,..] filename是字符串,只包含文件不包含目录
@@ -132,13 +148,22 @@
             throw 'Type Error in fs.readdir';
         var data = '';
         data += 'name=' + path;
-        postsomething(data, '/listFile', function (err, data) {
+        // 旧 EXE 用 StartsWith("listFile") 匹配路由，新接口必须避开此前缀。
+        postsomething(data, recursive ? '/listDirectoryRecursive' : '/listFile', function (err, data) {
             try {
                 data = JSON.parse(data);
+                if (!Array.isArray(data)) throw Error('Invalid file list');
             } catch (e) {
-                err = "Invalid /listFile";
+                err = err || "Invalid /listFile";
                 data = null;
             }
+            // 旧版启动服务没有递归接口，仍可选择根目录图片；选择框会显示升级提示。
+            if (recursive && err && (/HTTP 404/.test(err) || err == 'Invalid /listFile')) {
+                fs.supportsRecursive = false;
+                fs.readdir(path, callback);
+                return;
+            }
+            if (recursive && !err) fs.supportsRecursive = true;
             callback(err, data);
         });
         return;
