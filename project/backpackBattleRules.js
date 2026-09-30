@@ -4,40 +4,48 @@
  * 这里只实现公式、状态和数据驱动效果，不读取 core、DOM、Canvas，也不持有随机服务。
  * 实际战斗和预计模拟都由外层提供随机服务；预计模拟使用当前 core.rand 种子的局部副本。
  */
-var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
-	"use strict";
+var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87;
+// 显式定义导出对象；块级变量保留私有状态，加载时不调用初始化函数。
+{
 
-	var FIXED_SCALE = 1000;
-	var TICKS_PER_SECOND = 100;
-	var MIN_ATTACK_INTERVAL_SECONDS = 0.1;
-	var MIN_ATTACK_INTERVAL_TICKS = Math.round(MIN_ATTACK_INTERVAL_SECONDS * TICKS_PER_SECOND);
-	var getStatusRegistry = function () {
+	let FIXED_SCALE = 1000;
+	let TICKS_PER_SECOND = 100;
+	let MIN_ATTACK_INTERVAL_SECONDS = 0.1;
+	let MIN_ATTACK_INTERVAL_TICKS = Math.round(MIN_ATTACK_INTERVAL_SECONDS * TICKS_PER_SECOND);
+	let getStatusRegistry = function () {
+		"use strict";
 		return backpackBattleStatusDefinitions_7d94f05e_2f6d_4b8e_9c23_5a317ccab120;
 	};
 
-	var toNumber = function (value, fallback) {
+	let toNumber = function (value, fallback) {
+		"use strict";
 		var number = Number(value);
 		return Number.isFinite(number) ? number : (fallback == null ? 0 : fallback);
 	};
 
-	var clamp = function (value, minimum, maximum) {
+	let clamp = function (value, minimum, maximum) {
+		"use strict";
 		return Math.max(minimum, Math.min(maximum, value));
 	};
 
-	var fixed = function (value) {
+	let fixed = function (value) {
+		"use strict";
 		return Math.round(toNumber(value, 0) * FIXED_SCALE) / FIXED_SCALE;
 	};
 
-	var clone = function (value) {
+	let clone = function (value) {
+		"use strict";
 		return value == null ? value : JSON.parse(JSON.stringify(value));
 	};
 
-	var getStatusDefinition = function (statusId) {
+	let getStatusDefinition = function (statusId) {
+		"use strict";
 		return getStatusRegistry().definitions[statusId] || null;
 	};
 
 	/** 全部减益状态 ID，用于“随机弱体效果”等随机施加效果；按注册表 order 顺序返回。 */
-	var getAllDebuffIds = function () {
+	let getAllDebuffIds = function () {
+		"use strict";
 		var registry = getStatusRegistry();
 		return (registry.order || []).filter(function (statusId) {
 			var definition = registry.definitions[statusId];
@@ -46,7 +54,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 	};
 
 	/** 全部增益状态 ID，用于“随机 buff”等随机施加效果；按注册表 order 顺序返回。专属 buff（exclusive: true）不参与随机。 */
-	var getAllBuffIds = function () {
+	let getAllBuffIds = function () {
+		"use strict";
 		var registry = getStatusRegistry();
 		return (registry.order || []).filter(function (statusId) {
 			var definition = registry.definitions[statusId];
@@ -55,18 +64,21 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 	};
 
 	/** 是否专属 buff（如刻印/MP/狼皮）：不可被驱散、不参与随机 buff 池。 */
-	var isExclusiveBuff = function (statusId) {
+	let isExclusiveBuff = function (statusId) {
+		"use strict";
 		var definition = getStatusDefinition(statusId);
 		return !!(definition && definition.kind === "buff" && definition.exclusive === true);
 	};
 
-	var getStatusList = function (side, statusId) {
+	let getStatusList = function (side, statusId) {
+		"use strict";
 		var definition = getStatusDefinition(statusId);
 		if (!definition || !side) return null;
 		return definition.kind === "buff" ? side.buffs : side.debuffs;
 	};
 
-	var findStatus = function (side, statusId) {
+	let findStatus = function (side, statusId) {
+		"use strict";
 		var list = getStatusList(side, statusId);
 		if (!list) return null;
 		for (var index = 0; index < list.length; index++) {
@@ -75,12 +87,14 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		return null;
 	};
 
-	var getStatusStacks = function (side, statusId) {
+	let getStatusStacks = function (side, statusId) {
+		"use strict";
 		var status = findStatus(side, statusId);
 		return status ? Math.max(0, toNumber(status.stacks, 0)) : 0;
 	};
 
-	var removeStatusStacks = function (side, statusId, stacks) {
+	let removeStatusStacks = function (side, statusId, stacks) {
+		"use strict";
 		var list = getStatusList(side, statusId);
 		if (!list) return 0;
 		var wanted = Math.max(0, toNumber(stacks, 0));
@@ -94,7 +108,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		return 0;
 	};
 
-	var appendLog = function (state, text, kind) {
+	let appendLog = function (state, text, kind) {
+		"use strict";
 		if (!state || !Array.isArray(state.battleLog) || !text) return;
 		state.battleLog.push({
 			tick: state.tick,
@@ -104,15 +119,18 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		if (state.battleLog.length > 240) state.battleLog.splice(0, state.battleLog.length - 240);
 	};
 
-	var getSide = function (state, sideKey) {
+	let getSide = function (state, sideKey) {
+		"use strict";
 		return sideKey === "enemy" ? state.enemy : state.player;
 	};
 
-	var oppositeSide = function (sideKey) {
+	let oppositeSide = function (sideKey) {
+		"use strict";
 		return sideKey === "enemy" ? "player" : "enemy";
 	};
 
-	var applyStatus = function (state, targetKey, statusId, stacks, sourceKey, options) {
+	let applyStatus = function (state, targetKey, statusId, stacks, sourceKey, options) {
+		"use strict";
 		options = options || {};
 		var definition = getStatusDefinition(statusId);
 		var target = getSide(state, targetKey);
@@ -171,7 +189,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 	};
 
 	/** 强化效果获得计数：遍历 buffGainCounters，累计获得层数，每满 every 触发一次对敌伤害。 */
-	var accumulateBuffGains = function (state, stacks) {
+	let accumulateBuffGains = function (state, stacks) {
+		"use strict";
 		var counters = Array.isArray(state.buffGainCounters) ? state.buffGainCounters : [];
 		if (!counters.length || stacks <= 0) return;
 		counters.forEach(function (counter) {
@@ -184,7 +203,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		});
 	};
 
-	var cleanseAllDebuffs = function (state, sideKey) {
+	let cleanseAllDebuffs = function (state, sideKey) {
+		"use strict";
 		var side = getSide(state, sideKey);
 		if (!side) return 0;
 		var removed = 0;
@@ -200,7 +220,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 	};
 
 	/** 无随机处理器时的净化兜底：移除第一个 stacks>0 的 Debuff；战斗与预估均优先使用 handlers 随机选择。 */
-	var cleanseOneDebuff = function (state, sideKey) {
+	let cleanseOneDebuff = function (state, sideKey) {
+		"use strict";
 		var side = getSide(state, sideKey);
 		if (!side) return 0;
 		var available = side.debuffs.filter(function (debuff) { return debuff.stacks > 0; });
@@ -212,7 +233,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 	};
 
 	/** 消耗 MP（专属指示物）并累计到本次战斗的 MP 消耗总量（用于"奥义发动时按累计消耗 MP 造成伤害"等）；同时累计到 MP 消耗计数（每消耗 every 点 MP 触发奥义加成）。 */
-	var consumeMp = function (state, sideKey, amount) {
+	let consumeMp = function (state, sideKey, amount) {
+		"use strict";
 		var removed = removeStatusStacks(getSide(state, sideKey), "mp", amount);
 		if (removed > 0) {
 			state.mpConsumedTotal = fixed((state.mpConsumedTotal || 0) + removed);
@@ -222,7 +244,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 	};
 
 	/** MP 消耗计数：遍历 mpConsumeCounters，累计消耗量，每满 every 点给自身奥义 +value（如"每消耗10点MP：自身奥义+5"）。 */
-	var accumulateMpConsumption = function (state, consumed) {
+	let accumulateMpConsumption = function (state, consumed) {
+		"use strict";
 		var counters = Array.isArray(state.mpConsumeCounters) ? state.mpConsumeCounters : [];
 		if (!counters.length || consumed <= 0) return;
 		counters.forEach(function (counter) {
@@ -235,7 +258,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		});
 	};
 
-	var dispelLastBuff = function (state, sideKey) {
+	let dispelLastBuff = function (state, sideKey) {
+		"use strict";
 		var side = getSide(state, sideKey);
 		if (!side) return null;
 		for (var index = side.buffs.length - 1; index >= 0; index--) {
@@ -251,7 +275,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 	};
 
 	/** 每个 Buff 独立按当前层数的百分比向下取整驱散。专属 buff（刻印/MP/狼皮）不参与。 */
-	var dispelBuffPercent = function (state, sideKey, percent) {
+	let dispelBuffPercent = function (state, sideKey, percent) {
+		"use strict";
 		var side = getSide(state, sideKey);
 		if (!side) return { totalRemoved: 0, removedByStatus: {} };
 		percent = Math.max(0, toNumber(percent, 0));
@@ -274,7 +299,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		return { totalRemoved: totalRemoved, removedByStatus: removedByStatus };
 	};
 
-	var applyDamage = function (state, targetKey, rawDamage, options) {
+	let applyDamage = function (state, targetKey, rawDamage, options) {
+		"use strict";
 		options = options || {};
 		var target = getSide(state, targetKey);
 		if (!target) return { rawDamage: 0, blocked: 0, damage: 0 };
@@ -308,7 +334,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		return { rawDamage: fixed(rawDamage), blocked: fixed(blocked), damage: damage };
 	};
 
-	var heal = function (state, sideKey, amount, handlers) {
+	let heal = function (state, sideKey, amount, handlers) {
+		"use strict";
 		var side = getSide(state, sideKey);
 		if (!side) return 0;
 		var before = side.hp;
@@ -330,7 +357,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		return recovered;
 	};
 
-	var subtractPlayerHp = function (state, amount) {
+	let subtractPlayerHp = function (state, amount) {
+		"use strict";
 		var loss = Math.max(0, toNumber(amount, 0));
 		var nextHp = state.player.hp - loss;
 		state.player.hp = fixed(state.allowNegativePlayerHp ? nextHp : Math.max(0, nextHp));
@@ -338,12 +366,14 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		if (loss > 0) state.player.totalHpLost = fixed((state.player.totalHpLost || 0) + loss);
 	};
 
-	var getEffectiveHitRate = function (side, baseHitRate) {
+	let getEffectiveHitRate = function (side, baseHitRate) {
+		"use strict";
 		var darknessStacks = Math.max(0, getStatusStacks(side, "darkness"));
 		return clamp(toNumber(baseHitRate, 1) * Math.pow(0.92, darknessStacks), 0, 1);
 	};
 
-	var getUltimateGain = function (side, baseGain, combatState) {
+	let getUltimateGain = function (side, baseGain, combatState) {
+		"use strict";
 		baseGain = toNumber(baseGain, 0);
 		var modifiedGain = baseGain
 			+ getStatusStacks(side, "highSpirit") * 2
@@ -353,7 +383,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		return fixed(baseGain < 0 ? modifiedGain : Math.max(0, modifiedGain));
 	};
 
-	var getWeaponStat = function (weapon, stat, tick) {
+	let getWeaponStat = function (weapon, stat, tick) {
+		"use strict";
 		var value = toNumber(weapon.attributes && weapon.attributes[stat], 0);
 		var modifiers = Array.isArray(weapon.runtimeModifiers) ? weapon.runtimeModifiers : [];
 		modifiers.forEach(function (modifier) {
@@ -370,7 +401,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 	 * groupBy === "weaponTypes" 时统计与当前武器共享任意武器类型的武器数；
 	 * 默认统计场上"任意同名武器组"的最大数量——即只要场上存在 N 把相同名称的武器（不要求
 	 * 与当前武器同名、也不要求同类型）就计入，实现"一把a + 三把任意同名武器b 也触发a的效果"。 */
-	var countGroupedWeapons = function (state, weapon, groupBy) {
+	let countGroupedWeapons = function (state, weapon, groupBy) {
+		"use strict";
 		if (groupBy === "weaponTypes") {
 			var types = (weapon && (weapon.attributes && weapon.attributes.weaponTypes)) || (weapon && weapon.weaponTypes) || [];
 			return (state.weapons || []).filter(function (w) {
@@ -390,7 +422,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 
 	/** 同名武器数量驱动的伤害加成：本武器 name 相同的武器数（或 groupBy weaponTypes 时共享类型的武器数）
 	 * ≥ threshold 时伤害 +value（满足条件即生效，与数量无关）。 */
-	var getSameNameDamageBonus = function (state, weapon) {
+	let getSameNameDamageBonus = function (state, weapon) {
+		"use strict";
 		var bonuses = Array.isArray(state.sameNameDamageBonuses) ? state.sameNameDamageBonuses : [];
 		if (!bonuses.length || !weapon) return 0;
 		var weaponTypes = (weapon && (weapon.attributes && weapon.attributes.weaponTypes)) || (weapon && weapon.weaponTypes) || [];
@@ -405,14 +438,16 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		return fixed(total);
 	};
 
-	var getStatusBonusTimes = function (stacks, bonus) {
+	let getStatusBonusTimes = function (stacks, bonus) {
+		"use strict";
 		return bonus && bonus.mode === "presence"
 			? (stacks > 0 ? 1 : 0)
 			: Math.floor(stacks / Math.max(1, toNumber(bonus && bonus.every, 1)));
 	};
 
 	/** 状态驱动的武器伤害加成：默认只作用于注册该效果的武器；scope=all/nearby 时作用于全部/附近目标。 */
-	var getStatusWeaponDamageBonus = function (state, weapon) {
+	let getStatusWeaponDamageBonus = function (state, weapon) {
+		"use strict";
 		var bonuses = Array.isArray(state.weaponDamageBonuses) ? state.weaponDamageBonuses : [];
 		var weaponTypes = (weapon && (weapon.attributes && weapon.attributes.weaponTypes)) || (weapon && weapon.weaponTypes) || [];
 		var total = 0;
@@ -447,7 +482,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 	};
 
 	/** 状态驱动的攻击间隔修正（回合单位，换算为 Tick）：如"敌方每有10层冰结，自身间隔-1.9回合"。天然可逆、不累积。 */
-	var getStatusIntervalBonusTicks = function (state, weapon) {
+	let getStatusIntervalBonusTicks = function (state, weapon) {
+		"use strict";
 		var bonuses = Array.isArray(state.weaponIntervalBonuses) ? state.weaponIntervalBonuses : [];
 		var weaponTypes = (weapon && (weapon.attributes && weapon.attributes.weaponTypes)) || (weapon && weapon.weaponTypes) || [];
 		var totalTicks = 0;
@@ -462,7 +498,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 	};
 
 	/** 附近武器数量驱动的伤害加成：注册武器 directions/distance/filter 范围内每有一个匹配武器，其攻击伤害 +value。天然可逆、不累积。 */
-	var getNearbyDamageBonus = function (state, weapon) {
+	let getNearbyDamageBonus = function (state, weapon) {
+		"use strict";
 		var bonuses = Array.isArray(state.nearbyDamageBonuses) ? state.nearbyDamageBonuses : [];
 		var total = 0;
 		bonuses.forEach(function (bonus) {
@@ -473,7 +510,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 	};
 
 	/** 状态驱动的额外攻击次数：默认只作用于注册该效果的武器；scope=all 时才作用于全部匹配武器。 */
-	var getStatusExtraAttackCount = function (state, weapon) {
+	let getStatusExtraAttackCount = function (state, weapon) {
+		"use strict";
 		var bonuses = Array.isArray(state.weaponExtraAttacks) ? state.weaponExtraAttacks : [];
 		var weaponTypes = (weapon && (weapon.attributes && weapon.attributes.weaponTypes)) || (weapon && weapon.weaponTypes) || [];
 		var total = 0;
@@ -488,7 +526,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 	};
 
 	/** 附近武器数量驱动的额外攻击次数：注册武器 directions/distance/filter 范围内每有 every 个匹配武器，其攻击次数 +value（如"上下左右一格内每配置2个食物，本物品攻击次数+1"）。天然可逆、不累积。 */
-	var getNearbyExtraAttackCount = function (state, weapon) {
+	let getNearbyExtraAttackCount = function (state, weapon) {
+		"use strict";
 		var bonuses = Array.isArray(state.nearbyExtraAttacks) ? state.nearbyExtraAttacks : [];
 		var total = 0;
 		bonuses.forEach(function (bonus) {
@@ -499,7 +538,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 	};
 
 	/** 附近武器数量阈值驱动的额外攻击次数：附近匹配武器数 ≥ threshold 时，本武器攻击次数 +value（二进制，与数量无关；如"上下左右一格内食物与动物总数达到5个以上时，本武器攻击回数+2"）。 */
-	var getNearbyThresholdExtraAttackCount = function (state, weapon) {
+	let getNearbyThresholdExtraAttackCount = function (state, weapon) {
+		"use strict";
 		var bonuses = Array.isArray(state.nearbyThresholdExtraAttacks) ? state.nearbyThresholdExtraAttacks : [];
 		var total = 0;
 		bonuses.forEach(function (bonus) {
@@ -510,7 +550,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 	};
 
 	/** 附近武器数量驱动的攻击间隔修正（回合单位，换算为 Tick）：注册武器范围内每有 every 个匹配武器，其攻击间隔 +value 回合（如"上下左右一格内每有一个盾，本武器使用间隔-0.3"）。天然可逆、不累积。 */
-	var getNearbyIntervalBonusTicks = function (state, weapon) {
+	let getNearbyIntervalBonusTicks = function (state, weapon) {
+		"use strict";
 		var bonuses = Array.isArray(state.nearbyIntervalBonuses) ? state.nearbyIntervalBonuses : [];
 		var totalTicks = 0;
 		bonuses.forEach(function (bonus) {
@@ -521,7 +562,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 	};
 
 	/** 附近武器数量驱动的攻击间隔百分比修正：注册武器范围内每有 every 个匹配武器，攻击间隔 × (1 - value)（如"上下左右一格内每有一只动物，使用间隔-10%"）。乘算累积，天然可逆、不累积。 */
-	var getNearbyIntervalPercent = function (state, weapon) {
+	let getNearbyIntervalPercent = function (state, weapon) {
+		"use strict";
 		var bonuses = Array.isArray(state.nearbyIntervalPercentBonuses) ? state.nearbyIntervalPercentBonuses : [];
 		var total = 0;
 		bonuses.forEach(function (bonus) {
@@ -531,7 +573,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		return Math.min(0.99, Math.max(0, total));
 	};
 
-	var getWeaponIntervalTicks = function (state, weapon) {
+	let getWeaponIntervalTicks = function (state, weapon) {
+		"use strict";
 		var attributes = weapon.attributes || {};
 		// 新战斗快照用 baseAttackInterval 记录武器原始值；兼容旧快照和测试输入时，
 		// 再从未修正的 attackIntervalTicks / attackInterval 推断是否为主动攻击武器。
@@ -559,24 +602,28 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 	};
 
 	/** 怪物配置沿用 attackInterval 字段名，但数值语义是每秒出手次数。 */
-	var getEnemyAttackIntervalTicks = function (attackSpeed) {
+	let getEnemyAttackIntervalTicks = function (attackSpeed) {
+		"use strict";
 		attackSpeed = toNumber(attackSpeed, 1);
 		if (attackSpeed <= 0) attackSpeed = 1;
 		return Math.max(1, Math.round(100 / attackSpeed));
 	};
 
-	var getEnemyIntervalTicks = function (state) {
+	let getEnemyIntervalTicks = function (state) {
+		"use strict";
 		var interval = Math.max(1, Math.round(toNumber(state.enemy.attackIntervalTicks, 100)));
 		interval += getStatusStacks(state.enemy, "ice");
 		return Math.max(1, interval);
 	};
 
-	var getRoundRemainingTicks = function (tick) {
+	let getRoundRemainingTicks = function (tick) {
+		"use strict";
 		var progress = tick % 100;
 		return progress === 0 ? 100 : 100 - progress;
 	};
 
-	var settlePeriodicStatuses = function (state, handlers) {
+	let settlePeriodicStatuses = function (state, handlers) {
+		"use strict";
 		["player", "enemy"].forEach(function (sideKey) {
 			var side = getSide(state, sideKey);
 			var burnStacks = getStatusStacks(side, "burn");
@@ -610,7 +657,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		});
 	};
 
-	var matchesFilter = function (weapon, filter) {
+	let matchesFilter = function (weapon, filter) {
+		"use strict";
 		filter = filter || {};
 		var attributes = weapon.attributes || {};
 		var types = attributes.weaponTypes || weapon.weaponTypes || [];
@@ -622,10 +670,11 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		return true;
 	};
 
-	var CLOCKWISE_DIRECTIONS = ["up", "right", "down", "left"];
+	let CLOCKWISE_DIRECTIONS = ["up", "right", "down", "left"];
 
 	/** 战斗规则中的方向以武器 0 度为基准，运行时随来源武器顺时针旋转。 */
-	var rotateCombatDirections = function (directions, rotation) {
+	let rotateCombatDirections = function (directions, rotation) {
+		"use strict";
 		if (!Array.isArray(directions) || !directions.length) return [];
 		var normalizedRotation = Math.round((toNumber(rotation, 0)) / 90) * 90;
 		normalizedRotation = ((normalizedRotation % 360) + 360) % 360;
@@ -638,7 +687,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		});
 	};
 
-	var areNearby = function (leftWeapon, rightWeapon, options) {
+	let areNearby = function (leftWeapon, rightWeapon, options) {
+		"use strict";
 		options = options || {};
 		var distance = Math.max(1, Math.floor(toNumber(options.distance, 1)));
 		// rotate: false 表示固定世界方向（不随武器旋转），如"无论是否旋转，上方一格内触发"。
@@ -702,12 +752,14 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		});
 	};
 
-	var countNearbyWeapons = function (state, sourceWeapon, options) {
+	let countNearbyWeapons = function (state, sourceWeapon, options) {
+		"use strict";
 		return findNearbyWeapons(state, sourceWeapon, options).length;
 	};
 
 	/** 按战斗快照的稳定武器顺序返回空间与筛选条件都匹配的武器。 */
-	var findNearbyWeapons = function (state, sourceWeapon, options) {
+	let findNearbyWeapons = function (state, sourceWeapon, options) {
+		"use strict";
 		return state.weapons.filter(function (candidate) {
 			return candidate.instanceId !== sourceWeapon.instanceId
 				&& matchesFilter(candidate, options && options.filter)
@@ -715,13 +767,15 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		});
 	};
 
-	var resolveSideKey = function (target, sourceSide) {
+	let resolveSideKey = function (target, sourceSide) {
+		"use strict";
 		if (target === "player" || target === "enemy") return target;
 		if (target === "opponent") return oppositeSide(sourceSide);
 		return sourceSide;
 	};
 
-	var compare = function (actual, operator, expected) {
+	let compare = function (actual, operator, expected) {
+		"use strict";
 		if (operator === "gt") return actual > expected;
 		if (operator === "gte") return actual >= expected;
 		if (operator === "lt") return actual < expected;
@@ -730,7 +784,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		return actual === expected;
 	};
 
-	var conditionsPass = function (state, weapon, rule, context, handlers) {
+	let conditionsPass = function (state, weapon, rule, context, handlers) {
+		"use strict";
 		return (rule.conditions || []).every(function (condition) {
 			if (condition.kind === "status") {
 				var side = getSide(state, resolveSideKey(condition.target, context.sourceSide));
@@ -822,7 +877,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 	};
 
 	/** 支持“条件每满足 N 次触发一次”，计数按武器和规则分别保存并保留余数。 */
-	var frequencyPasses = function (weapon, rule, ruleIndex) {
+	let frequencyPasses = function (weapon, rule, ruleIndex) {
+		"use strict";
 		if (rule.every == null) return true;
 		var every = Math.max(1, Math.floor(toNumber(rule.every, 1)));
 		var counterKey = String(rule.counterKey || ("ruleEvery:" + (rule.id || ruleIndex)));
@@ -831,7 +887,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		return count >= every;
 	};
 
-	var resolveEffectAmount = function (state, weapon, effect, context) {
+	let resolveEffectAmount = function (state, weapon, effect, context) {
+		"use strict";
 		var amount = toNumber(effect.stacks == null ? effect.value : effect.stacks, 1);
 		var source = effect.stacksFrom;
 		if (source && source.kind === "nearbyCount") {
@@ -845,7 +902,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 	};
 
 	/** 执行一条规则的效果列表；可被 runCombatRules 调用，也可被 triggerWeaponEffects 用于立即发动其他武器的效果。 */
-	var runRuleEffects = function (state, weapon, rule, context, handlers) {
+	let runRuleEffects = function (state, weapon, rule, context, handlers) {
+		"use strict";
 		// 记录当前规则执行的 handlers，供 applyStatus 触发 buffReached 规则时使用（实战与预计内核一致）。
 		if (handlers) state._lastHandlers = handlers;
 		(rule.effects || []).forEach(function (effect) {
@@ -1442,7 +1500,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		});
 	};
 
-	var runCombatRules = function (state, weapon, trigger, context, handlers) {
+	let runCombatRules = function (state, weapon, trigger, context, handlers) {
+		"use strict";
 		context = context || {};
 		if (context.sourceSide == null) context.sourceSide = "player";
 		context.trigger = trigger;
@@ -1466,13 +1525,15 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		});
 	};
 
-	var runAllWeaponRules = function (state, trigger, context, handlers) {
+	let runAllWeaponRules = function (state, trigger, context, handlers) {
+		"use strict";
 		state.weapons.forEach(function (weapon) {
 			runCombatRules(state, weapon, trigger, context, handlers);
 		});
 	};
 
-	var createSide = function (source, defaultName) {
+	let createSide = function (source, defaultName) {
+		"use strict";
 		source = source || {};
 		var hp = Math.max(0, toNumber(source.hp, 0));
 		return {
@@ -1500,7 +1561,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		};
 	};
 
-	var createBattleState = function (input) {
+	let createBattleState = function (input) {
+		"use strict";
 		input = input || {};
 		var weapons = clone(input.weapons || []).map(function (weapon, index) {
 			weapon.instanceId = String(weapon.instanceId || ("weapon_" + index));
@@ -1552,7 +1614,7 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		};
 	};
 
-	return {
+	backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = {
 		TICKS_PER_SECOND: TICKS_PER_SECOND,
 		MIN_ATTACK_INTERVAL_SECONDS: MIN_ATTACK_INTERVAL_SECONDS,
 		MIN_ATTACK_INTERVAL_TICKS: MIN_ATTACK_INTERVAL_TICKS,
@@ -1602,4 +1664,4 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87 = (function () {
 		runAllWeaponRules: runAllWeaponRules,
 		createBattleState: createBattleState
 	};
-})();
+}

@@ -7,7 +7,7 @@ const vm = require('node:vm');
 const read = file => fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
 const plain = value => JSON.parse(JSON.stringify(value));
 
-function fixture(base, vertical = false) {
+function fixture(base, vertical = false, headless = false) {
     const nodes = {}, removed = [], timers = [], labels = [], dialogues = [];
     let document;
     const element = tag => {
@@ -51,7 +51,7 @@ function fixture(base, vertical = false) {
         replaceText:t=>t,doFunc:(fn,owner,...args)=>fn.apply(owner,args),
         encodeBase64:text=>Buffer.from(text).toString('base64'),showStartAnimate() {throw Error('转职返回不得重开标题');}
     };
-    const main = {dom,version:'test',mode:'play',floors:{}};
+    const main = {dom,version:'test',mode:'play',floors:{},replayChecking:headless};
     const theme = new Proxy({tokens:{},drawLabelOn(ctx,text) {labels.push(text);}}, {get:(o,k)=>k in o?o[k]:()=>{}});
     const context = vm.createContext({core,main,flags,document,console,dialogues,Image:function(){},
         setTimeout:fn=>timers.push(fn),clearTimeout() {},clearInterval() {},
@@ -77,6 +77,11 @@ function fixture(base, vertical = false) {
         core.insertAction = (...args) => core.events.insertAction(...args);
     `, context);
     core.material.items = context[Object.keys(context).find(key=>key.startsWith('items_'))];
+    if (headless) {
+        context.document = {};
+        context.window = {};
+        context.Image = function () {throw Error('Headless replay must not preload title images');};
+    }
     vm.runInContext(read('project/careerSelect.js'),context);
     context.installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0(core,core.plugin);
     const start = () => {core.events.setEvents(main.floors.MT29.events['1,9'],1,9);core.doAction();};
@@ -168,4 +173,30 @@ test('小偷仍在 (6,2) 打通暗道；其他选项与开局选职保持原行�
     f.core.plugin.careerSelect.open();f.key('ArrowRight');f.key('Enter');
     assert.equal(f.flags.kaiju,'琴');assert.equal(f.flags.zhuanzhi,undefined);
     assert.ok(f.core.status.route[0].startsWith('input2:'));
+});
+
+test('无界面验算保留九种转职的录像选择、奖励、外观与取消路线', () => {
+    for (const [base,index,name,items,pool] of cases) {
+        const f=fixture(base,false,true);f.core.replaying=true;
+        f.core.status.replay.toReplay=['choices:'+index];
+        f.start();f.flush();
+        assert.equal(f.flags.zhuanzhi,name);
+        assert.deepEqual(f.inventory,Object.fromEntries(items.map(id=>[id,1])));
+        assert.deepEqual(plain(f.flags.randomList),['existing',...pool]);
+        assert.deepEqual(f.removed,[[1,9,'MT29']]);
+        assert.deepEqual(plain(f.core.status.route),['choices:'+index]);
+        assert.equal(f.nodes.careerTitleVideo,undefined);
+        assert.equal(f.nodes.careerTitleCanvas,undefined);
+        assert.equal(f.nodes.careerSelect,undefined);
+    }
+    for (const [base,count] of [['剑',4],['杖',2],['琴',3]]) {
+        const f=fixture(base,false,true);f.core.replaying=true;
+        f.core.status.replay.toReplay=['choices:'+count];
+        f.start();f.flush();
+        assert.equal(f.flags.zhuanzhi,undefined);
+        assert.deepEqual(f.inventory,{});
+        assert.deepEqual(f.removed,[]);
+        assert.deepEqual(plain(f.core.status.route),['choices:'+count]);
+        assert.equal(f.core.plugin.careerSelect.open(),false);
+    }
 });

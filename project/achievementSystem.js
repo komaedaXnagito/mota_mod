@@ -300,7 +300,7 @@ var installAchievementSystem_d38bb038_c4fa_43be_927c_168680046baa = function (co
 	};
 
 	var isRealPlay = function () {
-		if (typeof main !== "undefined" && main.mode !== "play") return false;
+		if (typeof main !== "undefined" && (main.mode !== "play" || main.replayChecking)) return false;
 		return !(core.isReplaying && core.isReplaying());
 	};
 
@@ -561,6 +561,7 @@ var installAchievementSystem_d38bb038_c4fa_43be_927c_168680046baa = function (co
 	};
 
 	var enqueueToast = function (definition) {
+		if (typeof main !== "undefined" && main.replayChecking) return;
 		toastQueue.push(definition);
 		showNextToast();
 	};

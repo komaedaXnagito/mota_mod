@@ -1,48 +1,65 @@
 /** 背包与战斗共用的武器详情 Tooltip 和显示格式。 */
-var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
-	"use strict";
+var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61;
+// 显式定义导出对象；块级变量保留私有状态，加载时不调用初始化函数。
+{
 
-	var tooltip = null;
-	var activeAnchor = null;
-	var pinnedAnchor = null;
-	var lastPointer = null;
-	var tooltipHideTimer = null;
-	var releaseTooltipViewport = null;
-	var tooltipMoveFrame = null;
-	var pendingTooltipPosition = null;
-	var lastTooltipHtml = null;
-	var TOOLTIP_HIDE_DELAY = 0;
-	var recipePreviewRoot = null;
-	var recipeWeaponDetailRoot = null;
-	var recipeWeaponDetailReturnFocus = null;
-	var weaponCardRenderer = null;
-	var modalStack = [];
-	var modalKeyboardInstalled = false;
+	/** The engine's server checker sets replayChecking before plugin initialization.
+	 * Browser replay still has presentation and must not be treated as headless. */
+	let isHeadlessReplay = function () {
+		return typeof main !== "undefined" && !!main.replayChecking;
+	};
+	let canUseDOM = function () {
+		return !isHeadlessReplay() && typeof document !== "undefined"
+			&& typeof document.createElement === "function"
+			&& typeof document.querySelector === "function"
+			&& typeof window !== "undefined" && typeof window.addEventListener === "function";
+	};
+
+	let tooltip = null;
+	let activeAnchor = null;
+	let pinnedAnchor = null;
+	let lastPointer = null;
+	let tooltipHideTimer = null;
+	let releaseTooltipViewport = null;
+	let tooltipMoveFrame = null;
+	let pendingTooltipPosition = null;
+	let lastTooltipHtml = null;
+	let TOOLTIP_HIDE_DELAY = 0;
+	let recipePreviewRoot = null;
+	let recipeWeaponDetailRoot = null;
+	let recipeWeaponDetailReturnFocus = null;
+	let weaponCardRenderer = null;
+	let modalStack = [];
+	let modalKeyboardInstalled = false;
 	// 武器定义保存项目相对路径，引擎则按文件名缓存已加载的 Image。
 	// 在这里统一两者，避免各界面使用无版本参数的 URL 再请求一次相同文件。
-	var weaponImageCache = Object.create(null);
-	var weaponImageCore = null;
+	let weaponImageCache = Object.create(null);
+	let weaponImageCore = null;
 
 	// 所有武器入口共用这一层；读取主题放在调用时，兼容纯数据脚本并行加载。
-	var weaponTheme = function () {
+	let weaponTheme = function () {
+		"use strict";
 		return typeof fantasyUI_6f31b8ea_7c4d_4b67_a215_03b247f8e903 === "undefined"
 			? null : fantasyUI_6f31b8ea_7c4d_4b67_a215_03b247f8e903;
 	};
-	var decorateWeaponSurface = function (element, options) {
+	let decorateWeaponSurface = function (element, options) {
+		"use strict";
 		var theme = weaponTheme();
 		if (!element || !theme) return;
 		element.classList.add("weapon-ui-surface");
 		theme.decorate(element, options || { radius: 15, interactive: true });
 	};
 	// 仅装饰使用固定序列，不消耗游戏/商店随机数。离屏、后台与关闭时停止动画。
-	var particleHosts = new Map();
-	var particleObserver = null;
-	var syncParticleVisibility = function () {
+	let particleHosts = new Map();
+	let particleObserver = null;
+	let syncParticleVisibility = function () {
+		"use strict";
 		particleHosts.forEach(function (record) {
 			record.layer.classList.toggle("is-running", record.visible && !document.hidden);
 		});
 	};
-	var decorateWeaponParticles = function (element, rarity) {
+	let decorateWeaponParticles = function (element, rarity) {
+		"use strict";
 		var counts = { 3: 18, 4: 26, 5: 38 };
 		var count = counts[rarity];
 		if (!element || !count || particleHosts.has(element) || !element.style.setProperty) return;
@@ -81,7 +98,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		}
 		// 不支持观察器时保留静态星光，避免整本图鉴持续运行动画。
 	};
-	var releaseWeaponUI = function (root) {
+	let releaseWeaponUI = function (root) {
+		"use strict";
 		if (!root) return;
 		particleHosts.forEach(function (record, element) {
 			if (root !== element && !(root.contains && root.contains(element))) return;
@@ -96,22 +114,26 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		var theme = weaponTheme();
 		if (theme) theme.releaseTree(root);
 	};
-	var setWeaponButtonLabel = function (button, text) {
+	let setWeaponButtonLabel = function (button, text) {
+		"use strict";
 		if (!button) return;
 		var label = button.classList.contains("fantasy-ui-button") ? button.querySelector("span") : null;
 		(label || button).textContent = text;
 	};
 
-	var normalizeImagePath = function (source) {
+	let normalizeImagePath = function (source) {
+		"use strict";
 		return String(source || "").replace(/\\/g, "/");
 	};
 
-	var stripImageQuery = function (source) {
+	let stripImageQuery = function (source) {
+		"use strict";
 		return normalizeImagePath(source).split("#")[0].split("?")[0];
 	};
 
 	/** 把 project/images/foo.png 转成引擎图片缓存使用的 foo.png。 */
-	var getWeaponImageKey = function (source) {
+	let getWeaponImageKey = function (source) {
+		"use strict";
 		var path = stripImageQuery(source);
 		var marker = "project/images/";
 		var markerIndex = path.indexOf(marker);
@@ -120,7 +142,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		return path;
 	};
 
-	var getEngineWeaponImage = function (source, coreRef) {
+	let getEngineWeaponImage = function (source, coreRef) {
+		"use strict";
 		coreRef = coreRef || weaponImageCore || (typeof core !== "undefined" ? core : null);
 		var images = coreRef && coreRef.material && coreRef.material.images
 			? coreRef.material.images.images : null;
@@ -128,7 +151,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		return images && key ? images[key] || null : null;
 	};
 
-	var buildVersionedImageSource = function (source) {
+	let buildVersionedImageSource = function (source) {
+		"use strict";
 		var path = normalizeImagePath(source);
 		if (!path || /^(?:data|blob):/i.test(path)) return path;
 		if (/^(?:https?:)?\/\//i.test(path)) return path;
@@ -138,7 +162,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	};
 
 	/** 压缩资源使用会被释放的 blob URL；转为稳定 data URL 后才能供后续 DOM 图片复用。 */
-	var makeStableEngineImageSource = function (image, fallbackSource) {
+	let makeStableEngineImageSource = function (image, fallbackSource) {
+		"use strict";
 		if (!image || !image.src) return buildVersionedImageSource(fallbackSource);
 		if (!/^blob:/i.test(image.src)) return image.src;
 		if (typeof document === "undefined" || typeof document.createElement !== "function") {
@@ -159,7 +184,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		}
 	};
 
-	var cacheWeaponImage = function (source, coreRef) {
+	let cacheWeaponImage = function (source, coreRef) {
+		"use strict";
 		var key = getWeaponImageKey(source);
 		if (!key) return { key: "", src: normalizeImagePath(source), image: null, ready: null };
 		var record = weaponImageCache[key] || { key: key, src: "", image: null, ready: null };
@@ -193,7 +219,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	};
 
 	/** 在引擎开始加载资源前，把所有武器图自动并入 core.images。 */
-	var registerWeaponImages = function (coreRef, definitions) {
+	let registerWeaponImages = function (coreRef, definitions) {
+		"use strict";
 		weaponImageCore = coreRef || weaponImageCore;
 		if (!coreRef || !Array.isArray(coreRef.images)) return 0;
 		var known = Object.create(null);
@@ -210,7 +237,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	};
 
 	/** 资源加载完成后，将武器路径一次性映射到引擎已加载的 Image。 */
-	var preloadWeaponImages = function (coreRef, definitions) {
+	let preloadWeaponImages = function (coreRef, definitions) {
+		"use strict";
 		weaponImageCore = coreRef || weaponImageCore;
 		var waits = [];
 		Object.keys(definitions || {}).forEach(function (definitionId) {
@@ -222,22 +250,26 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		return typeof Promise === "function" ? Promise.all(waits) : null;
 	};
 
-	var getWeaponImageSource = function (source) {
+	let getWeaponImageSource = function (source) {
+		"use strict";
 		return cacheWeaponImage(source, weaponImageCore).src || normalizeImagePath(source);
 	};
 
-	var setWeaponImageSource = function (imageElement, source) {
+	let setWeaponImageSource = function (imageElement, source) {
+		"use strict";
 		if (!imageElement) return imageElement;
 		imageElement.decoding = "async";
 		imageElement.src = getWeaponImageSource(source);
 		return imageElement;
 	};
 
-	var getCachedWeaponImage = function (source) {
+	let getCachedWeaponImage = function (source) {
+		"use strict";
 		return cacheWeaponImage(source, weaponImageCore).image;
 	};
 
-	var getWeaponImageCacheStats = function () {
+	let getWeaponImageCacheStats = function () {
+		"use strict";
 		var keys = Object.keys(weaponImageCache);
 		return {
 			count: keys.length,
@@ -249,25 +281,29 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	 * 弹层会在捕获阶段拦截方向键的 keyup；若玩家在弹层打开前正按着方向键，
 	 * 引擎便收不到松键通知。接管或归还弹层焦点时主动终止移动，避免关闭后继续行走。
 	 */
-	var clearHeldMovementKeys = function () {
+	let clearHeldMovementKeys = function () {
+		"use strict";
 		if (typeof core === "undefined" || !core || !core.status) return;
 		core.status.holdingKeys = [];
 		core.status.heroStop = true;
 	};
 
-	var isEscapeKey = function (event) {
+	let isEscapeKey = function (event) {
+		"use strict";
 		return event && (event.key === "Escape" || event.key === "Esc" || event.keyCode === 27);
 	};
 
 	/** DOM 弹层与地图共用 outerUI 的边界和缩放密度，不能使用浏览器视口。 */
-	var getGameViewport = function (coreRef) {
+	let getGameViewport = function (coreRef) {
+		"use strict";
+		if (isHeadlessReplay()) return null;
 		coreRef = coreRef || (typeof core !== "undefined" ? core : weaponImageCore);
 		var outer = typeof document !== "undefined" && document.getElementById
 			? document.getElementById("outerUI") || document.getElementById("gameGroup") : null;
-		var rect = outer && outer.getBoundingClientRect();
+		var rect = outer && typeof outer.getBoundingClientRect === "function" && outer.getBoundingClientRect();
 		if (rect && (!rect.width || !rect.height)) {
 			outer = document.getElementById("gameGroup");
-			rect = outer && outer.getBoundingClientRect();
+			rect = outer && typeof outer.getBoundingClientRect === "function" && outer.getBoundingClientRect();
 		}
 		if (!rect || !rect.width || !rect.height) return null;
 		var domStyle = coreRef && coreRef.domStyle || {};
@@ -277,9 +313,11 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 			height: rect.height / scale, scale: scale, vertical: vertical };
 	};
 
-	var viewportBindingId = 0;
-	var bindGameViewport = function (root, coreRef, onResize) {
-		if (!root || !root.style || typeof window === "undefined") return function () {};
+	let viewportBindingId = 0;
+	let bindGameViewport = function (root, coreRef, onResize) {
+		"use strict";
+		if (isHeadlessReplay() || !root || !root.style || typeof window === "undefined"
+			|| typeof window.addEventListener !== "function" || typeof window.removeEventListener !== "function") return function () {};
 		coreRef = coreRef || (typeof core !== "undefined" ? core : weaponImageCore);
 		var resizeName = "gameModalViewport" + (++viewportBindingId);
 		var sync = function () {
@@ -322,7 +360,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		};
 	};
 
-	var removeModalEntry = function (entry) {
+	let removeModalEntry = function (entry) {
+		"use strict";
 		if (!entry) return;
 		if (entry.releaseViewport) entry.releaseViewport();
 		if (entry.root && entry.keyGuard && typeof entry.root.removeEventListener === "function") {
@@ -334,8 +373,9 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	};
 
 	/** Guides 使用视口坐标画箭头；保留坐标系，只收拢提示并裁剪遮罩。 */
-	var bindGuideViewport = function (canvas) {
-		if (!canvas) return function () {};
+	let bindGuideViewport = function (canvas) {
+		"use strict";
+		if (isHeadlessReplay() || !canvas) return function () {};
 		var theme = weaponTheme();
 		var surfaces = new Map();
 		var releaseSurface = function (surface) {
@@ -394,14 +434,16 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	};
 
 	/** 丢弃已被外部代码移除的弹层，避免失效节点继续拦截键盘。 */
-	var pruneModalStack = function () {
+	let pruneModalStack = function () {
+		"use strict";
 		for (var index = modalStack.length - 1; index >= 0; index--) {
 			var entry = modalStack[index];
 			if (!entry.root || entry.root.isConnected === false) removeModalEntry(entry);
 		}
 	};
 
-	var getTopModal = function () {
+	let getTopModal = function () {
+		"use strict";
 		pruneModalStack();
 		return modalStack.length ? modalStack[modalStack.length - 1] : null;
 	};
@@ -410,7 +452,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	 * 捕获所有键盘事件：Esc 在 keyup 时关闭栈顶，避免同一次按键继续触发引擎菜单；
 	 * 其他按键仅允许送入栈顶弹层，随后由根节点阻止它冒泡到 body 快捷键。
 	 */
-	var handleModalKeyboard = function (event) {
+	let handleModalKeyboard = function (event) {
+		"use strict";
 		var top = getTopModal();
 		if (!top) return;
 		if (isEscapeKey(event)) {
@@ -427,14 +470,16 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		}
 	};
 
-	var installModalKeyboard = function () {
+	let installModalKeyboard = function () {
+		"use strict";
 		if (modalKeyboardInstalled || typeof document === "undefined") return;
 		document.addEventListener("keydown", handleModalKeyboard, true);
 		document.addEventListener("keyup", handleModalKeyboard, true);
 		modalKeyboardInstalled = true;
 	};
 
-	var uninstallModalKeyboard = function () {
+	let uninstallModalKeyboard = function () {
+		"use strict";
 		if (!modalKeyboardInstalled || modalStack.length || typeof document === "undefined") return;
 		document.removeEventListener("keydown", handleModalKeyboard, true);
 		document.removeEventListener("keyup", handleModalKeyboard, true);
@@ -442,7 +487,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	};
 
 	/** 把弹层压入栈；同一根节点重复注册时会移动到栈顶。 */
-	var registerModal = function (root, close, options) {
+	let registerModal = function (root, close, options) {
+		"use strict";
 		if (!root || typeof close !== "function") return false;
 		clearHeldMovementKeys();
 		unregisterModal(root, { restoreFocus: false });
@@ -471,7 +517,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	};
 
 	/** 从弹层栈移除指定节点，并把焦点还给打开它之前的弹层。 */
-	var unregisterModal = function (root, options) {
+	let unregisterModal = function (root, options) {
+		"use strict";
 		options = options || {};
 		var removed = null;
 		var wasTop = false;
@@ -495,7 +542,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	};
 
 	/** 只关闭当前栈顶弹层，形成后进先出的 Esc 行为。 */
-	var closeTopModal = function () {
+	let closeTopModal = function () {
+		"use strict";
 		var top = getTopModal();
 		if (!top || top.closing) return false;
 		top.closing = true;
@@ -508,21 +556,25 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		return true;
 	};
 
-	var isTopModal = function (root) {
+	let isTopModal = function (root) {
+		"use strict";
 		var top = getTopModal();
 		return !!top && top.root === root;
 	};
 
-	var hasOpenModal = function () {
+	let hasOpenModal = function () {
+		"use strict";
 		return !!getTopModal();
 	};
 
-	var getModalDepth = function () {
+	let getModalDepth = function () {
+		"use strict";
 		pruneModalStack();
 		return modalStack.length;
 	};
 
-	var escapeHtml = function (value) {
+	let escapeHtml = function (value) {
+		"use strict";
 		return String(value == null ? "" : value)
 			.replace(/&/g, "&amp;")
 			.replace(/</g, "&lt;")
@@ -531,7 +583,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 			.replace(/'/g, "&#39;");
 	};
 
-	var formatNumber = function (value, digits) {
+	let formatNumber = function (value, digits) {
+		"use strict";
 		if (value == null || !Number.isFinite(Number(value))) return "—";
 		var factor = Math.pow(10, digits == null ? 2 : digits);
 		var rounded = Math.round(Number(value) * factor) / factor;
@@ -539,21 +592,24 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	};
 
 	/** 奥义获取显示：正值带 + 前缀，负值（消耗型武器）原样显示负号，空值显示破折号。 */
-	var formatUltimateGain = function (value) {
+	let formatUltimateGain = function (value) {
+		"use strict";
 		if (value == null || !Number.isFinite(Number(value))) return "—";
 		var number = Number(value);
 		var text = formatNumber(number);
 		return number > 0 ? "+" + text : text;
 	};
 
-	var formatPercent = function (value) {
+	let formatPercent = function (value) {
+		"use strict";
 		return value == null || !Number.isFinite(Number(value))
 			? "—"
 			: formatNumber(Number(value) * 100, 1) + "%";
 	};
 
 	/** 商店与背包共用：转义特殊效果文案，并把上方联动符号替换为黄色动态双箭头。 */
-	var formatSpecialEffectHtml = function (text) {
+	let formatSpecialEffectHtml = function (text) {
+		"use strict";
 		return String(text || "无特殊效果").split(/([\^∧＾])/g).map(function (part) {
 			if (/^[\^∧＾]$/.test(part)) {
 				return "<span class='bui-inline-synergy direction-up' role='img' aria-label='上方联动'></span>";
@@ -562,7 +618,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		}).join("");
 	};
 
-	var getDamageText = function (source) {
+	let getDamageText = function (source) {
+		"use strict";
 		source = source || {};
 		if (source.minAttack == null && source.maxAttack == null) return "—";
 		var minimum = source.minAttack == null ? source.maxAttack : source.minAttack;
@@ -570,12 +627,13 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		return formatNumber(minimum) + "～" + formatNumber(maximum);
 	};
 
-	var hasChanged = function (left, right) {
+	let hasChanged = function (left, right) {
+		"use strict";
 		if (left == null && right == null) return false;
 		return Math.abs((Number(left) || 0) - (Number(right) || 0)) > 0.0001;
 	};
 
-	var statNames = {
+	let statNames = {
 		attack: "伤害",
 		minAttack: "伤害下限",
 		maxAttack: "伤害上限",
@@ -585,7 +643,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		ultimateGain: "奥义获取"
 	};
 
-	var describeBonus = function (bonus) {
+	let describeBonus = function (bonus) {
+		"use strict";
 		bonus = bonus || {};
 		var stat = statNames[bonus.stat] || bonus.stat || "属性";
 		var operation = bonus.operation || "add";
@@ -598,23 +657,27 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		return escapeHtml(bonus.sourceName || "布局联动") + "：" + escapeHtml(stat + " " + text);
 	};
 
-	var makeValueWithBase = function (currentText, changed, baseText) {
+	let makeValueWithBase = function (currentText, changed, baseText) {
+		"use strict";
 		return "<strong>" + escapeHtml(currentText) + "</strong>"
 			+ (changed ? "<small>基础 " + escapeHtml(baseText) + "</small>" : "");
 	};
 
-	var getWeaponDefinitions = function () {
+	let getWeaponDefinitions = function () {
+		"use strict";
 		return typeof weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 !== "undefined"
 			? weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 : {};
 	};
 
-	var getRecipeData = function () {
+	let getRecipeData = function () {
+		"use strict";
 		return typeof weaponRecipes_7f2e9c4a_3b5d_4f8a_9c1e_6d4b8a2f9c31 !== "undefined"
 			? weaponRecipes_7f2e9c4a_3b5d_4f8a_9c1e_6d4b8a2f9c31 : { recipes: [] };
 	};
 
 	/** 配方使用 weapons.js 的键；背包和战斗快照保存的是内部短 id，因此统一在这里反查。 */
-	var getWeaponKey = function (weapon) {
+	let getWeaponKey = function (weapon) {
+		"use strict";
 		var definitions = getWeaponDefinitions();
 		if (typeof weapon === "string" && definitions[weapon]) return weapon;
 		if (!weapon) return null;
@@ -627,18 +690,21 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		return null;
 	};
 
-	var getWeaponDefinition = function (weapon) {
+	let getWeaponDefinition = function (weapon) {
+		"use strict";
 		var key = getWeaponKey(weapon);
 		return key ? getWeaponDefinitions()[key] : (typeof weapon === "object" ? weapon : null);
 	};
 
-	var getRecipeDisplayName = function (key) {
+	let getRecipeDisplayName = function (key) {
+		"use strict";
 		var definitions = getWeaponDefinitions();
 		var displayNames = getRecipeData().displayNames || {};
 		return displayNames[key] || (definitions[key] && definitions[key].name) || String(key || "未知武器");
 	};
 
-	var getWeaponRecipes = function (weapon) {
+	let getWeaponRecipes = function (weapon) {
+		"use strict";
 		var key = getWeaponKey(weapon);
 		if (!key) return [];
 		var recipes = getRecipeData().recipes;
@@ -647,11 +713,13 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		});
 	};
 
-	var canCraftWithWeapon = function (weapon) {
+	let canCraftWithWeapon = function (weapon) {
+		"use strict";
 		return getWeaponRecipes(weapon).length > 0;
 	};
 
-	var buildCraftHammerHtml = function (weapon) {
+	let buildCraftHammerHtml = function (weapon) {
+		"use strict";
 		var key = getWeaponKey(weapon);
 		if (!key || !canCraftWithWeapon(key)) return "";
 		return "<button type='button' class='bui-craft-hammer' data-bui-craft-key='"
@@ -659,7 +727,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 			+ escapeHtml(getRecipeDisplayName(key)) + "的合成表'>🔨</button>";
 	};
 
-	var normalizeWeaponCells = function (weapon) {
+	let normalizeWeaponCells = function (weapon) {
+		"use strict";
 		weapon = weapon || {};
 		var cells = [];
 		if (Array.isArray(weapon.cells)) {
@@ -684,11 +753,13 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		return cells.length ? cells : [[0, 0]];
 	};
 
-	var percentStyle = function (left, top, width, height) {
+	let percentStyle = function (left, top, width, height) {
+		"use strict";
 		return "left:" + left + "%;top:" + top + "%;width:" + width + "%;height:" + height + "%;";
 	};
 	/** 用真实占格校正图片留白：细长武器放开短边，不规则武器避免按整个外接矩形放大。 */
-	var getWeaponImageInset = function (weapon, baseInset) {
+	let getWeaponImageInset = function (weapon, baseInset) {
+		"use strict";
 		weapon = weapon || {};
 		var cells = normalizeWeaponCells(weapon.baseCells ? { cells: weapon.baseCells } : weapon);
 		var occupied = Object.create(null);
@@ -705,7 +776,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	};
 
 	/** Tooltip 内使用真实占格与等比裁剪，展示与合成槽一致的武器格子预览。 */
-	var buildWeaponGridPreviewHtml = function (weapon) {
+	let buildWeaponGridPreviewHtml = function (weapon) {
+		"use strict";
 		weapon = getWeaponDefinition(weapon) || weapon || {};
 		var cells = normalizeWeaponCells(weapon);
 		var sourceMinCol = Math.min.apply(null, cells.map(function (cell) { return cell[0]; }));
@@ -764,7 +836,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		return html.join("");
 	};
 
-	var buildWeaponTooltip = function (data) {
+	let buildWeaponTooltip = function (data) {
+		"use strict";
 		data = data || {};
 		var weapon = data.weapon || {};
 		var current = data.current || data.attributes || weapon;
@@ -820,11 +893,13 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		return html.join("");
 	};
 
-	var setWeaponCardRenderer = function (renderer) {
+	let setWeaponCardRenderer = function (renderer) {
+		"use strict";
 		weaponCardRenderer = renderer || null;
 	};
 
-	var isMobileRecipeLayout = function () {
+	let isMobileRecipeLayout = function () {
+		"use strict";
 		if (weaponCardRenderer && typeof weaponCardRenderer.isMobileListLayout === "function") {
 			return weaponCardRenderer.isMobileListLayout();
 		}
@@ -833,7 +908,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		return Number(window.innerWidth) <= 700;
 	};
 
-	var closeRecipeWeaponDetail = function (restoreFocus) {
+	let closeRecipeWeaponDetail = function (restoreFocus) {
+		"use strict";
 		if (!recipeWeaponDetailRoot) return false;
 		var returnFocus = recipeWeaponDetailReturnFocus;
 		unregisterModal(recipeWeaponDetailRoot);
@@ -847,7 +923,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	};
 
 	/** 移动端点击配方武器名后，用统一卡片组件弹出并默认展开完整详情。 */
-	var openRecipeWeaponDetail = function (definition, trigger) {
+	let openRecipeWeaponDetail = function (definition, trigger) {
+		"use strict";
 		if (!definition || !weaponCardRenderer || typeof document === "undefined") return false;
 		closeRecipeWeaponDetail(false);
 		var root = document.createElement("div");
@@ -894,7 +971,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		return true;
 	};
 
-	var closeWeaponRecipePreview = function () {
+	let closeWeaponRecipePreview = function () {
+		"use strict";
 		closeRecipeWeaponDetail(false);
 		unregisterModal(recipePreviewRoot);
 		releaseWeaponUI(recipePreviewRoot);
@@ -902,7 +980,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		recipePreviewRoot = null;
 	};
 
-	var appendCraftHammer = function (container, weapon) {
+	let appendCraftHammer = function (container, weapon) {
+		"use strict";
 		var key = getWeaponKey(weapon);
 		if (!container || !key || !canCraftWithWeapon(key)) return null;
 		var button = document.createElement("button");
@@ -923,7 +1002,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	};
 
 	/** 用于背包、商店、合成等可见名称，统一追加可点击的小锤子。 */
-	var renderWeaponName = function (container, weapon, options) {
+	let renderWeaponName = function (container, weapon, options) {
+		"use strict";
 		if (!container) return container;
 		options = options || {};
 		container.textContent = "";
@@ -936,7 +1016,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		return container;
 	};
 
-	var appendRecipeWeaponName = function (container, key, currentKey, onActivate) {
+	let appendRecipeWeaponName = function (container, key, currentKey, onActivate) {
+		"use strict";
 		var span = document.createElement("span");
 		span.className = "bui-recipe-preview-weapon" + (key === currentKey ? " is-current" : "");
 		span.dataset.weaponKey = key;
@@ -963,7 +1044,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		container.appendChild(span);
 	};
 
-	var openWeaponRecipePreview = function (weapon) {
+	let openWeaponRecipePreview = function (weapon) {
+		"use strict";
 		var key = getWeaponKey(weapon);
 		var recipes = getWeaponRecipes(key);
 		if (!key || !recipes.length || typeof document === "undefined") return false;
@@ -1047,7 +1129,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		return true;
 	};
 
-	var ensureTooltip = function () {
+	let ensureTooltip = function () {
+		"use strict";
 		if (tooltip && tooltip.isConnected) return tooltip;
 		tooltip = document.createElement("div");
 		lastTooltipHtml = null;
@@ -1076,7 +1159,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		return tooltip;
 	};
 
-	var positionTooltip = function (event, anchor) {
+	let positionTooltip = function (event, anchor) {
+		"use strict";
 		if (!tooltip || !tooltip.classList.contains("show") || !anchor) return;
 		// 背包详情有独立的贴边定位，保持其已有的物理像素坐标。
 		if (tooltip.classList.contains("backpack-panel-tooltip")) return;
@@ -1111,7 +1195,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		tooltip.style.setProperty("--game-tip-top", Math.max(top, Math.min(y, bottom - height)) + "px");
 	};
 
-	var cancelQueuedTooltipPosition = function () {
+	let cancelQueuedTooltipPosition = function () {
+		"use strict";
 		pendingTooltipPosition = null;
 		if (tooltipMoveFrame == null) return;
 		if (typeof window.cancelAnimationFrame === "function") window.cancelAnimationFrame(tooltipMoveFrame);
@@ -1119,7 +1204,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	};
 
 	/** 鼠标高频移动只在下一帧做一次尺寸读取与定位，避免每个 pointermove 都强制布局。 */
-	var queueTooltipPosition = function (event, anchor) {
+	let queueTooltipPosition = function (event, anchor) {
+		"use strict";
 		if (typeof window.requestAnimationFrame !== "function") {
 			positionTooltip(event, anchor);
 			return;
@@ -1138,8 +1224,9 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		});
 	};
 
-	var showTooltip = function (anchor, html, event) {
-		if (!anchor || !html) return;
+	let showTooltip = function (anchor, html, event) {
+		"use strict";
+		if (isHeadlessReplay() || !anchor || !html) return;
 		if (tooltipHideTimer) clearTimeout(tooltipHideTimer);
 		tooltipHideTimer = null;
 		cancelQueuedTooltipPosition();
@@ -1163,13 +1250,15 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 	};
 
 	/** 点击武器后固定 Tooltip；再次固定其他武器时直接切换内容与锚点。 */
-	var pinTooltip = function (anchor, html, event) {
-		if (!anchor || !html) return;
+	let pinTooltip = function (anchor, html, event) {
+		"use strict";
+		if (isHeadlessReplay() || !anchor || !html) return;
 		pinnedAnchor = anchor;
 		showTooltip(anchor, html, event);
 	};
 
-	var hideTooltip = function (anchor) {
+	let hideTooltip = function (anchor) {
+		"use strict";
 		if (tooltipHideTimer) clearTimeout(tooltipHideTimer);
 		tooltipHideTimer = null;
 		if (anchor && activeAnchor && anchor !== activeAnchor) return;
@@ -1182,21 +1271,25 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		pinnedAnchor = null;
 	};
 
-	var unpinTooltip = function () {
+	let unpinTooltip = function () {
+		"use strict";
 		hideTooltip();
 	};
 
-	var isTooltipPinned = function (anchor) {
+	let isTooltipPinned = function (anchor) {
+		"use strict";
 		return !!pinnedAnchor && (!anchor || pinnedAnchor === anchor);
 	};
 
-	var scheduleTooltipHide = function (anchor) {
+	let scheduleTooltipHide = function (anchor) {
+		"use strict";
 		if (pinnedAnchor) return;
 		if (tooltipHideTimer) clearTimeout(tooltipHideTimer);
 		tooltipHideTimer = setTimeout(function () { hideTooltip(anchor); }, TOOLTIP_HIDE_DELAY);
 	};
 
-	var bindTooltip = function (element, provider, options) {
+	let bindTooltip = function (element, provider, options) {
+		"use strict";
 		if (!element || element.dataset.buiTooltipBound) return;
 		options = options || {};
 		element.dataset.buiTooltipBound = "1";
@@ -1256,7 +1349,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		}
 	};
 
-	var buildStatusTooltip = function (definition, stacks, description, remainingTicks) {
+	let buildStatusTooltip = function (definition, stacks, description, remainingTicks) {
+		"use strict";
 		var kind = definition.kind === "buff" ? "Buff" : "Debuff";
 		return "<article class='bui-status-tip'><h3><span>" + escapeHtml(definition.name)
 			+ "</span><small style='color:" + escapeHtml(definition.color || "#fff") + "'>" + kind + "</small></h3>"
@@ -1266,7 +1360,7 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 			+ "</article>";
 	};
 
-	return {
+	backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = {
 		decorateWeaponSurface: decorateWeaponSurface,
 		decorateWeaponParticles: decorateWeaponParticles,
 		releaseWeaponUI: releaseWeaponUI,
@@ -1299,6 +1393,8 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		isTopModal: isTopModal,
 		hasOpenModal: hasOpenModal,
 		getModalDepth: getModalDepth,
+		isHeadlessReplay: isHeadlessReplay,
+		canUseDOM: canUseDOM,
 		getGameViewport: getGameViewport,
 		bindGameViewport: bindGameViewport,
 		bindGuideViewport: bindGuideViewport,
@@ -1309,4 +1405,4 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61 = (function () {
 		isTooltipPinned: isTooltipPinned,
 		hideTooltip: hideTooltip
 	};
-})();
+}

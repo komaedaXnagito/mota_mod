@@ -4,6 +4,11 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 
 	var registry = backpackBattleStatusDefinitions_7d94f05e_2f6d_4b8e_9c23_5a317ccab120;
 	var common = backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61;
+	// The server checker still runs the real runtime and settlement, but has no presentation layer.
+	if (common.isHeadlessReplay ? common.isHeadlessReplay(core)
+		: typeof main !== "undefined" && !!main.replayChecking) {
+		return { render: function () {}, close: function () {}, destroy: function () {}, isOpen: function () { return false; } };
+	}
 	var rules = backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87;
 	var root = null;
 	var nodes = {};

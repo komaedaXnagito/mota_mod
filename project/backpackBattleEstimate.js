@@ -72,6 +72,8 @@ var createBackpackBattleEstimateCoordinator_f43e0d5b_629e_457c_9540_b3f0d0541ffc
 	};
 
 	var ensureWorker = function () {
+		// Damage estimates are presentation-only; real replay battles use the deterministic runtime.
+		if (typeof main !== "undefined" && main.replayChecking) return null;
 		if (worker) return worker;
 		if (typeof Worker !== "function") return null;
 		try {

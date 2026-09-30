@@ -1,6 +1,9 @@
 /** 项目层接入：战斗入口、背包快照、奖励桥接、预计显伤和怪物手册。 */
 var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function (core, plugin) {
 	"use strict";
+	var isHeadlessReplay = function () {
+		return typeof main !== "undefined" && !!main.replayChecking;
+	};
 
 	var rules = backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87;
 	var MIN_ATTACK_INTERVAL_SECONDS = rules.MIN_ATTACK_INTERVAL_SECONDS;
@@ -820,12 +823,12 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 			return core.clearContinueAutomaticRoute(callback);
 		}
 
-		var isGuideBattle = !!(core.getFlag && core.getFlag("inGuide"))
+		var isGuideBattle = !isHeadlessReplay() && !!(core.getFlag && core.getFlag("inGuide"))
 			&& !(core.isReplaying && core.isReplaying());
 		var started = runtime.start(input, {
 			// 教程必须展示完整战斗过程；显式指定 1 倍速也可屏蔽此前保存的“立即结算”偏好。
 			speed: isGuideBattle ? 1 : undefined,
-			fastForward: !isGuideBattle && core.isReplaying && core.isReplaying(),
+			fastForward: isHeadlessReplay() || (!isGuideBattle && core.isReplaying && core.isReplaying()),
 			onFinish: function (result) {
 				settleFinishedBattle(result);
 			}
@@ -928,7 +931,9 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 			if (core.control._replay_error === wrappedReplayError) core.control._replay_error = originalReplayError;
 		}
 	};
-	window.addEventListener("beforeunload", cleanup, { once: true });
+	if (!isHeadlessReplay() && typeof window !== "undefined" && typeof window.addEventListener === "function") {
+		window.addEventListener("beforeunload", cleanup, { once: true });
+	}
 
 	plugin.backpackBattle = {
 		start: function (enemyId, x, y, options) {

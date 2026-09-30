@@ -1,12 +1,14 @@
 /** 碧蓝幻想公共美术组件。规范见 UI美术规范.md；Canvas 与 DOM 共用同一套边框几何。 */
-var fantasyUI_6f31b8ea_7c4d_4b67_a215_03b247f8e903 = (function () {
-	"use strict";
-	var UI_INK = "#214b70";
-	var UI_GOLD = "#dac58a";
-	var UI_SERIF = "'Noto Serif SC', 'Songti SC', 'SimSun', serif";
-	var UI_SANS = "'Microsoft YaHei', sans-serif";
+var fantasyUI_6f31b8ea_7c4d_4b67_a215_03b247f8e903;
+// 显式定义导出对象；块级变量保留私有状态，加载时不调用初始化函数。
+{
+	let UI_INK = "#214b70";
+	let UI_GOLD = "#dac58a";
+	let UI_SERIF = "'Noto Serif SC', 'Songti SC', 'SimSun', serif";
+	let UI_SANS = "'Microsoft YaHei', sans-serif";
 
-	var drawLabelOn = function (context, text, x, y, size, color, align, weight, serif, textBaseline) {
+	let drawLabelOn = function (context, text, x, y, size, color, align, weight, serif, textBaseline) {
+		"use strict";
 		context.save();
 		context.font = (weight || "normal") + " " + size + "px " + (serif ? UI_SERIF : UI_SANS);
 		context.fillStyle = color || UI_INK;
@@ -24,7 +26,8 @@ var fantasyUI_6f31b8ea_7c4d_4b67_a215_03b247f8e903 = (function () {
 		context.restore();
 	};
 
-	var diamondOn = function (context, x, y, width, height, color) {
+	let diamondOn = function (context, x, y, width, height, color) {
+		"use strict";
 		context.beginPath();
 		context.moveTo(x, y - height / 2);
 		context.lineTo(x + width / 2, y);
@@ -35,7 +38,8 @@ var fantasyUI_6f31b8ea_7c4d_4b67_a215_03b247f8e903 = (function () {
 		context.fill();
 	};
 
-	var arcFramePath = function (context, box, inset, radius) {
+	let arcFramePath = function (context, box, inset, radius) {
+		"use strict";
 		var x = box.x + inset, y = box.y + inset;
 		var w = box.w - inset * 2, h = box.h - inset * 2;
 		var r = Math.max(2, Math.min(radius - inset * 0.45, w / 4, h / 4));
@@ -52,7 +56,8 @@ var fantasyUI_6f31b8ea_7c4d_4b67_a215_03b247f8e903 = (function () {
 		context.closePath();
 	};
 
-	var metalGradient = function (context, box) {
+	let metalGradient = function (context, box) {
+		"use strict";
 		var gold = context.createLinearGradient(box.x, box.y, box.x + box.w * 0.3, box.y + box.h);
 		gold.addColorStop(0, "#f9e8ad");
 		gold.addColorStop(0.19, "#dac18a");
@@ -63,7 +68,8 @@ var fantasyUI_6f31b8ea_7c4d_4b67_a215_03b247f8e903 = (function () {
 		return gold;
 	};
 
-	var cornerFlourishOn = function (context, x, y, flipX, flipY, radius, ornate) {
+	let cornerFlourishOn = function (context, x, y, flipX, flipY, radius, ornate) {
+		"use strict";
 		context.save();
 		context.translate(x, y);
 		context.scale(flipX, flipY);
@@ -88,7 +94,8 @@ var fantasyUI_6f31b8ea_7c4d_4b67_a215_03b247f8e903 = (function () {
 		context.restore();
 	};
 
-	var drawCrestOn = function (context, x, y, size) {
+	let drawCrestOn = function (context, x, y, size) {
+		"use strict";
 		if (size >= 10) {
 			context.save();
 			context.strokeStyle = "#f2dfaa";
@@ -113,7 +120,8 @@ var fantasyUI_6f31b8ea_7c4d_4b67_a215_03b247f8e903 = (function () {
 		diamondOn(context, x, y, size * 0.42, size * 0.83, "#fff4c4");
 	};
 
-	var drawArcFrameOn = function (context, box, options) {
+	let drawArcFrameOn = function (context, box, options) {
+		"use strict";
 		options = options || {};
 		var radius = options.radius || 12;
 		context.save();
@@ -162,7 +170,8 @@ var fantasyUI_6f31b8ea_7c4d_4b67_a215_03b247f8e903 = (function () {
 		context.restore();
 	};
 
-	var hexButtonPath = function (context, box, inset) {
+	let hexButtonPath = function (context, box, inset) {
+		"use strict";
 		var x = box.x + inset, y = box.y + inset;
 		var w = box.w - inset * 2, h = box.h - inset * 2;
 		var cut = h * 0.40;
@@ -176,7 +185,8 @@ var fantasyUI_6f31b8ea_7c4d_4b67_a215_03b247f8e903 = (function () {
 		context.closePath();
 	};
 
-	var drawHexButtonOn = function (context, box, text, gold, selected, fontSize) {
+	let drawHexButtonOn = function (context, box, text, gold, selected, fontSize) {
+		"use strict";
 		context.save();
 		hexButtonPath(context, box, 0);
 		context.fillStyle = "#92754c";
@@ -262,13 +272,14 @@ var fantasyUI_6f31b8ea_7c4d_4b67_a215_03b247f8e903 = (function () {
 	};
 
 
-	var tokens = {
+	let tokens = {
 		ink: UI_INK, gold: UI_GOLD, serif: UI_SERIF, sans: UI_SANS,
 		goldShadow: "#92754c", ivory: "#fff8d8", blue: "#29537f",
 		blueLight: "#9bd1de", hover: "#ffe18a"
 	};
 
-	var pearlGradient = function (context, box, variant) {
+	let pearlGradient = function (context, box, variant) {
+		"use strict";
 		var fill = context.createLinearGradient(0, box.y, 0, box.y + box.h);
 		if (variant === "gold") {
 			fill.addColorStop(0, "#fff2cc");
@@ -282,7 +293,8 @@ var fantasyUI_6f31b8ea_7c4d_4b67_a215_03b247f8e903 = (function () {
 		return fill;
 	};
 
-	var installStyles = function () {
+	let installStyles = function () {
+		"use strict";
 		if (document.getElementById("fantasy-ui-style")) return;
 		var style = document.createElement("style");
 		style.id = "fantasy-ui-style";
@@ -296,10 +308,21 @@ var fantasyUI_6f31b8ea_7c4d_4b67_a215_03b247f8e903 = (function () {
 	};
 
 	// DOM 承载内容和点击；装饰复用原始 Canvas 路径，缩放不拉伸弧角。
-	var decorations = new Map();
-	var observer = null;
-	var decorate = function (element, options) {
+	let decorations = new Map();
+	let observer = null;
+	let resizeListenerInstalled = false;
+	let repaintDecorations = function () {
+		"use strict";
+		decorations.forEach(function (record) { record.paint(); });
+	};
+	let decorate = function (element, options) {
+		"use strict";
 		installStyles();
+		// 仅在浏览器实际使用 DOM 装饰时注册，服务端回放加载不访问 window。
+		if (!resizeListenerInstalled && typeof window !== "undefined" && typeof window.addEventListener === "function") {
+			window.addEventListener("resize", repaintDecorations);
+			resizeListenerInstalled = true;
+		}
 		options = options || {};
 		var art = document.createElement("canvas");
 		art.className = "fantasy-ui-art";
@@ -372,21 +395,19 @@ var fantasyUI_6f31b8ea_7c4d_4b67_a215_03b247f8e903 = (function () {
 		if (observer) observer.observe(element);
 		paint();
 	};
-	var releaseTree = function (root) {
+	let releaseTree = function (root) {
+		"use strict";
 		if (!root) return;
 		decorations.forEach(function (record, element) {
 			if (element === root || root.contains(element)) record.dispose();
 		});
 	};
-	window.addEventListener("resize", function () {
-		decorations.forEach(function (record) { record.paint(); });
-	});
 
-	return {
+	fantasyUI_6f31b8ea_7c4d_4b67_a215_03b247f8e903 = {
 		tokens: tokens, drawLabelOn: drawLabelOn, diamondOn: diamondOn,
 		arcFramePath: arcFramePath, metalGradient: metalGradient, cornerFlourishOn: cornerFlourishOn,
 		drawCrestOn: drawCrestOn, drawArcFrameOn: drawArcFrameOn,
 		hexButtonPath: hexButtonPath, drawHexButtonOn: drawHexButtonOn,
 		pearlGradient: pearlGradient, decorate: decorate, releaseTree: releaseTree
 	};
-})();
+}

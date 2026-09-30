@@ -22,6 +22,10 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		imageInsetCells: 0.12 // 武器图片与占格外缘之间保留的格子距离，与商店预览一致。
 	};
 	const uiCommon = backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61;
+	const isHeadlessReplay = function () {
+		return uiCommon.isHeadlessReplay ? uiCommon.isHeadlessReplay(core)
+			: typeof main !== "undefined" && !!main.replayChecking;
+	};
 
 	// state：当前内存中的背包数据；placed 是已摆放实例，inventory 是待摆放实例。
 	// unlockedCells 保存已经解锁的 [列, 行] 坐标。
@@ -625,9 +629,9 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 
 	/** 清除背包专用 Tooltip 定位，避免关闭背包后影响商店、图鉴等界面。 */
 	const clearBackpackTooltipPlacement = function () {
-		if (typeof document === "undefined") return;
 		tooltipPlacementSource = null;
 		tooltipPlacementAnchor = null;
+		if (isHeadlessReplay() || typeof document === "undefined" || typeof document.querySelector !== "function") return;
 		const tooltip = document.querySelector(".bui-tooltip.backpack-panel-tooltip");
 		if (!tooltip) return;
 		tooltip.classList.remove("backpack-panel-tooltip");
@@ -1966,7 +1970,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	};
 
 	const isGuideBackpack = function () {
-		return !!(core.getFlag && core.getFlag("inGuide"))
+		return !isHeadlessReplay() && !!(core.getFlag && core.getFlag("inGuide"))
 			&& !(core.isReplaying && core.isReplaying());
 	};
 
@@ -2112,6 +2116,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	};
 
 	const endBackpackGuide = function () {
+		if (isHeadlessReplay()) return;
 		const wasActive = !!backpackGuideTour || backpackGuideStartFrame != null
 			|| backpackGuideLayoutFrame != null || backpackGuideTargets.length > 0
 			|| document.body.classList.contains("backpack-guide-active");
@@ -2628,6 +2633,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	 * 录像播放中禁止打开，避免产生无法复现的拖拽路线。
 	 */
 	const openBackpack = function () {
+		if (isHeadlessReplay()) return false;
 		if (root) return true;
 		if (core.getFlag && core.getFlag("disableOpenBackpack")) {
 			if (core.drawTip) core.drawTip("当前无法操作背包");
@@ -2658,25 +2664,31 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		backpackGuideCompletionDialoguePending = false;
 		endBackpackGuide();
 		backpackGuideStarted = false;
-		uiCommon.hideTooltip();
 		clearBackpackTooltipPlacement();
 		clearInventoryDragGesture();
 		clearPlacedDragGesture();
 		closeSecondaryActions();
-		cancelDrag();
-		window.removeEventListener("resize", renderAll);
+		if (!isHeadlessReplay()) {
+			uiCommon.hideTooltip();
+			cancelDrag();
+			if (typeof window !== "undefined" && typeof window.removeEventListener === "function") {
+				window.removeEventListener("resize", renderAll);
+			}
+			if (typeof document !== "undefined" && typeof document.removeEventListener === "function") {
+				document.removeEventListener("pointermove", onPointerMove, true);
+				document.removeEventListener("pointerup", onPointerUp, true);
+				document.removeEventListener("pointercancel", onPointerCancel, true);
+				document.removeEventListener("keydown", onKeyDown, true);
+				document.removeEventListener("keyup", onKeyUp, true);
+			}
+			uiCommon.unregisterModal(root);
+			uiCommon.releaseWeaponUI(root);
+			if (root) root.remove();
+			document.documentElement.classList.remove("backpack-workspace-open");
+			document.body.classList.remove("backpack-workspace-open");
+		}
 		if (viewportObserver) viewportObserver.disconnect();
 		viewportObserver = null;
-		document.removeEventListener("pointermove", onPointerMove, true);
-		document.removeEventListener("pointerup", onPointerUp, true);
-		document.removeEventListener("pointercancel", onPointerCancel, true);
-		document.removeEventListener("keydown", onKeyDown, true);
-		document.removeEventListener("keyup", onKeyUp, true);
-		uiCommon.unregisterModal(root);
-		uiCommon.releaseWeaponUI(root);
-		if (root) root.remove();
-		document.documentElement.classList.remove("backpack-workspace-open");
-		document.body.classList.remove("backpack-workspace-open");
 		root = null;
 		boardPanel = boardControls = detailPanel = detailContent = returnButton = null;
 		selectedInstanceId = null; detailPinned = false;

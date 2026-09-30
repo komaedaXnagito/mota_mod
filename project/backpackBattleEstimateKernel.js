@@ -6,18 +6,21 @@
  * 随机种子只在本次模拟的局部变量中推进，不会回写游戏的 __randBattle__ flag。
  * 该文件可直接被 Web Worker 加载。
  */
-var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71 = (function () {
-	"use strict";
+var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71;
+// 显式定义导出对象；块级变量保留私有状态，加载时不调用初始化函数。
+{
 
-	var rules = null;
-	var MAX_TICKS = 1000000;
-	var getRules = function () {
+	let rules = null;
+	let MAX_TICKS = 1000000;
+	let getRules = function () {
+		"use strict";
 		if (!rules) rules = backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87;
 		return rules;
 	};
 
 	/** 完整复刻 libs/utils.js 的 __next_rand/core.rand，但只修改闭包内的 seed。 */
-	var createSeededRandom = function (initialSeed, state) {
+	let createSeededRandom = function (initialSeed, state) {
+		"use strict";
 		var seed = Math.floor(Number(initialSeed));
 		if (!isFinite(seed)) seed = 0;
 		var advance = function () {
@@ -50,7 +53,8 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71 = (functio
 		};
 	};
 
-	var makeHandlers = function (state, attackWeapon, random) {
+	let makeHandlers = function (state, attackWeapon, random) {
+		"use strict";
 		return {
 			dispelBuff: function (targetKey) {
 				var target = rules.getSide(state, targetKey);
@@ -153,13 +157,15 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71 = (functio
 		};
 	};
 
-	var getAverageDamage = function (state, weapon) {
+	let getAverageDamage = function (state, weapon) {
+		"use strict";
 		var minimum = Math.max(0, rules.getWeaponStat(weapon, "minAttack", state.tick));
 		var maximum = Math.max(minimum, rules.getWeaponStat(weapon, "maxAttack", state.tick));
 		return rules.fixed((minimum + maximum) / 2);
 	};
 
-	var canWeaponEverDealDamage = function (state, weapon) {
+	let canWeaponEverDealDamage = function (state, weapon) {
+		"use strict";
 		if (getAverageDamage(state, weapon) > 0) return true;
 		return (weapon.combatRules || []).some(function (rule) {
 			return (rule.effects || []).some(function (effect) {
@@ -172,7 +178,8 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71 = (functio
 		});
 	};
 
-	var simulate = function (input) {
+	let simulate = function (input) {
+		"use strict";
 		getRules();
 		var simulationInput = rules.clone(input || {});
 		simulationInput.player = simulationInput.player || {};
@@ -467,8 +474,8 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71 = (functio
 		};
 	};
 
-	return {
+	backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71 = {
 		MAX_TICKS: MAX_TICKS,
 		simulate: simulate
 	};
-})();
+}

@@ -6,6 +6,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 		 * 因此不会受游戏缩放倍率或窗口尺寸变化影响。
 		 */
 		this._ensureGameBackgroundVideo = function (anchor) {
+			if (main.replayChecking) return null;
 			var layer = document.getElementById("outerBackgroundVideoLayer");
 			var createVideo = function (id, objectPosition) {
 				var video = document.createElement("video");
@@ -116,16 +117,16 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 		// 自动注册所有武器图，新增武器时无需再手工维护 data.js 的 images 列表。
 		if (weaponImageCommon) weaponImageCommon.registerWeaponImages(core, weaponImageDefinitions);
 		// 引擎的文字输入/确认框也是 DOM 弹窗，和项目弹窗共用游戏窗口边界。
-		if (weaponImageCommon) weaponImageCommon.bindGameViewport(document.getElementById("inputDiv"), core);
+		if (weaponImageCommon && !main.replayChecking) weaponImageCommon.bindGameViewport(document.getElementById("inputDiv"), core);
 		this._afterLoadResources = function () {
 			// 本函数将在所有资源加载完毕后，游戏开启前被执行
 			core.ui.statusBar.init();
 			// 将定义路径统一映射到引擎缓存，后续所有武器界面复用同一资源 URL。
-			if (weaponImageCommon) weaponImageCommon.preloadWeaponImages(core, weaponImageDefinitions);
+			if (weaponImageCommon && !main.replayChecking) weaponImageCommon.preloadWeaponImages(core, weaponImageDefinitions);
 			// I373 使用独立的盲盒贴图；覆盖到 items 图集格位，保证所有绘制入口显示一致。
 			var blindBoxImage = core.material.images.images["blindBoxSet06Volcanic.png"];
 			var itemIcon = core.material.icons.items.I373;
-			if (blindBoxImage && core.material.images.items && itemIcon != null) {
+			if (!main.replayChecking && blindBoxImage && core.material.images.items && itemIcon != null) {
 				var itemAtlas = document.createElement("canvas");
 				itemAtlas.width = core.material.images.items.width;
 				itemAtlas.height = core.material.images.items.height;
@@ -2624,6 +2625,14 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 		})();
 	},
 	"statusBar2": function () {
+		if (main.replayChecking) {
+			// Presentation API used by floor events; game status updates remain in functions.js.
+			core.ui.statusBar = {};
+			["init", "update", "clearItemInfo", "clearInfo", "printEnvironmentInfo", "_update_props", "print", "showInfo"].forEach(function (name) {
+				core.ui.statusBar[name] = function () {};
+			});
+			return;
+		}
 		//老版状态栏ui绘制，请作者在添加道具等操作时一并将新版状态栏一起添加，以供玩家自行选择ui，或通过提示让玩家选择作者想使用的ui。
 		if (core.getLocalStorage("newStatusBar")) return
 		main.dom.floorMsgGroup.style.display = "none";
@@ -3662,6 +3671,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 		// init() called in `afterLoadResources`.
 	},
 	"statusBar": function () {
+		if (main.replayChecking) return;
 		//新版鸽窝状态栏ui绘制，请作者在添加道具等操作时一并将老版状态栏一起添加，以供玩家自行选择ui，或通过提示让玩家选择作者想使用的ui。
 		if (!core.getLocalStorage("newStatusBar")) return
 		main.dom.floorMsgGroup.style.display = "none";
@@ -8918,6 +8928,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 		 * @param cb 执行的函数
 		 */
 		function nextFrame(cb) {
+			if (main.replayChecking || typeof requestAnimationFrame !== "function") { cb(); return; }
 			requestAnimationFrame(() => {
 				requestAnimationFrame(cb);
 			});
@@ -9230,7 +9241,8 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 		 * async環境下await Sleep(500)
 		 * @param {number} millisecond 暫停毫秒數
 		 */
-		self.Sleep = async function (millisecond) {
+		var utilityGlobal = typeof self !== "undefined" ? self : globalThis;
+		utilityGlobal.Sleep = async function (millisecond) {
 			return new Promise((resolve) => setTimeout(resolve, millisecond));
 		};
 
@@ -9238,14 +9250,17 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 		 * 使js暫停一幀
 		 * async環境下await SleepFrame()
 		 */
-		self.SleepFrame = async function () {
-			return new Promise((resolve) => requestAnimationFrame(resolve));
+		utilityGlobal.SleepFrame = async function () {
+			return new Promise((resolve) => {
+				if (main.replayChecking || typeof requestAnimationFrame !== "function") resolve();
+				else requestAnimationFrame(resolve);
+			});
 		};
 
 		/**
 		 * editor_file的isset函數
 		 */
-		self.isset = function (val) {
+		utilityGlobal.isset = function (val) {
 			if (val == undefined || val == null) {
 				return false;
 			}
@@ -9255,7 +9270,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 		/**
 		 * editor_file的checkCallback函數
 		 */
-		self.checkCallback = function (callback) {
+		utilityGlobal.checkCallback = function (callback) {
 			if (!isset(callback)) {
 				printe("未设置callback");
 				throw "未设置callback";
@@ -10858,6 +10873,19 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 		};
 	},
 	"帧动画": function () {
+		if (main.replayChecking) {
+			core.plugin.playing = new Set();
+			this.setanimate = function (name, px, py, width, height, allFarme, imageList, soundList) {
+				core.setFlag("animate_" + name, { px: px, py: py, width: width, height: height,
+					allFarme: allFarme, imageList: imageList, soundList: soundList });
+			};
+			this.deleteanimate = function (name) { core.setFlag("animate_" + name); };
+			["animatemove", "animateloop", "animatereverse", "animatepause", "animateclear"].forEach(function (name) {
+				core.plugin[name] = function () {};
+			});
+			this.playanimate = function () { return -1; };
+			return;
+		}
 		// 在此增加新插件
 		// 在此增加新插件
 		const animate2 = document.createElement("canvas"); //画布设置
@@ -11297,6 +11325,19 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 		};
 	},
 	"动画": function () {
+		if (main.replayChecking) {
+			// Keep event completion semantics without requiring the browser Transition class.
+			maps.prototype.moveAnimate = maps.prototype.pauseAnimate = maps.prototype.remuseAnimate = function () {};
+			maps.prototype.drawResizeAnimate = function (name, id, x, y, hero, reverse, loop, callback) {
+				if (callback) callback();
+				return -1;
+			};
+			events.prototype._action_animateResize = function (data) {
+				core.events.__action_doAsyncFunc(data.async, core.maps.drawResizeAnimate,
+					data.name, data.id, data.centerX, data.centerY, data.hero, data.reverse, data.loop);
+			};
+			return;
+		}
 
 		// 在此增加新插件
 		const {

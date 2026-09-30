@@ -4,39 +4,44 @@
  * 只根据武器的结构化 synergyRules/combatRules 和来源武器占格计算潜在联动格，
  * 不解析描述文本、不读取游戏状态，也不使用随机数。背包与战斗界面共用此结果。
  */
-var backpackWeaponSynergy_91f4c21e_7d37_4f12_9cc4_a9606ba62a83 = (function () {
-	"use strict";
+var backpackWeaponSynergy_91f4c21e_7d37_4f12_9cc4_a9606ba62a83;
+// 显式定义导出对象；块级变量保留私有状态，加载时不调用初始化函数。
+{
 
-	var ALL_DIRECTIONS = ["up", "down", "left", "right"];
-	var CLOCKWISE_DIRECTIONS = ["up", "right", "down", "left"];
-	var DIRECTION_VECTORS = {
+	let ALL_DIRECTIONS = ["up", "down", "left", "right"];
+	let CLOCKWISE_DIRECTIONS = ["up", "right", "down", "left"];
+	let DIRECTION_VECTORS = {
 		up: [0, -1],
 		down: [0, 1],
 		left: [-1, 0],
 		right: [1, 0]
 	};
 
-	var normalizeDirections = function (directions) {
+	let normalizeDirections = function (directions) {
+		"use strict";
 		if (!Array.isArray(directions) || !directions.length) return ALL_DIRECTIONS.slice();
 		return directions.map(String).filter(function (direction, index, list) {
 			return DIRECTION_VECTORS[direction] && list.indexOf(direction) === index;
 		});
 	};
 
-	var normalizeRotation = function (rotation) {
+	let normalizeRotation = function (rotation) {
+		"use strict";
 		rotation = Math.round((Number(rotation) || 0) / 90) * 90;
 		return ((rotation % 360) + 360) % 360;
 	};
 
 	/** 把武器 0 度本地方向旋转为当前背包中的世界方向。 */
-	var rotateDirection = function (direction, rotation) {
+	let rotateDirection = function (direction, rotation) {
+		"use strict";
 		var directionIndex = CLOCKWISE_DIRECTIONS.indexOf(String(direction));
 		if (directionIndex < 0) return null;
 		var quarterTurns = normalizeRotation(rotation) / 90;
 		return CLOCKWISE_DIRECTIONS[(directionIndex + quarterTurns) % 4];
 	};
 
-	var rotateDirections = function (directions, rotation) {
+	let rotateDirections = function (directions, rotation) {
+		"use strict";
 		return normalizeDirections(directions).map(function (direction) {
 			return rotateDirection(direction, rotation);
 		}).filter(function (direction, index, list) {
@@ -46,7 +51,8 @@ var backpackWeaponSynergy_91f4c21e_7d37_4f12_9cc4_a9606ba62a83 = (function () {
 
 	/** 返回带旋转后 directions 的条件副本，不修改 weapons.js 中的原始定义。
 	 *  condition.rotate === false 时保持固定世界方向（不随武器旋转）。 */
-	var rotateSpatialCondition = function (condition, rotation) {
+	let rotateSpatialCondition = function (condition, rotation) {
+		"use strict";
 		condition = condition || {};
 		var rotated = Object.assign({}, condition);
 		if (condition.rotate === false) return rotated;
@@ -54,7 +60,8 @@ var backpackWeaponSynergy_91f4c21e_7d37_4f12_9cc4_a9606ba62a83 = (function () {
 		return rotated;
 	};
 
-	var normalizeSourceCells = function (cells) {
+	let normalizeSourceCells = function (cells) {
+		"use strict";
 		var used = {};
 		return (Array.isArray(cells) ? cells : []).map(function (cell) {
 			return [Math.floor(Number(cell[0])), Math.floor(Number(cell[1]))];
@@ -67,7 +74,8 @@ var backpackWeaponSynergy_91f4c21e_7d37_4f12_9cc4_a9606ba62a83 = (function () {
 		});
 	};
 
-	var collectSpatialRules = function (weapon) {
+	let collectSpatialRules = function (weapon) {
+		"use strict";
 		var result = [];
 		(Array.isArray(weapon && weapon.synergyRules) ? weapon.synergyRules : []).forEach(function (rule, ruleIndex) {
 			(Array.isArray(rule.conditions) ? rule.conditions : []).forEach(function (condition, conditionIndex) {
@@ -149,7 +157,8 @@ var backpackWeaponSynergy_91f4c21e_7d37_4f12_9cc4_a9606ba62a83 = (function () {
 		return result;
 	};
 
-	var addAffectedCell = function (cellMap, sourceKeys, col, row, directions, descriptor) {
+	let addAffectedCell = function (cellMap, sourceKeys, col, row, directions, descriptor) {
+		"use strict";
 		col = Math.floor(Number(col));
 		row = Math.floor(Number(row));
 		var key = col + "," + row;
@@ -174,7 +183,8 @@ var backpackWeaponSynergy_91f4c21e_7d37_4f12_9cc4_a9606ba62a83 = (function () {
 		if (cellMap[key].kinds.indexOf(descriptor.kind) < 0) cellMap[key].kinds.push(descriptor.kind);
 	};
 
-	var addOrthogonalCells = function (cellMap, sourceKeys, sourceCells, descriptor) {
+	let addOrthogonalCells = function (cellMap, sourceKeys, sourceCells, descriptor) {
+		"use strict";
 		var condition = descriptor.condition || {};
 		var distance = Math.max(1, Math.floor(Number(condition.distance) || 1));
 		var directions = normalizeDirections(condition.directions);
@@ -195,7 +205,8 @@ var backpackWeaponSynergy_91f4c21e_7d37_4f12_9cc4_a9606ba62a83 = (function () {
 		});
 	};
 
-	var addSideBoxCells = function (cellMap, sourceKeys, sourceCells, descriptor) {
+	let addSideBoxCells = function (cellMap, sourceKeys, sourceCells, descriptor) {
+		"use strict";
 		var condition = descriptor.condition || {};
 		var distance = Math.max(1, Math.floor(Number(condition.distance) || 1));
 		var span = Math.max(1, Math.floor(Number(condition.span) || distance));
@@ -243,7 +254,8 @@ var backpackWeaponSynergy_91f4c21e_7d37_4f12_9cc4_a9606ba62a83 = (function () {
 	 * 战斗触发规则与布局联动规则共用同一套严格位置判断：
 	 * sideBox 走矩形区域，其余按严格同一行/列的正交判断，不再使用曼哈顿大致方向。
 	 */
-	var addCombatNearbyCells = function (cellMap, sourceKeys, sourceCells, descriptor) {
+	let addCombatNearbyCells = function (cellMap, sourceKeys, sourceCells, descriptor) {
+		"use strict";
 		var condition = descriptor.condition || {};
 		if (condition.relation === "sideBox") {
 			addSideBoxCells(cellMap, sourceKeys, sourceCells, descriptor);
@@ -252,7 +264,8 @@ var backpackWeaponSynergy_91f4c21e_7d37_4f12_9cc4_a9606ba62a83 = (function () {
 		}
 	};
 
-	var getAffectedCells = function (weapon, occupiedSourceCells, rotation) {
+	let getAffectedCells = function (weapon, occupiedSourceCells, rotation) {
+		"use strict";
 		var sourceCells = normalizeSourceCells(occupiedSourceCells);
 		if (!sourceCells.length) return [];
 		var sourceKeys = {};
@@ -275,7 +288,7 @@ var backpackWeaponSynergy_91f4c21e_7d37_4f12_9cc4_a9606ba62a83 = (function () {
 		});
 	};
 
-	return {
+	backpackWeaponSynergy_91f4c21e_7d37_4f12_9cc4_a9606ba62a83 = {
 		getAffectedCells: getAffectedCells,
 		collectSpatialRules: collectSpatialRules,
 		normalizeRotation: normalizeRotation,
@@ -283,4 +296,4 @@ var backpackWeaponSynergy_91f4c21e_7d37_4f12_9cc4_a9606ba62a83 = (function () {
 		rotateDirections: rotateDirections,
 		rotateSpatialCondition: rotateSpatialCondition
 	};
-})();
+}

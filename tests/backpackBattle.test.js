@@ -242,7 +242,7 @@ test("商店、图鉴和背包共用武器卡片与特殊效果渲染", () => {
 	assert.match(rendererSource, /var buildWeaponDetails = function \(definition, options\)/);
 	assert.match(rendererSource, /locked \? \["\?\?\?", "\?\?\?", "\?\?\?", "\?\?\?"\]/);
 	assert.match(rendererSource, /if \(locked\) effectText\.textContent = "\?\?\?"/);
-	assert.match(commonSource, /const|var formatSpecialEffectHtml/);
+	assert.match(commonSource, /(?:const|let|var) formatSpecialEffectHtml/);
 	assert.match(commonSource, /split\(\/\(\[\\\^∧＾\]\)\/g\)/);
 	assert.match(commonSource, /TOOLTIP_HIDE_DELAY = 0/);
 	assert.match(commonSource, /queueTooltipPosition\(event, element\)/);

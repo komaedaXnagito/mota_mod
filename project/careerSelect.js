@@ -6,6 +6,14 @@
  */
 var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, plugin) {
 	"use strict";
+	var isHeadlessReplay = function () {
+		return typeof main !== "undefined" && !!main.replayChecking;
+	};
+	var canUseCareerUI = function () {
+		return !isHeadlessReplay() && typeof document !== "undefined"
+			&& typeof document.createElement === "function" && typeof document.addEventListener === "function"
+			&& typeof window !== "undefined" && typeof window.addEventListener === "function";
+	};
 
 	var CAREERS = [
 		{
@@ -711,6 +719,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	};
 
 	var showSelection = function () {
+		if (!canUseCareerUI()) return false;
 		createCanvas();
 		pauseGameBackgroundVideos();
 		selectedIndex = 0;
@@ -730,6 +739,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	};
 
 	var open = function () {
+		if (!canUseCareerUI()) return false;
 		if (!visible) prepare();
 		canvas.focus();
 		render();
@@ -760,7 +770,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	var originalChoices = core.events._action_choices;
 	core.events._action_choices = function (data, x, y, prefix) {
 		if ((data.floorId || core.status.floorId) === "MT29" && x === 1 && y === 9) {
-			if (!core.isReplaying()) return openPromotion(data.choices);
+			if (!isHeadlessReplay() && !core.isReplaying()) return openPromotion(data.choices);
 			data = core.clone(data);
 			data.choices.push({ text: "返回", action: [{ type: "exit" }] });
 		}
@@ -1286,15 +1296,17 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		});
 	};
 
-	createTitleVideo();
-	loadTitleImage();
-	createTitleCanvas();
-	// 重新聚焦或首次交互时补偿浏览器的媒体暂停策略。
-	document.addEventListener("visibilitychange", function () {
-		if (!document.hidden) resumeActiveBackgroundVideo();
-	});
-	document.addEventListener("pointerdown", resumeActiveBackgroundVideo, true);
-	document.addEventListener("keydown", resumeActiveBackgroundVideo, true);
+	if (canUseCareerUI()) {
+		createTitleVideo();
+		loadTitleImage();
+		createTitleCanvas();
+		// 重新聚焦或首次交互时补偿浏览器的媒体暂停策略。
+		document.addEventListener("visibilitychange", function () {
+			if (!document.hidden) resumeActiveBackgroundVideo();
+		});
+		document.addEventListener("pointerdown", resumeActiveBackgroundVideo, true);
+		document.addEventListener("keydown", resumeActiveBackgroundVideo, true);
+	}
 
 	plugin.careerSelect = {
 		prepare: prepare,
@@ -1317,6 +1329,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	// resetGame 即使清空全部游戏 Canvas，也不会影响职业选择层，因此不会闪出地图。
 	var originalStartGame = core.events.startGame;
 	var startGameWithCareerSelect = function (hard, seed, route, callback) {
+		if (isHeadlessReplay()) return originalStartGame.call(core.events, hard, seed, route, callback);
 		if (route == null) {
 			if (main.mode !== "play") return;
 			prepare();
@@ -1336,6 +1349,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 	// 续关切入读档时同步退出标题层，防止视频盖住已经绘制的读档 Canvas。
 	var originalLoad = core.events.load;
 	var loadWithTitleCleanup = function (fromUserAction) {
+		if (isHeadlessReplay()) return originalLoad.apply(core.events, arguments);
 		var fromTitle = !core.isPlaying() && core.dom.startPanel.style.display !== "none";
 		var result = originalLoad.apply(core.events, arguments);
 		// 只有引擎实际接受了切换才关闭；被忽略的读档请求仍保留可操作的标题菜单。
