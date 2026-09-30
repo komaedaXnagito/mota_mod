@@ -154,6 +154,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		if (root) return;
 		root = document.createElement("div");
 		root.className = "bb-overlay bb-sky-battle weapon-ui-skin";
+		common.setPreloadedBackground(root, "project/images/backpack_background.png", core);
 		root.dataset.mobile = core.domStyle && core.domStyle.isVertical ? "true" : "false";
 		root.innerHTML = [
 			"<section class='bb-panel' role='dialog' aria-label='背包乱斗战斗'>",

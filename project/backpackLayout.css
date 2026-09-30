@@ -3,7 +3,7 @@ html.backpack-workspace-open, body.backpack-workspace-open { overflow: hidden; }
 #backpack-system-root[data-layout='atelier'] {
   position: absolute; inset: auto; z-index: 10020; box-sizing: border-box; transform-origin: top left;
   overflow-x: hidden; overflow-y: auto; touch-action: pan-y;
-  background: url('images/backpack_background.png') center center / cover;
+  background-position: center; background-size: cover;
   color: #214b70; font-family: 'Microsoft YaHei',sans-serif;
   scrollbar-width: thin; scrollbar-color: #c3ad72 #e3eff3;
 }

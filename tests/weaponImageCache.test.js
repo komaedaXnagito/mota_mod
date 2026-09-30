@@ -10,6 +10,7 @@ const root = path.resolve(__dirname, "..");
 
 function loadImageCacheHarness() {
 	let imageConstructCount = 0;
+	let canvasConstructCount = 0;
 	class FakeImage {
 		constructor() {
 			imageConstructCount++;
@@ -32,6 +33,7 @@ function loadImageCacheHarness() {
 		main: { version: "2.10.96" },
 		document: {
 			createElement() {
+				canvasConstructCount++;
 				return {
 					getContext() { return { drawImage() {} }; },
 					toDataURL() { return "data:image/png;base64,cached"; }
@@ -46,7 +48,8 @@ function loadImageCacheHarness() {
 	return {
 		common: context.backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61,
 		definitions: context.weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44,
-		getImageConstructCount: () => imageConstructCount
+		getImageConstructCount: () => imageConstructCount,
+		getCanvasConstructCount: () => canvasConstructCount
 	};
 }
 
@@ -104,4 +107,43 @@ test("未进入引擎列表的图片也只创建一个预加载实例", async ()
 	assert.equal(first.src, "project/images/futureWeapon.png?v=2.10.96");
 	assert.equal(second.src, first.src);
 	assert.equal(harness.getImageConstructCount(), 1);
+});
+
+test("背包和战斗背景复用模板带版本的预加载地址", () => {
+	const harness = loadImageCacheHarness();
+	const image = { src: "http://localhost/project/images/backpack_background.png?v=2.10.96" };
+	const core = { material: { images: { images: { "backpack_background.png": image } } } };
+	const backpack = { style: {} }, battle = { style: {} };
+	for (const element of [backpack, battle]) {
+		harness.common.setPreloadedBackground(element, "project/images/backpack_background.png", core);
+		assert.equal(element.style.backgroundImage, `url("${image.src}")`);
+	}
+	assert.equal(harness.getImageConstructCount(), 0);
+	assert.equal(harness.getCanvasConstructCount(), 0);
+});
+
+test("压缩包背景的稳定地址只生成一次，替换引擎图片后重新生成", () => {
+	const harness = loadImageCacheHarness();
+	const images = { "backpack_background.png": { src: "blob:expired", naturalWidth: 1280, naturalHeight: 720 } };
+	const core = { material: { images: { images } } };
+	for (let i = 0; i < 3; i++) {
+		const element = { style: {} };
+		harness.common.setPreloadedBackground(element, "project/images/backpack_background.png", core);
+		assert.equal(element.style.backgroundImage, 'url("data:image/png;base64,cached")');
+	}
+	assert.equal(harness.getCanvasConstructCount(), 1, "反复打开两个界面应复用同一稳定地址");
+	images["backpack_background.png"] = { src: "blob:replacement", width: 1280, height: 720 };
+	const element = { style: {} };
+	harness.common.setPreloadedBackground(element, "project/images/backpack_background.png", core);
+	assert.equal(harness.getCanvasConstructCount(), 2, "图片重新预加载后应更新缓存");
+	assert.equal(harness.getImageConstructCount(), 0, "不应通过原文件重新加载压缩包图片");
+});
+
+test("背景预加载缺失时不绕过模板另发图片请求", () => {
+	const harness = loadImageCacheHarness();
+	const core = { material: { images: { images: {} } } };
+	const element = { style: {} };
+	harness.common.setPreloadedBackground(element, "project/images/backpack_background.png", core);
+	assert.equal(element.style.backgroundImage, "none");
+	assert.equal(harness.getImageConstructCount(), 0);
 });

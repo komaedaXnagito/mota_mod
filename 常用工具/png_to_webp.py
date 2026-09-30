@@ -7,6 +7,52 @@ import tempfile
 import threading
 
 
+def enable_high_dpi():
+    """在创建任何 Tk 窗口之前调用，避免 Windows 对界面进行位图拉伸。"""
+    if os.name != "nt":
+        return
+    import ctypes
+
+    try:
+        user32 = ctypes.WinDLL("user32", use_last_error=True)
+        setter = user32.SetProcessDpiAwarenessContext
+        setter.argtypes = [ctypes.c_void_p]
+        setter.restype = ctypes.c_int
+        if setter(ctypes.c_void_p(-4)):  # PER_MONITOR_AWARE_V2
+            return
+        if ctypes.get_last_error() == 5:  # 已由宿主或清单设置
+            return
+    except (AttributeError, OSError):
+        pass
+    try:
+        setter = ctypes.WinDLL("shcore").SetProcessDpiAwareness
+        setter.argtypes = [ctypes.c_int]
+        setter.restype = ctypes.c_long
+        if setter(2) == 0:  # Windows 8.1：每显示器 DPI
+            return
+    except (AttributeError, OSError):
+        pass
+    try:
+        ctypes.WinDLL("user32").SetProcessDPIAware()  # 旧系统回退
+    except (AttributeError, OSError):
+        pass
+
+
+def window_dpi(root):
+    if os.name == "nt":
+        import ctypes
+        try:
+            getter = ctypes.WinDLL("user32").GetDpiForWindow
+            getter.argtypes = [ctypes.c_void_p]
+            getter.restype = ctypes.c_uint
+            dpi = getter(root.winfo_id())
+            if dpi:
+                return dpi
+        except (AttributeError, OSError):
+            pass
+    return round(root.winfo_fpixels("1i"))
+
+
 def convert_one(source, target, lossless=True, quality=85, overwrite=False):
     from PIL import Image
 
@@ -96,9 +142,17 @@ class ConverterWindow:
     def __init__(self, root):
         import tkinter as tk
         from tkinter import ttk
+        from tkinter import font
         from tkinter.scrolledtext import ScrolledText
 
         self.root = root
+        self.dpi = window_dpi(root)
+        self.spacing = []
+        self.style = ttk.Style(root)
+        self.fonts = [font.nametofont(name, root=root) for name in
+                      ("TkDefaultFont", "TkTextFont", "TkMenuFont", "TkHeadingFont")]
+        self.title_font = font.Font(root=root, family="Microsoft YaHei UI", weight="bold")
+        self.apply_scaling(self.dpi)
         self.messages = queue.Queue()
         self.cancel = threading.Event()
         self.running = False
@@ -110,14 +164,14 @@ class ConverterWindow:
         self.quality = tk.StringVar(value="85")
         self.status = tk.StringVar(value="选择文件夹即可开始，原 PNG 文件会保留。")
         root.title("PNG 批量转 WebP")
-        root.geometry("800x540")
-        root.minsize(640, 460)
+        root.geometry(f"{self.pixels(800)}x{self.pixels(540)}")
         root.protocol("WM_DELETE_WINDOW", self.close)
         panel = ttk.Frame(root, padding=20)
+        self.panel = panel
         panel.pack(fill="both", expand=True)
         panel.columnconfigure(1, weight=1)
         panel.rowconfigure(8, weight=1)
-        ttk.Label(panel, text="PNG → WebP", font=("Microsoft YaHei UI", 20, "bold")).grid(
+        ttk.Label(panel, text="PNG → WebP", font=self.title_font).grid(
             row=0, column=0, columnspan=3, sticky="w", pady=(0, 8))
         ttk.Label(panel, text="本地批量转换 · 保留透明背景 · 保留文件夹结构").grid(
             row=1, column=0, columnspan=3, sticky="w", pady=(0, 16))
@@ -157,12 +211,61 @@ class ConverterWindow:
         ttk.Button(actions, text="打开输出文件夹", command=self.open_output).pack(side="right")
         self.progress = ttk.Progressbar(panel, mode="determinate")
         self.progress.grid(row=7, column=0, columnspan=3, sticky="ew", pady=(0, 10))
-        self.log = ScrolledText(panel, height=10, font=("Microsoft YaHei UI", 10), state="disabled")
+        self.log = ScrolledText(panel, height=10, font="TkTextFont", state="disabled")
         self.log.grid(row=8, column=0, columnspan=3, sticky="nsew")
-        ttk.Label(panel, textvariable=self.status, wraplength=730).grid(
+        self.status_label = ttk.Label(panel, textvariable=self.status, wraplength=730)
+        self.status_label.grid(
             row=9, column=0, columnspan=3, sticky="w", pady=(10, 0))
+        self.capture_spacing(panel)
+        self.apply_scaling(self.dpi)
+        panel.bind("<Configure>", self.resize_status)
         self.update_quality()
         root.after(100, self.poll)
+        root.after(500, self.check_dpi)
+
+    def pixels(self, value):
+        return round(value * self.dpi / 96)
+
+    def capture_spacing(self, parent):
+        for widget in parent.winfo_children():
+            manager = widget.winfo_manager()
+            # ScrolledText 的布局方法代理到外层 Frame；只调整该 Frame。
+            if manager in ("grid", "pack") and widget.winfo_class() != "Text":
+                info = getattr(widget, manager + "_info")()
+                padding = {}
+                for name in ("padx", "pady", "ipadx", "ipady"):
+                    if name in info:
+                        values = info[name]
+                        if not isinstance(values, tuple):
+                            values = self.root.tk.splitlist(str(values))
+                        padding[name] = tuple(int(str(value)) for value in values)
+                self.spacing.append((widget, manager, padding))
+            self.capture_spacing(widget)
+
+    def apply_scaling(self, dpi):
+        self.dpi = dpi
+        self.root.tk.call("tk", "scaling", dpi / 72)
+        # Tk 8.6 已有控件不会可靠地随 tk scaling 更新；显式设置像素字体。
+        for face in self.fonts:
+            face.configure(family="Microsoft YaHei UI", size=-round(10 * dpi / 72))
+        self.title_font.configure(size=-round(20 * dpi / 72))
+        self.style.configure("TButton", padding=(self.pixels(8), self.pixels(4)))
+        self.style.configure("TProgressbar", thickness=self.pixels(12))
+        self.root.minsize(self.pixels(760), self.pixels(460))
+        if hasattr(self, "panel"):
+            self.panel.configure(padding=self.pixels(20))
+        for widget, manager, padding in self.spacing:
+            getattr(widget, manager + "_configure")(
+                **{name: tuple(self.pixels(value) for value in values) for name, values in padding.items()})
+
+    def resize_status(self, event):
+        self.status_label.configure(wraplength=max(self.pixels(100), event.width - self.pixels(40)))
+
+    def check_dpi(self):
+        dpi = window_dpi(self.root)
+        if dpi != self.dpi:
+            self.apply_scaling(dpi)
+        self.root.after(500, self.check_dpi)
 
     def update_quality(self):
         self.quality_input.configure(state="disabled" if self.running or self.lossless.get() else "normal")
@@ -295,6 +398,7 @@ def main():
             return 1
         print(summary(result))
         return 1 if result["failed"] else 0
+    enable_high_dpi()
     import tkinter as tk
     root = tk.Tk()
     ConverterWindow(root)

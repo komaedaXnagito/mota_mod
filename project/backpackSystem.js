@@ -2454,6 +2454,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		root = document.createElement("div");
 		root.id = "backpack-system-root";
 		root.dataset.layout = "atelier";
+		uiCommon.setPreloadedBackground(root, "project/images/backpack_background.png", core);
 		selectedInstanceId = null; detailPinned = false;
 
 		createWorkspacePanels();

@@ -4,6 +4,7 @@
 /.cc-connect/
 /.workbuddy/
 /.codex-tmp
+webp_output
 
 # Runtime saves and temporary files
 /_saves/*

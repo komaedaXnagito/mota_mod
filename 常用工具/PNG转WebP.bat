@@ -1,5 +1,7 @@
 @echo off
 setlocal
+chcp 65001 >nul
+set PYTHONUTF8=1
 where python >nul 2>nul
 if not errorlevel 1 (
     python -B "%~dp0png_to_webp.py" %*

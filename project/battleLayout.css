@@ -6,7 +6,7 @@
   font-family: var(--weapon-serif); font-weight: 400; font-synthesis: none;
   font-variant-numeric: lining-nums tabular-nums;
   inset: auto; transform-origin: top left; align-items: flex-start; overflow-y: auto;
-  background: url('images/backpack_background.png') center / cover;
+  background-position: center; background-size: cover;
   color: var(--weapon-ink, #214b70); touch-action: pan-y; overflow-x: hidden;
 }
 .bb-sky-battle .bb-panel {

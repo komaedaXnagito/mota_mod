@@ -191,8 +191,10 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61;
 		var record = weaponImageCache[key] || { key: key, src: "", image: null, ready: null };
 		var engineImage = getEngineWeaponImage(source, coreRef);
 		if (engineImage) {
+			if (record.image !== engineImage || !record.src) {
+				record.src = makeStableEngineImageSource(engineImage, source);
+			}
 			record.image = engineImage;
-			record.src = makeStableEngineImageSource(engineImage, source);
 			record.ready = typeof Promise === "function" ? Promise.resolve(engineImage) : null;
 			weaponImageCache[key] = record;
 			return record;
@@ -261,6 +263,15 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61;
 		imageElement.decoding = "async";
 		imageElement.src = getWeaponImageSource(source);
 		return imageElement;
+	};
+
+	/** 背景只读取模板预加载图片，不另行加载原文件；压缩包图片沿用稳定地址缓存。 */
+	let setPreloadedBackground = function (element, source, coreRef) {
+		"use strict";
+		if (!element) return element;
+		var record = getEngineWeaponImage(source, coreRef) ? cacheWeaponImage(source, coreRef) : null;
+		element.style.backgroundImage = record ? "url(" + JSON.stringify(record.src) + ")" : "none";
+		return element;
 	};
 
 	let getCachedWeaponImage = function (source) {
@@ -1370,6 +1381,7 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61;
 		preloadWeaponImages: preloadWeaponImages,
 		getWeaponImageSource: getWeaponImageSource,
 		setWeaponImageSource: setWeaponImageSource,
+		setPreloadedBackground: setPreloadedBackground,
 		getWeaponImageInset: getWeaponImageInset,
 		getCachedWeaponImage: getCachedWeaponImage,
 		getWeaponImageCacheStats: getWeaponImageCacheStats,
