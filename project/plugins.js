@@ -11658,4 +11658,4 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 	"成就系统": function () {
 		installAchievementSystem_d38bb038_c4fa_43be_927c_168680046baa(core, this);
 	}
-};
+}
