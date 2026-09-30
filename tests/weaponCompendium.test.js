@@ -73,7 +73,7 @@ function makeHarness(options) {
 	return { context, core, plugin, api, flags, storage };
 }
 
-test("新局外档案默认没有任何已解锁武器，锁定信息完全脱敏", () => {
+test("新局外档案未解锁武器也返回完整内容，查看不增加收集进度", () => {
 	const harness = makeHarness();
 	const profile = harness.api.getProfile();
 	const entries = harness.api.getEntries();
@@ -82,9 +82,16 @@ test("新局外档案默认没有任何已解锁武器，锁定信息完全脱�
 	assert.ok(entries.length > 100);
 	assert.ok(entries.every(entry => entry.unlocked === false));
 	assert.ok(entries.every(entry => entry.cleared === false));
-	assert.ok(entries.every(entry => entry.name === "???"));
-	assert.ok(entries.every(entry => entry.description === "???"));
-	assert.ok(entries.every(entry => entry.weaponTypes.length === 1 && entry.weaponTypes[0] === "???"));
+	const definitions = harness.context.weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44;
+	for (const entry of entries) {
+		const definition = definitions[entry.weaponId];
+		assert.equal(entry.name, definition.name);
+		assert.equal(entry.description, definition.synergyText || definition.description || "无特殊描述");
+		for (const key of ["rarity", "minAttack", "maxAttack", "hitRate", "attackInterval", "ultimateGain"])
+			assert.equal(entry[key], definition[key]);
+		assert.deepEqual(Array.from(entry.weaponTypes), Array.from(definition.weaponTypes || []));
+	}
+	assert.equal(harness.api.getProfile().unlockedWeaponIds.length, 0);
 });
 
 test("共享武器卡片 lock 属性输出黑色轮廓样式和全量问号数据", () => {
@@ -96,10 +103,12 @@ test("共享武器卡片 lock 属性输出黑色轮廓样式和全量问号数�
 			this.dataset = {};
 			this.style = {};
 			this.attributes = {};
+			this.listeners = {};
 			this.className = "";
 			this.textContent = "";
 			this.innerHTML = "";
 			this.classList = {
+				contains: name => this.className.split(/\s+/).includes(name),
 				add: (...names) => {
 					const tokens = this.className.split(/\s+/).filter(Boolean);
 					names.forEach(name => { if (!tokens.includes(name)) tokens.push(name); });
@@ -109,7 +118,16 @@ test("共享武器卡片 lock 属性输出黑色轮廓样式和全量问号数�
 		}
 		appendChild(child) { this.children.push(child); return child; }
 		setAttribute(name, value) { this.attributes[name] = String(value); }
-		addEventListener() {}
+		addEventListener(name, handler) { this.listeners[name] = handler; }
+		querySelector(selector) {
+			const parts = selector.split(/\s+/);
+			const matches = node => parts.every(part => part[0] === "."
+				? node.className.split(/\s+/).includes(part.slice(1)) : node.tagName === part.toUpperCase());
+			const descendants = node => node.children.flatMap(child => [child].concat(descendants(child)));
+			return descendants(this).find(node => matches(node)) || null;
+		}
+		focus() {}
+		remove() {}
 	}
 	harness.context.document.createElement = tagName => new FakeElement(tagName);
 	const definition = harness.context.weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44.I372;
@@ -140,6 +158,25 @@ test("共享武器卡片 lock 属性输出黑色轮廓样式和全量问号数�
 	assert.equal(mobileToggle.textContent, "");
 	assert.ok(visibleText.filter(text => text === "???").length >= 7);
 	assert.equal(nodes.some(node => node.className === "weapon-card-synergy-cell"), false);
+	const grayCard = renderer.createCard(definition, { grayscale: true, showCraftHammer: false, mobileListMode: true });
+	const grayNodes = flatten(grayCard);
+	assert.equal(grayCard.dataset.locked, "false");
+	assert.ok(grayNodes.filter(node => node.tagName === "IMG").every(node => node.style.filter === "grayscale(1)"));
+	assert.ok(grayNodes.some(node => node.textContent === definition.name));
+	assert.ok(grayNodes.some(node => node.className === "weapon-card-synergy-cell"));
+	assert.equal(grayNodes.some(node => node.textContent === "???"), false);
+	const colorCard = renderer.createCard(definition, { showCraftHammer: false });
+	assert.equal(flatten(colorCard).find(node => node.tagName === "IMG").style.filter, undefined);
+	let modal;
+	harness.context.document.body.appendChild = node => { modal = node; };
+	const clickableGrayCard = renderer.createCard(definition, { grayscale: true, previewOnClick: true, showCraftHammer: false });
+	clickableGrayCard.children[0].listeners.click();
+	const modalNodes = flatten(modal);
+	assert.equal(modalNodes.find(node => node.tagName === "IMG").style.filter, "grayscale(1)");
+	assert.ok(modalNodes.some(node => node.textContent === definition.name));
+	assert.ok(modalNodes.some(node => node.className === "weapon-card-synergy-cell"));
+	assert.equal(modalNodes.some(node => node.textContent === "???"), false);
+	renderer.closePreviewModal(false);
 	const cssSource = fs.readFileSync(path.join(root, "project/backpack.css"), "utf8");
 	assert.match(cssSource, /\.weapon-card\.is-locked \.weapon-card-preview-image-frame img,[\s\S]*?\.weapon-card-preview\.is-locked \.weapon-card-preview-image-frame img\s*\{[^}]*filter:\s*brightness\(0\)/);
 	assert.match(cssSource, /\.weapon-card-meta\s*\{[^}]*display:\s*flex/);
@@ -267,9 +304,12 @@ test("奖励条件与奖励内容都由数组配置，并且每项只领取一�
 	assert.equal(harness.api.getProfile().values.compendiumPoints, 3);
 });
 
-test("名称搜索只检索已解锁名称，类型筛选可作用于完整图鉴", () => {
+test("名称搜索可检索未解锁武器，类型筛选可作用于完整图鉴", () => {
 	const harness = makeHarness();
-	assert.equal(harness.api.getEntries({ search: "薛定谔" }).length, 0);
+	const lockedResult = harness.api.getEntries({ search: "  薛定谔  ", collectionStatus: "locked" });
+	assert.equal(lockedResult.length, 1);
+	assert.equal(lockedResult[0].weaponId, "I372");
+	assert.equal(lockedResult[0].unlocked, false);
 	harness.api.unlockWeapons(["I372"]);
 	const searchResult = harness.api.getEntries({ search: "薛定谔" });
 	assert.equal(searchResult.length, 1);
@@ -374,7 +414,7 @@ test("主加载表、插件安装器与 50 层战后事件均已接入图鉴", (
 	assert.match(cssSource, /@container game-modal \(max-width: 700px\)[\s\S]*?\.weapon-compendium-group-grid\s*\{\s*grid-template-columns:\s*minmax\(0,\s*1fr\)/);
 	assert.match(compendiumSource, /mobileListMode:\s*true/);
 	assert.match(rendererSource, /var bindMobileListInteractions = function/);
-	assert.match(rendererSource, /openPreviewModal\(definition, \{ lock: renderOptions\.lock, trigger: mobilePreview \}\)/);
+	assert.match(rendererSource, /openPreviewModal\(definition, \{ lock: renderOptions\.lock, grayscale: renderOptions\.grayscale, trigger: mobilePreview \}\)/);
 	assert.match(rendererSource, /summary\.addEventListener\("click"[\s\S]*?toggleDetails\(\)/);
 	assert.match(rendererSource, /appendCraftHammer\(meta, definition\)/);
 	assert.match(rendererSource, /summary\.appendChild\(meta\);[\s\S]*?summary\.appendChild\(actionButton\)/);

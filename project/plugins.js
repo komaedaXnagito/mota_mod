@@ -4930,7 +4930,40 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 			this.afterBattle(id, x, y);
 			if (callback) callback();
 		}
-
+core.saves.autosave.max = 2000;
+	////// 实际每一步的行走过程 //////
+	control.prototype.moveAction = function (callback) {
+		if (core.status.heroMoving > 0) return;
+		var noPass = core.noPass(core.nextX(), core.nextY()),
+			canMove = core.canMoveHero();
+		let loc = core.nextX() + ',' + core.nextY()
+		// 下一个点如果不能走
+		if (noPass || !canMove) return this._moveAction_noPass(canMove, callback);
+		if (core.status.checkBlock.damage[loc] || core.getBlockCls(core.nextX(), core.nextY()) === 'items') core.autosave()
+		this._moveAction_moving(callback);
+	}
+	maps.prototype.nearStair = function () {
+		const a = core.searchBlock('*Floor'); // 获取所有*Floor图块
+		// 如果没有找到任何*Floor图块，直接返回false
+		if (!a || a.length === 0) {
+			return false;
+		}
+		// 遍历每个*Floor图块，检查其上下左右四个方向的格子是否可到达
+		for (const floorBlock of a) {
+			const x = floorBlock.x;
+			const y = floorBlock.y;
+			// 检查上、下、左、右四个方向的格子是否可瞬移到达
+			// 只要有一个方向可到达，就返回true
+			if (core.canMoveDirectly(x, y - 1) >= 0 || // 上
+				core.canMoveDirectly(x, y + 1) >= 0 || // 下
+				core.canMoveDirectly(x - 1, y) >= 0 || // 左
+				core.canMoveDirectly(x + 1, y) >= 0) { // 右
+				return true;
+			}
+		}
+		// 所有*Floor图块的相邻格子都不可到达，返回false
+		return false;
+	};
 	},
 	"额外信息": function () {
 		/* 宝石血瓶左下角显示数值

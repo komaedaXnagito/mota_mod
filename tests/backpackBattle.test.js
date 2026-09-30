@@ -1518,19 +1518,19 @@ test("预计输入保留当前生命，生命变化会进入完整输入缓存�
 	assert.match(kernelSource, /initialPlayerHp\s*-\s*state\.player\.hp/);
 });
 
-test("恰好 10000 回合返回数值，进入第 10001 回合才超限", () => {
+test("恰好 1000 回合返回数值，进入第 1001 回合才超限", () => {
 	const context = loadPure();
 	const kernel = context.backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71;
 	const exact = kernel.simulate(makeInput({
-		enemy: Object.assign({}, makeInput().enemy, { hp: 10000, atk: 0 }),
+		enemy: Object.assign({}, makeInput().enemy, { hp: 1000, atk: 0 }),
 		weapons: [makeWeapon({
 			attributes: Object.assign({}, makeWeapon().attributes, { minAttack: 1, maxAttack: 1 })
 		})]
 	}));
 	assert.equal(exact.roundsExceeded, false);
-	assert.equal(exact.rounds, 10000);
+	assert.equal(exact.rounds, 1000);
 	const exceeded = kernel.simulate(makeInput({
-		enemy: Object.assign({}, makeInput().enemy, { hp: 10001, atk: 0 }),
+		enemy: Object.assign({}, makeInput().enemy, { hp: 1001, atk: 0 }),
 		weapons: [makeWeapon({
 			attributes: Object.assign({}, makeWeapon().attributes, { minAttack: 1, maxAttack: 1 })
 		})]

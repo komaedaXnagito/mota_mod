@@ -227,6 +227,7 @@ var installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c = function (c
 		uiCommon.setWeaponImageSource(image, geometry.weapon.image || "");
 		image.alt = locked ? "未解锁武器" : (geometry.weapon.name || "");
 		image.draggable = false;
+		if (options.grayscale === true) image.style.filter = "grayscale(1)";
 		layoutPreviewImage(imageFrame, image, geometry);
 		imageFrame.appendChild(image);
 		stage.appendChild(imageFrame);
@@ -303,7 +304,7 @@ var installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c = function (c
 		close.className = "weapon-card-preview-modal-close";
 		close.textContent = themed ? "返回" : "×";
 		close.setAttribute("aria-label", "关闭武器预览");
-		var preview = buildWeaponPreview(definition || {}, { lock: locked });
+		var preview = buildWeaponPreview(definition || {}, { lock: locked, grayscale: options.grayscale });
 		preview.classList.add("is-synergy-visible");
 		if (!locked) {
 			preview.setAttribute("aria-label", "武器占格与始终显示的联动区域");
@@ -381,7 +382,7 @@ var installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c = function (c
 		var toggleDetails = function () {
 			if (!isMobileListLayout()) return;
 			if (renderOptions.mobileDetailsInModal) {
-				openPreviewModal(definition, { lock: renderOptions.lock, trigger: summary });
+				openPreviewModal(definition, { lock: renderOptions.lock, grayscale: renderOptions.grayscale, trigger: summary });
 				return;
 			}
 			var expanded = card.classList.toggle("is-mobile-expanded");
@@ -393,7 +394,7 @@ var installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c = function (c
 			}
 		};
 		var openPreview = function () {
-			openPreviewModal(definition, { lock: renderOptions.lock, trigger: mobilePreview });
+			openPreviewModal(definition, { lock: renderOptions.lock, grayscale: renderOptions.grayscale, trigger: mobilePreview });
 		};
 		mobilePreview.addEventListener("click", function (event) {
 			if (!isMobileListLayout()) return;
@@ -436,7 +437,7 @@ var installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c = function (c
 
 	/**
 	 * 渲染完整武器卡片。
-	 * options.lock: 未解锁脱敏模式；options.showCraftHammer: 是否显示可合成锤子；
+	 * options.grayscale: 武器图片灰色显示，保留完整内容；options.lock: 脱敏模式；options.showCraftHammer: 是否显示可合成锤子；
 	 * options.mobileListMode: 手机端使用图鉴式列表；options.actionButton: 操作按钮。
 	 * options.mobileDetailsInModal: 紧凑列表通过弹窗查看详情，保持候选列表的高度不变。
 	 * options.actionPlacement: 默认 summary；footer 将操作区放在特殊效果之后，独立于详情滚动。
@@ -468,7 +469,7 @@ var installWeaponCardRenderer_5ca7b6bd_8f36_4e6a_aa12_f8468a8ccf1c = function (c
 			desktopPreview.setAttribute("role", "button");
 			desktopPreview.setAttribute("aria-label", locked ? "查看未解锁武器档案" : "查看" + definition.name + "的武器档案");
 			var openArchive = function () {
-				openPreviewModal(definition, { lock: locked, force: true, trigger: desktopPreview });
+				openPreviewModal(definition, { lock: locked, grayscale: renderOptions.grayscale, force: true, trigger: desktopPreview });
 			};
 			desktopPreview.addEventListener("click", openArchive);
 			desktopPreview.addEventListener("keydown", function (event) {

@@ -426,6 +426,7 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 				"nowWeapon": "sword5",
 				"nowShield": "shield5",
 				"次数": 1,
+				"扩容次数": 1,
 				"useBetweenLight": true,
 				"__winskin_opacity__": 1,
 				"useEnemyInfoDisplay": false
@@ -904,14 +905,14 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			},
 			{
 				"id": "shop2",
-				"text": "\t[贪婪之神,moneyShop]勇士啊, 给我${20+5*flag:次数*(flag:次数-2)}金币就可以：",
+				"text": "\t[贪婪之神,moneyShop]勇士啊, 给我${20+5*flag:扩容次数*(flag:扩容次数-2)}金币就可以：",
 				"textInList": "背包扩容商店",
 				"mustEnable": true,
 				"disablePreview": false,
 				"choices": [
 					{
 						"text": "背包格子+1",
-						"need": "status:money>=20+5*flag:次数*(flag:次数-2)",
+						"need": "status:money>=20+5*flag:扩容次数*(flag:扩容次数-2)",
 						"action": [
 							{
 								"type": "playSound",
@@ -927,11 +928,11 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 								"type": "setValue",
 								"name": "status:money",
 								"operator": "-=",
-								"value": "20+5*flag:次数*(flag:次数-2)"
+								"value": "20+5*flag:扩容次数*(flag:扩容次数-2)"
 							},
 							{
 								"type": "setValue",
-								"name": "flag:次数",
+								"name": "flag:扩容次数",
 								"operator": "+=",
 								"value": "1"
 							}

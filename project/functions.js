@@ -21,6 +21,8 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a =
 			core.status.hero = core.clone(hero);
 			window.hero = core.status.hero;
 			window.flags = core.status.hero.flags;
+			// 旧存档没有独立扩容计数时，从首次购买价格开始；已有计数照常恢复。
+			if (core.getFlag("扩容次数") == null) core.setFlag("扩容次数", 1);
 			core.events.setHeroIcon(core.status.hero.image, true);
 			core.control._initStatistics(core.animateFrame.totalTime);
 			core.status.hero.statistics.totalTime = core.animateFrame.totalTime =

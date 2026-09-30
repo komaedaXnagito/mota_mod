@@ -444,7 +444,7 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 		return Object.keys(types).sort(function (a, b) { return a.localeCompare(b, "zh-CN"); });
 	};
 
-	/** 返回已经脱敏的图鉴条目；锁定条目不会通过 API 泄露名称、属性或描述。 */
+	/** 返回完整图鉴条目；解锁状态仅用于收集进度和武器灰色显示。 */
 	var getEntries = function (filters) {
 		filters = filters || {};
 		var search = String(filters.search || "").trim().toLocaleLowerCase("zh-CN");
@@ -458,9 +458,8 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 		return definitionKeys.filter(function (key) {
 			var definition = DEFINITIONS[key] || {};
 			var isUnlocked = !!unlocked[key];
-			var nameMatches = !search || (isUnlocked
-				? String(definition.name || "").toLocaleLowerCase("zh-CN").indexOf(search) >= 0
-				: search === "???");
+			var nameMatches = !search
+				|| String(definition.name || "").toLocaleLowerCase("zh-CN").indexOf(search) >= 0;
 			var types = Array.isArray(definition.weaponTypes) ? definition.weaponTypes : [];
 			var isCleared = !!cleared[key];
 			var statusMatches = !collectionStatus
@@ -478,16 +477,15 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 				cleared: !!cleared[key],
 				image: String(definition.image || ""),
 				imageCrop: cloneData(definition.imageCrop),
-				name: isUnlocked ? String(definition.name || "未命名武器") : "???",
-				rarity: isUnlocked ? definition.rarity : "???",
-				minAttack: isUnlocked ? definition.minAttack : "???",
-				maxAttack: isUnlocked ? definition.maxAttack : "???",
-				hitRate: isUnlocked ? definition.hitRate : "???",
-				attackInterval: isUnlocked ? definition.attackInterval : "???",
-				ultimateGain: isUnlocked ? definition.ultimateGain : "???",
-				weaponTypes: isUnlocked ? cloneData(definition.weaponTypes || []) : ["???"],
-				description: isUnlocked
-					? String(definition.synergyText || definition.description || "无特殊描述") : "???"
+				name: String(definition.name || "未命名武器"),
+				rarity: definition.rarity,
+				minAttack: definition.minAttack,
+				maxAttack: definition.maxAttack,
+				hitRate: definition.hitRate,
+				attackInterval: definition.attackInterval,
+				ultimateGain: definition.ultimateGain,
+				weaponTypes: cloneData(definition.weaponTypes || []),
+				description: String(definition.synergyText || definition.description || "无特殊描述")
 			};
 		});
 	};
@@ -611,7 +609,7 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 	var createCard = function (entry) {
 		if (!cardRenderer) throw new Error("武器卡片渲染组件未安装");
 		var card = cardRenderer.createCard(DEFINITIONS[entry.weaponId] || {}, {
-			lock: !entry.unlocked,
+			grayscale: !entry.unlocked,
 			showCraftHammer: false,
 			mobileListMode: true,
 			previewOnClick: true,
@@ -619,6 +617,7 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 			className: "weapon-compendium-entry" + (entry.cleared ? " has-cleared-run" : "")
 		});
 		card.dataset.weaponId = entry.weaponId;
+		card.dataset.unlocked = entry.unlocked ? "true" : "false";
 		card.dataset.cleared = entry.cleared ? "true" : "false";
 		var status = document.createElement("span");
 		status.className = "weapon-compendium-entry-status";
@@ -691,7 +690,7 @@ var installWeaponCompendium_1a6d635c_008d_4bb5_a44a_e62e80ffad37 = function (cor
 		var search = document.createElement("input");
 		search.className = "weapon-compendium-search";
 		search.type = "search";
-		search.placeholder = "搜索已解锁武器名称";
+		search.placeholder = "搜索武器名称";
 		search.setAttribute("aria-label", "按武器名称搜索");
 		var filter = document.createElement("select");
 		filter.className = "weapon-compendium-filter";

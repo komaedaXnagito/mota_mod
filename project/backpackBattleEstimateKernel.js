@@ -11,7 +11,7 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71;
 {
 
 	let rules = null;
-	let MAX_TICKS = 1000000;
+	let MAX_TICKS = 100000; // 1000 回合，每回合 100 Tick。
 	let getRules = function () {
 		"use strict";
 		if (!rules) rules = backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87;
