@@ -64,28 +64,10 @@ main.floors.MT50=
                 "type": "function",
                 "function": "function(){\nif (core.plugin && core.plugin.weaponCompendium) core.plugin.weaponCompendium.completeRun();\n}"
             },
+            "\t[魔王,redKing]你是如此的强大…居然能打败我…但是你封印不了我…我还会复活的…哈哈哈哈…",
             {
-                "type": "if",
-                "condition": "((item:pickaxe>0 || item:earthquake>0) &&( item:downFly>0))",
-                "true": [
-                    {
-                        "type": "animate",
-                        "name": "zone",
-                        "loc": "hero"
-                    },
-                    "\t[魔王,redKing]你是如此的强大…居然能打败我…什么…我居然被封印了…啊…",
-                    {
-                        "type": "win",
-                        "reason": "封印魔王"
-                    }
-                ],
-                "false": [
-                    "\t[魔王,redKing]你是如此的强大…居然能打败我…但是你封印不了我…我还会复活的…哈哈哈哈…",
-                    {
-                        "type": "win",
-                        "reason": "击败魔王"
-                    }
-                ]
+                "type": "win",
+                "reason": "击败魔王(${flags.zhuanzhi})"
             }
         ]
     },

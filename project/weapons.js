@@ -22,7 +22,14 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			]
 		],
 		"image": "project/images/xde.png",
-		"imageCrop": [3, 6, 69, 299, 88, 312],
+		"imageCrop": [
+			3,
+			6,
+			69,
+			299,
+			88,
+			312
+		],
 		"sourceName": "薛定谔",
 		"rarity": 4,
 		"minAttack": 3,
@@ -509,18 +516,18 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"weaponTypes": [
 			"饮料"
 		],
-		"synergyText": "自身HP低于最大HP的1/3时：回复10HP、所有武器在5秒内伤害+2，并立即发动∧内的饮料效果（每场战斗仅触发1次）",
+		"synergyText": "自身HP累计损失50点后：回复10HP、所有武器在5秒内伤害+2，并立即发动∧内的饮料效果（每场战斗仅触发1次）",
 		"combatRules": [
 			{
-				"id": "lowHpTriggerOnce",
+				"id": "hpLost50TriggerOnce",
 				"trigger": "afterTakeDamage",
 				"once": true,
 				"conditions": [
 					{
-						"kind": "hpPercent",
+						"kind": "hpLost",
 						"target": "self",
-						"operator": "lte",
-						"value": 0.3333
+						"operator": "gte",
+						"value": 50
 					}
 				],
 				"effects": [
@@ -5692,18 +5699,18 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		],
 		"sourceName": "小红",
 		"rarity": 1,
-		"synergyText": "自身HP低于最大HP的1/3时：回复5HP，并立即发动∧内的饮料效果（每场战斗仅触发1次）",
+		"synergyText": "自身HP累计损失50后：回复5HP，并立即发动∧内的饮料效果（每场战斗仅触发1次）",
 		"combatRules": [
 			{
-				"id": "lowHpTriggerOnce",
+				"id": "hpLost50TriggerOnce",
 				"trigger": "afterTakeDamage",
 				"once": true,
 				"conditions": [
 					{
-						"kind": "hpPercent",
+						"kind": "hpLost",
 						"target": "self",
-						"operator": "lte",
-						"value": 0.3333
+						"operator": "gte",
+						"value": 50
 					}
 				],
 				"effects": [
@@ -6039,11 +6046,6 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"name": "乐师之证",
 		"shape": [
 			[
-				1,
-				1
-			],
-			[
-				1,
 				1
 			]
 		],
@@ -6717,7 +6719,30 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"rarity": 4,
 		"weaponTypes": [
 			"召唤石"
-		]
+		],
+		"combatRules": [
+			{
+				"id": "onceAfterHpLost500Heal500",
+				"trigger": "roundStart",
+				"once": true,
+				"conditions": [
+					{
+						"kind": "hpLost",
+						"target": "self",
+						"operator": "gte",
+						"value": 300
+					}
+				],
+				"effects": [
+					{
+						"type": "heal",
+						"target": "self",
+						"value": 300
+					}
+				]
+			}
+		],
+		"synergyText": "自身hp累计损失300后：自身hp+300（每场战斗仅触发一次）"
 	},
 	"I550": {
 		"id": "圣诞瓦姆杜斯",
@@ -7817,11 +7842,6 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"name": "玉钢",
 		"shape": [
 			[
-				1,
-				1
-			],
-			[
-				1,
 				1
 			]
 		],
@@ -8581,11 +8601,6 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"name": "绯绯色金",
 		"shape": [
 			[
-				1,
-				1
-			],
-			[
-				1,
 				1
 			]
 		],
@@ -10600,7 +10615,30 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		],
 		"weaponTypes": [
 			"召唤石"
-		]
+		],
+		"combatRules": [
+			{
+				"id": "onceAfterHpLost500Heal500",
+				"trigger": "roundStart",
+				"once": true,
+				"conditions": [
+					{
+						"kind": "hpLost",
+						"target": "self",
+						"operator": "gte",
+						"value": 250
+					}
+				],
+				"effects": [
+					{
+						"type": "heal",
+						"target": "self",
+						"value": 350
+					}
+				]
+			}
+		],
+		"synergyText": "自身hp累计损失250后：自身hp+350（每场战斗仅触发一次）"
 	},
 	"I603": {
 		"id": "欧罗巴（突破II）",
@@ -10626,6 +10664,29 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"sourceName": "欧罗巴（突破II）",
 		"weaponTypes": [
 			"召唤石"
+		],
+		"synergyText": "自身hp累计损失200后：自身hp+400（每场战斗仅触发一次）",
+		"combatRules": [
+			{
+				"id": "onceAfterHpLost500Heal500",
+				"trigger": "roundStart",
+				"once": true,
+				"conditions": [
+					{
+						"kind": "hpLost",
+						"target": "self",
+						"operator": "gte",
+						"value": 200
+					}
+				],
+				"effects": [
+					{
+						"type": "heal",
+						"target": "self",
+						"value": 400
+					}
+				]
+			}
 		]
 	},
 	"I604": {
@@ -10652,6 +10713,29 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		],
 		"weaponTypes": [
 			"召唤石"
+		],
+		"synergyText": "自身hp累计损失150后：自身hp+450（每场战斗仅触发一次）",
+		"combatRules": [
+			{
+				"id": "onceAfterHpLost500Heal500",
+				"trigger": "roundStart",
+				"once": true,
+				"conditions": [
+					{
+						"kind": "hpLost",
+						"target": "self",
+						"operator": "gte",
+						"value": 150
+					}
+				],
+				"effects": [
+					{
+						"type": "heal",
+						"target": "self",
+						"value": 450
+					}
+				]
+			}
 		]
 	},
 	"I605": {
@@ -10678,6 +10762,40 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"rarity": 5,
 		"weaponTypes": [
 			"召唤石"
+		],
+		"synergyText": "自身hp累计损失100后：自身hp+9999999，所有武器伤害+4，3秒内免疫伤害（每场战斗仅触发一次）",
+		"combatRules": [
+			{
+				"id": "onceHpLost100HealAllWeaponDmgInvincible",
+				"trigger": "roundStart",
+				"once": true,
+				"conditions": [
+					{
+						"kind": "hpLost",
+						"target": "self",
+						"operator": "gte",
+						"value": 100
+					}
+				],
+				"effects": [
+					{
+						"type": "heal",
+						"target": "self",
+						"value": 9999999
+					},
+					{
+						"type": "modifyWeaponStat",
+						"weaponTarget": "all",
+						"stat": "attack",
+						"operation": "add",
+						"value": 4
+					},
+					{
+						"type": "setInvincible",
+						"durationTicks": 300
+					}
+				]
+			}
 		]
 	},
 	"I606": {
@@ -11076,9 +11194,23 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		]
 	},
 	"I614": {
-		"shape": [[1], [1]],
+		"shape": [
+			[
+				1
+			],
+			[
+				1
+			]
+		],
 		"image": "project/images/shendun.png",
-		"imageCrop": [7, 15, 68, 125, 312, 312],
+		"imageCrop": [
+			7,
+			15,
+			68,
+			125,
+			312,
+			312
+		],
 		"name": "神域守护·布洛蒂亚（突破I）",
 		"sourceName": "神域守护·布洛蒂亚（突破I）",
 		"rarity": 5,
@@ -11112,9 +11244,23 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		]
 	},
 	"I615": {
-		"shape": [[1], [1]],
+		"shape": [
+			[
+				1
+			],
+			[
+				1
+			]
+		],
 		"image": "project/images/shendun.png",
-		"imageCrop": [7, 15, 68, 125, 312, 312],
+		"imageCrop": [
+			7,
+			15,
+			68,
+			125,
+			312,
+			312
+		],
 		"sourceName": "神域守护·布洛蒂亚（突破II）",
 		"rarity": 5,
 		"id": "神域守护·布洛蒂亚（突破II）",
@@ -11148,9 +11294,23 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		]
 	},
 	"I616": {
-		"shape": [[1], [1]],
+		"shape": [
+			[
+				1
+			],
+			[
+				1
+			]
+		],
 		"image": "project/images/shendun.png",
-		"imageCrop": [7, 15, 68, 125, 312, 312],
+		"imageCrop": [
+			7,
+			15,
+			68,
+			125,
+			312,
+			312
+		],
 		"sourceName": "神域守护·布洛蒂亚（突破III）",
 		"id": "神域守护·布洛蒂亚（突破III）",
 		"name": "神域守护·布洛蒂亚（突破III）",
@@ -11184,9 +11344,23 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		]
 	},
 	"I617": {
-		"shape": [[1], [1]],
+		"shape": [
+			[
+				1
+			],
+			[
+				1
+			]
+		],
 		"image": "project/images/shendun.png",
-		"imageCrop": [7, 15, 68, 125, 312, 312],
+		"imageCrop": [
+			7,
+			15,
+			68,
+			125,
+			312,
+			312
+		],
 		"id": "神域守护·布洛蒂亚（终突）",
 		"name": "神域守护·布洛蒂亚（终突）",
 		"sourceName": "神域守护·布洛蒂亚（终突）",
