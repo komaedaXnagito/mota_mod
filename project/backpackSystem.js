@@ -2169,6 +2169,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 				target: function () { return root && root.querySelector(".backpack-battle-speed-control"); },
 				text: "这里可以调整战斗动画的播放速度",
 				beforeEnter: function () {
+					clearWeaponSelection();
 					uiCommon.hideTooltip();
 					if (root) root.dataset.tooltipPinned = "false";
 				}

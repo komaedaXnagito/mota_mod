@@ -1,4 +1,4 @@
-var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
+var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d = 
 {
 	"main": {
 		"floorIds": [
@@ -63,11 +63,10 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			"anxiaojingling.png",
 			"asikeleibiesizhizhang.png",
 			"backpackSlot.png",
+			"backpack_background.png",
 			"bahamutezhidun.png",
 			"bear.png",
-			"bg.jpg",
 			"bg2.jpg",
-			"bgVer.png",
 			"bigRedPotion.png",
 			"bingqilin.png",
 			"black_cat_walk.png",
@@ -175,7 +174,6 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			"rquan.png",
 			"rzhang.png",
 			"sevenStarSword.png",
-			"shangmian.png",
 			"shaonvmilu.png",
 			"shendun.png",
 			"shenyizhidun.png",
@@ -195,10 +193,8 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			"spiritEuropa.png",
 			"spiritFireDragon.png",
 			"status.png",
-			"statusBackground.jpg",
 			"statusBackground.png",
 			"statusBackground2.png",
-			"statusBackground3.jpg",
 			"sword_character.webp",
 			"sword_walk.png",
 			"taheermasala.png",
@@ -227,7 +223,6 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			"wolf_walk.png",
 			"wuyaofu.png",
 			"xde.png",
-			"xiamian.png",
 			"xiangjiao.png",
 			"xiangxielishe.png",
 			"xianzhezhizheng.png",
@@ -244,7 +239,6 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			"yinxiang.png",
 			"yinyoushirenzhizheng.png",
 			"yiqiyizhen.png",
-			"youbian.png",
 			"yubuzhixian.png",
 			"yueqiu.png",
 			"yugang.png",
@@ -254,7 +248,6 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			"zhihu.png",
 			"zhuiyixiaotiqin.png",
 			"zongqingzhimu.png",
-			"zuobian.png",
 			"zuzhangqiu.png"
 		],
 		"tilesets": [

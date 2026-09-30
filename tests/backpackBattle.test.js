@@ -471,6 +471,58 @@ test("移动端详情仅响应点击，拖拽期间不能重新选中武器", ()
   assert.equal(context.selectedInstanceId,"one");assert.equal(renders,2,"桌面仍支持悬停预览");
 });
 
+test("背包教程讲完详情和合成提示后自动收起详情，普通点击仍可展开", () => {
+  for (const compact of [true, false]) {
+    class Guides {
+      constructor(options) { this.options = options; this.current = 0; }
+      start() { this.inProgress = true; this.render(); }
+      next() { this.current++; this.render(); }
+      render() { this.options.render({guide:this.options.guides[this.current],sender:this}); }
+    }
+    const noop = () => {};
+    const classList = {add:noop,remove:noop};
+    const weapon = {instanceId:"one",click:() => context.select("one",true)};
+    const context = {
+      window:{Guides},console,
+      document:{createElement:() => ({setAttribute:noop}),
+        body:{appendChild:noop,addEventListener:noop,classList}},
+      root:{dataset:{detailOpen:"false"},classList,querySelector:() => ({})},
+      layout:{compact},dragState:null,selectedInstanceId:null,detailPinned:false,
+      detailPanel:{querySelector:() => ({})},
+      backpackGuideStartFrame:null,backpackGuideStarted:false,backpackGuideTour:null,
+      backpackGuideStep:null,backpackGuideStepIndex:-1,backpackGuideTargets:[],
+      releaseGuideViewport:null,core:{},plugin:{},
+      uiCommon:{hideTooltip:noop,bindGuideViewport:() => noop},
+      isGuideBackpack:() => true,getTopLeftPlacedWeapon:() => weapon,
+      getBackpackPlacementRect:noop,getBackpackExpansionRect:noop,
+      openSecondaryActionsForGuide:noop,closeSecondaryActions:noop,
+      disableBackpackGuideInteraction:noop,revealBackpackGuideTarget:noop,
+      syncBackpackGuideTargets:noop,cleanupBackpackGuide:noop,
+      findEntry:id => id === weapon.instanceId ? weapon : null,
+      clearSynergyHighlights:noop,
+      renderWeaponDetails:() => {
+        context.root.dataset.detailOpen = String(!!context.selectedInstanceId && context.detailPinned);
+      }
+    };
+    vm.runInNewContext(backpackUiFunction("selectWeapon")+backpackUiFunction("clearWeaponSelection")
+      +backpackUiFunction("startBackpackGuide")+"\nselect=selectWeapon; startBackpackGuide();",context);
+    const tour = context.backpackGuideTour;
+    assert.ok(tour.inProgress);
+    tour.next();
+    assert.equal(context.root.dataset.detailOpen,"false");
+    tour.next();
+    assert.equal(context.root.dataset.detailOpen,"true","介绍武器详情时应展开");
+    tour.next();
+    assert.equal(context.root.dataset.detailOpen,"true","介绍合成提示时应继续显示详情");
+    tour.next();
+    assert.equal(context.root.dataset.detailOpen,"false","进入战速步骤时应自动收起");
+    assert.equal(context.selectedInstanceId,null);
+    assert.equal(context.detailPinned,false);
+    weapon.click();
+    assert.equal(context.root.dataset.detailOpen,"true","普通点击仍可固定详情");
+  }
+});
+
 test("所有项目页面入口加载统一美化滚动条", () => {
 	const scrollbarSource = fs.readFileSync(path.join(root, "scrollbars.css"), "utf8");
 	assert.match(scrollbarSource, /scrollbar-width:\s*thin/);
