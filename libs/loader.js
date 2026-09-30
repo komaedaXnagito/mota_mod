@@ -43,50 +43,97 @@ loader.prototype._load_sync = function (callback) {
     });
 }
 
+// 大体积魔塔分块加载优化：兼容鹿间裕贵插件及平台 splitChunkMap 协议。
+// 所有类别先注册，再开始请求；类别的解码和后处理结束后才通知启动完成。
 loader.prototype._load_async = function (callback) {
     core.loader._setStartLoadTipText('正在加载资源文件...');
-    var all = {};
-
-    var _makeOnProgress = function (name) {
-        if (!all[name]) all[name] = { loaded: 0, total: 0, finished: false };
-        return function (loaded, total) {
+    var categories = ['animates', 'sounds', 'materials', 'images', 'autotiles', 'tilesets'];
+    var methods = ['_loadAnimates_async', '_loadMusic_async', '_loadMaterials_async',
+        '_loadExtraImages_async', '_loadAutotiles_async', '_loadTilesets_async'];
+    var all = {}, remaining = categories.length, finished = false;
+    categories.forEach(function (name) {
+        all[name] = { loaded: 0, total: 0, finished: false };
+    });
+    categories.forEach(function (name, index) {
+        core.loader[methods[index]](function (loaded, total) {
             all[name].loaded = loaded;
             all[name].total = total;
             var allLoaded = 0, allTotal = 0;
-            for (var one in all) {
-                allLoaded += all[one].loaded;
-                allTotal += all[one].total;
-            }
+            categories.forEach(function (category) {
+                allLoaded += all[category].loaded;
+                allTotal += all[category].total;
+            });
             if (allTotal > 0) {
-                if (allLoaded == allTotal) {
-                    core.loader._setStartLoadTipText("正在处理资源文件... 请稍候...");
-                } else {
-                    core.loader._setStartLoadTipText('正在加载资源文件... ' +
-                        core.formatSize(allLoaded) + " / " + core.formatSize(allTotal) +
-                        " (" + (allLoaded / allTotal * 100).toFixed(2) + "%)");
-                }
+                core.loader._setStartLoadTipText(allLoaded == allTotal ?
+                    '正在处理资源文件... 请稍候...' : '正在加载资源文件... ' +
+                    core.formatSize(allLoaded) + ' / ' + core.formatSize(allTotal) +
+                    ' (' + (allLoaded / allTotal * 100).toFixed(2) + '%)');
                 core.loader._setStartProgressVal(allLoaded / allTotal * 100);
             }
-        };
-    }
-    var _makeOnFinished = function (name) {
-        return function () {
-            setTimeout(function () {
-                all[name].finished = true;
-                for (var one in all) {
-                    if (!all[one].finished) return;
-                }
-                callback();
-            });
-        }
-    }
+        }, function () {
+            if (all[name].finished) return;
+            all[name].finished = true;
+            remaining--;
+            if (remaining == 0 && !finished) {
+                finished = true;
+                core.loader._setStartProgressVal(100);
+                if (callback) callback();
+            }
+        });
+    });
+}
 
-    this._loadAnimates_async(_makeOnProgress('animates'), _makeOnFinished('animates'));
-    this._loadMusic_async(_makeOnProgress('sounds'), _makeOnFinished('sounds'));
-    this._loadMaterials_async(_makeOnProgress('materials'), _makeOnFinished('materials'));
-    this._loadExtraImages_async(_makeOnProgress('images'), _makeOnFinished('images'));
-    this._loadAutotiles_async(_makeOnProgress('autotiles'), _makeOnFinished('autotiles'));
-    this._loadTilesets_async(_makeOnProgress('tilesets'), _makeOnFinished('tilesets'));
+// 平台未拆分该类别时仍使用原压缩包；空数组代表没有资源，无需请求。
+loader.prototype._getResourceChunks = function (category) {
+    var chunks = main.splitChunkMap && main.splitChunkMap[category];
+    if (Array.isArray(chunks)) return chunks;
+    return ['project/' + category + '/' + category + '.h5data'];
+}
+
+// 每个包独立下载、解包并处理，避免先合并整个大目录；聚合进度与完成回调。
+loader.prototype._loadArchives = function (urls, convertToText, onprogress, process, onfinished) {
+    if (typeof urls == 'string') urls = [urls];
+    var remaining = urls.length;
+    if (!remaining) {
+        if (onfinished) onfinished();
+        return;
+    }
+    var progress = urls.map(function () { return { loaded: 0, total: 0 }; });
+    urls.forEach(function (url, index) {
+        var received = false, finished = false;
+        var done = function () {
+            if (finished) return;
+            finished = true;
+            remaining--;
+            if (remaining == 0 && onfinished) onfinished();
+        };
+        var fail = function (error) {
+            if (received) return;
+            received = true;
+            console.error('无法加载资源包 ' + url, error);
+            done();
+        };
+        try {
+            core.unzip(url + (url.indexOf('?') < 0 ? '?' : '&') + 'v=' + main.version,
+                function (data) {
+                    if (received) return;
+                    received = true;
+                    try { process(data, done); }
+                    catch (error) {
+                        console.error('无法处理资源包 ' + url, error);
+                        done();
+                    }
+                }, fail, convertToText, function (loaded, total) {
+                    progress[index] = { loaded: loaded, total: total };
+                    var allLoaded = 0, allTotal = 0;
+                    progress.forEach(function (item) {
+                        allLoaded += item.loaded;
+                        allTotal += item.total;
+                    });
+                    if (onprogress) onprogress(allLoaded, allTotal);
+                });
+        } catch (error) { fail(error); }
+    });
 }
 
 // ----- 加载资源文件 ------ //
@@ -100,13 +147,14 @@ loader.prototype._loadMaterials_sync = function (callback) {
 }
 
 loader.prototype._loadMaterials_async = function (onprogress, onfinished) {
-    this.loadImagesFromZip('project/materials/materials.h5data', core.materials, core.material.images, onprogress, function () {
+    this.loadImagesFromZip(this._getResourceChunks('materials'), core.materials, core.material.images, onprogress, function () {
         core.loader._loadMaterials_afterLoad();
         onfinished();
     });
 }
 
 loader.prototype._loadMaterials_afterLoad = function () {
+    if (!core.material.images['icons']) return;
     var images = core.splitImage(core.material.images['icons']);
     for (var key in core.statusBar.icons) {
         if (typeof core.statusBar.icons[key] == 'number') {
@@ -137,7 +185,7 @@ loader.prototype._loadExtraImages_async = function (onprogress, onfinished) {
         return !name.toLowerCase().endsWith('.gif');
     });
 
-    this.loadImagesFromZip('project/images/images.h5data', images, core.material.images.images, onprogress, onfinished);
+    this.loadImagesFromZip(this._getResourceChunks('images'), images, core.material.images.images, onprogress, onfinished);
     // gif没有被压缩在zip中，延迟加载...
     gifs.forEach(function (gif) {
         this.loadImage("images", gif, function (id, image) {
@@ -167,20 +215,20 @@ loader.prototype._loadAutotiles_async = function (onprogress, onfinished) {
     var keys = Object.keys(core.material.icons.autotile);
     var autotiles = {};
 
-    this.loadImagesFromZip('project/autotiles/autotiles.h5data', keys, autotiles, onprogress, function () {
-        core.loader._loadAutotiles_afterLoad(keys, autotiles);
-        onfinished();
+    this.loadImagesFromZip(this._getResourceChunks('autotiles'), keys, autotiles, onprogress, function () {
+        core.loader._loadAutotiles_afterLoad(keys, autotiles, onfinished);
     });
 }
 
-loader.prototype._loadAutotiles_afterLoad = function (keys, autotiles) {
+loader.prototype._loadAutotiles_afterLoad = function (keys, autotiles, callback) {
     // autotile需要保证顺序
     keys.forEach(function (v) {
-        core.material.images.autotile[v] = autotiles[v];
+        if (autotiles[v]) core.material.images.autotile[v] = autotiles[v];
     });
 
     setTimeout(function () {
         core.maps._makeAutotileEdges();
+        if (callback) callback();
     });
 
 }
@@ -198,7 +246,7 @@ loader.prototype._loadTilesets_sync = function (callback) {
 
 loader.prototype._loadTilesets_async = function (onprogress, onfinished) {
     core.material.images.tilesets = {};
-    this.loadImagesFromZip('project/tilesets/tilesets.h5data', core.tilesets, core.material.images.tilesets, onprogress, function () {
+    this.loadImagesFromZip(this._getResourceChunks('tilesets'), core.tilesets, core.material.images.tilesets, onprogress, function () {
         core.loader._loadTilesets_afterLoad();
         onfinished();
     });
@@ -246,7 +294,7 @@ loader.prototype.loadImages = function (dir, names, toSave, callback) {
 loader.prototype.loadImage = function (dir, imgName, callback) {
     try {
         var name = imgName;
-        if (name.indexOf(".") < 0)
+        if (name.substring(name.lastIndexOf('/') + 1).indexOf(".") < 0)
             name = name + ".png";
         var image = new Image();
         image.onload = function () {
@@ -263,6 +311,7 @@ loader.prototype.loadImage = function (dir, imgName, callback) {
     }
     catch (e) {
         console.error(e);
+        callback(imgName, null);
     }
 }
 
@@ -273,30 +322,75 @@ loader.prototype.loadImagesFromZip = function (url, names, toSave, onprogress, o
         if (onfinished) onfinished();
         return;
     }
-
-    core.unzip(url + "?v=" + main.version, function (data) {
-        var cnt = 1;
+    var found = Object.create(null), loaded = Object.create(null), basenames = Object.create(null);
+    var urls = typeof url == 'string' ? [url] : url;
+    var directory = urls.length && /^project\/(images|materials|autotiles|tilesets)\//.exec(urls[0]);
+    names.forEach(function (name) {
+        var basename = name.substring(name.lastIndexOf('/') + 1);
+        if (basename.indexOf('.') < 0) basename += '.png';
+        if (!basenames[basename]) basenames[basename] = [];
+        if (basenames[basename].indexOf(name) < 0) basenames[basename].push(name);
+    });
+    this._loadArchives(url, false, onprogress, function (data, done) {
+        var pending = 1;
+        var complete = function () { if (--pending == 0) done(); };
         names.forEach(function (name) {
             var imgName = name;
-            if (imgName.indexOf('.') < 0) imgName += '.png';
-            if (imgName in data) {
-                var img = new Image();
-                var url = URL.createObjectURL(data[imgName]);
-                cnt++;
-                img.onload = function () {
-                    cnt--;
-                    URL.revokeObjectURL(url);
+            if (imgName.substring(imgName.lastIndexOf('/') + 1).indexOf('.') < 0) imgName += '.png';
+            if (found[name]) return;
+            var archiveName = imgName;
+            if (!Object.prototype.hasOwnProperty.call(data, archiveName)) {
+                // 部分平台打包器只保存 basename；仅无同名冲突时兼容，绝不串图。
+                var basename = imgName.substring(imgName.lastIndexOf('/') + 1);
+                if (basenames[basename].length != 1 || !Object.prototype.hasOwnProperty.call(data, basename)) return;
+                archiveName = basename;
+            }
+            found[name] = true;
+            pending++;
+            var img, objectUrl, settled = false;
+            var finish = function (success) {
+                if (settled) return;
+                settled = true;
+                if (objectUrl) URL.revokeObjectURL(objectUrl);
+                if (success) {
                     img.setAttribute('_width', img.width);
                     img.setAttribute('_height', img.height);
-                    if (cnt == 0 && onfinished) onfinished();
+                    toSave[name] = img;
+                    loaded[name] = true;
+                } else {
+                    console.error('无法解码图片 ' + imgName);
                 }
-                img.src = url;
-                toSave[name] = img;
-            }
+                complete();
+            };
+            try {
+                img = new Image();
+                objectUrl = URL.createObjectURL(data[archiveName]);
+                img.onload = function () { finish(true); };
+                img.onerror = function () { finish(false); };
+                img.src = objectUrl;
+            } catch (error) { finish(false); }
         });
-        cnt--;
-        if (cnt == 0 && onfinished) onfinished();
-    }, null, false, onprogress);
+        complete();
+    }, function () {
+        var pending = 1;
+        var complete = function () { if (--pending == 0 && onfinished) onfinished(); };
+        names.filter(function (name, index) { return names.indexOf(name) == index; }).forEach(function (name) {
+            if (loaded[name]) return;
+            console.error('资源包中缺少或损坏图片 ' + name);
+            if (!directory) return;
+            pending++;
+            // 保留目录路径回退原文件；打包器保留原文件时可恢复，失败也必须结束等待。
+            var finished = false;
+            core.loader.loadImage(directory[1], name, function (id, image) {
+                if (finished) return;
+                finished = true;
+                if (image) toSave[id] = image;
+                else console.error('无法加载原始图片 ' + id);
+                complete();
+            });
+        });
+        complete();
+    });
 }
 
 // ------ 加载动画文件 ------ //
@@ -331,19 +425,30 @@ loader.prototype._loadAnimates_sync = function () {
 }
 
 loader.prototype._loadAnimates_async = function (onprogress, onfinished) {
-    core.unzip('project/animates/animates.h5data?v=' + main.version, function (animates) {
+    this._loadArchives(this._getResourceChunks('animates'), true, onprogress, function (animates, done) {
+        var pending = 1;
+        var complete = function () { if (--pending == 0) done(); };
         for (var name in animates) {
-            if (name.endsWith(".animate")) {
+            if (name.endsWith('.animate')) {
                 var t = name.substring(0, name.length - 8);
-                if (core.animates.indexOf(t) >= 0)
-                    core.material.animates[t] = core.loader._loadAnimate(animates[name]);
+                if (core.animates.indexOf(t) >= 0) {
+                    pending++;
+                    core.material.animates[t] = core.loader._loadAnimate(animates[name], complete);
+                }
             }
         }
-        onfinished();
-    }, null, true, onprogress);
+        complete();
+    }, onfinished);
 }
 
-loader.prototype._loadAnimate = function (content) {
+loader.prototype._loadAnimate = function (content, callback) {
+    var pending = 1, finished = false;
+    var complete = function () {
+        if (--pending == 0 && !finished) {
+            finished = true;
+            if (callback) callback();
+        }
+    };
     try {
         content = JSON.parse(content);
         var data = {};
@@ -356,13 +461,26 @@ loader.prototype._loadAnimate = function (content) {
                 data.images.push(null);
             }
             else {
+                pending++;
+                var settled = false;
+                var onsettled = function () {
+                    if (settled) return;
+                    settled = true;
+                    complete();
+                };
                 try {
                     var image = new Image();
+                    image.onload = onsettled;
+                    image.onerror = function () {
+                        console.error('无法解码动画图片');
+                        onsettled();
+                    };
                     image.src = t2;
                     data.images.push(image);
                 } catch (e) {
                     console.error(e);
                     data.images.push(null);
+                    onsettled();
                 }
             }
         })
@@ -383,10 +501,15 @@ loader.prototype._loadAnimate = function (content) {
             })
             data.frames.push(info);
         });
+        complete();
         return data;
     }
     catch (e) {
         console.error(e);
+        if (!finished) {
+            finished = true;
+            if (callback) callback();
+        }
         return null;
     }
 }
@@ -409,19 +532,17 @@ loader.prototype._loadMusic_async = function (onprogress, onfinished) {
     core.bgms.forEach(function (t) {
         core.loader.loadOneMusic(t);
     });
-    core.unzip('project/sounds/sounds.h5data?v=' + main.version, function (data) {
-        // 延迟解析
-        setTimeout(function () {
-            for (var name in data) {
-                if (core.sounds.indexOf(name) >= 0) {
-                    core.loader._loadOneSound_decodeData(name, data[name]);
-                }
+    this._loadArchives(this._getResourceChunks('sounds'), false, onprogress, function (data, done) {
+        var pending = 1;
+        var complete = function () { if (--pending == 0) done(); };
+        for (var name in data) {
+            if (core.sounds.indexOf(name) >= 0) {
+                pending++;
+                core.loader._loadOneSound_decodeData(name, data[name], complete);
             }
-        });
-        onfinished();
-    }, null, false, onprogress);
-
-    // 直接开始播放
+        }
+        complete();
+    }, onfinished);
     core.playBgm(main.startBgm);
 }
 
@@ -443,28 +564,32 @@ loader.prototype.loadOneSound = function (name) {
     }, null, 'arraybuffer');
 }
 
-loader.prototype._loadOneSound_decodeData = function (name, data) {
-    if (data instanceof Blob) {
-        var blobReader = new zip.BlobReader(data);
-        blobReader.init(function () {
-            blobReader.readUint8Array(0, blobReader.size, function (uint8) {
-                core.loader._loadOneSound_decodeData(name, uint8.buffer);
-            })
-        });
-        return;
-    }
+loader.prototype._loadOneSound_decodeData = function (name, data, callback) {
+    var finished = false;
+    var done = function (buffer, error) {
+        if (finished) return;
+        finished = true;
+        if (error) console.error(error);
+        core.material.sounds[name] = buffer;
+        if (callback) callback();
+    };
     try {
+        if (data instanceof Blob) {
+            var blobReader = new zip.BlobReader(data);
+            var fail = function (error) { done(null, error); };
+            blobReader.init(function () {
+                blobReader.readUint8Array(0, blobReader.size, function (uint8) {
+                    core.loader._loadOneSound_decodeData(name, uint8.buffer, function () {
+                        done(core.material.sounds[name]);
+                    });
+                }, fail);
+            }, fail);
+            return;
+        }
         core.musicStatus.audioContext.decodeAudioData(data, function (buffer) {
-            core.material.sounds[name] = buffer;
-        }, function (e) {
-            console.error(e);
-            core.material.sounds[name] = null;
-        })
-    }
-    catch (e) {
-        console.error(e);
-        core.material.sounds[name] = null;
-    }
+            done(buffer);
+        }, function (error) { done(null, error); });
+    } catch (error) { done(null, error); }
 }
 
 loader.prototype.loadBgm = function (name) {
