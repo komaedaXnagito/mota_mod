@@ -649,7 +649,7 @@ mainStyle_m
 
 /* mainStyle_m
 tooltip : 主要样式设置
-default : ["project/images/bg.jpg", "project/images/bg.jpg", "color: white", "background-color: #32369F; opacity: 0.85; color: #FFFFFF; border: #FFFFFF 2px solid; caret-color: #FFD700;", "url(project/materials/ground.png) repeat", "url(project/materials/ground.png) repeat", "url(project/materials/ground.png) repeat", "background-color: black; color: white", "255,255,255,1", "rgba(255,255,255,1)", "204,204,204,1", "rgba(204,204,204,1)", "255,215,0,1", "rgba(255,215,0,1)", "Verdana"]
+default : ["project/images/origin_background.webp", "project/images/origin_background.webp", "color: white", "background-color: #32369F; opacity: 0.85; color: #FFFFFF; border: #FFFFFF 2px solid; caret-color: #FFD700;", "url(project/materials/ground.png) repeat", "url(project/materials/ground.png) repeat", "url(project/materials/ground.png) repeat", "background-color: black; color: white", "255,255,255,1", "rgba(255,255,255,1)", "204,204,204,1", "rgba(204,204,204,1)", "255,215,0,1", "rgba(255,215,0,1)", "Verdana"]
 helpUrl : /_docs/#/instruction
 var code = {
     startBackground: EvalString_0,
@@ -788,7 +788,7 @@ splitImagesOne
 /* splitImagesOne
 tooltip : 图片裁剪项
 helpUrl : /_docs/#/instruction
-default : ['hero.png', 32, 32, 'hero_']
+default : ['hero.webp', 32, 32, 'hero_']
 material : ["./project/images/:images", "EvalString_0"]
 allImages : ['EvalString_0']
 var code = '{"name": "'+EvalString_0+'", "width": '+Int_0+', "height": '+Int_1+', "prefix": "'+EvalString_1+'"},\n';
@@ -1219,11 +1219,11 @@ if (EvalString_0) {
   if (colorRe.test(EvalString_0)) {
     EvalString_0 = ', "background": ['+EvalString_0+']';
   }
-  else if (/^\w+\.png$/.test(EvalString_0)) {
+  else if (/^[-\w/]+\.(?:png|webp)$/.test(EvalString_0)) {
     EvalString_0 = ', "background": "'+EvalString_0+'"';
   }
   else {
-    throw new Error('背景格式错误,必须是形如0~255,0~255,0~255,0~1的颜色，或一个WindowSkin的png图片名称');
+    throw new Error('背景格式错误,必须是形如0~255,0~255,0~255,0~1的颜色，或一个WindowSkin 的 png 或 webp 图片名称');
   }
 }
 IntString_1 = IntString_1 ? (', "titlefont": '+IntString_1) : '';
@@ -1746,7 +1746,7 @@ setHeroIcon_s
 tooltip : setHeroIcon：更改角色行走图
 helpUrl : /_docs/#/instruction
 colour : this.dataColor
-default : ["hero.png", false]
+default : ["hero.webp", false]
 allImages : ['EvalString_0']
 material : ["./project/images/:images", "EvalString_0"]
 EvalString_0 = EvalString_0 && (', "name": "'+EvalString_0+'"');
@@ -3812,18 +3812,18 @@ drawBackground_s
 /* drawBackground_s
 tooltip : drawBackground：绘制背景
 helpUrl : /_docs/#/instruction
-default : ["winskin.png","rgba(255,255,255,1)","0","0","100","100"]
+default : ["winskin.webp","rgba(255,255,255,1)","0","0","100","100"]
 colour : this.uiColor
 previewBlock : true
 var colorRe = MotaActionFunctions.pattern.colorRe;
 if (colorRe.test(EvalString_0)) {
   EvalString_0 = ', "background": ['+EvalString_0+']';
 }
-else if (/^\w+\.png$/.test(EvalString_0)) {
+else if (/^[-\w/]+\.(?:png|webp)$/.test(EvalString_0)) {
   EvalString_0 = ', "background": "'+EvalString_0+'"';
 }
 else {
-  throw new Error('背景格式错误,必须是形如0~255,0~255,0~255,0~1的颜色，或一个WindowSkin的png图片名称');
+  throw new Error('背景格式错误,必须是形如0~255,0~255,0~255,0~1的颜色，或一个WindowSkin 的 png 或 webp 图片名称');
 }
 var code = '{"type": "drawBackground"'+EvalString_0+', "x": '+PosString_0+', "y": '+PosString_1+', "width": '+PosString_2+', "height": '+PosString_3+'},\n';
 return code;
@@ -3837,7 +3837,7 @@ drawSelector_s
 tooltip : drawSelector：绘制闪烁光标
 helpUrl : /_docs/#/instruction
 previewBlock : true
-default : ["winskin.png","1","0","0","100","100"]
+default : ["winskin.webp","1","0","0","100","100"]
 colour : this.uiColor
 var code = '{"type": "drawSelector", "image": "'+EvalString_0+'", "code": '+Int_0+', "x": '+PosString_0+', "y": '+PosString_1+', "width": '+PosString_2+', "height": '+PosString_3+'},\n';
 return code;

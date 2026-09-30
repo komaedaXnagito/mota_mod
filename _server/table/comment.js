@@ -138,7 +138,7 @@ var comment_c456ea59_6018_45ef_8bcc_211a24c627dc = {
 							"_type": "textarea",
 							"_string": true,
 							"_docs": "武器图片",
-							"_data": "武器图片路径，例如 project/images/weapon.png"
+							"_data": "武器图片路径，例如 project/images/weapon.webp"
 						},
 						"imageCrop": {
 							"_leaf": true,

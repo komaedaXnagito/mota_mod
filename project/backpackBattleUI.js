@@ -154,7 +154,7 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 		if (root) return;
 		root = document.createElement("div");
 		root.className = "bb-overlay bb-sky-battle weapon-ui-skin";
-		common.setPreloadedBackground(root, "project/images/backpack_background.png", core);
+		common.setPreloadedBackground(root, "project/images/backpack_background.webp", core);
 		root.dataset.mobile = core.domStyle && core.domStyle.isVertical ? "true" : "false";
 		root.innerHTML = [
 			"<section class='bb-panel' role='dialog' aria-label='背包乱斗战斗'>",
@@ -637,8 +637,8 @@ var createBackpackBattleUI_877f7cd8_53d6_448c_94ab_15ef82119bb2 = function (core
 
 	var getWeaponMuzzle = function (weapon, frameWidth, frameHeight) {
 		// 素材原始像素中的枪口；贝尼迪的枪口低于刺刀尖，不能直接取图片顶端。
-		var tips = { "windGun.png": [34, 12], "oilGun.png": [39, 10], "rchong.png": [42, 21],
-			"lakamuchong.png": [37, 41], "zongqingzhimu.png": [37, 14] };
+		var tips = { "windGun.webp": [34, 12], "oilGun.webp": [39, 10], "rchong.webp": [42, 21],
+			"lakamuchong.webp": [37, 41], "zongqingzhimu.webp": [37, 14] };
 		var crop = weapon.imageCrop, tip = tips[(weapon.image || "").split("/").pop()];
 		if (!Array.isArray(crop) || crop.length < 6 || !(crop[2] > 0 && crop[3] > 0)) return { x: 0, y: -frameHeight / 2 };
 		var scale = Math.min(frameWidth / crop[2], frameHeight / crop[3]);

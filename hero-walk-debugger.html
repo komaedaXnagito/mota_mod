@@ -323,13 +323,13 @@
       <div class="field">
         <label for="pathInput">手动输入图片路径</label>
         <div class="input-row">
-          <input id="pathInput" type="text" value="project/images/what_is_this_walk.png" spellcheck="false" autocomplete="off">
+          <input id="pathInput" type="text" value="project/images/hero.webp" spellcheck="false" autocomplete="off">
           <button id="loadButton" type="button">载入</button>
         </div>
       </div>
 
       <div class="field">
-        <label for="autoSelect">自动发现的 128×192、*_walk.png</label>
+        <label for="autoSelect">自动发现的 128×192、*_walk.webp</label>
         <select id="autoSelect">
           <option value="">正在扫描……</option>
         </select>
@@ -416,11 +416,11 @@
 
     // 当前仓库的静态兜底；页面仍会优先尝试扫描目录和 project/data.js。
     const FALLBACK_WALK_FILES = [
-      "what_is_this_walk.png",
-      "what_is_this_2_walk.png",
-      "what_is_this_3_walk.png",
-      "what_is_this_4_walk.png",
-      "what_is_this_5_walk.png"
+      "sword_walk.webp",
+      "harp_walk.webp",
+      "witch_walk.webp",
+      "wolf_walk.webp",
+      "shield_walk.webp"
     ];
 
     const FRAME_WIDTH = 32;

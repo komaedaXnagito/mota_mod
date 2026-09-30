@@ -590,7 +590,7 @@ MotaActionParser = function () {
       case "setText": // 设置剧情文本的属性
         data.title = this.Colour(data.title);
         data.text = this.Colour(data.text);
-        if (!/^\w+\.png$/.test(data.background))
+        if (!/^[-\w/]+\.(?:png|webp)$/.test(data.background))
           data.background = this.Colour(data.background);
         this.next = MotaActionBlocks["setText_s"].xmlText([
           data.position,
@@ -2282,7 +2282,7 @@ MotaActionParser = function () {
         ]);
         break;
       case "drawBackground": // 绘制背景
-        if (!/^\w+\.png$/.test(data.background))
+        if (!/^[-\w/]+\.(?:png|webp)$/.test(data.background))
           data.background = this.Colour(data.background);
         this.next = MotaActionBlocks["drawBackground_s"].xmlText([
           data.background,

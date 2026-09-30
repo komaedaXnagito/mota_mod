@@ -672,7 +672,7 @@ test('枪口使用透明裁剪后的同一缩放，刺刀不能当枪口，未�
     const source = fs.readFileSync(path.join(root, 'project/backpackBattleUI.js'), 'utf8');
     const fn = source.match(/var getWeaponMuzzle = function[^]*?\n\t\};/)[0];
     const muzzle = vm.runInNewContext(fn + '\ngetWeaponMuzzle;');
-    const rifle = { image: 'project/images/lakamuchong.png', imageCrop: [17, 7, 42, 223, 312, 312] };
+    const rifle = { image: 'project/images/lakamuchong.webp', imageCrop: [17, 7, 42, 223, 312, 312] };
     const result = muzzle(rifle, 40, 80), scale = 80 / 223;
     assert.ok(Math.abs(result.x - (37 - 17 - 21) * scale) < .001);
     assert.ok(Math.abs(result.y - (41 - 7 - 111.5) * scale) < .001);

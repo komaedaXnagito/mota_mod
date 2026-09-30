@@ -5,6 +5,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
+const webpSize = require("./helpers/webpSize");
 
 const root = path.resolve(__dirname, "..");
 
@@ -41,10 +42,9 @@ function findElement(element, predicate) {
 	return null;
 }
 
-function readPngSize(file) {
-	const data = fs.readFileSync(file);
-	assert.equal(data.toString("ascii", 1, 4), "PNG", file);
-	return { width: data.readUInt32BE(16), height: data.readUInt32BE(20) };
+function readWebpSize(file) {
+	const [width, height] = webpSize(fs.readFileSync(file));
+	return { width, height };
 }
 
 function createHarness() {
@@ -159,11 +159,11 @@ test("成就难度仅包含青铜、白金、钻石", () => {
 	const levels = Array.from(new Set(api.getDefinitions().map((entry) => entry.level))).sort();
 	assert.deepEqual(levels, ["bronze", "diamond", "platinum"]);
 	api.getDefinitions().forEach((entry) => {
-		assert.match(entry.icon, /^project\/images\/achievements\/.+\.png$/, entry.id);
-		assert.match(entry.largeIcon, /^project\/images\/achievements\/large\/.+\.png$/, entry.id);
+		assert.match(entry.icon, /^project\/images\/achievements\/.+\.webp$/, entry.id);
+		assert.match(entry.largeIcon, /^project\/images\/achievements\/large\/.+\.webp$/, entry.id);
 		const largeFile = path.join(root, entry.largeIcon);
 		assert.equal(fs.existsSync(largeFile), true, entry.largeIcon);
-		const size = readPngSize(largeFile);
+		const size = readWebpSize(largeFile);
 		assert.ok(size.width >= 1024 && size.height >= 1024, `${entry.id}: ${size.width}x${size.height}`);
 	});
 	const statistics = api.getStatistics();
@@ -206,7 +206,7 @@ test("点击成就图标可以打开并关闭大图", () => {
 	assert.equal(viewer.attributes.role, "dialog");
 	const largeImage = findElement(viewer, (element) => element.tagName === "IMG");
 	assert.ok(largeImage);
-	assert.match(largeImage.src, /^project\/images\/achievements\/large\/.+\.png$/);
+	assert.match(largeImage.src, /^project\/images\/achievements\/large\/.+\.webp$/);
 
 	const closeButton = findElement(viewer, (element) =>
 		String(element.className || "") === "achievement-icon-viewer-close"

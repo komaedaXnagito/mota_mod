@@ -21,7 +21,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/xde.png",
+		"image": "project/images/xde.webp",
 		"imageCrop": [
 			3,
 			6,
@@ -111,7 +111,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				0
 			]
 		],
-		"image": "project/images/fireDragonAxe.png",
+		"image": "project/images/fireDragonAxe.webp",
 		"imageCrop": [
 			3,
 			15,
@@ -192,7 +192,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/darkDragonSpear.png",
+		"image": "project/images/darkDragonSpear.webp",
 		"imageCrop": [
 			7,
 			7,
@@ -244,7 +244,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/gundamFist.png",
+		"image": "project/images/gundamFist.webp",
 		"imageCrop": [
 			3,
 			14,
@@ -301,7 +301,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/darkAxe.png",
+		"image": "project/images/darkAxe.webp",
 		"imageCrop": [
 			24,
 			8,
@@ -343,7 +343,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/darkBook.png",
+		"image": "project/images/darkBook.webp",
 		"imageCrop": [
 			8,
 			3,
@@ -455,7 +455,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/largeDropStaff.png",
+		"image": "project/images/largeDropStaff.webp",
 		"imageCrop": [
 			2,
 			25,
@@ -497,7 +497,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/bigRedPotion.png",
+		"image": "project/images/bigRedPotion.webp",
 		"imageCrop": [
 			3,
 			4,
@@ -582,7 +582,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				0
 			]
 		],
-		"image": "project/images/electricEel.png",
+		"image": "project/images/electricEel.webp",
 		"imageCrop": [
 			8,
 			4,
@@ -686,7 +686,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/dropStaff.png",
+		"image": "project/images/dropStaff.webp",
 		"imageCrop": [
 			2,
 			25,
@@ -731,7 +731,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/fangTian.png",
+		"image": "project/images/fangTian.webp",
 		"imageCrop": [
 			2,
 			23,
@@ -795,7 +795,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/windDagger.png",
+		"image": "project/images/windDagger.webp",
 		"imageCrop": [
 			4,
 			6,
@@ -855,7 +855,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/windGuitar.png",
+		"image": "project/images/windGuitar.webp",
 		"imageCrop": [
 			2,
 			13,
@@ -955,7 +955,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/windGun.png",
+		"image": "project/images/windGun.webp",
 		"imageCrop": [
 			7,
 			9,
@@ -1008,7 +1008,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/giBao.png",
+		"image": "project/images/giBao.webp",
 		"imageCrop": [
 			2,
 			7,
@@ -1082,7 +1082,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/lightSword.png",
+		"image": "project/images/lightSword.webp",
 		"imageCrop": [
 			2,
 			22,
@@ -1133,7 +1133,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/lightDragonFist.png",
+		"image": "project/images/lightDragonFist.webp",
 		"imageCrop": [
 			2,
 			12,
@@ -1193,7 +1193,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/pan.png",
+		"image": "project/images/pan.webp",
 		"imageCrop": [
 			2,
 			39,
@@ -1297,7 +1297,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/fireBass.png",
+		"image": "project/images/fireBass.webp",
 		"imageCrop": [
 			2,
 			6,
@@ -1413,7 +1413,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/fireGuitar.png",
+		"image": "project/images/fireGuitar.webp",
 		"imageCrop": [
 			1,
 			4,
@@ -1522,7 +1522,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/machineGodShield.png",
+		"image": "project/images/machineGodShield.webp",
 		"imageCrop": [
 			3,
 			11,
@@ -1621,7 +1621,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/diamondCrystal.png",
+		"image": "project/images/diamondCrystal.webp",
 		"imageCrop": [
 			8,
 			4,
@@ -1670,7 +1670,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/goldJar.png",
+		"image": "project/images/goldJar.webp",
 		"imageCrop": [
 			3,
 			7,
@@ -1745,7 +1745,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/spiritFireDragon.png",
+		"image": "project/images/spiritFireDragon.webp",
 		"imageCrop": [
 			12,
 			5,
@@ -1831,7 +1831,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/spiritEuropa.png",
+		"image": "project/images/spiritEuropa.webp",
 		"imageCrop": [
 			8,
 			4,
@@ -1913,7 +1913,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/blueDagger.png",
+		"image": "project/images/blueDagger.webp",
 		"imageCrop": [
 			16,
 			7,
@@ -1989,7 +1989,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/comboDagger.png",
+		"image": "project/images/comboDagger.webp",
 		"imageCrop": [
 			8,
 			5,
@@ -2070,7 +2070,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/pie.png",
+		"image": "project/images/pie.webp",
 		"imageCrop": [
 			2,
 			17,
@@ -2210,7 +2210,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				0
 			]
 		],
-		"image": "project/images/crab.png",
+		"image": "project/images/crab.webp",
 		"imageCrop": [
 			1,
 			3,
@@ -2303,7 +2303,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/sevenStarSword.png",
+		"image": "project/images/sevenStarSword.webp",
 		"imageCrop": [
 			10,
 			10,
@@ -2366,7 +2366,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/oilGun.png",
+		"image": "project/images/oilGun.webp",
 		"imageCrop": [
 			6,
 			7,
@@ -2466,7 +2466,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				0
 			]
 		],
-		"image": "project/images/oilAxe.png",
+		"image": "project/images/oilAxe.webp",
 		"imageCrop": [
 			29,
 			5,
@@ -2562,7 +2562,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/oilBow.png",
+		"image": "project/images/oilBow.webp",
 		"imageCrop": [
 			6,
 			6,
@@ -2614,7 +2614,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/oilStaff.png",
+		"image": "project/images/oilStaff.webp",
 		"imageCrop": [
 			1,
 			6,
@@ -2713,7 +2713,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/waterDagger.png",
+		"image": "project/images/waterDagger.webp",
 		"imageCrop": [
 			20,
 			5,
@@ -2766,7 +2766,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/waterDragonUmbrella.png",
+		"image": "project/images/waterDragonUmbrella.webp",
 		"imageCrop": [
 			11,
 			3,
@@ -2858,7 +2858,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/ameNoHabakiri.png",
+		"image": "project/images/ameNoHabakiri.webp",
 		"imageCrop": [
 			4,
 			11,
@@ -2948,7 +2948,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/bronzeShield.png",
+		"image": "project/images/bronzeShield.webp",
 		"imageCrop": [
 			2,
 			2,
@@ -3015,7 +3015,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/earthDragonStaff.png",
+		"image": "project/images/earthDragonStaff.webp",
 		"imageCrop": [
 			3,
 			7,
@@ -3088,7 +3088,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/earthGirlSword.png",
+		"image": "project/images/earthGirlSword.webp",
 		"imageCrop": [
 			2,
 			21,
@@ -3139,7 +3139,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/silverShield.png",
+		"image": "project/images/silverShield.webp",
 		"imageCrop": [
 			2,
 			7,
@@ -3251,7 +3251,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/silverJar.png",
+		"image": "project/images/silverJar.webp",
 		"imageCrop": [
 			21,
 			16,
@@ -3322,7 +3322,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/friedShrimp.png",
+		"image": "project/images/friedShrimp.webp",
 		"imageCrop": [
 			3,
 			23,
@@ -3437,7 +3437,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/trueSevenStarSword.png",
+		"image": "project/images/trueSevenStarSword.webp",
 		"imageCrop": [
 			10,
 			10,
@@ -3517,7 +3517,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/rquan.png",
+		"image": "project/images/rquan.webp",
 		"imageCrop": [
 			6,
 			20,
@@ -3548,7 +3548,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/rfu.png",
+		"image": "project/images/rfu.webp",
 		"imageCrop": [
 			11,
 			9,
@@ -3589,7 +3589,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/ranfu.png",
+		"image": "project/images/ranfu.webp",
 		"imageCrop": [
 			33,
 			5,
@@ -3645,7 +3645,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/rzhang.png",
+		"image": "project/images/rzhang.webp",
 		"imageCrop": [
 			2,
 			31,
@@ -3682,7 +3682,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/rqiang.png",
+		"image": "project/images/rqiang.webp",
 		"imageCrop": [
 			13,
 			6,
@@ -3713,7 +3713,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/rduan.png",
+		"image": "project/images/rduan.webp",
 		"imageCrop": [
 			4,
 			10,
@@ -3744,7 +3744,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/rchong.png",
+		"image": "project/images/rchong.webp",
 		"imageCrop": [
 			5,
 			12,
@@ -3796,7 +3796,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/rgaodaquan.png",
+		"image": "project/images/rgaodaquan.webp",
 		"imageCrop": [
 			7,
 			13,
@@ -3854,7 +3854,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/iozhang.png",
+		"image": "project/images/iozhang.webp",
 		"imageCrop": [
 			4,
 			17,
@@ -3948,7 +3948,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/yiqiyizhen.png",
+		"image": "project/images/yiqiyizhen.webp",
 		"imageCrop": [
 			14,
 			9,
@@ -4010,7 +4010,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/qixingjianpeizi.png",
+		"image": "project/images/qixingjianpeizi.webp",
 		"imageCrop": [
 			10,
 			10,
@@ -4068,7 +4068,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/choushan.png",
+		"image": "project/images/choushan.webp",
 		"imageCrop": [
 			3,
 			7,
@@ -4142,7 +4142,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/niyuwodetaoseshuipingxian.png",
+		"image": "project/images/niyuwodetaoseshuipingxian.webp",
 		"imageCrop": [
 			9,
 			3,
@@ -4217,7 +4217,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/shiyizhezhizheng.png",
+		"image": "project/images/shiyizhezhizheng.webp",
 		"imageCrop": [
 			3,
 			6,
@@ -4291,7 +4291,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/guangxiaojingling.png",
+		"image": "project/images/guangxiaojingling.webp",
 		"imageCrop": [
 			1,
 			13,
@@ -4357,7 +4357,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/guanglongwanou.png",
+		"image": "project/images/guanglongwanou.webp",
 		"imageCrop": [
 			15,
 			15,
@@ -4421,7 +4421,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/shouwangzhizheng.png",
+		"image": "project/images/shouwangzhizheng.webp",
 		"imageCrop": [
 			4,
 			11,
@@ -4509,7 +4509,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/junshen.png",
+		"image": "project/images/junshen.webp",
 		"imageCrop": [
 			7,
 			15,
@@ -4564,7 +4564,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/bingqilin.png",
+		"image": "project/images/bingqilin.webp",
 		"imageCrop": [
 			7,
 			3,
@@ -4655,7 +4655,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				0
 			]
 		],
-		"image": "project/images/fenghuangqin.png",
+		"image": "project/images/fenghuangqin.webp",
 		"imageCrop": [
 			28,
 			5,
@@ -4761,7 +4761,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/qiepianboluo.png",
+		"image": "project/images/qiepianboluo.webp",
 		"imageCrop": [
 			4,
 			6,
@@ -4850,7 +4850,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/yazhizhifu.png",
+		"image": "project/images/yazhizhifu.webp",
 		"imageCrop": [
 			12,
 			7,
@@ -4909,7 +4909,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/shuangjianzhizheng.png",
+		"image": "project/images/shuangjianzhizheng.webp",
 		"imageCrop": [
 			15,
 			7,
@@ -4997,7 +4997,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/faka.png",
+		"image": "project/images/faka.webp",
 		"imageCrop": [
 			13,
 			12,
@@ -5021,7 +5021,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/yinyoushirenzhizheng.png",
+		"image": "project/images/yinyoushirenzhizheng.webp",
 		"imageCrop": [
 			7,
 			5,
@@ -5088,7 +5088,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/tulongwanou.png",
+		"image": "project/images/tulongwanou.webp",
 		"imageCrop": [
 			2,
 			3,
@@ -5138,7 +5138,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/chuileimantuoling.png",
+		"image": "project/images/chuileimantuoling.webp",
 		"imageCrop": [
 			2,
 			21,
@@ -5245,7 +5245,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/jichudun.png",
+		"image": "project/images/jichudun.webp",
 		"imageCrop": [
 			11,
 			6,
@@ -5315,7 +5315,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/taheermasala.png",
+		"image": "project/images/taheermasala.webp",
 		"imageCrop": [
 			7,
 			5,
@@ -5400,7 +5400,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/weiershitianjiang.png",
+		"image": "project/images/weiershitianjiang.webp",
 		"imageCrop": [
 			19,
 			9,
@@ -5473,7 +5473,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/xiaoguangjian.png",
+		"image": "project/images/xiaoguangjian.webp",
 		"imageCrop": [
 			6,
 			17,
@@ -5532,7 +5532,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/xiaotumeijian.png",
+		"image": "project/images/xiaotumeijian.webp",
 		"imageCrop": [
 			11,
 			20,
@@ -5594,7 +5594,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/xiaodiaobaozhang.png",
+		"image": "project/images/xiaodiaobaozhang.webp",
 		"imageCrop": [
 			2,
 			25,
@@ -5639,7 +5639,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/xiaoshuiduan.png",
+		"image": "project/images/xiaoshuiduan.webp",
 		"imageCrop": [
 			19,
 			21,
@@ -5688,7 +5688,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/xiaohong.png",
+		"image": "project/images/xiaohong.webp",
 		"imageCrop": [
 			7,
 			4,
@@ -5750,7 +5750,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/shaonvmilu.png",
+		"image": "project/images/shaonvmilu.webp",
 		"imageCrop": [
 			5,
 			30,
@@ -5809,7 +5809,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/nibolonggenzhibei.png",
+		"image": "project/images/nibolonggenzhibei.webp",
 		"imageCrop": [
 			6,
 			26,
@@ -5876,7 +5876,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/wuyaofu.png",
+		"image": "project/images/wuyaofu.webp",
 		"imageCrop": [
 			6,
 			4,
@@ -5977,7 +5977,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/bahamutezhidun.png",
+		"image": "project/images/bahamutezhidun.webp",
 		"imageCrop": [
 			2,
 			7,
@@ -6049,7 +6049,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/yingyuanzhezhizheng.png",
+		"image": "project/images/yingyuanzhezhizheng.webp",
 		"imageCrop": [
 			5,
 			4,
@@ -6152,7 +6152,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/huixinglieshou.png",
+		"image": "project/images/huixinglieshou.webp",
 		"imageCrop": [
 			12,
 			14,
@@ -6218,7 +6218,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/emiezhilei.png",
+		"image": "project/images/emiezhilei.webp",
 		"imageCrop": [
 			11,
 			14,
@@ -6291,7 +6291,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/lakamuchong.png",
+		"image": "project/images/lakamuchong.webp",
 		"imageCrop": [
 			17,
 			7,
@@ -6360,7 +6360,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/zhihu.png",
+		"image": "project/images/zhihu.webp",
 		"imageCrop": [
 			3,
 			10,
@@ -6435,7 +6435,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/anxiaojingling.png",
+		"image": "project/images/anxiaojingling.webp",
 		"imageCrop": [
 			1,
 			12,
@@ -6500,7 +6500,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/anlongwanou.png",
+		"image": "project/images/anlongwanou.webp",
 		"imageCrop": [
 			5,
 			19,
@@ -6564,7 +6564,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			]
 		],
 		"rarity": 2,
-		"image": "project/images/weishuzhaxia.png",
+		"image": "project/images/weishuzhaxia.webp",
 		"imageCrop": [
 			3,
 			23,
@@ -6640,7 +6640,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				0
 			]
 		],
-		"image": "project/images/mengxiang.png",
+		"image": "project/images/mengxiang.webp",
 		"imageCrop": [
 			3,
 			14,
@@ -6706,7 +6706,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/ouluoba.png",
+		"image": "project/images/ouluoba.webp",
 		"imageCrop": [
 			7,
 			15,
@@ -6752,7 +6752,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/shuilongwanou.png",
+		"image": "project/images/shuilongwanou.webp",
 		"imageCrop": [
 			8,
 			2,
@@ -6817,7 +6817,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/fasangxiaojingling.png",
+		"image": "project/images/fasangxiaojingling.webp",
 		"imageCrop": [
 			9,
 			3,
@@ -6899,7 +6899,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/hundunzhiyuan.png",
+		"image": "project/images/hundunzhiyuan.webp",
 		"imageCrop": [
 			7,
 			8,
@@ -7015,7 +7015,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/shipo.png",
+		"image": "project/images/shipo.webp",
 		"imageCrop": [
 			7,
 			15,
@@ -7054,7 +7054,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/huozuzhangqiu.png",
+		"image": "project/images/huozuzhangqiu.webp",
 		"imageCrop": [
 			3,
 			5,
@@ -7137,7 +7137,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/huolongwanou.png",
+		"image": "project/images/huolongwanou.webp",
 		"imageCrop": [
 			5,
 			3,
@@ -7202,7 +7202,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/lianjinlong.png",
+		"image": "project/images/lianjinlong.webp",
 		"imageCrop": [
 			22,
 			5,
@@ -7271,7 +7271,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/kaorou.png",
+		"image": "project/images/kaorou.webp",
 		"imageCrop": [
 			5,
 			32,
@@ -7358,7 +7358,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/xiong.png",
+		"image": "project/images/xiong.webp",
 		"imageCrop": [
 			6,
 			8,
@@ -7462,7 +7462,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/kuangzhanshizhinu.png",
+		"image": "project/images/kuangzhanshizhinu.webp",
 		"imageCrop": [
 			3,
 			15,
@@ -7533,7 +7533,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/kuangzhanshizhizheng.png",
+		"image": "project/images/kuangzhanshizhizheng.webp",
 		"imageCrop": [
 			3,
 			6,
@@ -7593,7 +7593,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/shiziwangzhanquan.png",
+		"image": "project/images/shiziwangzhanquan.webp",
 		"imageCrop": [
 			3,
 			14,
@@ -7641,7 +7641,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/langgong.png",
+		"image": "project/images/langgong.webp",
 		"imageCrop": [
 			2,
 			24,
@@ -7696,7 +7696,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/liequan.png",
+		"image": "project/images/liequan.webp",
 		"imageCrop": [
 			2,
 			8,
@@ -7768,7 +7768,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/yumi.png",
+		"image": "project/images/yumi.webp",
 		"imageCrop": [
 			2,
 			44,
@@ -7845,7 +7845,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/yugang.png",
+		"image": "project/images/yugang.webp",
 		"imageCrop": [
 			2,
 			4,
@@ -7902,7 +7902,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/qinshizhizheng.png",
+		"image": "project/images/qinshizhizheng.webp",
 		"imageCrop": [
 			2,
 			42,
@@ -8009,7 +8009,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/fengkuangsaozhou.png",
+		"image": "project/images/fengkuangsaozhou.webp",
 		"imageCrop": [
 			4,
 			13,
@@ -8092,7 +8092,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/dunfuzhizheng.png",
+		"image": "project/images/dunfuzhizheng.webp",
 		"imageCrop": [
 			3,
 			9,
@@ -8210,7 +8210,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/shixiangguizhiren.png",
+		"image": "project/images/shixiangguizhiren.webp",
 		"imageCrop": [
 			5,
 			12,
@@ -8265,7 +8265,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/shendun.png",
+		"image": "project/images/shendun.webp",
 		"imageCrop": [
 			7,
 			15,
@@ -8312,7 +8312,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/jinglingniao.png",
+		"image": "project/images/jinglingniao.webp",
 		"imageCrop": [
 			4,
 			11,
@@ -8377,7 +8377,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/zongqingzhimu.png",
+		"image": "project/images/zongqingzhimu.webp",
 		"imageCrop": [
 			5,
 			10,
@@ -8443,7 +8443,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/zuzhangqiu.png",
+		"image": "project/images/zuzhangqiu.webp",
 		"imageCrop": [
 			3,
 			5,
@@ -8537,7 +8537,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/juequan.png",
+		"image": "project/images/juequan.webp",
 		"imageCrop": [
 			3,
 			21,
@@ -8604,7 +8604,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/feifeisejin.png",
+		"image": "project/images/feifeisejin.webp",
 		"imageCrop": [
 			2,
 			5,
@@ -8646,7 +8646,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/zhanhuaping.png",
+		"image": "project/images/zhanhuaping.webp",
 		"imageCrop": [
 			17,
 			7,
@@ -8718,7 +8718,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/huluobo.png",
+		"image": "project/images/huluobo.webp",
 		"imageCrop": [
 			5,
 			33,
@@ -8831,7 +8831,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				0
 			]
 		],
-		"image": "project/images/weilanshandian.png",
+		"image": "project/images/weilanshandian.webp",
 		"imageCrop": [
 			29,
 			11,
@@ -8917,7 +8917,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/hongzhigong.png",
+		"image": "project/images/hongzhigong.webp",
 		"imageCrop": [
 			4,
 			4,
@@ -8977,7 +8977,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				0
 			]
 		],
-		"image": "project/images/qunbailiren.png",
+		"image": "project/images/qunbailiren.webp",
 		"imageCrop": [
 			10,
 			22,
@@ -9027,7 +9027,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/yubuzhixian.png",
+		"image": "project/images/yubuzhixian.webp",
 		"imageCrop": [
 			1,
 			37,
@@ -9120,7 +9120,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/xianzhezhizheng.png",
+		"image": "project/images/xianzhezhizheng.webp",
 		"imageCrop": [
 			6,
 			7,
@@ -9221,7 +9221,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/luqiang.png",
+		"image": "project/images/luqiang.webp",
 		"imageCrop": [
 			22,
 			13,
@@ -9362,7 +9362,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/zhejiushishenghuo.png",
+		"image": "project/images/zhejiushishenghuo.webp",
 		"imageCrop": [
 			20,
 			7,
@@ -9467,7 +9467,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/zhuiyixiaotiqin.png",
+		"image": "project/images/zhuiyixiaotiqin.webp",
 		"imageCrop": [
 			2,
 			8,
@@ -9594,7 +9594,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/yezhu.png",
+		"image": "project/images/yezhu.webp",
 		"imageCrop": [
 			9,
 			5,
@@ -9673,7 +9673,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/jingangjingsuipian.png",
+		"image": "project/images/jingangjingsuipian.webp",
 		"imageCrop": [
 			23,
 			14,
@@ -9716,7 +9716,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/tiedun.png",
+		"image": "project/images/tiedun.webp",
 		"imageCrop": [
 			14,
 			14,
@@ -9765,7 +9765,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/tieguo.png",
+		"image": "project/images/tieguo.webp",
 		"imageCrop": [
 			2,
 			39,
@@ -9832,7 +9832,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/tongguanzi.png",
+		"image": "project/images/tongguanzi.webp",
 		"imageCrop": [
 			1,
 			34,
@@ -9906,7 +9906,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				0
 			]
 		],
-		"image": "project/images/asikeleibiesizhizhang.png",
+		"image": "project/images/asikeleibiesizhizhang.webp",
 		"imageCrop": [
 			32,
 			5,
@@ -9985,7 +9985,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/yinxiang.png",
+		"image": "project/images/yinxiang.webp",
 		"imageCrop": [
 			6,
 			8,
@@ -10069,7 +10069,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/fenglongwanou.png",
+		"image": "project/images/fenglongwanou.webp",
 		"imageCrop": [
 			11,
 			5,
@@ -10131,7 +10131,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/xiangxielishe.png",
+		"image": "project/images/xiangxielishe.webp",
 		"imageCrop": [
 			2,
 			7,
@@ -10203,7 +10203,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/xiangjiao.png",
+		"image": "project/images/xiangjiao.webp",
 		"imageCrop": [
 			15,
 			12,
@@ -10286,7 +10286,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/guiwanguogang.png",
+		"image": "project/images/guiwanguogang.webp",
 		"imageCrop": [
 			11,
 			20,
@@ -10343,7 +10343,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/mojianshizhizheng.png",
+		"image": "project/images/mojianshizhizheng.webp",
 		"imageCrop": [
 			7,
 			7,
@@ -10438,7 +10438,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				0
 			]
 		],
-		"image": "project/images/tuoniao.png",
+		"image": "project/images/tuoniao.webp",
 		"imageCrop": [
 			6,
 			9,
@@ -10520,7 +10520,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/lu.png",
+		"image": "project/images/lu.webp",
 		"imageCrop": [
 			2,
 			33,
@@ -10604,7 +10604,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			]
 		],
 		"sourceName": "欧罗巴（突破I）",
-		"image": "project/images/ouluoba.png",
+		"image": "project/images/ouluoba.webp",
 		"imageCrop": [
 			7,
 			15,
@@ -10652,7 +10652,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 			]
 		],
 		"rarity": 5,
-		"image": "project/images/ouluoba.png",
+		"image": "project/images/ouluoba.webp",
 		"imageCrop": [
 			7,
 			15,
@@ -10694,7 +10694,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"name": "欧罗巴（突破III）",
 		"sourceName": "欧罗巴（突破III）",
 		"rarity": 5,
-		"image": "project/images/ouluoba.png",
+		"image": "project/images/ouluoba.webp",
 		"shape": [
 			[
 				1
@@ -10750,7 +10750,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/ouluoba.png",
+		"image": "project/images/ouluoba.webp",
 		"imageCrop": [
 			7,
 			15,
@@ -10803,7 +10803,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"name": "格里姆尼尔(突破I)",
 		"sourceName": "格里姆尼尔(突破I)",
 		"rarity": 5,
-		"image": "project/images/junshen.png",
+		"image": "project/images/junshen.webp",
 		"imageCrop": [
 			7,
 			15,
@@ -10857,7 +10857,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		]
 	},
 	"I607": {
-		"image": "project/images/junshen.png",
+		"image": "project/images/junshen.webp",
 		"imageCrop": [
 			7,
 			15,
@@ -10915,7 +10915,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		]
 	},
 	"I608": {
-		"image": "project/images/junshen.png",
+		"image": "project/images/junshen.webp",
 		"imageCrop": [
 			7,
 			15,
@@ -10973,7 +10973,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		]
 	},
 	"I609": {
-		"image": "project/images/junshen.png",
+		"image": "project/images/junshen.webp",
 		"imageCrop": [
 			7,
 			15,
@@ -11038,7 +11038,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		]
 	},
 	"I610": {
-		"image": "project/images/shipo.png",
+		"image": "project/images/shipo.webp",
 		"imageCrop": [
 			7,
 			15,
@@ -11077,7 +11077,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"rarity": 5
 	},
 	"I612": {
-		"image": "project/images/shipo.png",
+		"image": "project/images/shipo.webp",
 		"imageCrop": [
 			7,
 			15,
@@ -11116,7 +11116,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"rarity": 5
 	},
 	"I611": {
-		"image": "project/images/shipo.png",
+		"image": "project/images/shipo.webp",
 		"imageCrop": [
 			7,
 			15,
@@ -11155,7 +11155,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 		"rarity": 5
 	},
 	"I613": {
-		"image": "project/images/shipo.png",
+		"image": "project/images/shipo.webp",
 		"imageCrop": [
 			7,
 			15,
@@ -11202,7 +11202,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/shendun.png",
+		"image": "project/images/shendun.webp",
 		"imageCrop": [
 			7,
 			15,
@@ -11252,7 +11252,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/shendun.png",
+		"image": "project/images/shendun.webp",
 		"imageCrop": [
 			7,
 			15,
@@ -11302,7 +11302,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/shendun.png",
+		"image": "project/images/shendun.webp",
 		"imageCrop": [
 			7,
 			15,
@@ -11352,7 +11352,7 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				1
 			]
 		],
-		"image": "project/images/shendun.png",
+		"image": "project/images/shendun.webp",
 		"imageCrop": [
 			7,
 			15,

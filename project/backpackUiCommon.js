@@ -131,7 +131,7 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61;
 		return normalizeImagePath(source).split("#")[0].split("?")[0];
 	};
 
-	/** 把 project/images/foo.png 转成引擎图片缓存使用的 foo.png。 */
+	/** 把 project/images/foo.webp 转成引擎图片缓存使用的 foo.webp。 */
 	let getWeaponImageKey = function (source) {
 		"use strict";
 		var path = stripImageQuery(source);
@@ -149,6 +149,37 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61;
 			? coreRef.material.images.images : null;
 		var key = getWeaponImageKey(source);
 		return images && key ? images[key] || null : null;
+	};
+
+	/** 旧存档的图片名称仍可访问已预加载的 WebP，不请求已移除的 PNG/JPEG。 */
+	let registerLegacyImageAliases = function (coreRef) {
+		"use strict";
+		var images = coreRef && coreRef.material && coreRef.material.images
+			? coreRef.material.images.images : null;
+		if (!images) return 0;
+		var added = 0;
+		Object.keys(images).forEach(function (name) {
+			if (!/\.webp$/i.test(name)) return;
+			["png", "jpg", "jpeg"].forEach(function (extension) {
+				var legacyName = name.replace(/\.webp$/i, "." + extension);
+				if (images[legacyName]) return;
+				images[legacyName] = images[name];
+				added++;
+			});
+		});
+		// 模板对话头像只识别 .png；通过缓存别名支持 WebP，保留标题和原有图块解析。
+		var original = coreRef.ui && coreRef.ui._getTitleAndIcon;
+		if (typeof original === "function" && !original._supportsWebpPortrait) {
+			var wrapped = function (content) {
+				return original.call(this, content.replace(/(\t|\\t)\[(([^\],]+),)?([^\],]+)\.webp\]/gi,
+					function (tag, prefix, titlePart, title, name) {
+						return prefix + "[" + (titlePart || "") + name + ".png]";
+					}));
+			};
+			wrapped._supportsWebpPortrait = true;
+			coreRef.ui._getTitleAndIcon = wrapped;
+		}
+		return added;
 	};
 
 	let buildVersionedImageSource = function (source) {
@@ -1378,6 +1409,7 @@ var backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61;
 		setWeaponButtonLabel: setWeaponButtonLabel,
 		escapeHtml: escapeHtml,
 		registerWeaponImages: registerWeaponImages,
+		registerLegacyImageAliases: registerLegacyImageAliases,
 		preloadWeaponImages: preloadWeaponImages,
 		getWeaponImageSource: getWeaponImageSource,
 		setWeaponImageSource: setWeaponImageSource,

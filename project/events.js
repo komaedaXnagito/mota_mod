@@ -284,7 +284,7 @@ var events_c12a15a8_c380_4b28_8144_256cba95f760 =
 				"data": [
 					{
 						"type": "drawSelector",
-						"image": "winskin.png",
+						"image": "winskin.webp",
 						"code": 1,
 						"x": "32*temp:X",
 						"y": "32*temp:Y",

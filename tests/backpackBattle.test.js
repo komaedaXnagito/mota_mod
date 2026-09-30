@@ -73,16 +73,16 @@ test("开局地图背包道具使用背包名称和专用图标槽", () => {
 	const iconsSource = fs.readFileSync(path.join(root, "project/icons.js"), "utf8");
 	assert.match(itemsSource, /"I385":\s*\{[\s\S]*?"name": "背包"/);
 	assert.match(iconsSource, /"I385": 70/);
-	assert.equal(fs.existsSync(path.join(root, "project/images/backpackSlot.png")), true);
+	assert.equal(fs.existsSync(path.join(root, "project/images/backpackSlot.webp")), true);
 });
 
 test("I373 使用火山盲盒独立贴图", () => {
 	const dataSource = fs.readFileSync(path.join(root, "project/data.js"), "utf8");
 	const pluginsSource = fs.readFileSync(path.join(root, "project/plugins.js"), "utf8");
-	assert.match(dataSource, /"blindBoxSet06Volcanic\.png"/);
+	assert.match(dataSource, /"blindBoxSet06Volcanic\.webp"/);
 	assert.match(pluginsSource, /core\.material\.icons\.items\.I373/);
-	assert.match(pluginsSource, /core\.material\.images\.images\["blindBoxSet06Volcanic\.png"\]/);
-	assert.equal(fs.existsSync(path.join(root, "project/images/blindBoxSet06Volcanic.png")), true);
+	assert.match(pluginsSource, /core\.material\.images\.images\["blindBoxSet06Volcanic\.webp"\]/);
+	assert.equal(fs.existsSync(path.join(root, "project/images/blindBoxSet06Volcanic.webp")), true);
 });
 
 test("MT1 怪物能力初始化使用战斗随机流", () => {
@@ -4423,8 +4423,6 @@ test("MP 指示 buff：kind buff、可叠加、专属不可驱散/不可随机�
 	assert.equal(rules.getStatusExtraAttackCount(state, { attributes: { weaponTypes: ["剑"] } }), 0, "mp 不影响攻击次数");
 	assert.equal(rules.getNearbyDamageBonus(state, { attributes: { weaponTypes: ["剑"] }, instanceId: "x" }), 0, "mp 不影响附近伤害");
 
-	// 图标文件存在。
-	assert.ok(fs.existsSync(path.join(root, "project/images/status/mp.svg")), "图标 SVG 文件存在");
 });
 
 test("专属 buff：刻印/MP/狼皮 不可驱散、不可随机（exclusive: true）", () => {
@@ -4532,15 +4530,13 @@ test("黑之魅力 buff：kind buff、exclusive、每秒反射/再生/格挡+1�
 	rules.settlePeriodicStatuses(state3);
 	assert.equal(state3.player.buffs.find((b) => b.id === "blackCharm"), undefined, "MP=0 时立即解除");
 
-	// 静态断言 + 图标文件。
+	// 静态断言和实际用于渲染的内嵌图标。
 	const rulesSource = fs.readFileSync(path.join(root, "project/backpackBattleRules.js"), "utf8");
 	assert.match(rulesSource, /blackCharm/);
 	const statusesSource = fs.readFileSync(path.join(root, "project/backpackBattleStatuses.js"), "utf8");
 	assert.match(statusesSource, /"blackCharm"/);
-	assert.ok(fs.existsSync(path.join(root, "project/images/status/blackCharm.svg")), "黑之魅力 SVG 文件存在");
-	assert.ok(fs.existsSync(path.join(root, "project/images/status/mp.svg")), "MP SVG 文件存在");
 	// MP 新图标：黑紫背景 + 白色 MP + 无角标。
-	const mpSvg = fs.readFileSync(path.join(root, "project/images/status/mp.svg"), "utf8");
+	const mpSvg = statuses.definitions.mp.iconSvg;
 	assert.match(mpSvg, />MP</);
 	assert.ok(!/<circle cx='51'/.test(mpSvg) && !/>\d+</.test(mpSvg), "MP 无角标");
 });

@@ -12,7 +12,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 				var video = document.createElement("video");
 				video.id = id;
 				video.src = "project/video/background.mp4";
-				video.poster = "project/images/origin_background.png";
+				video.poster = "project/images/origin_background.webp";
 				video.autoplay = false;
 				video.loop = true;
 				video.muted = true;
@@ -120,11 +120,12 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 		if (weaponImageCommon && !main.replayChecking) weaponImageCommon.bindGameViewport(document.getElementById("inputDiv"), core);
 		this._afterLoadResources = function () {
 			// 本函数将在所有资源加载完毕后，游戏开启前被执行
+			if (weaponImageCommon) weaponImageCommon.registerLegacyImageAliases(core);
 			core.ui.statusBar.init();
 			// 将定义路径统一映射到引擎缓存，后续所有武器界面复用同一资源 URL。
 			if (weaponImageCommon && !main.replayChecking) weaponImageCommon.preloadWeaponImages(core, weaponImageDefinitions);
 			// I373 使用独立的盲盒贴图；覆盖到 items 图集格位，保证所有绘制入口显示一致。
-			var blindBoxImage = core.material.images.images["blindBoxSet06Volcanic.png"];
+			var blindBoxImage = core.material.images.images["blindBoxSet06Volcanic.webp"];
 			var itemIcon = core.material.icons.items.I373;
 			if (!main.replayChecking && blindBoxImage && core.material.images.items && itemIcon != null) {
 				var itemAtlas = document.createElement("canvas");
@@ -897,11 +898,11 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 			core.setTextAlign("uievent", "left");
 			core.setTextBaseline("uievent", "top");
 			core.fillRect("uievent", 0, 0, 416, 416, "black");
-			core.drawWindowSkin("winskin.png", "uievent", 0, 0, 416, 56);
-			core.drawWindowSkin("winskin.png", "uievent", 0, 56, 312, 56);
-			core.drawWindowSkin("winskin.png", "uievent", 0, 112, 312, 304);
-			core.drawWindowSkin("winskin.png", "uievent", 312, 56, 104, 56);
-			core.drawWindowSkin("winskin.png", "uievent", 312, 112, 104, 304);
+			core.drawWindowSkin("winskin.webp", "uievent", 0, 0, 416, 56);
+			core.drawWindowSkin("winskin.webp", "uievent", 0, 56, 312, 56);
+			core.drawWindowSkin("winskin.webp", "uievent", 0, 112, 312, 304);
+			core.drawWindowSkin("winskin.webp", "uievent", 312, 56, 104, 56);
+			core.drawWindowSkin("winskin.webp", "uievent", 312, 112, 104, 304);
 			core.setFillStyle("uievent", "white");
 			core.setStrokeStyle("uievent", "white");
 			core.fillText("uievent", "购买", 32, 74, "white", bigFont);
@@ -918,7 +919,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 			core.setTextAlign("uievent", "left");
 			core.ui.drawUIEventSelector(
 				1,
-				"winskin.png",
+				"winskin.webp",
 				22 + 100 * type,
 				66,
 				60,
@@ -1023,7 +1024,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 					}
 					core.ui.drawUIEventSelector(
 						2,
-						"winskin.png",
+						"winskin.webp",
 						8,
 						120 + i * 40,
 						295,
@@ -1465,7 +1466,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 		// 多角色共用hp的话则删除hp，等等。总之，不共用的属性都在这里进行定义就好。
 		var hero1 = {
 			"floorId": "MT0", // 该角色初始楼层ID；如果共用楼层可以注释此项
-			"image": "brave.png", // 角色的行走图名称；此项必填不然会报错
+			"image": "brave.webp", // 角色的行走图名称；此项必填不然会报错
 			"name": "1号角色",
 			"lv": 1,
 			"hp": 10000, // 如果HP共用可注释此项
@@ -1588,7 +1589,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 			var toLoc = data.loc || core.status.hero.loc;
 			core.insertAction([{
 					"type": "setHeroIcon",
-					"name": data.image || "hero.png"
+					"name": data.image || "hero.webp"
 				}, // 改变行走图
 				// 同层则用changePos，不同层则用changeFloor；这是为了避免共用楼层造成触发eachArrive
 				toFloorId != core.status.floorId ? {
@@ -1837,7 +1838,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 							"condition": "true",
 							"data": [{
 									"type": "drawBackground",
-									"background": "winskin.png",
+									"background": "winskin.webp",
 									"x": 16,
 									"y": 16,
 									"width": 384,
@@ -3312,7 +3313,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 			if (key == "blueKey") sx += 26;
 			else if (key == "yellowKey") sx += 13;
 			else if (key == "greenKey") sx += 39;
-			core.drawImage("outerUI", "maba.png", sx, sy, 12, 18, x, y, 36, 54);
+			core.drawImage("outerUI", "maba.webp", sx, sy, 12, 18, x, y, 36, 54);
 		}
 		//清除道具说明
 		statusBar.prototype.clearItemInfo = statusBar.prototype._update_infoWindow = function () {
@@ -3963,7 +3964,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 					uictx.canvas.height = GAMEVIEW_HEIGHT_VERTICAL;
 					bgctx.clearRect(0, 0, GAMEVIEW_WIDTH_VERTICAL, GAMEVIEW_HEIGHT_VERTICAL);
 					bgctx.globalAlpha = globalAlpha;
-					const bg3 = core.material.images.images["statusBackground2.png"]; //竖屏按钮
+					const bg3 = core.material.images.images["statusBackground2.webp"]; //竖屏按钮
 					bgctx.drawImage(
 						bg3,
 						0,
@@ -3980,7 +3981,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 					uictx.canvas.height = GAMEVIEW_HEIGHT;
 					bgctx.clearRect(0, 0, GAMEVIEW_WIDTH, GAMEVIEW_HEIGHT);
 					bgctx.globalAlpha = globalAlpha;
-					const bg3 = core.material.images.images["statusBackground.png"]; //横屏按钮
+					const bg3 = core.material.images.images["statusBackground.webp"]; //横屏按钮
 					bgctx.drawImage(bg3, 0, 0, GAMEVIEW_WIDTH, GAMEVIEW_HEIGHT);
 					bgctx.globalAlpha = 1;
 					core.setTextAlign("outerUI", "center");
@@ -4333,7 +4334,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 				else if (key == "blueKey") sx += 26;
 				else if (key == "greenKey") sx += 39;
 
-				core.drawImage("outerUI", "maba.png", sx, sy, 13, 26, x, y, 13 * 3, 26 * 3);
+				core.drawImage("outerUI", "maba.webp", sx, sy, 13, 26, x, y, 13 * 3, 26 * 3);
 			}
 			_update_infoWindow() {
 				const itemId = this.selectedItem;
@@ -6046,7 +6047,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 				item_right = itembar_right - 2,
 				itemName_color = "#fff";
 			// 修改此项以更换闪烁光标
-			var item_selector = "winskin.png";
+			var item_selector = "winskin.webp";
 			///// ***
 
 			core.setAlpha(ctx, itembar_alpha);
@@ -9425,7 +9426,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 							"condition": "true",
 							"data": [{
 									"type": "drawSelector",
-									"image": "winskin.png",
+									"image": "winskin.webp",
 									"code": 1,
 									"x": "32*temp:X",
 									"y": "32*temp:Y",
@@ -9871,7 +9872,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 								),
 								MotaActionFunctions.actionParser.parse(
 									[{
-										"name": "bg.jpg",
+										"name": "origin_background.webp",
 										"x": 0,
 										"y": 0,
 										"canvas": "bg"
@@ -9895,7 +9896,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 										"背景音乐": "bgm.mp3",
 										"确定": "confirm.mp3",
 										"攻击": "attack.mp3",
-										"背景图": "bg.jpg",
+										"背景图": "origin_background.webp",
 										"领域": "zone",
 										"文件名": "file.jpg"
 									},
@@ -9903,7 +9904,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 								),
 								MotaActionFunctions.actionParser.parse(
 									[{
-										"name": "hero.png",
+										"name": "hero.webp",
 										"width": 32,
 										"height": 32,
 										"prefix": "hero_"
@@ -10549,7 +10550,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 			if (pos[0])
 				core.drawImage(
 					ctx,
-					"light.png",
+					"light.webp",
 					32 * (frame - 1),
 					0,
 					32,
@@ -10564,7 +10565,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 			if (pos[1])
 				core.drawImage(
 					ctx,
-					"light.png",
+					"light.webp",
 					32 * (frame - 1),
 					0,
 					32,

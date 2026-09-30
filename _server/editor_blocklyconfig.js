@@ -92,7 +92,7 @@ editor_blocklyconfig=(function(){
         "背景音乐": "bgm.mp3", "确定": "confirm.mp3", "攻击": "attack.mp3", "背景图": "bg.jpg", "领域": "zone", "文件名": "file.jpg"
       }, 'nameMap'),
       MotaActionFunctions.actionParser.parse([
-        {"name": "hero.png", "width": 32, "height": 32, "prefix": "hero_"},
+        {"name": "hero.webp", "width": 32, "height": 32, "prefix": "hero_"},
       ], 'splitImages'),
     ],
     '显示文字':[
@@ -392,7 +392,7 @@ editor_blocklyconfig=(function(){
           "data": [
             {
               "type": "drawSelector",
-              "image": "winskin.png",
+              "image": "winskin.webp",
               "code": 1,
               "x": "32*temp:X",
               "y": "32*temp:Y",

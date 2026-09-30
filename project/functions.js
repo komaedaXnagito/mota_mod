@@ -1657,7 +1657,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a =
 		core.ui.setFillStyle(ctx, core.status.globalAttribute.statusBarColor);
 		var offset = core.status.hero.loc.x - core.bigmap.offsetX / 32 >= core._HEIGHT_ ? 0 : core._PY_;
 		core.ui.setAlpha(ctx, 0.75);
-		core.ui.drawWindowSkin('winskin.png', ctx, offset, 0, core._PX_ - core._PY_, core._PY_);
+		core.ui.drawWindowSkin('winskin.webp', ctx, offset, 0, core._PX_ - core._PY_, core._PY_);
 		core.ui.setAlpha(ctx, 1);
 		core.drawImage(ctx, core.statusBar.icons.floor, 6 + offset, 9, 25, 25);
 		fill((core.status.thisMap || {}).name || "Loading", 42 + offset, 29);

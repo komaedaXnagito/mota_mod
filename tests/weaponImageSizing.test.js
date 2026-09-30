@@ -6,6 +6,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const root = path.join(__dirname, '..');
 const read = name => fs.readFileSync(path.join(root, 'project', name), 'utf8');
+const imageSize = require('./helpers/webpSize');
 const context = vm.createContext({ console });
 vm.runInContext(read('weapons.js') + '\n' + read('backpackUiCommon.js'), context);
 const definitions = context.weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44;
@@ -22,7 +23,7 @@ test('全部159项武器均有有效占格、存在的图片及真实尺寸内�
     for (const [id, weapon] of Object.entries(definitions)) {
         assert.ok(Array.isArray(weapon.shape) && cellsOf(weapon).length, id + '占格');
         const image = fs.readFileSync(path.join(root, weapon.image));
-        const width = image.readUInt32BE(16), height = image.readUInt32BE(20);
+        const [width, height] = imageSize(image);
         const [x, y, w, h, fullW, fullH] = weapon.imageCrop;
         assert.equal(fullW, width, id); assert.equal(fullH, height, id);
         assert.ok(x >= 0 && y >= 0 && w > 0 && h > 0 && x + w <= width && y + h <= height, id + '裁剪不得越界');

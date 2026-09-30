@@ -24,44 +24,44 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 			portrait: "sword_character.webp",
 			portraitFilter: "none",
 			promotions: ["狂战士", "双剑士", "盾誓士", "魔剑士"],
-			poolTypes: ["剑", "盾", "短", "斧"],
+			poolTypes: ["剑", "盾", "刀", "斧"],
 			poolPreview: "七星剑、修瓦利耶之剑、真龙之盾",
 			unlockText: "转职后解锁刀类；狂战士额外解锁专属斧。",
-			walk: "sword_walk.png"
+			walk: "sword_walk.webp"
 		},
 		{
 			id: "琴",
 			name: "琴师",
 			color: "#53e4ff",
 			accent: "#8b7bff",
-			portrait: "harp_chatacter.png",
+			portrait: "harp_chatacter.webp",
 			portraitFilter: "none",
 			promotions: ["兽王", "摇滚巨星", "极乐净土"],
 			poolTypes: ["乐器", "食物", "饮料"],
 			poolPreview: "追忆小提琴、语部之弦、史莱姆铃铛",
 			unlockText: "转职后可追加动物或吉他相关武器。",
-			walk: "harp_walk.png"
+			walk: "harp_walk.webp"
 		},
 		{
 			id: "杖",
 			name: "术士",
 			color: "#c79cff",
 			accent: "#53d8b4",
-			portrait: "witch_character.png",
+			portrait: "witch_character.webp",
 			portraitFilter: "none",
 			promotions: ["黑猫道士", "使役者"],
 			poolTypes: ["杖", "召唤石", "道具"],
 			poolPreview: "巖迫之躯杖、钢棍、格里姆尼尔",
 			unlockText: "转职后可追加专属法杖或精灵相关武器。",
-			walk: "witch_walk.png"
+			walk: "witch_walk.webp"
 		}
 	];
 
 	var PROMOTION_APPEARANCES = {
-		"狂战士": { portrait: "wolf_character.webp", walk: "wolf_walk.png", portraitFocus: { x: 0.64, y: 0.36, size: 0.3 }, portraitCardOffsetY: -0.12 },
-		"双剑士": { portrait: "double_sword_character.webp", walk: "double_sword.png", portraitFocus: { x: 0.48, y: 0.13, size: 0.28 } },
-		"盾誓士": { portrait: "shield_character.webp", walk: "shield_walk.png", portraitFocus: { x: 0.52, y: 0.25, size: 0.3 } },
-		"魔剑士": { portrait: "magicsword_character.webp", walk: "magicsword_walk.png", portraitFocus: { x: 0.49, y: 0.30, size: 0.28 } }
+		"狂战士": { portrait: "wolf_character.webp", walk: "wolf_walk.webp", portraitFocus: { x: 0.64, y: 0.36, size: 0.3 }, portraitCardOffsetY: -0.12 },
+		"双剑士": { portrait: "double_sword_character.webp", walk: "double_sword.webp", portraitFocus: { x: 0.48, y: 0.13, size: 0.28 } },
+		"盾誓士": { portrait: "shield_character.webp", walk: "shield_walk.webp", portraitFocus: { x: 0.52, y: 0.25, size: 0.3 } },
+		"魔剑士": { portrait: "magicsword_character.webp", walk: "magicsword_walk.webp", portraitFocus: { x: 0.49, y: 0.30, size: 0.28 } }
 	};
 	var getCareerAppearance = function (base, promotion) {
 		return Object.assign({}, base, PROMOTION_APPEARANCES[promotion] || {});
@@ -814,7 +814,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		buttonOffsetY: 28
 	};
 	// 最终蒙版中：人物为黑、背景为白，边缘已经包含 10px 羽化。
-	var TITLE_CHARACTER_MASK_PATH = "project/images/title-character-mask.png";
+	var TITLE_CHARACTER_MASK_PATH = "project/images/title-character-mask.webp";
 	// 生成的人物轮廓比底图人物约大 9%，围绕背景焦点等比收缩后再参与遮罩。
 	var TITLE_CHARACTER_MASK_LAYOUT = {
 		landscape: { scale: 0.91, offsetX: 0, offsetY: 0 },
@@ -1160,7 +1160,7 @@ var installCareerSelect_54c7b8d1_6f26_4c48_9f45_1d87a2bb4df0 = function (core, p
 		titleVideo = document.createElement("video");
 		titleVideo.id = "careerTitleVideo";
 		titleVideo.src = "project/video/background.mp4";
-		titleVideo.poster = "project/images/origin_background.png";
+		titleVideo.poster = "project/images/origin_background.webp";
 		titleVideo.autoplay = true;
 		titleVideo.loop = true;
 		titleVideo.muted = true;

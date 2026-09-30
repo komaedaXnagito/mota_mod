@@ -24,7 +24,7 @@ var achievementDefinitions_f21a6f89_1840_47d9_9f6a_79d54a2f790e = [
 		description: "从这里开始，写下属于你的登塔故事。",
 		level: "bronze",
 		hidden: false,
-		icon: "project/images/achievements/begin-journey.png"
+		icon: "project/images/achievements/begin-journey.webp"
 	},
 	{
 		id: "first_victory",
@@ -33,7 +33,7 @@ var achievementDefinitions_f21a6f89_1840_47d9_9f6a_79d54a2f790e = [
 		description: "第一场胜利往往最值得铭记。",
 		level: "bronze",
 		hidden: false,
-		icon: "project/images/achievements/first-victory.png"
+		icon: "project/images/achievements/first-victory.webp"
 	},
 	{
 		id: "reach_floor_10",
@@ -42,7 +42,7 @@ var achievementDefinitions_f21a6f89_1840_47d9_9f6a_79d54a2f790e = [
 		description: "脚步已经越过塔底的阴影。",
 		level: "platinum",
 		hidden: false,
-		icon: "project/images/achievements/reach-floor-10.png"
+		icon: "project/images/achievements/reach-floor-10.webp"
 	},
 	{
 		id: "reach_floor_25",
@@ -51,7 +51,7 @@ var achievementDefinitions_f21a6f89_1840_47d9_9f6a_79d54a2f790e = [
 		description: "登塔过半，真正的挑战才刚刚开始。",
 		level: "platinum",
 		hidden: false,
-		icon: "project/images/achievements/reach-floor-25.png"
+		icon: "project/images/achievements/reach-floor-25.webp"
 	},
 	{
 		id: "reach_floor_50",
@@ -60,7 +60,7 @@ var achievementDefinitions_f21a6f89_1840_47d9_9f6a_79d54a2f790e = [
 		description: "你已站上高塔之巅，俯瞰来时的道路。",
 		level: "diamond",
 		hidden: false,
-		icon: "project/images/achievements/reach-floor-50.png"
+		icon: "project/images/achievements/reach-floor-50.webp"
 	},
 	{
 		id: "battle_100",
@@ -69,7 +69,7 @@ var achievementDefinitions_f21a6f89_1840_47d9_9f6a_79d54a2f790e = [
 		description: "历经百战，锋芒依旧。",
 		level: "diamond",
 		hidden: false,
-		icon: "project/images/achievements/battle-100.png"
+		icon: "project/images/achievements/battle-100.webp"
 	},
 	{
 		id: "curious_mind",
@@ -78,7 +78,7 @@ var achievementDefinitions_f21a6f89_1840_47d9_9f6a_79d54a2f790e = [
 		description: "真正的收藏家不会错过任何一页记录。",
 		level: "bronze",
 		hidden: true,
-		icon: "project/images/achievements/curious-mind.png"
+		icon: "project/images/achievements/curious-mind.webp"
 	},
 	{
 		id: "secret_discovery",
@@ -87,7 +87,7 @@ var achievementDefinitions_f21a6f89_1840_47d9_9f6a_79d54a2f790e = [
 		description: "墙壁不会说话，但它记得每一条秘密通道。",
 		level: "platinum",
 		hidden: true,
-		icon: "project/images/achievements/secret-discovery.png"
+		icon: "project/images/achievements/secret-discovery.webp"
 	},
 	{
 		id: "weak_demon_king",
@@ -96,7 +96,7 @@ var achievementDefinitions_f21a6f89_1840_47d9_9f6a_79d54a2f790e = [
 		description: "弱哎，拜托你很弱哎",
 		level: "platinum",
 		hidden: false,
-		icon: "project/images/achievements/weak-demon-king.png"
+		icon: "project/images/achievements/weak-demon-king.webp"
 	},
 	{
 		id: "barely_started",
@@ -105,7 +105,7 @@ var achievementDefinitions_f21a6f89_1840_47d9_9f6a_79d54a2f790e = [
 		description: "我去，这是什么牢塔吗？",
 		level: "platinum",
 		hidden: true,
-		icon: "project/images/achievements/barely-started.png"
+		icon: "project/images/achievements/barely-started.webp"
 	},
 	{
 		id: "battle_rounds_100",
@@ -114,7 +114,7 @@ var achievementDefinitions_f21a6f89_1840_47d9_9f6a_79d54a2f790e = [
 		description: "呼哧呼哧，这塔……",
 		level: "bronze",
 		hidden: false,
-		icon: "project/images/achievements/exhausted-100-rounds.png"
+		icon: "project/images/achievements/exhausted-100-rounds.webp"
 	},
 	{
 		id: "battle_healing",
@@ -123,7 +123,7 @@ var achievementDefinitions_f21a6f89_1840_47d9_9f6a_79d54a2f790e = [
 		description: "原来这塔能回血",
 		level: "bronze",
 		hidden: false,
-		icon: "project/images/achievements/battle-healing.png"
+		icon: "project/images/achievements/battle-healing.webp"
 	},
 	{
 		id: "battle_rounds_300",
@@ -132,7 +132,7 @@ var achievementDefinitions_f21a6f89_1840_47d9_9f6a_79d54a2f790e = [
 		description: "尽力了……",
 		level: "bronze",
 		hidden: false,
-		icon: "project/images/achievements/all-out-300-rounds.png"
+		icon: "project/images/achievements/all-out-300-rounds.webp"
 	},
 	{
 		id: "junk_refresh_100",
@@ -141,7 +141,7 @@ var achievementDefinitions_f21a6f89_1840_47d9_9f6a_79d54a2f790e = [
 		description: "这什么垃圾商店？",
 		level: "bronze",
 		hidden: false,
-		icon: "project/images/achievements/junk-refresh.png"
+		icon: "project/images/achievements/junk-refresh.webp"
 	},
 	{
 		id: "boastful_knight_defeat",
@@ -150,7 +150,7 @@ var achievementDefinitions_f21a6f89_1840_47d9_9f6a_79d54a2f790e = [
 		description: "怎么有人比牢骑还菜啊？",
 		level: "bronze",
 		hidden: true,
-		icon: "project/images/achievements/boastful-knight-defeat.png"
+		icon: "project/images/achievements/boastful-knight-defeat.webp"
 	},
 	{
 		id: "one_hp_demon_king",
@@ -159,7 +159,7 @@ var achievementDefinitions_f21a6f89_1840_47d9_9f6a_79d54a2f790e = [
 		description: "看来是我比他稍微强了一点点",
 		level: "diamond",
 		hidden: true,
-		icon: "project/images/achievements/one-hp-demon-king.png"
+		icon: "project/images/achievements/one-hp-demon-king.webp"
 	}
 ];
 

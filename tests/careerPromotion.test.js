@@ -115,10 +115,10 @@ test('九种转职共用开局界面，横竖屏确认后只发放原奖励，�
         assert.ok(confirmed.stopped && confirmed.prevented);
         assert.equal(f.flags.kaiju,base);assert.equal(f.flags.zhuanzhi,name);
         const appearances = {
-            '狂战士':['wolf_walk.png','wolf_character.webp'],
-            '双剑士':['double_sword.png','double_sword_character.webp'],
-            '盾誓士':['shield_walk.png','shield_character.webp'],
-            '魔剑士':['magicsword_walk.png','magicsword_character.webp']
+            '狂战士':['wolf_walk.webp','wolf_character.webp'],
+            '双剑士':['double_sword.webp','double_sword_character.webp'],
+            '盾誓士':['shield_walk.webp','shield_character.webp'],
+            '魔剑士':['magicsword_walk.webp','magicsword_character.webp']
         };
         assert.equal(f.core.status.hero.image,appearances[name]?.[0] || 'original.png');
         if(appearances[name]) assert.equal(f.core.plugin.careerSelect.getCurrentAppearance().portrait,appearances[name][1]);
