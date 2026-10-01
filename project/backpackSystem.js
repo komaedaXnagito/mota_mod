@@ -22,6 +22,8 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		imageInsetCells: 0.12 // 武器图片与占格外缘之间保留的格子距离，与商店预览一致。
 	};
 	const uiCommon = backpackUiCommon_2c986f67_7621_44eb_972d_24f1e2c6ce61;
+	const SAVED_LAYOUT_LIMIT = 5;
+	const SAVED_LAYOUT_STORAGE_KEY = "backpack_saved_layouts";
 	const isHeadlessReplay = function () {
 		return uiCommon.isHeadlessReplay ? uiCommon.isHeadlessReplay(core)
 			: typeof main !== "undefined" && !!main.replayChecking;
@@ -44,6 +46,13 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	let detailPanel = null;
 	let detailContent = null;
 	let returnButton = null;
+	let savedLayoutRoot = null;
+	let savedLayoutBody = null;
+	let savedLayoutMessage = null;
+	let savedLayoutMode = "apply";
+	let savedLayoutSelection = 0;
+	let savedLayoutConfirmation = null;
+	let savedLayoutPreviewObserver = null;
 	let selectedInstanceId = null;
 	let detailPinned = false;
 	let bagCanvas = null; // 绘制背景、网格和拖拽合法性提示的画布。
@@ -530,6 +539,178 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		state.inventory = state.inventory.filter(function (entry) {
 			return entry.instanceId !== instanceId;
 		});
+	};
+
+	/** 布局只保存武器定义和逻辑坐标，不绑定一次游戏中的实例 ID 或属性快照。 */
+	const normalizeSavedLayout = function (source) {
+		if (!source || !Array.isArray(source.entries) || !source.entries.length || source.entries.length > 4096) return null;
+		const entries = [];
+		for (let index = 0; index < source.entries.length; index++) {
+			const entry = source.entries[index];
+			if (!entry || typeof entry.definitionId !== "string" || !entry.definitionId
+				|| entry.definitionId.length > 128 || !Number.isSafeInteger(entry.x) || !Number.isSafeInteger(entry.y)
+				|| !Number.isFinite(entry.rotation)) return null;
+			const normalized = { definitionId: entry.definitionId, x: entry.x, y: entry.y,
+				rotation: normalizeRotation(entry.rotation) };
+			if (entry.uniqueKey != null && String(entry.uniqueKey)) normalized.uniqueKey = String(entry.uniqueKey);
+			entries.push(normalized);
+		}
+		return { entries: entries };
+	};
+
+	/** 本机五个固定槽位独立于游戏进度，读档、重新开局后仍可复用。 */
+	const readSavedLayouts = function () {
+		const raw = core.getLocalStorage ? core.getLocalStorage(SAVED_LAYOUT_STORAGE_KEY, null) : null;
+		const slots = raw && raw.version === 1 && Array.isArray(raw.slots) ? raw.slots : [];
+		return Array.from({ length: SAVED_LAYOUT_LIMIT }, function (_, index) {
+			return normalizeSavedLayout(slots[index]);
+		});
+	};
+
+	const writeSavedLayouts = function (slots) {
+		try {
+			return !!core.setLocalStorage && core.setLocalStorage(SAVED_LAYOUT_STORAGE_KEY,
+				{ version: 1, slots: cloneData(slots.slice(0, SAVED_LAYOUT_LIMIT)) }) !== false;
+		} catch (error) { return false; }
+	};
+
+	const canEditSavedLayout = function (slot) {
+		return Number.isInteger(slot) && slot >= 0 && slot < SAVED_LAYOUT_LIMIT
+			&& !(core.isReplaying && core.isReplaying()) && !dragState
+			&& !(core.getFlag && core.getFlag("disableOpenBackpack"));
+	};
+
+	const saveBackpackLayout = function (slot) {
+		if (!canEditSavedLayout(slot)) return { ok: false, message: "当前无法保存布局" };
+		readState();
+		if (!state.placed.length) return { ok: false, message: "请先在背包中装备武器，再保存布局" };
+		let slots;
+		try { slots = readSavedLayouts(); }
+		catch (error) { return { ok: false, message: "读取布局失败，请检查浏览器存储权限" }; }
+		slots[slot] = { entries: state.placed.map(function (entry) {
+			const cell = toLogicalCell(entry.col, entry.row);
+			const saved = { definitionId: entry.definitionId, x: cell.x, y: cell.y, rotation: normalizeRotation(entry.rotation) };
+			if (entry.uniqueKey) saved.uniqueKey = entry.uniqueKey;
+			return saved;
+		}) };
+		if (!writeSavedLayouts(slots)) return { ok: false, message: "保存失败：浏览器存储不可用或空间不足" };
+		return { ok: true, slot: slot, message: "已保存布局 " + (slot + 1) + "（" + state.placed.length + " 件装备）" };
+	};
+
+	const deleteBackpackLayout = function (slot) {
+		if (!canEditSavedLayout(slot)) return { ok: false, message: "当前无法删除布局" };
+		let slots;
+		try { slots = readSavedLayouts(); }
+		catch (error) { return { ok: false, message: "读取布局失败，请检查浏览器存储权限" }; }
+		slots[slot] = null;
+		if (!writeSavedLayouts(slots)) return { ok: false, message: "删除失败：浏览器存储不可用" };
+		return { ok: true, message: "已删除布局 " + (slot + 1) };
+	};
+
+	/** 本地模板属于可损坏的输入；拒绝对象原型名称，并重建最新的规范化占格。 */
+	const getSavedLayoutWeapon = function (definitionId) {
+		if (Object.prototype.hasOwnProperty.call(Object.prototype, definitionId)) return null;
+		try {
+			const definition = getWeaponDefinition(definitionId);
+			return definition && typeof definition === "object" ? normalizeWeapon(definition) : null;
+		} catch (error) { return null; }
+	};
+
+	/** 只规划、不移动实例。先跳过不可用位置，避免锁格中的同名武器占用可用副本。 */
+	const planSavedLayout = function (saved) {
+		const grid = getGridConfig();
+		const available = getAllEntries();
+		const reservedKeys = new Set(saved.entries.filter(function (entry) { return !!entry.uniqueKey; })
+			.map(function (entry) { return JSON.stringify([entry.definitionId, entry.uniqueKey]); }));
+		const usedInstances = new Set(), usedCells = new Set(), lockedCells = new Set();
+		const result = { ok: true, totalCount: saved.entries.length, appliedCount: 0,
+			missingCount: 0, lockedCount: 0, lockedCellCount: 0, invalidCount: 0, entries: [] };
+		saved.entries.forEach(function (source) {
+			const position = fromLogicalCell(source.x, source.y);
+			const weapon = getSavedLayoutWeapon(source.definitionId);
+			const planned = { definitionId: source.definitionId, col: position.col, row: position.row,
+				rotation: source.rotation, status: "missing", cells: [] };
+			result.entries.push(planned);
+			if (!weapon) { result.missingCount++; return; }
+			planned.cells = occupiedCells({ weapon: weapon }, position.col, position.row, source.rotation);
+			if (!planned.cells.length || planned.cells.some(function (cell) {
+				return cell[0] < 0 || cell[1] < 0 || cell[0] >= grid.maxCols || cell[1] >= grid.maxRows;
+			})) { planned.status = "invalid"; result.invalidCount++; return; }
+			const locked = planned.cells.filter(function (cell) { return !isCellUnlocked(cell[0], cell[1]); });
+			if (locked.length) {
+				locked.forEach(function (cell) { lockedCells.add(cellKey(cell[0], cell[1])); });
+				planned.status = "locked"; result.lockedCount++; return;
+			}
+			if (planned.cells.some(function (cell) { return usedCells.has(cellKey(cell[0], cell[1])); })) {
+				planned.status = "invalid"; result.invalidCount++; return;
+			}
+			const candidates = available.filter(function (candidate) {
+				return candidate.definitionId === source.definitionId && !usedInstances.has(candidate.instanceId)
+					&& (!source.uniqueKey || candidate.uniqueKey === source.uniqueKey);
+			});
+			// 普通槽位优先用普通副本，不抢占后续明确要求的特殊实例。
+			const entry = source.uniqueKey ? candidates[0] : candidates.find(function (candidate) { return !candidate.uniqueKey; })
+				|| candidates.find(function (candidate) { return !reservedKeys.has(JSON.stringify([candidate.definitionId, candidate.uniqueKey])); })
+				|| candidates[0];
+			if (!entry) { result.missingCount++; return; }
+			usedInstances.add(entry.instanceId);
+			planned.cells.forEach(function (cell) { usedCells.add(cellKey(cell[0], cell[1])); });
+			planned.instanceId = entry.instanceId;
+			planned.status = "ready";
+			result.appliedCount++;
+		});
+		result.lockedCellCount = lockedCells.size;
+		return result;
+	};
+
+	const describeSavedLayoutPlan = function (result, applied) {
+		if (!result.ok) return result.message;
+		return (applied ? "已应用 " : "可应用 ") + result.appliedCount + "/" + result.totalCount + " 件"
+			+ "；缺少装备 " + result.missingCount + " 件"
+			+ "；未解锁 " + result.lockedCellCount + " 格（跳过 " + result.lockedCount + " 件）"
+			+ (result.invalidCount ? "；位置冲突或越界 " + result.invalidCount + " 件" : "");
+	};
+
+	const previewBackpackLayout = function (slot) {
+		if (!Number.isInteger(slot) || slot < 0 || slot >= SAVED_LAYOUT_LIMIT) return { ok: false, message: "布局槽位无效" };
+		let saved;
+		try { saved = readSavedLayouts()[slot]; }
+		catch (error) { return { ok: false, message: "读取布局失败，请检查浏览器存储权限" }; }
+		if (!saved) return { ok: false, message: "此槽位暂无有效布局" };
+		readState();
+		const result = planSavedLayout(saved);
+		result.message = describeSavedLayoutPlan(result, false);
+		return result;
+	};
+
+	/** 一次性提交，未使用的真实实例收回库存。录像仅使用既有 o/i/m 动作。 */
+	const applyBackpackLayout = function (slot) {
+		if (!canEditSavedLayout(slot)) return { ok: false, message: "当前无法应用布局" };
+		const result = previewBackpackLayout(slot);
+		if (!result.ok) return result;
+		const collected = state.placed.slice();
+		const pool = state.inventory.concat(collected);
+		const placed = [], used = new Set();
+		result.entries.forEach(function (planned) {
+			if (planned.status !== "ready") return;
+			const entry = pool.find(function (candidate) { return candidate.instanceId === planned.instanceId; });
+			entry.col = planned.col; entry.row = planned.row; entry.rotation = planned.rotation;
+			placed.push(entry); used.add(entry.instanceId);
+		});
+		state.inventory = pool.filter(function (entry) {
+			if (used.has(entry.instanceId)) return false;
+			delete entry.col; delete entry.row;
+			return true;
+		});
+		state.placed = placed;
+		persistState();
+		// 清空棋盘动作必须全部排在摆放之前，才能确定性回放互换位置、旋转和部分应用。
+		collected.forEach(recordWeaponOut);
+		placed.forEach(function (entry) { recordWeaponEnter(entry); recordWeaponMove(entry); });
+		selectedInstanceId = null; detailPinned = false;
+		renderAll();
+		result.message = describeSavedLayoutPlan(result, true);
+		return result;
 	};
 
 	/** 返回一个背包实例的武器类型，供卡片和提示文本显示。 */
@@ -1816,6 +1997,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	/** 创建工具栏按钮，并阻止 pointerdown 冒泡到游戏画布。 */
 	const createButton = function (text, callback, gold) {
 		const button = document.createElement("button");
+		button.type = "button";
 		button.className = "backpack-button";
 		button.textContent = text;
 		button.addEventListener("pointerdown", function (event) {
@@ -1824,6 +2006,206 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		button.addEventListener("click", callback);
 		uiCommon.decorateWeaponSurface(button, { button: true, gold: !!gold });
 		return button;
+	};
+
+	const closeSavedLayoutPanel = function () {
+		if (!savedLayoutRoot) return;
+		if (savedLayoutPreviewObserver) savedLayoutPreviewObserver.disconnect();
+		savedLayoutPreviewObserver = null;
+		uiCommon.unregisterModal(savedLayoutRoot);
+		uiCommon.releaseWeaponUI(savedLayoutRoot);
+		savedLayoutRoot.remove();
+		savedLayoutRoot = savedLayoutBody = savedLayoutMessage = null;
+		savedLayoutConfirmation = null;
+	};
+
+	/** 预览使用同一套占格、裁剪与旋转，按完整最大网格缩放；不影响装备状态。 */
+	const createSavedLayoutPreview = function (plan) {
+		const grid = getGridConfig(), step = 28, gap = 2;
+		const preview = document.createElement("div");
+		preview.className = "backpack-layout-preview";
+		preview.setAttribute("role", "img");
+		preview.setAttribute("aria-label", "布局预览，蓝色可用，红色缺少装备，金色未解锁");
+		const board = document.createElement("div");
+		board.className = "backpack-layout-preview-board";
+		board.style.width = px(grid.maxCols * step);
+		board.style.height = px(grid.maxRows * step);
+		const unavailableCells = new Set();
+		plan.entries.forEach(function (entry) {
+			if (entry.status === "locked") entry.cells.forEach(function (cell) {
+				if (!isCellUnlocked(cell[0], cell[1])) unavailableCells.add(cellKey(cell[0], cell[1]));
+			});
+		});
+		for (let row = 0; row < grid.maxRows; row++) for (let col = 0; col < grid.maxCols; col++) {
+			const cell = document.createElement("span");
+			cell.className = "backpack-layout-preview-cell"
+				+ (isCellUnlocked(col, row) ? " is-unlocked" : "")
+				+ (unavailableCells.has(cellKey(col, row)) ? " is-needed" : "");
+			cell.style.left = px(col * step); cell.style.top = px(row * step);
+			cell.style.width = px(step - gap); cell.style.height = px(step - gap);
+			board.appendChild(cell);
+		}
+		plan.entries.forEach(function (entry) {
+			const weapon = getSavedLayoutWeapon(entry.definitionId);
+			if (!weapon || entry.col < 0 || entry.row < 0 || entry.col >= grid.maxCols || entry.row >= grid.maxRows) return;
+			const element = createWeaponElement(weapon, entry.rotation, step - gap, gap);
+			element.classList.add("backpack-layout-preview-weapon", "is-" + entry.status);
+			element.title = weapon.name;
+			element.style.left = px(entry.col * step); element.style.top = px(entry.row * step);
+			board.appendChild(element);
+		});
+		// 固定逻辑坐标，容器宽度变化时只缩放预览，不改变保存的格子坐标。
+		preview.style.aspectRatio = grid.maxCols + " / " + grid.maxRows;
+		preview.appendChild(board);
+		return preview;
+	};
+
+	const renderSavedLayoutPanel = function (notice) {
+		if (!savedLayoutRoot) return;
+		if (savedLayoutPreviewObserver) savedLayoutPreviewObserver.disconnect();
+		savedLayoutPreviewObserver = null;
+		uiCommon.releaseWeaponUI(savedLayoutBody);
+		savedLayoutBody.textContent = "";
+		savedLayoutMessage.textContent = notice || "";
+		let slots;
+		try { slots = readSavedLayouts(); }
+		catch (error) { savedLayoutMessage.textContent = "读取布局失败，请检查浏览器存储权限"; return; }
+		const tabs = document.createElement("div");
+		tabs.className = "backpack-layout-slots";
+		tabs.setAttribute("aria-label", "选择布局槽位（最多五套）");
+		slots.forEach(function (saved, index) {
+			const tab = document.createElement("button");
+			tab.type = "button";
+			tab.className = "backpack-layout-slot";
+			tab.dataset.slot = String(index);
+			tab.setAttribute("aria-pressed", String(index === savedLayoutSelection));
+			const title = document.createElement("b"); title.textContent = "布局 " + (index + 1);
+			const count = document.createElement("small"); count.textContent = saved ? saved.entries.length + " 件装备" : "空槽位";
+			tab.appendChild(title); tab.appendChild(count);
+			tab.addEventListener("click", function () {
+				savedLayoutSelection = index; savedLayoutConfirmation = null;
+				renderSavedLayoutPanel();
+				savedLayoutBody.querySelector("[data-slot='" + index + "']").focus();
+			});
+			tabs.appendChild(tab);
+			uiCommon.decorateWeaponSurface(tab, { radius: 10, interactive: true });
+		});
+		savedLayoutBody.appendChild(tabs);
+		const selected = slots[savedLayoutSelection];
+		const content = document.createElement("div");
+		content.className = "backpack-layout-content";
+		if (selected) {
+			const plan = previewBackpackLayout(savedLayoutSelection);
+			if (!plan.ok) { savedLayoutMessage.textContent = plan.message; return; }
+			content.appendChild(createSavedLayoutPreview(plan));
+			const detail = document.createElement("div");
+			detail.className = "backpack-layout-info";
+			const summary = document.createElement("p"); summary.className = "backpack-layout-summary";
+			summary.textContent = plan.message;
+			detail.appendChild(summary);
+			const legend = document.createElement("p"); legend.className = "backpack-layout-legend";
+			legend.textContent = "蓝色：可装备 · 红色：缺少 · 金色：未解锁";
+			detail.appendChild(legend);
+			const list = document.createElement("ul"); list.className = "backpack-layout-entry-list";
+			const statuses = { ready: "可装备", missing: "缺少装备", locked: "格子未解锁", invalid: "位置冲突或越界" };
+			plan.entries.forEach(function (entry) {
+				const weapon = getSavedLayoutWeapon(entry.definitionId), item = document.createElement("li");
+				const cell = toLogicalCell(entry.col, entry.row);
+				item.dataset.status = entry.status;
+				item.textContent = (weapon ? weapon.name : entry.definitionId) + " · " + entry.rotation + "°"
+					+ " · (" + cell.x + ", " + cell.y + ") · " + statuses[entry.status];
+				list.appendChild(item);
+			});
+			detail.appendChild(list); content.appendChild(detail);
+		} else {
+			const empty = document.createElement("p"); empty.className = "backpack-layout-empty";
+			empty.textContent = "布局 " + (savedLayoutSelection + 1) + " 尚未保存。将当前已装备武器保存到这里，即可预览并快速应用。";
+			content.appendChild(empty);
+		}
+		savedLayoutBody.appendChild(content);
+		const actions = document.createElement("div"); actions.className = "backpack-layout-actions";
+		const finish = function (result) {
+			savedLayoutConfirmation = null;
+			renderSavedLayoutPanel(result.message);
+			if (savedLayoutMessage) savedLayoutMessage.focus();
+		};
+		if (savedLayoutConfirmation) {
+			const deleting = savedLayoutConfirmation === "delete";
+			savedLayoutMessage.textContent = deleting ? "确认删除布局 " + (savedLayoutSelection + 1) + "？"
+				: "确认用当前装备覆盖布局 " + (savedLayoutSelection + 1) + "？";
+			const confirm = createButton(deleting ? "确认删除" : "确认覆盖", function () {
+				finish(deleting ? deleteBackpackLayout(savedLayoutSelection) : saveBackpackLayout(savedLayoutSelection));
+			}, true);
+			actions.appendChild(confirm);
+			actions.appendChild(createButton("取消", function () { savedLayoutConfirmation = null; renderSavedLayoutPanel(); }));
+		} else {
+			const save = createButton(selected ? "覆盖此布局" : "保存到此槽位", function () {
+				if (selected) { savedLayoutConfirmation = "save"; renderSavedLayoutPanel(); }
+				else finish(saveBackpackLayout(savedLayoutSelection));
+			}, savedLayoutMode === "save");
+			save.classList.add("backpack-layout-save"); actions.appendChild(save);
+			const apply = createButton("直接应用", function () { finish(applyBackpackLayout(savedLayoutSelection)); }, savedLayoutMode === "apply");
+			apply.disabled = !selected; apply.classList.add("backpack-layout-apply"); actions.appendChild(apply);
+			const remove = createButton("删除", function () { savedLayoutConfirmation = "delete"; renderSavedLayoutPanel(); });
+			remove.disabled = !selected; remove.classList.add("backpack-layout-delete"); actions.appendChild(remove);
+		}
+		savedLayoutBody.appendChild(actions);
+		// 重绘会移除触发按钮，焦点必须留在栈顶弹层内，方便键盘继续确认或取消。
+		const nextFocus = actions.querySelector("button");
+		if (nextFocus) nextFocus.focus();
+		if (selected) {
+			const preview = savedLayoutBody.querySelector(".backpack-layout-preview");
+			const board = preview.firstElementChild;
+			const resizePreview = function () {
+				board.style.transform = "scale(" + preview.clientWidth / (getGridConfig().maxCols * 28) + ")";
+			};
+			resizePreview();
+			if (typeof ResizeObserver !== "undefined") {
+				savedLayoutPreviewObserver = new ResizeObserver(resizePreview);
+				savedLayoutPreviewObserver.observe(preview);
+			}
+		}
+	};
+
+	const openSavedLayoutPanel = function (mode) {
+		if (!root || dragState || isHeadlessReplay()) return false;
+		if (savedLayoutRoot) return true;
+		clearWeaponSelection(); uiCommon.hideTooltip();
+		savedLayoutMode = mode === "save" ? "save" : "apply";
+		savedLayoutConfirmation = null;
+		try {
+			const slots = readSavedLayouts();
+			const first = slots.findIndex(function (slot) { return savedLayoutMode === "save" ? !slot : !!slot; });
+			if (first >= 0) savedLayoutSelection = first;
+		} catch (error) { /* 在面板中展示可恢复的存储错误。 */ }
+		savedLayoutRoot = document.createElement("div");
+		savedLayoutRoot.className = "backpack-layout-root weapon-ui-skin";
+		const panel = document.createElement("section"); panel.className = "backpack-layout-panel";
+		panel.setAttribute("role", "dialog"); panel.setAttribute("aria-modal", "true");
+		panel.setAttribute("aria-labelledby", "backpack-layout-heading");
+		const heading = document.createElement("header");
+		const title = document.createElement("h2"); title.id = "backpack-layout-heading";
+		title.textContent = savedLayoutMode === "save" ? "保存布局" : "应用布局";
+		heading.appendChild(title);
+		const close = createButton("返回", closeSavedLayoutPanel); close.setAttribute("aria-label", "关闭布局面板");
+		heading.appendChild(close); panel.appendChild(heading);
+		const hint = document.createElement("p"); hint.className = "backpack-layout-hint";
+		hint.textContent = "最多保存 5 套，本机跨存档保留。应用时跳过缺少装备与未解锁格子，其余武器收回待放置区。";
+		panel.appendChild(hint);
+		savedLayoutBody = document.createElement("div"); savedLayoutBody.className = "backpack-layout-body";
+		panel.appendChild(savedLayoutBody);
+		savedLayoutMessage = document.createElement("p"); savedLayoutMessage.className = "backpack-layout-message";
+		savedLayoutMessage.setAttribute("role", "status"); savedLayoutMessage.tabIndex = -1;
+		panel.appendChild(savedLayoutMessage);
+		savedLayoutRoot.appendChild(panel); document.body.appendChild(savedLayoutRoot);
+		uiCommon.decorateWeaponSurface(panel, { radius: 23, ornate: true, crest: true });
+		uiCommon.registerModal(savedLayoutRoot, closeSavedLayoutPanel, { name: "backpack-layouts" });
+		savedLayoutRoot.addEventListener("pointerdown", function (event) {
+			if (event.target === savedLayoutRoot) closeSavedLayoutPanel();
+		});
+		renderSavedLayoutPanel();
+		close.focus();
+		return true;
 	};
 
 	const closeSecondaryActions = function () {
@@ -2402,7 +2784,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	const createWorkspacePanels = function () {
 		boardPanel = document.createElement("section");
 		boardPanel.className = "backpack-board-panel";
-		boardPanel.innerHTML = "<header class='backpack-board-heading'><h1>我的背包</h1><span>拖动 · 旋转 · 构筑你的战斗组合</span></header>";
+		boardPanel.innerHTML = "<header class='backpack-board-heading'><h1>我的背包</h1></header>";
 		expansionCountLabel = document.createElement("span");
 		expansionCountLabel.className = "backpack-expansion-count";
 		boardPanel.querySelector("header").appendChild(expansionCountLabel);
@@ -2412,8 +2794,13 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		const rotateButton = createButton("旋转 R", rotateSelection);
 		rotateButton.classList.add("backpack-rotate-drag-button");
 		boardControls.appendChild(rotateButton);
-		const hint = document.createElement("p"); hint.innerHTML = "拖动摆放<br>点击查看<br><span aria-hidden='true'>◇<br>│<br>✦</span>";
-		boardControls.appendChild(hint); root.appendChild(boardControls);
+		const saveLayoutButton = createButton("保存布局", function () { openSavedLayoutPanel("save"); });
+		saveLayoutButton.classList.add("backpack-action-save-layout");
+		boardControls.appendChild(saveLayoutButton);
+		const applyLayoutButton = createButton("应用布局", function () { openSavedLayoutPanel("apply"); }, true);
+		applyLayoutButton.classList.add("backpack-action-apply-layout");
+		boardControls.appendChild(applyLayoutButton);
+		root.appendChild(boardControls);
 		detailPanel = document.createElement("section");
 		detailPanel.className = "backpack-details weapon-ui-skin";
 		detailPanel.setAttribute("aria-label", "武器详情");
@@ -2662,6 +3049,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	 */
 	const closeBackpack = function (options) {
 		options = options || {};
+		closeSavedLayoutPanel();
 		const showGuideCompletionDialogue = backpackGuideCompletionDialoguePending && !options.keepLocked;
 		backpackGuideCompletionDialoguePending = false;
 		endBackpackGuide();
@@ -2897,6 +3285,14 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	// 公共界面 API：供状态栏道具、事件脚本和读档清理流程调用。
 	this.openBackpack = openBackpack;
 	this.closeBackpack = closeBackpack;
+	this.getSavedBackpackLayouts = function () {
+		try { return cloneData(readSavedLayouts()); }
+		catch (error) { return Array.from({ length: SAVED_LAYOUT_LIMIT }, function () { return null; }); }
+	};
+	this.saveBackpackLayout = saveBackpackLayout;
+	this.deleteBackpackLayout = deleteBackpackLayout;
+	this.previewBackpackLayout = previewBackpackLayout;
+	this.applyBackpackLayout = applyBackpackLayout;
 
 	// 公共配置对象：可在其他项目脚本中修改最大/初始行列。
 	this.backpackConfig = CONFIG;
