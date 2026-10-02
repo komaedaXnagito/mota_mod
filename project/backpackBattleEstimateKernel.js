@@ -178,11 +178,18 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71;
 		});
 	};
 
-	let simulate = function (input) {
+	let simulate = function (input, options) {
 		"use strict";
 		getRules();
+		var isDps = options && options.dps === true;
+		var tickLimit = isDps ? 500 : MAX_TICKS;
 		var simulationInput = rules.clone(input || {});
 		simulationInput.player = simulationInput.player || {};
+		// 木桩不攻击、没有初始状态；累计 damageTaken，避免用巨额 HP 的差值丢失小数精度。
+		if (isDps) simulationInput.enemy = {
+			id: "backpackDpsDummy", name: "训练木桩", hp: 1e30, maxHp: 1e30,
+			atk: 0, def: 0, attackIntervalTicks: tickLimit + 1, buffs: [], debuffs: []
+		};
 		var state = rules.createBattleState(simulationInput);
 		var initialPlayerHp = state.player.hp;
 		// 显伤需要算完整场战斗；勇士生命降到 0 以下后仍继续行动，直到击杀怪物或达到回合上限。
@@ -390,7 +397,7 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71;
 		var hasPotentialDamage = state.weapons.some(function (weapon) {
 			return rules.getWeaponIntervalTicks(state, weapon) > 0 && canWeaponEverDealDamage(state, weapon);
 		}) || rules.getStatusStacks(state.enemy, "burn") > 0;
-		if (!hasPotentialDamage) {
+		if (!isDps && !hasPotentialDamage) {
 			return { damage: null, rounds: null, ticks: MAX_TICKS + 1, roundsExceeded: true };
 		}
 
@@ -402,6 +409,8 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71;
 		};
 
 		var getNextDelta = function () {
+			// 固定窗口逐 Tick 推进，与实战一致地处理临时修正过期及动态间隔。
+			if (isDps) return 1;
 			var remaining = 100 - state.tick % 100;
 			state.weapons.forEach(function (weapon) {
 				var interval = rules.getWeaponIntervalTicks(state, weapon);
@@ -414,6 +423,7 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71;
 		};
 
 		while (state.enemy.hp > 0) {
+			if (isDps && state.tick >= tickLimit) break;
 			var delta = getNextDelta();
 			if (state.tick + delta > MAX_TICKS) {
 				return { damage: null, rounds: null, ticks: MAX_TICKS + 1, roundsExceeded: true };
@@ -453,7 +463,7 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71;
 
 			if (state.enemy.hp <= 0) break;
 			var enemyInterval = rules.getEnemyIntervalTicks(state);
-			if (state.enemy.cooldownTicks >= enemyInterval) {
+			if (!isDps && state.enemy.cooldownTicks >= enemyInterval) {
 				state.enemy.cooldownTicks = 0;
 				attackEnemy();
 			}
@@ -462,6 +472,14 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71;
 				return { damage: null, rounds: null, ticks: MAX_TICKS + 1, roundsExceeded: true };
 			}
 		}
+
+		if (isDps) return {
+			ticks: tickLimit,
+			totalDamage: rules.fixed(state.enemy.damageTaken),
+			dps: rules.fixed(state.enemy.damageTaken / (tickLimit / rules.TICKS_PER_SECOND)),
+			rngCallCount: state.rngCallCount,
+			randomSeedEnd: random.getSeed()
+		};
 
 		return {
 			// 显伤与实际结算保持一致；战后生命增加时显示为负伤害。
@@ -476,6 +494,7 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71;
 
 	backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71 = {
 		MAX_TICKS: MAX_TICKS,
-		simulate: simulate
+		simulate: simulate,
+		simulateDps: function (input) { return simulate(input, { dps: true }); }
 	};
 }

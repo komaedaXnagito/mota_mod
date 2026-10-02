@@ -199,6 +199,22 @@ html.backpack-workspace-open, body.backpack-workspace-open { overflow: hidden; }
 #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-board-controls > .backpack-button { width: 66px; padding: 4px 6px; font-size: 11px; }
 #backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-board-heading > .backpack-expansion-count { margin-left: 0; }
 
+/* 预估输出位于标题右侧，竖屏预留返回按钮的位置。 */
+#backpack-system-root[data-layout='atelier'] .backpack-dps-estimate {
+  display: flex; align-items: baseline; gap: 6px; margin-left: auto; min-width: 0;
+  color: #315775; font-size: 12px; white-space: nowrap;
+}
+#backpack-system-root[data-layout='atelier'] .backpack-dps-estimate strong {
+  font: bold 18px/1.2 var(--weapon-number); color: #214b70;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+#backpack-system-root[data-layout='atelier'] .backpack-board-heading > .backpack-expansion-count:first-of-type { margin-left: 0; flex: none; }
+#backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-dps-estimate {
+  flex-direction: row; align-items: baseline; gap: 5px; font-size: 10px;
+}
+#backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-dps-estimate strong { font-size: 14px; }
+#backpack-system-root[data-layout='atelier'][data-compact='true'] .backpack-board-heading { padding-left: 22px; padding-right: 98px; }
+
 /* 保存布局弹层限定在游戏边界内，复用武器面板的金框、图片裁剪及模态栈。 */
 .backpack-layout-root {
   position: fixed; inset: 0; z-index: 10150; display: flex; align-items: center; justify-content: center;
@@ -206,23 +222,24 @@ html.backpack-workspace-open, body.backpack-workspace-open { overflow: hidden; }
   font-family: 'Microsoft YaHei',sans-serif;
 }
 .backpack-layout-panel {
-  width: min(800px,100%); max-height: 100%; min-height: 0; display: flex; flex-direction: column;
+  width: min(800px,100%); height: min(620px,100%); max-height: 100%; min-height: 0; display: flex; flex-direction: column;
   box-sizing: border-box; padding: 24px 28px; background: transparent; border: 0;
 }
 .backpack-layout-panel > header { display: flex; flex: none; align-items: center; justify-content: space-between; gap: 12px; }
 .backpack-layout-panel h2 { margin: 0; font: bold 25px/1.4 var(--weapon-serif); }
 .backpack-layout-root .backpack-button { height: 32px; min-height: 32px; padding: 4px 18px; font: 13px/1.3 var(--weapon-serif); }
 .backpack-layout-root button:disabled { opacity: .5; cursor: not-allowed; }
-.backpack-layout-hint { flex: none; margin: 8px 0 12px; font-size: 12px; line-height: 1.6; color: #58778b; }
-.backpack-layout-body { overflow: auto; min-height: 0; scrollbar-width: thin; touch-action: pan-y; }
-.backpack-layout-slots { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 8px; padding: 3px; }
+/* 操作按钮的装饰有 24px 外延，不能放进滚动容器，否则空白也会撑出滚动条。 */
+.backpack-layout-body { display: flex; flex-direction: column; flex: 1; margin-top: 12px; min-height: 0; overflow: visible; }
+.backpack-layout-slots { flex: none; display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 8px; padding: 3px; }
 .backpack-layout-slot { display: flex; flex-direction: column; gap: 5px; align-items: center; padding: 12px 4px; min-width: 0; color: #214b70; cursor: pointer; border: 0; background: transparent; }
 .backpack-layout-slot b { font: bold 16px/1.2 var(--weapon-serif); }
 .backpack-layout-slot small { font-size: 11px; white-space: nowrap; }
 .backpack-layout-slot[aria-pressed='true'] { filter: drop-shadow(0 0 3px #be8a24); }
 .backpack-layout-slot[aria-pressed='true'] b::before { content: '✓ '; }
-.backpack-layout-content { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 18px; align-items: start; padding: 16px 3px; }
-.backpack-layout-preview { position: relative; width: 100%; overflow: hidden; background: #dce8eb80; }
+.backpack-layout-content { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); grid-template-rows: minmax(0,1fr); gap: 18px; padding: 16px 3px; }
+.backpack-layout-preview-area { min-width: 0; min-height: 0; display: grid; place-items: center; }
+.backpack-layout-preview { position: relative; width: 100%; max-width: 100%; overflow: hidden; background: #dce8eb80; }
 .backpack-layout-preview-board { position: absolute; left: 0; top: 0; transform-origin: top left; }
 .backpack-layout-preview-cell { position: absolute; box-sizing: border-box; border: 1px dashed #91a8b166; background: #bdcdd755; }
 .backpack-layout-preview-cell.is-unlocked { background: #f1f9fa; border: 1px solid #8fb0bd; }
@@ -235,25 +252,31 @@ html.backpack-workspace-open, body.backpack-workspace-open { overflow: hidden; }
 .backpack-layout-preview-weapon.is-invalid .backpack-cell-outline { border: 2px solid #b45151; background: #e9909066; }
 .backpack-layout-preview-weapon.is-locked .backpack-cell-outline { border: 2px solid #b88622; background: #efca7977; }
 .backpack-layout-preview-weapon:not(.is-ready) .backpack-image-frame { opacity: .48; }
-.backpack-layout-info { min-width: 0; font-size: 12px; line-height: 1.7; }
-.backpack-layout-summary { margin: 0 0 8px; color: #214b70; font-weight: bold; }
-.backpack-layout-legend { margin: 0 0 8px; color: #58778b; font-size: 11px; }
-.backpack-layout-entry-list { padding: 0 0 0 18px; margin: 0; max-height: 200px; overflow: auto; scrollbar-width: thin; }
+.backpack-layout-info { display: flex; flex-direction: column; min-width: 0; min-height: 0; font-size: 12px; line-height: 1.7; }
+.backpack-layout-summary { flex: none; margin: 0 0 8px; color: #214b70; font-weight: bold; }
+.backpack-layout-legend { flex: none; margin: 0 0 8px; color: #58778b; font-size: 11px; }
+.backpack-layout-entry-list { min-height: 0; padding: 0 0 0 18px; margin: 0; overflow: auto; scrollbar-width: thin; touch-action: pan-y; overscroll-behavior: contain; }
 .backpack-layout-entry-list [data-status='missing'], .backpack-layout-entry-list [data-status='invalid'] { color: #a53e3e; }
 .backpack-layout-entry-list [data-status='locked'] { color: #8c6417; }
-.backpack-layout-empty { grid-column: 1/-1; padding: 45px 18px; margin: 0; text-align: center; font-size: 14px; line-height: 1.8; color: #58778b; }
-.backpack-layout-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 4px 0; }
-.backpack-layout-message { margin: 10px 0 0; flex: none; min-height: 20px; color: #315775; font-size: 12px; line-height: 1.6; }
+.backpack-layout-empty { grid-column: 1/-1; align-self: center; padding: 18px; margin: 0; text-align: center; font-size: 14px; line-height: 1.8; color: #58778b; }
+.backpack-layout-actions { flex: none; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 4px 0; }
+.backpack-layout-message {
+  position: absolute; z-index: 3; top: 18px; left: 50%; transform: translateX(-50%);
+  width: max-content; max-width: calc(100% - 48px); box-sizing: border-box; margin: 0; padding: 10px 18px;
+  border: 1px solid #c3ad72; border-radius: 8px; background: #f5fbf2; box-shadow: 0 4px 16px #214b7026;
+  color: #315775; font-size: 12px; line-height: 1.6; text-align: center; overflow-wrap: anywhere; pointer-events: none;
+}
+.backpack-layout-message[hidden] { display: none; }
 @container game-modal (max-width: 700px) {
-  .backpack-layout-panel { padding: 20px 18px; }
+  .backpack-layout-panel { height: min(760px,100%); padding: 24px 18px; }
   .backpack-layout-panel h2 { font-size: 21px; }
   .backpack-layout-slots { gap: 4px; }
   .backpack-layout-slot { padding: 10px 2px; }
   .backpack-layout-slot b { font-size: 12px; }
   .backpack-layout-slot small { font-size: 9px; }
-  .backpack-layout-content { grid-template-columns: minmax(0,1fr); gap: 10px; padding: 12px 3px; }
-  .backpack-layout-preview { width: min(100%,300px); justify-self: center; }
-  .backpack-layout-entry-list { max-height: 84px; }
-  .backpack-layout-hint, .backpack-layout-message { font-size: 11px; }
+  .backpack-layout-content { grid-template-columns: minmax(0,1fr); grid-template-rows: minmax(0,1fr) minmax(120px,.65fr); gap: 10px; padding: 12px 3px; }
+  .backpack-layout-preview { max-width: 300px; }
+  .backpack-layout-empty { grid-row: 1/-1; }
+  .backpack-layout-message { font-size: 11px; }
   .backpack-layout-root .backpack-button { padding: 4px 13px; font-size: 12px; }
 }

@@ -49,6 +49,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	let savedLayoutRoot = null;
 	let savedLayoutBody = null;
 	let savedLayoutMessage = null;
+	let savedLayoutMessageTimer = null;
 	let savedLayoutMode = "apply";
 	let savedLayoutSelection = 0;
 	let savedLayoutConfirmation = null;
@@ -61,6 +62,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	let expansionLayer = null; // 放置虚线加号扩展按钮的 DOM 图层。
 	let synergyLayer = null; // Hover 武器时显示结构化联动范围和方向动画。
 	let expansionCountLabel = null; // 工具栏中显示背包格子数量的文字节点。
+	let dpsLabel = null;
 	let battleSpeedSelect = null; // 工具栏中的默认战斗速度选择器。
 	let placedLayer = null; // 显示已摆放武器 DOM 元素的图层。
 	let dragLayer = null; // 显示当前拖拽物视觉副本的最高层图层。
@@ -972,7 +974,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 			element.style.width = px(box.width); element.style.height = px(box.height);
 		};
 		place(boardPanel, board); place(detailPanel, detail); place(toolbarElement, actions); place(boardControls, layout.rotate);
-		if (returnButton) { returnButton.style.left = px(compact ? board.left + board.width - 94 : margin); returnButton.style.top = px(compact ? board.top + 10 : 18); }
+		if (returnButton) { returnButton.style.left = px(compact ? board.left + board.width - 94 : width - margin - 76); returnButton.style.top = px(compact ? board.top + 10 : 18); }
 		bagCanvas.style.height = px(height);
 	};
 
@@ -1702,6 +1704,25 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		});
 	};
 
+	/** 使用独立 Worker 的缓存结果，只更新文字，不重绘整个工作台。 */
+	const renderDps = function () {
+		if (!dpsLabel || !root) return;
+		const estimator = core.plugin && core.plugin.backpackBattleEstimate;
+		const entry = estimator && estimator.requestDps ? estimator.requestDps() : null;
+		const value = dpsLabel.querySelector("strong");
+		const format = function (number) {
+			const rounded = Math.round((Number(number) || 0) * 10) / 10;
+			return core.formatBigNumber ? core.formatBigNumber(rounded, true) : String(rounded);
+		};
+		value.textContent = !entry || entry.status === "error" ? "—"
+			: entry.status === "ready" ? format(entry.result.dps) : "计算中";
+		dpsLabel.title = entry && entry.status === "ready"
+			? "当前背包对无反击木桩模拟 500 tick（5 秒），总伤害 " + format(entry.result.totalDamage)
+				+ "；DPS = 总伤害 ÷ 5，包含联动、奥义及持续伤害"
+			: entry && entry.status === "error" ? "预估 DPS 计算失败：" + entry.error
+				: "按当前背包模拟 500 tick（5 秒）的平均每秒伤害";
+	};
+
 	/** 统一执行尺寸计算、画布绘制、扩展槽、已摆放区和库存区渲染。 */
 	const renderAll = function () {
 		if (!root) return;
@@ -1716,6 +1737,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		renderSellZone();
 		renderDragActions();
 		renderWeaponDetails();
+		renderDps();
 		if (document.querySelector(".bui-tooltip.backpack-panel-tooltip.show")) {
 			positionBackpackTooltip();
 		}
@@ -2010,6 +2032,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 
 	const closeSavedLayoutPanel = function () {
 		if (!savedLayoutRoot) return;
+		showSavedLayoutMessage();
 		if (savedLayoutPreviewObserver) savedLayoutPreviewObserver.disconnect();
 		savedLayoutPreviewObserver = null;
 		uiCommon.unregisterModal(savedLayoutRoot);
@@ -2017,6 +2040,18 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		savedLayoutRoot.remove();
 		savedLayoutRoot = savedLayoutBody = savedLayoutMessage = null;
 		savedLayoutConfirmation = null;
+	};
+
+	/** 浮动提示不参与面板布局；确认操作的提示保留到确认或取消。 */
+	const showSavedLayoutMessage = function (notice, persistent) {
+		if (savedLayoutMessageTimer !== null) clearTimeout(savedLayoutMessageTimer);
+		savedLayoutMessageTimer = null;
+		if (!savedLayoutMessage) return;
+		savedLayoutMessage.textContent = notice || "";
+		savedLayoutMessage.hidden = !notice;
+		if (notice && !persistent) savedLayoutMessageTimer = setTimeout(function () {
+			showSavedLayoutMessage();
+		}, 4000);
 	};
 
 	/** 预览使用同一套占格、裁剪与旋转，按完整最大网格缩放；不影响装备状态。 */
@@ -2066,10 +2101,10 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		savedLayoutPreviewObserver = null;
 		uiCommon.releaseWeaponUI(savedLayoutBody);
 		savedLayoutBody.textContent = "";
-		savedLayoutMessage.textContent = notice || "";
+		showSavedLayoutMessage(notice);
 		let slots;
 		try { slots = readSavedLayouts(); }
-		catch (error) { savedLayoutMessage.textContent = "读取布局失败，请检查浏览器存储权限"; return; }
+		catch (error) { showSavedLayoutMessage("读取布局失败，请检查浏览器存储权限"); return; }
 		const tabs = document.createElement("div");
 		tabs.className = "backpack-layout-slots";
 		tabs.setAttribute("aria-label", "选择布局槽位（最多五套）");
@@ -2096,8 +2131,11 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		content.className = "backpack-layout-content";
 		if (selected) {
 			const plan = previewBackpackLayout(savedLayoutSelection);
-			if (!plan.ok) { savedLayoutMessage.textContent = plan.message; return; }
-			content.appendChild(createSavedLayoutPreview(plan));
+			if (!plan.ok) { showSavedLayoutMessage(plan.message); return; }
+			const previewArea = document.createElement("div");
+			previewArea.className = "backpack-layout-preview-area";
+			previewArea.appendChild(createSavedLayoutPreview(plan));
+			content.appendChild(previewArea);
 			const detail = document.createElement("div");
 			detail.className = "backpack-layout-info";
 			const summary = document.createElement("p"); summary.className = "backpack-layout-summary";
@@ -2127,12 +2165,11 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		const finish = function (result) {
 			savedLayoutConfirmation = null;
 			renderSavedLayoutPanel(result.message);
-			if (savedLayoutMessage) savedLayoutMessage.focus();
 		};
 		if (savedLayoutConfirmation) {
 			const deleting = savedLayoutConfirmation === "delete";
-			savedLayoutMessage.textContent = deleting ? "确认删除布局 " + (savedLayoutSelection + 1) + "？"
-				: "确认用当前装备覆盖布局 " + (savedLayoutSelection + 1) + "？";
+			showSavedLayoutMessage(deleting ? "确认删除布局 " + (savedLayoutSelection + 1) + "？"
+				: "确认用当前装备覆盖布局 " + (savedLayoutSelection + 1) + "？", true);
 			const confirm = createButton(deleting ? "确认删除" : "确认覆盖", function () {
 				finish(deleting ? deleteBackpackLayout(savedLayoutSelection) : saveBackpackLayout(savedLayoutSelection));
 			}, true);
@@ -2155,14 +2192,20 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		if (nextFocus) nextFocus.focus();
 		if (selected) {
 			const preview = savedLayoutBody.querySelector(".backpack-layout-preview");
+			const previewArea = preview.parentNode;
 			const board = preview.firstElementChild;
 			const resizePreview = function () {
-				board.style.transform = "scale(" + preview.clientWidth / (getGridConfig().maxCols * 28) + ")";
+				const grid = getGridConfig();
+				// 同时适应宽度和剩余高度，完整棋盘不会挤走列表或操作按钮。
+				preview.style.width = Math.floor(Math.min(previewArea.clientWidth,
+					previewArea.clientHeight * grid.maxCols / grid.maxRows)) + "px";
+				board.style.transform = "scale(" + preview.clientWidth / (grid.maxCols * 28) + ")";
 			};
 			resizePreview();
 			if (typeof ResizeObserver !== "undefined") {
 				savedLayoutPreviewObserver = new ResizeObserver(resizePreview);
-				savedLayoutPreviewObserver.observe(preview);
+				// 观察固定的可用区域，避免缩放棋盘自身导致观察器反复触发。
+				savedLayoutPreviewObserver.observe(previewArea);
 			}
 		}
 	};
@@ -2189,15 +2232,13 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		heading.appendChild(title);
 		const close = createButton("返回", closeSavedLayoutPanel); close.setAttribute("aria-label", "关闭布局面板");
 		heading.appendChild(close); panel.appendChild(heading);
-		const hint = document.createElement("p"); hint.className = "backpack-layout-hint";
-		hint.textContent = "最多保存 5 套，本机跨存档保留。应用时跳过缺少装备与未解锁格子，其余武器收回待放置区。";
-		panel.appendChild(hint);
 		savedLayoutBody = document.createElement("div"); savedLayoutBody.className = "backpack-layout-body";
 		panel.appendChild(savedLayoutBody);
 		savedLayoutMessage = document.createElement("p"); savedLayoutMessage.className = "backpack-layout-message";
-		savedLayoutMessage.setAttribute("role", "status"); savedLayoutMessage.tabIndex = -1;
-		panel.appendChild(savedLayoutMessage);
-		savedLayoutRoot.appendChild(panel); document.body.appendChild(savedLayoutRoot);
+		savedLayoutMessage.setAttribute("role", "status"); savedLayoutMessage.setAttribute("aria-atomic", "true");
+		savedLayoutMessage.hidden = true;
+		savedLayoutRoot.appendChild(panel); savedLayoutRoot.appendChild(savedLayoutMessage);
+		document.body.appendChild(savedLayoutRoot);
 		uiCommon.decorateWeaponSurface(panel, { radius: 23, ornate: true, crest: true });
 		uiCommon.registerModal(savedLayoutRoot, closeSavedLayoutPanel, { name: "backpack-layouts" });
 		savedLayoutRoot.addEventListener("pointerdown", function (event) {
@@ -2785,6 +2826,11 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		boardPanel = document.createElement("section");
 		boardPanel.className = "backpack-board-panel";
 		boardPanel.innerHTML = "<header class='backpack-board-heading'><h1>我的背包</h1></header>";
+		dpsLabel = document.createElement("output");
+		dpsLabel.className = "backpack-dps-estimate";
+		dpsLabel.setAttribute("aria-live", "polite");
+		dpsLabel.innerHTML = "<span>预估 DPS</span><strong>计算中</strong>";
+		boardPanel.querySelector("header").appendChild(dpsLabel);
 		expansionCountLabel = document.createElement("span");
 		expansionCountLabel.className = "backpack-expansion-count";
 		boardPanel.querySelector("header").appendChild(expansionCountLabel);
@@ -3099,6 +3145,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 		inventoryPanel = null;
 		expansionLayer = null;
 		expansionCountLabel = null;
+		dpsLabel = null;
 		battleSpeedSelect = null;
 		placedLayer = null;
 		synergyLayer = null;
@@ -3360,6 +3407,7 @@ var installBackpackSystem_97b6d981_3a73_47b8_ba94_2315c62f5658 = function (core,
 	this.boxbar = openBackpack;
 	this.closeBoxbar = closeBackpack;
 	this.updateBackpack = renderAll;
+	this.refreshBackpackDps = renderDps;
 
 	/** 成功执行一条背包录像后，把动作纳入当前路线并继续回放。 */
 	const finishBackpackReplayAction = function (action) {

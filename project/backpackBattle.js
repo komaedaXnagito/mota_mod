@@ -495,6 +495,7 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 	};
 
 	var refreshEstimateViews = function () {
+		if (plugin.refreshBackpackDps) plugin.refreshBackpackDps();
 		if (!core.status || !core.status.played || core.status.gameOver || runtime.isActive()) return;
 		if (core.updateDamage) core.updateDamage();
 		if (core.status.event && (core.status.event.id === "book" || core.status.event.id === "book-detail")
@@ -517,7 +518,12 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 		maximumCacheSize: 256,
 		createInput: function (enemyId, x, y, floorId) {
 			var randomSeed = getBattleRandomSeed();
-			var input = createBattleInput(enemyId, x, y, floorId, true);
+			var input = enemyId === "backpackDpsDummy" ? {
+				version: BATTLE_RULE_VERSION,
+				simulationMode: "backpackDps",
+				player: getHeroSnapshot(),
+				weapons: getPlacedWeaponSnapshots()
+			} : createBattleInput(enemyId, x, y, floorId, true);
 			input.randomSeed = randomSeed;
 			return {
 				battleRuleVersion: BATTLE_RULE_VERSION,
@@ -962,6 +968,7 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 		getStatusDefinitions: function () { return clone(backpackBattleStatusDefinitions_7d94f05e_2f6d_4b8e_9c23_5a317ccab120); }
 	};
 	plugin.backpackBattleEstimate = {
+		requestDps: function () { return estimate.request("backpackDpsDummy"); },
 		request: estimate.request,
 		peek: estimate.peek,
 		clear: estimate.clear,

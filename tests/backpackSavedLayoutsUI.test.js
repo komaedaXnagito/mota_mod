@@ -12,12 +12,13 @@ const saved = definitionId => ({ entries: [{ definitionId, x: 0, y: 0, rotation:
 
 function fixture(initialSlots = [saved("first"), null, saved("third"), null, null]) {
     const document = { activeElement: null, listeners: {} };
-    const observers = [], decorations = [], released = [], calls = [];
+    const observers = [], decorations = [], released = [], calls = [], timers = new Map();
+    let timerId = 0;
     let slots = clone(initialSlots), readFailure = false, actionFailure = false, applied = 0;
     function element(tag = "div") {
         const node = {
             tagName: tag.toUpperCase(), style: {}, dataset: {}, attributes: {}, children: [], parentNode: null,
-            listeners: {}, className: "", clientWidth: 308, disabled: false, _text: "",
+            listeners: {}, className: "", clientWidth: 308, clientHeight: 280, disabled: false, _text: "",
             addEventListener(type, callback, capture = false) {
                 (this.listeners[type] ||= []).push({ callback, capture: !!capture });
             },
@@ -77,6 +78,8 @@ function fixture(initialSlots = [saved("first"), null, saved("third"), null, nul
     const opener = element("button"); opener.textContent = "保存布局";
     backpack.appendChild(opener); document.body.appendChild(backpack); opener.focus();
     const context = vm.createContext({ document, window: {}, core: { status: {} }, main: {}, console,
+        setTimeout(callback) { const id = ++timerId; timers.set(id, callback); return id; },
+        clearTimeout(id) { timers.delete(id); },
         ResizeObserver: class {
             constructor(callback) { this.callback = callback; this.targets = []; this.disconnected = false; observers.push(this); }
             observe(node) { this.targets.push(node); }
@@ -91,6 +94,7 @@ function fixture(initialSlots = [saved("first"), null, saved("third"), null, nul
     common.hideTooltip = () => {};
     Object.assign(context, {
         root: backpack, dragState: null, savedLayoutRoot: null, savedLayoutBody: null, savedLayoutMessage: null,
+        savedLayoutMessageTimer: null,
         savedLayoutPreviewObserver: null, savedLayoutMode: "apply", savedLayoutSelection: 0, savedLayoutConfirmation: null,
         uiCommon: common, isHeadlessReplay: () => false, clearWeaponSelection() {},
         readSavedLayouts() { if (readFailure) throw Error("Storage unavailable"); return clone(slots); },
@@ -126,7 +130,7 @@ function fixture(initialSlots = [saved("first"), null, saved("third"), null, nul
         cellKey: (col, row) => col + "," + row,
         toLogicalCell: (col, row) => ({ x: col - 2, y: row - 2 }), px: number => Math.round(number) + "px"
     });
-    const functions = ["createButton", "closeSavedLayoutPanel", "createSavedLayoutPreview", "renderSavedLayoutPanel", "openSavedLayoutPanel"];
+    const functions = ["createButton", "closeSavedLayoutPanel", "showSavedLayoutMessage", "createSavedLayoutPreview", "renderSavedLayoutPanel", "openSavedLayoutPanel"];
     const declarations = functions.map(name => {
         const match = source.match(new RegExp("\\tconst " + name + " = function \\([^]*?\\n\\t};"));
         assert.ok(match, "Expected production function " + name); return match[0];
@@ -161,7 +165,8 @@ function fixture(initialSlots = [saved("first"), null, saved("third"), null, nul
         node.focus(); dispatch(node, "click"); return true;
     }
     return {
-        context, common, document, observers, decorations, released, calls, opener, backpack, button, click, dispatch,
+        context, common, document, observers, decorations, released, calls, timers, opener, backpack, button, click, dispatch,
+        expireMessage() { [...timers.values()].forEach(callback => callback()); },
         get panel() { return context.savedLayoutRoot; }, get body() { return context.savedLayoutBody; },
         get slots() { return clone(slots); }, get applied() { return applied; },
         open(mode = "apply") { return context.api.openSavedLayoutPanel(mode); },
@@ -195,7 +200,7 @@ test("empty slot save invokes its action once, shows feedback, and retains an ac
     assert.deepEqual(f.calls, [["save", 1]]);
     assert.equal(f.slots[1].entries[0].definitionId, "current");
     assert.equal(f.context.savedLayoutMessage.textContent, "已保存布局 2");
-    assert.equal(f.document.activeElement, f.context.savedLayoutMessage);
+    assert.equal(f.document.activeElement, f.button("覆盖此布局"));
     assert.ok(f.panel.querySelector(".backpack-layout-preview"));
 });
 
@@ -292,6 +297,10 @@ test("preview resize updates scale, releases replaced observers, and survives mi
     const f = fixture(); f.open();
     const first = f.observers.at(-1), preview = f.panel.querySelector(".backpack-layout-preview");
     assert.equal(preview.firstElementChild.style.transform, "scale(1)");
+    assert.equal(first.targets[0], preview.parentNode);
+    preview.parentNode.clientHeight = 140; first.callback();
+    assert.equal(preview.style.width, "154px");
+    preview.parentNode.clientHeight = 280;
     preview.clientWidth = 154; first.callback();
     assert.equal(preview.firstElementChild.style.transform, "scale(0.5)");
     f.select(2); assert.equal(first.disconnected, true);
@@ -310,7 +319,7 @@ test("dialog and preview expose names, slot selection, status feedback, and non-
     assert.equal(dialog.getAttribute("aria-labelledby"), f.panel.querySelector("h2").id);
     assert.equal(f.button("返回").getAttribute("aria-label"), "关闭布局面板");
     assert.equal(f.context.savedLayoutMessage.getAttribute("role"), "status");
-    assert.equal(f.context.savedLayoutMessage.tabIndex, -1);
+    assert.equal(f.context.savedLayoutMessage.getAttribute("aria-atomic"), "true");
     const tabs = f.panel.querySelectorAll(".backpack-layout-slot");
     assert.equal(tabs.length, 5);
     assert.deepEqual(tabs.map(node => node.getAttribute("aria-pressed")), ["true", "false", "false", "false", "false"]);
@@ -319,6 +328,29 @@ test("dialog and preview expose names, slot selection, status feedback, and non-
     assert.equal(preview.getAttribute("role"), "img");
     assert.match(preview.getAttribute("aria-label"), /预览/);
     assert.equal(preview.querySelectorAll(".backpack-layout-preview-cell").length, 110);
+});
+
+test("layout feedback floats outside the panel, expires, and clears on switch or close", () => {
+    const f = fixture(); f.open();
+    assert.equal(f.panel.querySelector(".backpack-layout-hint"), null);
+    assert.equal(f.panel.querySelector("section").querySelector(".backpack-layout-message"), null);
+    assert.equal(f.context.savedLayoutMessage.hidden, true);
+    f.click("直接应用");
+    assert.equal(f.context.savedLayoutMessage.hidden, false);
+    assert.equal(f.timers.size, 1);
+    f.click("直接应用"); assert.equal(f.timers.size, 1);
+    f.expireMessage();
+    assert.equal(f.context.savedLayoutMessage.hidden, true);
+    assert.equal(f.context.savedLayoutMessage.textContent, "");
+    f.assertFocusInside();
+    f.click("删除");
+    assert.match(f.context.savedLayoutMessage.textContent, /确认删除布局/);
+    assert.equal(f.context.savedLayoutMessage.hidden, false);
+    assert.equal(f.timers.size, 0);
+    f.select(2); assert.equal(f.context.savedLayoutMessage.hidden, true);
+    f.click("直接应用");
+    f.close(); assert.equal(f.timers.size, 0);
+    f.open(); assert.equal(f.context.savedLayoutMessage.hidden, true);
 });
 
 test("preview marks ready, missing, locked and invalid weapons without making a gameplay call", () => {
