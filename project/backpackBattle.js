@@ -66,8 +66,8 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 	var activeBattleContext = null;
 	var lastLayoutSignature = null;
 	var EVENT_ID = "backpackBattle";
-	var BATTLE_RULE_VERSION = 8;
-	var WEAPON_CONFIG_VERSION = 1;
+	var BATTLE_RULE_VERSION = 9;
+	var WEAPON_CONFIG_VERSION = 2;
 
 	var clone = function (value) {
 		return value == null ? value : (core.clone ? core.clone(value) : JSON.parse(JSON.stringify(value)));
@@ -119,6 +119,8 @@ var installBackpackBattleSystem_3a1b88da_43f6_4f51_89e7_be56dc57f84e = function 
 		if (!Number.isFinite(hpmax) || hpmax <= 0) hpmax = hp;
 		return {
 			name: hero.name || "勇士",
+			career: core.getFlag("kaiju", null),
+			promotion: core.getFlag("zhuanzhi", null),
 			hp: hp,
 			maxHp: Math.max(hp, hpmax),
 			atk: Math.max(0, Number(core.getRealStatus ? core.getRealStatus("atk") : hero.atk) || 0),

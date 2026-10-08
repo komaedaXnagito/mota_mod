@@ -1500,10 +1500,52 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87;
 		});
 	};
 
+	// 与职业选择界面的类型一致；转职新增的专属类型只在相应转职后参与奥义。
+	let CAREER_WEAPON_TYPES = {
+		"剑": ["剑", "盾", "刀", "斧"],
+		"琴": ["乐器", "食物", "饮料"],
+		"杖": ["杖", "召唤石", "道具"]
+	};
+	let PROMOTION_WEAPON_TYPES = {
+		"狂战士": { career: "剑", types: ["斧"] },
+		"双剑士": { career: "剑", types: ["刀"] },
+		"盾誓士": { career: "剑", types: ["刀"] },
+		"魔剑士": { career: "剑", types: ["刀"] },
+		"黑猫道士": { career: "杖", types: [] },
+		"使役者": { career: "杖", types: ["精灵", "短"] },
+		"兽王": { career: "琴", types: ["动物"] },
+		"摇滚巨星": { career: "琴", types: ["吉他"] },
+		"极乐净土": { career: "琴", types: ["吉他"] }
+	};
+	// 职业证明标为“道具”，按其所属转职判定，不能误归入术士的通用道具类型。
+	let PROMOTION_ITEM_NAMES = {
+		"狂战士之证": "狂战士", "双剑士之证": "双剑士", "盾骑士之证": "盾誓士",
+		"魔剑士之证": "魔剑士", "贤者之证": "黑猫道士", "使役者之证": "使役者",
+		"森人之证": "兽王", "乐师之证": "摇滚巨星", "甄选吉他拨片": "摇滚巨星",
+		"吟游诗人之证": "极乐净土"
+	};
+	let isCareerWeapon = function (state, weapon) {
+		"use strict";
+		var player = state.player || {};
+		var types = CAREER_WEAPON_TYPES[player.career];
+		// 无职业信息的外部战斗快照兼容原规则；游戏输入每次从存档读取职业。
+		if (!types) return true;
+		var itemPromotion = PROMOTION_ITEM_NAMES[weapon.name];
+		if (itemPromotion) return itemPromotion === player.promotion
+			&& PROMOTION_WEAPON_TYPES[itemPromotion].career === player.career;
+		var promotion = PROMOTION_WEAPON_TYPES[player.promotion];
+		if (promotion && promotion.career === player.career) types = types.concat(promotion.types);
+		var weaponTypes = weapon.weaponTypes || (weapon.attributes && weapon.attributes.weaponTypes) || [];
+		return weaponTypes.some(function (type) { return types.indexOf(type) >= 0; });
+	};
+
 	let runCombatRules = function (state, weapon, trigger, context, handlers) {
 		"use strict";
 		context = context || {};
 		if (context.sourceSide == null) context.sourceSide = "player";
+		if (context.sourceSide === "player"
+			&& (trigger === "afterUltimate" || (trigger === "beforeAllyAttack" && context.attackOrigin === "ultimate"))
+			&& !isCareerWeapon(state, weapon)) return;
 		context.trigger = trigger;
 		handlers = handlers || {};
 		var rules = Array.isArray(weapon.combatRules) ? weapon.combatRules : [];
@@ -1551,6 +1593,8 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87;
 			ultimate: fixed(Math.max(0, toNumber(source.ultimate, 0))),
 			// 奥义获取词条：每次攻击获取的奥义值（受高扬/虚脱状态影响，见 getUltimateGain）。
 			ultimateGain: Math.max(0, toNumber(source.ultimateGain, 0)),
+			career: source.career || null,
+			promotion: source.promotion || null,
 			buffs: clone(source.buffs || []),
 			debuffs: clone(source.debuffs || []),
 			damageTaken: 0,
@@ -1659,6 +1703,7 @@ var backpackBattleRules_36e4a689_0f48_476f_92a7_1c12b3903e87;
 		settlePeriodicStatuses: settlePeriodicStatuses,
 		rotateCombatDirections: rotateCombatDirections,
 		findNearbyWeapons: findNearbyWeapons,
+		isCareerWeapon: isCareerWeapon,
 		countNearbyWeapons: countNearbyWeapons,
 		runCombatRules: runCombatRules,
 		runAllWeaponRules: runAllWeaponRules,

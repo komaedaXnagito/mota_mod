@@ -232,6 +232,7 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71;
 		var attackWeapon = function (weapon, options) {
 			if (state.enemy.hp <= 0) return { attacked: false, hit: false };
 			options = normalizeAttackOptions(options);
+			if (options.origin === "ultimate" && !rules.isCareerWeapon(state, weapon)) return { attacked: false, hit: false };
 			var ultimateChange = rules.getUltimateGain(state.player, weapon.attributes.ultimateGain, state);
 			if (!canPayWeaponUltimate(weapon, options)) return { attacked: false, hit: false };
 			if (ultimateChange < 0 && options.ultimateMode !== "none") {
@@ -317,7 +318,7 @@ var backpackBattleEstimateKernel_69e88a3f_71f9_4df3_82a6_c4695b166a71;
 			if (state.player.ultimate >= 100 && state.enemy.hp > 0) {
 				state.player.ultimate = rules.fixed(state.player.ultimate - 100);
 				state.weapons.forEach(function (weapon) {
-					if (state.enemy.hp > 0 && rules.getWeaponIntervalTicks(state, weapon) > 0
+					if (state.enemy.hp > 0 && rules.isCareerWeapon(state, weapon) && rules.getWeaponIntervalTicks(state, weapon) > 0
 						&& rules.getWeaponStat(weapon, "maxAttack", state.tick) > 0) {
 						attackWeapon(weapon, {
 							origin: "ultimate",

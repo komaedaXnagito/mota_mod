@@ -339,10 +339,10 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 		if (state.player.ultimate >= 100 && state.enemy.hp > 0 && state.player.hp > 0) {
 			logBattlePhase("玩家奥义开始", { ultimateBefore: state.player.ultimate });
 			state.player.ultimate = rules.fixed(state.player.ultimate - 100);
-			rules.appendLog(state, "奥义发动：所有武器立即攻击", "ultimate");
+			rules.appendLog(state, "奥义发动：本职业武器立即攻击", "ultimate");
 			state.weapons.forEach(function (weapon) {
 				if (state.enemy.hp <= 0 || state.player.hp <= 0) return;
-				if (rules.getWeaponIntervalTicks(state, weapon) > 0
+				if (rules.isCareerWeapon(state, weapon) && rules.getWeaponIntervalTicks(state, weapon) > 0
 					&& rules.getWeaponStat(weapon, "maxAttack", state.tick) > 0) {
 					logBattlePhase("玩家奥义武器入队", getWeaponPhaseDetails(weapon, { origin: "ultimate" }));
 					attackWeapon(weapon, {
@@ -365,6 +365,7 @@ var createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc = function 
 	var attackWeapon = function (weapon, options) {
 		if (!state || state.enemy.hp <= 0 || state.player.hp <= 0) return { attacked: false, hit: false };
 		options = normalizeAttackOptions(options);
+		if (options.origin === "ultimate" && !rules.isCareerWeapon(state, weapon)) return { attacked: false, hit: false };
 		logBattlePhase("武器攻击开始", getWeaponPhaseDetails(weapon, options, {
 			cooldownTicks: weapon.cooldownTicks
 		}));

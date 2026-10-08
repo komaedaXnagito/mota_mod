@@ -11027,10 +11027,17 @@ var weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44 = {
 				]
 			},
 			{
-				"trigger": "afterUltimate",
+				"trigger": "beforeAllyAttack",
+				"conditions": [
+					{
+						"kind": "attackOrigin",
+						"value": "ultimate"
+					}
+				],
 				"effects": [
 					{
-						"type": "allExtraAttack",
+						"type": "modifyCurrentAttackCount",
+						"operation": "add",
 						"value": 1
 					}
 				]

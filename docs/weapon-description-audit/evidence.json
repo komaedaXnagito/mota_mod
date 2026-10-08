@@ -1,0 +1,970 @@
+{
+  "scope": "159件人工逐条对照，候选用下列隔离快照复现；基础属性被刻意控制的场景已说明。不是159件全部组合穷举。",
+  "hashes": {
+    "weapons.js": "6f174946f6af613f3f35c532fc8a6ee2f77e3be293d56aea524caceafc1f6c6f",
+    "backpackBattleRules.js": "1a76d9a20f5718460b3039b99b664ce405f89a87328ab4defec39ef92dc2b0ff",
+    "backpackBattleCore.js": "bd6a90ec1dfc2f2919ea528c4eedab0d92bc3a250c47b51bf9b6343bc6fd07c5",
+    "backpackWeaponSystem.js": "cfc1d9e56cde4b11ac6e85e1eeb31902d7b0d40180d1824053f3288022ecdace"
+  },
+  "results": [
+    {
+      "key": "attack-vs-hit",
+      "ids": [
+        "I396"
+      ],
+      "fixture": "10 次出手全部未命中；奥义获取设为0",
+      "actual": {
+        "holderCounters": {
+          "attacks": 10
+        },
+        "modifiers": [],
+        "buffs": []
+      },
+      "expected": "描述中的攻击时／每N次攻击效果仍应按出手触发；实际只注册在命中事件",
+      "classification": "confirmed"
+    },
+    {
+      "key": "attack-vs-hit",
+      "ids": [
+        "I410"
+      ],
+      "fixture": "10 次出手全部未命中；奥义获取设为0",
+      "actual": {
+        "holderCounters": {
+          "attacks": 10
+        },
+        "modifiers": [],
+        "buffs": []
+      },
+      "expected": "描述中的攻击时／每N次攻击效果仍应按出手触发；实际只注册在命中事件",
+      "classification": "confirmed"
+    },
+    {
+      "key": "attack-vs-hit",
+      "ids": [
+        "I407"
+      ],
+      "fixture": "10 次出手全部未命中；奥义获取设为0",
+      "actual": {
+        "holderCounters": {
+          "attacks": 100,
+          "hits": 95
+        },
+        "modifiers": [],
+        "buffs": []
+      },
+      "expected": "描述中的攻击时／每N次攻击效果仍应按出手触发；实际只注册在命中事件",
+      "classification": "confirmed"
+    },
+    {
+      "key": "attack-vs-hit",
+      "ids": [
+        "I426"
+      ],
+      "fixture": "10 次出手全部未命中；奥义获取设为0",
+      "actual": {
+        "holderCounters": {
+          "attacks": 100,
+          "hits": 95
+        },
+        "modifiers": [],
+        "buffs": []
+      },
+      "expected": "描述中的攻击时／每N次攻击效果仍应按出手触发；实际只注册在命中事件",
+      "classification": "confirmed"
+    },
+    {
+      "key": "attack-vs-hit",
+      "ids": [
+        "I592"
+      ],
+      "fixture": "10 次出手全部未命中；奥义获取设为0",
+      "actual": {
+        "holderCounters": {
+          "attacks": 100,
+          "hits": 95
+        },
+        "modifiers": [],
+        "buffs": []
+      },
+      "expected": "描述中的攻击时／每N次攻击效果仍应按出手触发；实际只注册在命中事件",
+      "classification": "confirmed"
+    },
+    {
+      "key": "attack-vs-hit",
+      "ids": [
+        "I513"
+      ],
+      "fixture": "10 次出手全部未命中；奥义获取设为0",
+      "actual": {
+        "holderCounters": {},
+        "modifiers": [],
+        "buffs": []
+      },
+      "expected": "描述中的攻击时／每N次攻击效果仍应按出手触发；实际只注册在命中事件",
+      "classification": "confirmed"
+    },
+    {
+      "key": "attack-vs-hit",
+      "ids": [
+        "I425"
+      ],
+      "fixture": "10 次出手全部未命中；奥义获取设为0",
+      "actual": {
+        "holderCounters": {},
+        "modifiers": [],
+        "buffs": []
+      },
+      "expected": "描述中的攻击时／每N次攻击效果仍应按出手触发；实际只注册在命中事件",
+      "classification": "confirmed"
+    },
+    {
+      "key": "attack-vs-hit",
+      "ids": [
+        "I554"
+      ],
+      "fixture": "10 次出手全部未命中；奥义获取设为0",
+      "actual": {
+        "holderCounters": {
+          "attacks": 100,
+          "hits": 89
+        },
+        "modifiers": [],
+        "buffs": []
+      },
+      "expected": "描述中的攻击时／每N次攻击效果仍应按出手触发；实际只注册在命中事件",
+      "classification": "confirmed"
+    },
+    {
+      "key": "attack-vs-hit",
+      "ids": [
+        "I574"
+      ],
+      "fixture": "10 次出手全部未命中；奥义获取设为0",
+      "actual": {
+        "holderCounters": {
+          "attacks": 100,
+          "hits": 89
+        },
+        "modifiers": [],
+        "buffs": []
+      },
+      "expected": "描述中的攻击时／每N次攻击效果仍应按出手触发；实际只注册在命中事件",
+      "classification": "confirmed"
+    },
+    {
+      "key": "attack-vs-hit",
+      "ids": [
+        "I588"
+      ],
+      "fixture": "10 次出手全部未命中；奥义获取设为0",
+      "actual": {
+        "holderCounters": {
+          "attacks": 10
+        },
+        "modifiers": [],
+        "buffs": []
+      },
+      "expected": "描述中的攻击时／每N次攻击效果仍应按出手触发；实际只注册在命中事件",
+      "classification": "confirmed"
+    },
+    {
+      "key": "attack-vs-hit",
+      "ids": [
+        "I517"
+      ],
+      "fixture": "10 次出手全部未命中；奥义获取设为0",
+      "actual": {
+        "holderCounters": {
+          "attacks": 10
+        },
+        "modifiers": [],
+        "buffs": [
+          {
+            "id": "block",
+            "stacks": 20,
+            "acquiredTick": 0
+          }
+        ]
+      },
+      "expected": "描述中的攻击时／每N次攻击效果仍应按出手触发；实际只注册在命中事件",
+      "classification": "confirmed"
+    },
+    {
+      "key": "attack-vs-hit",
+      "ids": [
+        "I606"
+      ],
+      "fixture": "10 次出手全部未命中；奥义获取设为0",
+      "actual": {
+        "holderCounters": {
+          "attacks": 10
+        },
+        "modifiers": [],
+        "buffs": [
+          {
+            "id": "block",
+            "stacks": 25,
+            "acquiredTick": 0
+          }
+        ]
+      },
+      "expected": "描述中的攻击时／每N次攻击效果仍应按出手触发；实际只注册在命中事件",
+      "classification": "confirmed"
+    },
+    {
+      "key": "attack-vs-hit",
+      "ids": [
+        "I607"
+      ],
+      "fixture": "10 次出手全部未命中；奥义获取设为0",
+      "actual": {
+        "holderCounters": {
+          "attacks": 10
+        },
+        "modifiers": [],
+        "buffs": [
+          {
+            "id": "block",
+            "stacks": 30,
+            "acquiredTick": 0
+          }
+        ]
+      },
+      "expected": "描述中的攻击时／每N次攻击效果仍应按出手触发；实际只注册在命中事件",
+      "classification": "confirmed"
+    },
+    {
+      "key": "attack-vs-hit",
+      "ids": [
+        "I608"
+      ],
+      "fixture": "10 次出手全部未命中；奥义获取设为0",
+      "actual": {
+        "holderCounters": {
+          "attacks": 10
+        },
+        "modifiers": [],
+        "buffs": [
+          {
+            "id": "block",
+            "stacks": 35,
+            "acquiredTick": 0
+          }
+        ]
+      },
+      "expected": "描述中的攻击时／每N次攻击效果仍应按出手触发；实际只注册在命中事件",
+      "classification": "confirmed"
+    },
+    {
+      "key": "passive-afterAttack",
+      "ids": [
+        "I560"
+      ],
+      "fixture": "原始被动间隔不改动；分别满足奥义100／HP损失200／MP20",
+      "actual": {
+        "hp": 1000,
+        "ultimate": 100,
+        "buffs": []
+      },
+      "expected": "奥义消耗并获得10秒狼皮",
+      "classification": "confirmed"
+    },
+    {
+      "key": "passive-afterAttack",
+      "ids": [
+        "I577"
+      ],
+      "fixture": "原始被动间隔不改动；分别满足奥义100／HP损失200／MP20",
+      "actual": {
+        "hp": 800,
+        "ultimate": 0,
+        "buffs": []
+      },
+      "expected": "回复30HP至830",
+      "classification": "confirmed"
+    },
+    {
+      "key": "passive-afterAttack",
+      "ids": [
+        "I584"
+      ],
+      "fixture": "原始被动间隔不改动；分别满足奥义100／HP损失200／MP20",
+      "actual": {
+        "hp": 1000,
+        "ultimate": 0,
+        "buffs": [
+          {
+            "id": "mp",
+            "stacks": 20
+          }
+        ]
+      },
+      "expected": "获得黑之魅力",
+      "classification": "confirmed"
+    },
+    {
+      "key": "duplicate-food-damage",
+      "ids": [
+        "I412"
+      ],
+      "fixture": "右侧放1个食物；同时计算布局和战斗加成",
+      "actual": 6,
+      "expected": "+3",
+      "classification": "confirmed"
+    },
+    {
+      "key": "food-range",
+      "ids": [
+        "I412"
+      ],
+      "fixture": "食物在右侧4×4高亮范围上边缘；消耗10强化",
+      "actual": 0,
+      "expected": "食物攻击次数+1",
+      "classification": "confirmed"
+    },
+    {
+      "key": "source-included-as-neighbor",
+      "ids": [
+        "I540"
+      ],
+      "fixture": "邻接精灵/武器；黑魅等前置条件满足，派发相应事件",
+      "actual": [
+        {
+          "stat": "attack",
+          "operation": "add",
+          "value": 1,
+          "expiresTick": null
+        }
+      ],
+      "expected": "只给邻接目标加伤，来源物品不属于自己的邻接范围",
+      "classification": "confirmed"
+    },
+    {
+      "key": "source-included-as-neighbor",
+      "ids": [
+        "I569"
+      ],
+      "fixture": "邻接精灵/武器；黑魅等前置条件满足，派发相应事件",
+      "actual": [
+        {
+          "stat": "attack",
+          "operation": "add",
+          "value": 1,
+          "expiresTick": 1000
+        }
+      ],
+      "expected": "只给邻接目标加伤，来源物品不属于自己的邻接范围",
+      "classification": "confirmed"
+    },
+    {
+      "key": "source-included-as-neighbor",
+      "ids": [
+        "I578"
+      ],
+      "fixture": "邻接精灵/武器；黑魅等前置条件满足，派发相应事件",
+      "actual": [
+        {
+          "stat": "attack",
+          "operation": "add",
+          "value": 1,
+          "expiresTick": 100
+        }
+      ],
+      "expected": "只给邻接目标加伤，来源物品不属于自己的邻接范围",
+      "classification": "confirmed"
+    },
+    {
+      "key": "source-included-as-neighbor",
+      "ids": [
+        "I584"
+      ],
+      "fixture": "邻接精灵/武器；黑魅等前置条件满足，派发相应事件",
+      "actual": [
+        {
+          "stat": "attack",
+          "operation": "add",
+          "value": 1,
+          "expiresTick": null
+        }
+      ],
+      "expected": "只给邻接目标加伤，来源物品不属于自己的邻接范围",
+      "classification": "confirmed"
+    },
+    {
+      "key": "wolf-duration-as-damage",
+      "ids": [
+        "I548"
+      ],
+      "fixture": "狼皮剩余10秒",
+      "actual": 100,
+      "expected": "固定+10伤害",
+      "classification": "confirmed"
+    },
+    {
+      "key": "ultimate-after-damage",
+      "ids": [
+        "I581"
+      ],
+      "fixture": "基础伤害固定10；初始敌冰3；普通命中加至4后立刻奥义",
+      "actual": 20,
+      "expected": "普通10 + 奥义(10+4×2) = 28",
+      "classification": "confirmed"
+    },
+    {
+      "key": "wrong-stat",
+      "ids": [
+        "I568"
+      ],
+      "fixture": "盾骑士证书+斧；开局登记stat=damage",
+      "actual": 0,
+      "expected": "斧伤害+3",
+      "classification": "confirmed"
+    },
+    {
+      "key": "animal-interval-rechecked",
+      "ids": [
+        "I566"
+      ],
+      "fixture": "相邻1个动物；重新检查conditionId",
+      "actual": -0.15,
+      "expected": "-0.15；先前疑点排除",
+      "classification": "matched"
+    },
+    {
+      "key": "recursive-extra",
+      "ids": [
+        "I509"
+      ],
+      "fixture": "固定10伤害，只有1次正常出手；正随机种子11",
+      "actual": {
+        "hits": 4,
+        "damage": 40
+      },
+      "expected": "至多2段；追加攻击不应再次给自己追加",
+      "classification": "confirmed"
+    },
+    {
+      "key": "registration-overwrite",
+      "ids": [
+        "I389"
+      ],
+      "fixture": "同时摆2个独立实例，观察weaponDamageBonuses",
+      "actual": 1,
+      "expected": "2件各自登记；实际同id互相覆盖",
+      "classification": "confirmed"
+    },
+    {
+      "key": "registration-overwrite",
+      "ids": [
+        "I412"
+      ],
+      "fixture": "同时摆2个独立实例，观察nearbyDamageBonuses",
+      "actual": 1,
+      "expected": "2件各自登记；实际同id互相覆盖",
+      "classification": "confirmed"
+    },
+    {
+      "key": "registration-overwrite",
+      "ids": [
+        "I413"
+      ],
+      "fixture": "同时摆2个独立实例，观察nearbyExtraAttacks",
+      "actual": 1,
+      "expected": "2件各自登记；实际同id互相覆盖",
+      "classification": "confirmed"
+    },
+    {
+      "key": "registration-overwrite",
+      "ids": [
+        "I415"
+      ],
+      "fixture": "同时摆2个独立实例，观察nearbyIntervalBonuses",
+      "actual": 1,
+      "expected": "2件各自登记；实际同id互相覆盖",
+      "classification": "confirmed"
+    },
+    {
+      "key": "registration-overwrite",
+      "ids": [
+        "I423"
+      ],
+      "fixture": "同时摆2个独立实例，观察sameNameDamageBonuses",
+      "actual": 1,
+      "expected": "2件各自登记；实际同id互相覆盖",
+      "classification": "confirmed"
+    },
+    {
+      "key": "registration-overwrite",
+      "ids": [
+        "I524"
+      ],
+      "fixture": "同时摆2个独立实例，观察buffGainCounters",
+      "actual": 1,
+      "expected": "2件各自登记；实际同id互相覆盖",
+      "classification": "confirmed"
+    },
+    {
+      "key": "registration-overwrite",
+      "ids": [
+        "I542"
+      ],
+      "fixture": "同时摆2个独立实例，观察nearbyIntervalBonuses",
+      "actual": 1,
+      "expected": "2件各自登记；实际同id互相覆盖",
+      "classification": "confirmed"
+    },
+    {
+      "key": "registration-overwrite",
+      "ids": [
+        "I558"
+      ],
+      "fixture": "同时摆2个独立实例，观察nearbyThresholdExtraAttacks",
+      "actual": 1,
+      "expected": "2件各自登记；实际同id互相覆盖",
+      "classification": "confirmed"
+    },
+    {
+      "key": "registration-overwrite",
+      "ids": [
+        "I573"
+      ],
+      "fixture": "同时摆2个独立实例，观察nearbyDamageBonuses",
+      "actual": 1,
+      "expected": "2件各自登记；实际同id互相覆盖",
+      "classification": "confirmed"
+    },
+    {
+      "key": "registration-overwrite",
+      "ids": [
+        "I574"
+      ],
+      "fixture": "同时摆2个独立实例，观察mpConsumeCounters",
+      "actual": 1,
+      "expected": "2件各自登记；实际同id互相覆盖",
+      "classification": "confirmed"
+    },
+    {
+      "key": "cross-weapon-id-collision",
+      "ids": [
+        "I415",
+        "I542"
+      ],
+      "fixture": "亵渎魔弹和贝尼迪共同登记shieldInterval",
+      "actual": [
+        {
+          "id": "shieldInterval",
+          "every": 1,
+          "value": -0.2,
+          "sourceWeaponId": "I542",
+          "directions": [
+            "up",
+            "down",
+            "left",
+            "right"
+          ],
+          "distance": 1,
+          "relation": null,
+          "span": 1,
+          "filter": {
+            "weaponTypes": [
+              "盾"
+            ]
+          }
+        }
+      ],
+      "expected": "两把不同武器均保留登记",
+      "classification": "confirmed"
+    },
+    {
+      "key": "invincibility-shortened",
+      "ids": [
+        "I418",
+        "I571"
+      ],
+      "fixture": "先获得500tick无敌，再触发较短无敌",
+      "actual": 100,
+      "expected": "结束时间至少保持500",
+      "classification": "confirmed"
+    },
+    {
+      "key": "invincibility-shortened",
+      "ids": [
+        "I418",
+        "I614"
+      ],
+      "fixture": "先获得500tick无敌，再触发较短无敌",
+      "actual": 130,
+      "expected": "结束时间至少保持500",
+      "classification": "confirmed"
+    },
+    {
+      "key": "invincibility-shortened",
+      "ids": [
+        "I418",
+        "I615"
+      ],
+      "fixture": "先获得500tick无敌，再触发较短无敌",
+      "actual": 160,
+      "expected": "结束时间至少保持500",
+      "classification": "confirmed"
+    },
+    {
+      "key": "invincibility-shortened",
+      "ids": [
+        "I418",
+        "I616"
+      ],
+      "fixture": "先获得500tick无敌，再触发较短无敌",
+      "actual": 190,
+      "expected": "结束时间至少保持500",
+      "classification": "confirmed"
+    },
+    {
+      "key": "invincibility-shortened",
+      "ids": [
+        "I418",
+        "I617"
+      ],
+      "fixture": "先获得500tick无敌，再触发较短无敌",
+      "actual": 220,
+      "expected": "结束时间至少保持500",
+      "classification": "confirmed"
+    },
+    {
+      "key": "invincibility-shortened",
+      "ids": [
+        "I418",
+        "I605"
+      ],
+      "fixture": "先获得500tick无敌，再触发较短无敌",
+      "actual": 300,
+      "expected": "结束时间至少保持500",
+      "classification": "confirmed"
+    },
+    {
+      "key": "heal-round-delay",
+      "ids": [
+        "I549"
+      ],
+      "fixture": "敌方tick10造成达到阈值的HP损失",
+      "actual": 700,
+      "expected": "达到阈值当时触发；当前只等整秒roundStart",
+      "classification": "confirmed"
+    },
+    {
+      "key": "heal-round-delay",
+      "ids": [
+        "I602"
+      ],
+      "fixture": "敌方tick10造成达到阈值的HP损失",
+      "actual": 750,
+      "expected": "达到阈值当时触发；当前只等整秒roundStart",
+      "classification": "confirmed"
+    },
+    {
+      "key": "heal-round-delay",
+      "ids": [
+        "I603"
+      ],
+      "fixture": "敌方tick10造成达到阈值的HP损失",
+      "actual": 800,
+      "expected": "达到阈值当时触发；当前只等整秒roundStart",
+      "classification": "confirmed"
+    },
+    {
+      "key": "heal-round-delay",
+      "ids": [
+        "I604"
+      ],
+      "fixture": "敌方tick10造成达到阈值的HP损失",
+      "actual": 850,
+      "expected": "达到阈值当时触发；当前只等整秒roundStart",
+      "classification": "confirmed"
+    },
+    {
+      "key": "heal-round-delay",
+      "ids": [
+        "I605"
+      ],
+      "fixture": "敌方tick10造成达到阈值的HP损失",
+      "actual": 900,
+      "expected": "达到阈值当时触发；当前只等整秒roundStart",
+      "classification": "confirmed"
+    },
+    {
+      "key": "self-damage-not-notified",
+      "ids": [
+        "I391"
+      ],
+      "fixture": "另一个武器持续自伤（I395）；达到损失/低血条件；无敌方主动攻击",
+      "actual": {
+        "hp": 950,
+        "totalHpLost": 50,
+        "counters": {}
+      },
+      "expected": "自伤满足描述条件也应触发",
+      "classification": "confirmed"
+    },
+    {
+      "key": "self-damage-not-notified",
+      "ids": [
+        "I534"
+      ],
+      "fixture": "另一个武器持续自伤（I395）；达到损失/低血条件；无敌方主动攻击",
+      "actual": {
+        "hp": 950,
+        "totalHpLost": 50,
+        "counters": {}
+      },
+      "expected": "自伤满足描述条件也应触发",
+      "classification": "confirmed"
+    },
+    {
+      "key": "self-damage-not-notified",
+      "ids": [
+        "I519"
+      ],
+      "fixture": "另一个武器持续自伤（I395）；达到损失/低血条件；无敌方主动攻击",
+      "actual": {
+        "hp": 290,
+        "totalHpLost": 50,
+        "counters": {}
+      },
+      "expected": "自伤满足描述条件也应触发",
+      "classification": "confirmed"
+    },
+    {
+      "key": "strict-half-boundary",
+      "ids": [
+        "I562"
+      ],
+      "fixture": "恰好50%HP；概率分支在此受控为成功",
+      "actual": 13,
+      "expected": "高于50%条件不触发（应10）",
+      "classification": "confirmed"
+    },
+    {
+      "key": "strict-half-boundary",
+      "ids": [
+        "I585"
+      ],
+      "fixture": "恰好50%HP；概率分支在此受控为成功",
+      "actual": 15,
+      "expected": "高于50%条件不触发（应10）",
+      "classification": "confirmed"
+    },
+    {
+      "key": "strict-half-boundary",
+      "ids": [
+        "I575"
+      ],
+      "fixture": "恰好50%HP；概率分支在此受控为成功",
+      "actual": 30,
+      "expected": "只有概率+10，HP低于条件不触发（应20）",
+      "classification": "confirmed"
+    },
+    {
+      "key": "zero-neighbor-default-one",
+      "ids": [
+        "I599"
+      ],
+      "fixture": "0个邻接武器，战斗开始",
+      "actual": [
+        {
+          "id": "ice",
+          "stacks": 1,
+          "acquiredTick": 0
+        }
+      ],
+      "expected": "0层弱体",
+      "classification": "confirmed"
+    },
+    {
+      "key": "threshold-waits-own-attack",
+      "ids": [
+        "I559"
+      ],
+      "fixture": "tick10损血达到200；自身冷却尚未结束；黑魅存在",
+      "actual": {
+        "hp": 800,
+        "ultimate": 0
+      },
+      "expected": "达到损血条件时奥义+100",
+      "classification": "confirmed"
+    },
+    {
+      "key": "threshold-waits-own-attack",
+      "ids": [
+        "I593"
+      ],
+      "fixture": "tick10损血达到200；自身冷却尚未结束；黑魅存在",
+      "actual": {
+        "hp": 800,
+        "ultimate": 0
+      },
+      "expected": "达到损血条件时回复200HP",
+      "classification": "confirmed"
+    },
+    {
+      "key": "first-attack-before-threshold-bonus",
+      "ids": [
+        "I511"
+      ],
+      "fixture": "开局4件邻接扣200HP；基础伤害固定10；第1次攻击",
+      "actual": {
+        "damage": 10,
+        "hits": 1
+      },
+      "expected": "条件已满足，应3段×30=90",
+      "classification": "confirmed"
+    },
+    {
+      "key": "blocked-damage-event-missing",
+      "ids": [
+        "I586"
+      ],
+      "fixture": "敌方命中但全部由格挡抵消；10层弱体/邻接盾条件满足",
+      "actual": {
+        "hp": 900,
+        "buffs": [
+          {
+            "id": "block",
+            "stacks": 93
+          }
+        ],
+        "debuffs": [
+          {
+            "id": "darkness",
+            "stacks": 10
+          }
+        ]
+      },
+      "expected": "10弱体达到条件后净化并回血，不依赖HP是否又减少",
+      "classification": "confirmed"
+    },
+    {
+      "key": "blocked-damage-event-missing",
+      "ids": [
+        "I568"
+      ],
+      "fixture": "敌方命中但全部由格挡抵消；10层弱体/邻接盾条件满足",
+      "actual": {
+        "hp": 900,
+        "buffs": [
+          {
+            "id": "block",
+            "stacks": 93
+          }
+        ],
+        "debuffs": [
+          {
+            "id": "darkness",
+            "stacks": 10
+          }
+        ]
+      },
+      "expected": "被攻击时仍应获得高扬1和格挡2",
+      "classification": "confirmed"
+    },
+    {
+      "key": "third-hp-boundary",
+      "ids": [
+        "I519"
+      ],
+      "fixture": "恰好1/3HP，派发受到伤害事件",
+      "actual": 600,
+      "expected": "低于1/3才回血，恰好1/3不触发",
+      "classification": "confirmed"
+    },
+    {
+      "key": "shared-sacrifice-flag",
+      "ids": [
+        "I519"
+      ],
+      "fixture": "第1件触发低血回复后，将HP置满，派发第2件攻击后事件",
+      "actual": 900,
+      "expected": "第2件尚未触发自己的回复，攻击仍应自伤20至880",
+      "classification": "confirmed"
+    },
+    {
+      "key": "buff-bonus-delayed",
+      "ids": [
+        "I596"
+      ],
+      "fixture": "初始已有20层强化；基础伤害固定10；第1次命中",
+      "actual": 10,
+      "expected": "已达到条件，第1次伤害应13；实际命中后才永久加3",
+      "classification": "confirmed"
+    },
+    {
+      "key": "acquisition-odds-missing",
+      "ids": [
+        "I540"
+      ],
+      "fixture": "中央定义、道具表和全项目ID钩子检索；对照I523已配置addOdds",
+      "actual": {
+        "centralItemEffect": null,
+        "itemEffect": null
+      },
+      "expected": "获取后提高精灵概率：未找到对应执行入口",
+      "classification": "confirmed"
+    },
+    {
+      "key": "ultimate-percent-wording",
+      "ids": [
+        "I405"
+      ],
+      "fixture": "双方初始奥义50，被攻击事件",
+      "actual": {
+        "player": 60,
+        "enemy": 45
+      },
+      "expected": "同一句±10%分别实现为10点和当前值10%；需确定百分比口径",
+      "classification": "ambiguous"
+    },
+    {
+      "key": "unlock-wording",
+      "ids": [
+        "I513",
+        "I516"
+      ],
+      "fixture": "阅读MT29职业事件、职业描述、拾取入口",
+      "actual": "职业选择一次性加入随机池；持有/移走证明不重新检查",
+      "expected": "持有可获得是职业提示还是必须一直持有，描述未明确",
+      "classification": "ambiguous"
+    },
+    {
+      "key": "same-name-wording",
+      "ids": [
+        "I423"
+      ],
+      "fixture": "阅读countGroupedWeapons与现有注释",
+      "actual": "场上任意一组3把同名即可；不要求与此武器同名",
+      "expected": "配置3个同名是否指本武器的3份，需确定",
+      "classification": "ambiguous"
+    },
+    {
+      "key": "random-twelve-wording",
+      "ids": [
+        "I599"
+      ],
+      "fixture": "阅读随机弱体handler",
+      "actual": "奥义随机选1种弱体，加12层",
+      "expected": "12次各自抽取，还是1次抽取12层，需确定",
+      "classification": "ambiguous"
+    },
+    {
+      "key": "zero-damage-ultimate-wording",
+      "ids": [
+        "I406",
+        "I516",
+        "I576"
+      ],
+      "fixture": "阅读resolveUltimate入队条件",
+      "actual": "有冷却但0基础伤害的辅助物品不在奥义攻击队列",
+      "expected": "奥义所有武器是否包含0伤害辅助物品，需确定",
+      "classification": "ambiguous"
+    }
+  ]
+}

@@ -112,6 +112,62 @@ test("Worker 将 DPS 与怪物损血预估分开派发", () => {
     assert.equal(responses[1].result.damage, 1);
 });
 
+test("格里姆尼尔终突只给本次奥义增加一段，连续奥义不叠加，实战与两种预估一致", () => {
+    for (const [gain, copies] of [[0, 1], [50, 1], [100, 1], [100, 2]]) {
+        const { context, kernel } = fixture();
+        vm.runInContext(read("weapons"), context);
+        const definition = context.weaponDefinitions_9f2e6f5b_4b2c_4f8c_9a3d_7e1b6c0d5a44.I609;
+        const sword = weapon("sword", 10, 100);
+        sword.attributes.ultimateGain = gain;
+        const summons = Array.from({ length: copies }, (_, i) => {
+            const summon = weapon("grim" + i, definition.minAttack,
+                definition.attackInterval * 100, definition.combatRules);
+            summon.row = i + 1;
+            summon.attributes.ultimateGain = definition.ultimateGain;
+            return summon;
+        });
+        const data = input([sword, ...summons]);
+        const before = JSON.stringify(data);
+        const predicted = kernel.simulateDps(data);
+        let seed = data.randomSeed;
+        const runtime = context.createBackpackBattleRuntime_2f8f7df2_bf4f_45ea_8ec4_628e0e25a0dc({
+            randBattle(n) {
+                seed = seed * 16807 % 2147483647;
+                const value = seed / 2147483647;
+                return n == null ? value : Math.floor(value * n);
+            }, registerAnimationFrame() {}, unregisterAnimationFrame() {}
+        });
+        const runtimeInput = clone(data);
+        runtimeInput.enemy = { hp: 1e30, maxHp: 1e30, atk: 0,
+            attackIntervalTicks: 501, buffs: [], debuffs: [] };
+        runtime.start(runtimeInput);
+        let expected;
+        for (let round = 1; round <= 5; round++) {
+            const snapshot = runtime.stepTicks(100);
+            const ultimates = Math.floor(round * gain / 100);
+            expected = round * 10 + ultimates * (10 + 7 * copies) * (1 + copies);
+            assert.equal(snapshot.enemy.damageTaken, expected, `gain=${gain}, copies=${copies}, round=${round}`);
+            const swordState = snapshot.weapons.find(w => w.instanceId === "sword");
+            assert.equal(swordState.runtimeCounters.hits, round + ultimates * (1 + copies),
+                "普通攻击每次一段，每次奥义固定增加段数");
+            for (const summon of snapshot.weapons.filter(w => w.instanceId !== "sword"))
+                assert.equal(summon.runtimeCounters.hits || 0, ultimates * (1 + copies), "召唤石自身也受益");
+            for (const w of snapshot.weapons) assert.equal(w.extraAttackCount || 0, 0, "没有永久叠加次数");
+        }
+        runtime.destroy();
+        assert.equal(predicted.totalDamage, expected);
+        assert.equal(predicted.dps, expected / 5);
+        assert.equal(predicted.randomSeedEnd, seed, "随机调用顺序保持实战一致");
+        const enemyInput = clone(runtimeInput);
+        enemyInput.enemy.hp = enemyInput.enemy.maxHp = expected;
+        const estimate = kernel.simulate(enemyInput);
+        assert.equal(estimate.ticks, 500, "怪物预估使用同样的奥义段数");
+        assert.equal(estimate.damage, 0);
+        assert.equal(estimate.roundsExceeded, false);
+        assert.equal(JSON.stringify(data), before, "预估不会改写输入或存档规则");
+    }
+});
+
 test("DPS 标签从计算中刷新为数值，失败或关闭后不显示旧值", () => {
     const source = read("backpackSystem");
     const render = source.match(/\tconst renderDps = function \(\) \{[^]*?\n\t\};/)[0];
